@@ -40,6 +40,7 @@ CLICKHOUSE_SQL_DIR = os.getenv("CLICKHOUSE_SQL_DIR", "/root/heiST/monitoring/cli
 PROXMOX_SSH_KEYFILE = os.getenv("PROXMOX_SSH_KEYFILE", "/root/.ssh/id_rsa.pub")
 CLICKHOUSE_PASSWORD = os.getenv("CLICKHOUSE_PASSWORD", "changeme")
 CLICKHOUSE_USER = os.getenv("CLICKHOUSE_USER", "default")
+CLICKHOUSE_VERSION = "25.8.32.4"
 
 
 @time_function
@@ -132,7 +133,7 @@ def install_clickhouse():
 
     execute_remote_command_with_key(
         MONITORING_IP,
-        "curl -fsSL 'https://packages.clickhouse.com/rpm/lts/repodata/repomd.xml.key' | sudo gpg --dearmor -o /usr/share/keyrings/clickhouse-keyring.gpg",
+        "curl -fsSL 'https://packages.clickhouse.com/rpm/lts/repodata/repomd.xml.key' | sudo gpg --batch --dearmor -o /usr/share/keyrings/clickhouse-keyring.gpg",
         ssh_key_path=PROXMOX_SSH_KEYFILE,
         shell=True
     )
@@ -149,7 +150,22 @@ def install_clickhouse():
 
     execute_remote_command_with_key(
         MONITORING_IP,
-        "sudo apt-get update && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y clickhouse-server clickhouse-client",
+        f"""sudo tee /etc/apt/preferences.d/clickhouse >/dev/null <<'EOF'
+        Package: clickhouse-server clickhouse-client clickhouse-common-static
+        Pin: version {CLICKHOUSE_VERSION}
+        Pin-Priority: 1001
+        EOF""",
+        ssh_key_path=PROXMOX_SSH_KEYFILE,
+        shell=True
+    )
+
+    execute_remote_command_with_key(
+        MONITORING_IP,
+        f"""sudo apt-get update && \
+        sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+        clickhouse-common-static={CLICKHOUSE_VERSION} \
+        clickhouse-client={CLICKHOUSE_VERSION} \
+        clickhouse-server={CLICKHOUSE_VERSION}""",
         ssh_key_path=PROXMOX_SSH_KEYFILE,
         shell=True
     )

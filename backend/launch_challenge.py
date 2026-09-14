@@ -114,6 +114,7 @@ def launch_challenge(challenge_template_id, user_id, vpn_monitoring_device, dmz_
                 start_time_network = time.time()
                 print(f"[Info] Starting network setup for challenge {challenge.id} and user {user_id}", flush=True)
                 start_dnsmasq_instances(challenge, user_vpn_ip)
+                force_dhcp_renew_on_windows_machines(challenge)
                 launch_timing_logger(start_time_network, "[NETWORK SETUP COMPLETE]", challenge_template_id, user_id)
 
                 start_time_user_flags = time.time()
@@ -249,9 +250,11 @@ def fetch_machines(challenge, db_conn):
 
     with db_conn.cursor() as cursor:
         cursor.execute("""
-                       SELECT id, machine_template_id
-                       FROM machines
-                       WHERE challenge_id = %s
+                       SELECT m.id, m.machine_template_id, df.guest_os
+                       FROM machines m
+                       JOIN machine_templates mt ON mt.id = m.machine_template_id
+                       JOIN disk_files df ON df.id = mt.disk_file_id
+                       WHERE m.challenge_id = %s
                        """, (challenge.id,))
 
         machines_fetched = cursor.fetchall()
@@ -260,9 +263,11 @@ def fetch_machines(challenge, db_conn):
         for row in machines_fetched:
             machine_id = row[0]
             machine_template_id = row[1]
+            guest_os = row[2]
 
-            print(f"[Debug] Adding machine {machine_id} with template {machine_template_id} to challenge", flush=True)
+            print(f"[Debug] Adding machine {machine_id} with template {machine_template_id} (guest_os={guest_os}) to challenge", flush=True)
             machine_template = MachineTemplate(machine_template_id, challenge.template)
+            machine_template.set_guest_os(guest_os)
             machine = Machine(machine_id, machine_template, challenge)
             challenge.add_machine(machine)
             machine_template.set_child(machine)
@@ -508,6 +513,43 @@ def process_all_user_specific_flags(challenge, user_email, user_unique_id):
     except Exception as e:
         print(f"[Error] Failed to write user-specific flags to VMs: {e}", flush=True)
         raise e
+
+
+def force_dhcp_renew_on_windows_machines(challenge):
+    """
+    Force an immediate DHCP renew on Windows machines right after dnsmasq
+    actually starts serving on their network.
+    """
+    print(f"[Info] Forcing DHCP renew on Windows machines for challenge {challenge.id}", flush=True)
+
+    renew_threads = []
+    for machine in challenge.machines.values():
+        guest_os = getattr(machine.template, "guest_os", None) or ""
+        if guest_os.lower() != "windows":
+            continue
+        renew_threads.append(threading.Thread(target=_force_dhcp_renew_on_vm, args=(machine.id,)))
+
+    for thread in renew_threads:
+        thread.start()
+    for thread in renew_threads:
+        thread.join()
+
+    print(f"[Info] Finished forcing DHCP renew on {len(renew_threads)} Windows machine(s)", flush=True)
+
+
+def _force_dhcp_renew_on_vm(machine_id):
+    """
+    Run ipconfig /release followed by /renew on a single Windows VM via QGA.
+    """
+    try:
+        with GuestAgent(vmid=machine_id, windows=True) as ga:
+            for cmd in (["ipconfig", "/release"], ["ipconfig", "/renew"]):
+                result = ga.exec(cmd, capture_output=True, timeout=30)
+                if result.exit_code != 0:
+                    print(f"[Warning] '{' '.join(cmd)}' failed on VM {machine_id} "
+                          f"(exit={result.exit_code}): {result.stderr.strip()!r}", flush=True)
+    except GuestAgentError as e:
+        print(f"[Warning] Guest agent error forcing DHCP renew on VM {machine_id}: {e}", flush=True)
 
 
 def write_user_specific_flags_to_vm(machine_id, flags):

@@ -197,7 +197,7 @@ def generate_prefixed_mac_address(vm_id: int, mac_index) -> str:
     return mac_address.lower()
 
 
-def initial_configuration_api_call(machine_template, init_ip, cicustom_path):
+def initial_configuration_api_call(machine_template):
     """
     Initial configuration of a virtual machine in Proxmox.
     """
@@ -208,11 +208,8 @@ def initial_configuration_api_call(machine_template, init_ip, cicustom_path):
         "sockets": 1,
         "cpu": "kvm64",
         "scsihw": "virtio-scsi-pci",
-        "cicustom": f"user={cicustom_path}",
-        "ipconfig30": f"ip={init_ip}/20,gw=10.32.0.1",
         "agent": 1
     }
-
     return make_api_call("PUT", endpoint, data)
 
 

@@ -36,21 +36,21 @@ class OvaUploadHandler
     public function __construct(
         array $config,
         array $generalConfig,
-        
+
         IDatabaseHelper $databaseHelper = null,
         ISecurityHelper $securityHelper = null,
         ILogger $logger = null,
         ICurlHelper $curlHelper = null,
         IAuthHelper $authHelper = null,
         IOvaValidator $ovaValidator = null,
-        
+
         ISession $session = new Session(),
         IServer $server = new Server(),
         IGet $get = new Get(),
         IPost $post = new Post(),
         IFiles $files = new Files(),
         IEnv $env = new Env(),
-        
+
         ISystem $system = new SystemWrapper(),
         ICookie $cookie = new Cookie()
     )
@@ -219,22 +219,32 @@ class OvaUploadHandler
         }
     }
 
+    private function validateGuestOS(string $guestOs): void
+    {
+        if (!in_array($guestOs, ['linux', 'windows'], true)) {
+            $this->logger->logWarning("Invalid guest OS value '$guestOs' from user $this->userId");
+            throw new CustomException('Invalid guest OS specified', 400);
+        }
+    }
+
     private function handleChunkedInit(): void
     {
         $fileName = $this->sanitizeFilename($this->inputData['fileName']);
         $fileSize = (int)($this->inputData['fileSize'] ?? 0);
         $totalChunks = (int)($this->inputData['totalChunks'] ?? 0);
+        $guestOs = $this->inputData['guest_os'] ?? '';
 
         $this->logger->logDebug("Chunked upload init for user $this->userId: $fileName ($fileSize bytes)");
 
         $this->validateFileSize($fileSize);
         $this->validateFileType($fileName);
+        $this->validateGuestOS($guestOs);
 
         $displayName = $this->system->pathinfo($fileName, PATHINFO_FILENAME);
         $this->checkDuplicateFileName($displayName);
 
         $uploadId = uniqid('upload_');
-        $this->createUploadMetadata($uploadId, $fileName, $fileSize, $totalChunks);
+        $this->createUploadMetadata($uploadId, $fileName, $fileSize, $totalChunks, $guestOs);
 
         echo json_encode([
             'success' => true,
@@ -316,7 +326,8 @@ class OvaUploadHandler
             $this->uploadToProxmox(
                 $combinedFile,
                 $this->system->pathinfo($meta['fileName'], PATHINFO_FILENAME),
-                $uniqueName
+                $uniqueName,
+                $meta['guest_os']
             );
 
             $this->cleanupUploadFiles($uploadId, $combinedFile);
@@ -422,14 +433,16 @@ class OvaUploadHandler
         }
 
         $file = $this->files['ova_file'];
+        $guestOs = $this->post['guest_os'] ?? '';
         $tempPath = '';
         $uniqueName = '';
 
         try {
             $this->validateFileType($file['name']);
             $this->validateFileSize($file['size']);
+            $this->validateGuestOS($guestOs);
 
-            $originalName = $this->system->pathinfo($file['name'], PATHINFO_FILENAME);
+            $originalName = $this->system->pathinfo($this->sanitizeFilename($file['name']), PATHINFO_FILENAME);
             $uniqueName = uniqid('ova_') . '.' . strtolower($this->system->pathinfo($file['name'], PATHINFO_EXTENSION));
             $tempPath = $this->system->sys_get_temp_dir() . '/' . $uniqueName;
 
@@ -446,7 +459,7 @@ class OvaUploadHandler
             }
 
             $this->validateOvaFile($tempPath);
-            $this->uploadToProxmox($tempPath, $originalName, $uniqueName);
+            $this->uploadToProxmox($tempPath, $originalName, $uniqueName, $guestOs);
 
             if ($this->system->connection_aborted()) {
                 $this->logger->logWarning("Client disconnected during direct upload processing");
@@ -503,7 +516,8 @@ class OvaUploadHandler
                 SELECT
                     id, 
                     display_name, 
-                    upload_date
+                    upload_date,
+                    guest_os
                 FROM get_user_disk_files(:user_id)
             ");
             $stmt->execute(['user_id' => $this->userId]);
@@ -574,7 +588,7 @@ class OvaUploadHandler
         }
     }
 
-    private function createUploadMetadata(string $uploadId, string $fileName, int $fileSize, int $totalChunks): void
+    private function createUploadMetadata(string $uploadId, string $fileName, int $fileSize, int $totalChunks, string $guestOs): void
     {
         $metadata = [
             'fileName' => $fileName,
@@ -582,7 +596,8 @@ class OvaUploadHandler
             'totalChunks' => $totalChunks,
             'receivedChunks' => 0,
             'userId' => $this->userId,
-            'uploadDate' => $this->system->time()
+            'uploadDate' => $this->system->time(),
+            'guest_os' => $guestOs
         ];
 
         if ($this->system->file_put_contents($this->config['upload']['UPLOAD_TEMP_DIR'] . $uploadId . '.meta', json_encode($metadata)) === false) {
@@ -648,7 +663,7 @@ class OvaUploadHandler
         $this->system->unlink($this->config['upload']['UPLOAD_TEMP_DIR'] . $uploadId . '.meta');
     }
 
-    private function uploadToProxmox(string $filePath, string $displayName, string $proxmoxFilename): void
+    private function uploadToProxmox(string $filePath, string $displayName, string $proxmoxFilename, string $guestOs): void
     {
 
         $this->checkDuplicateFileName($displayName);
@@ -683,20 +698,21 @@ class OvaUploadHandler
             throw new CustomException('File processing failed', 500);
         }
 
-        $this->storeFileMetadata($displayName, $proxmoxFilename);
+        $this->storeFileMetadata($displayName, $proxmoxFilename, $guestOs);
     }
 
-    private function storeFileMetadata(string $displayName, string $proxmoxFilename): void
+    private function storeFileMetadata(string $displayName, string $proxmoxFilename, string $guestOs): void
     {
         $this->pdo->beginTransaction();
         try {
             $stmt = $this->pdo->prepare("
-                SELECT add_user_disk_file(:user_id, :display_name, :proxmox_filename)
+                SELECT add_user_disk_file(:user_id, :display_name, :proxmox_filename, :guest_os)
             ");
             $stmt->execute([
                 'user_id' => $this->userId,
                 'display_name' => $displayName,
-                'proxmox_filename' => $proxmoxFilename
+                'proxmox_filename' => $proxmoxFilename,
+                'guest_os' => $guestOs
             ]);
             $this->pdo->commit();
         } catch (PDOException $e) {

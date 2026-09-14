@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import socket
+import stat
 import threading
 import time
 from dataclasses import dataclass
@@ -460,8 +461,8 @@ class GuestAgent:
         """Execute a command on a Windows guest.
 
         Attempts direct ``guest-exec`` first.  If the process is PowerShell
-        and returns no output with a non-zero exit code the call is
-        retried wrapped in ``cmd.exe /c start /wait /MIN`` to supply a window handle.
+        and returns no output with a non-zero exit code, or hangs and never exits within the timeout, the call is retried
+        wrapped in ``cmd.exe /c start /wait /MIN`` to supply a window handle.
         """
         is_ps = argv[0].lower().endswith("powershell.exe")
         command, args = argv[0], argv[1:]
@@ -477,7 +478,6 @@ class GuestAgent:
             )
             if result.exit_code == 0:
                 return result
-            # PS with no output is a console-handle crash on legacy Windows -> retry
             if is_ps and not result.stdout and not result.stderr:
                 pass
             else:
@@ -485,6 +485,13 @@ class GuestAgent:
         except GACommandError:
             if not is_ps:
                 raise
+        except GATimeoutError:
+            if not is_ps:
+                raise
+            logger.warning(
+                "PowerShell exec hung, retrying wrapped: %r",
+                argv,
+            )
 
         wrapped = _wrap_for_windows(command, args)
         return self._exec_socket(
@@ -495,7 +502,6 @@ class GuestAgent:
             poll_interval=0.5,
             env=None,
         )
-
 
     def read_file(self, guest_path: str, *, chunk_size: int = 65536) -> bytes:
         """Read a file from inside the guest and return its contents."""
@@ -527,6 +533,7 @@ class GuestAgent:
         data: Union[bytes, str],
         *,
         mode: str = "w",
+        unix_mode: Optional[int] = None,
     ) -> None:
         """Write data to guest_path inside the guest."""
         raw = data.encode("utf-8") if isinstance(data, str) else data
@@ -544,6 +551,37 @@ class GuestAgent:
                 self._call("guest-file-close", {"handle": handle})
             except GuestAgentError:
                 pass
+
+        if unix_mode is not None:
+            if self.windows:
+                logger.debug(
+                    "unix_mode=%o requested for %s but VM %s is Windows; ignoring",
+                    unix_mode, guest_path, self.vmid,
+                )
+            else:
+                self.exec(
+                    ["chmod", format(unix_mode, "o"), guest_path],
+                    capture_output=False,
+                    timeout=10,
+                )
+
+    def write_local_file(
+        self,
+        local_path: Union[str, Path],
+        guest_path: str,
+        *,
+        preserve_mode: bool = True,
+    ) -> None:
+        """Read a local file and write it to guest_path inside the guest,
+        preserving the local file's Unix permission bits by default
+        (Linux guests only -- ignored for Windows guests).
+        """
+        local_path = Path(local_path)
+        data = local_path.read_bytes()
+        unix_mode = None
+        if preserve_mode and not self.windows:
+            unix_mode = stat.S_IMODE(local_path.stat().st_mode)
+        self.write_file(guest_path, data, unix_mode=unix_mode)
 
 
 def _resolve_socket_path(vmid: int) -> Path:

@@ -57,27 +57,10 @@ END;
 $$;
 
 
-CREATE FUNCTION get_proxmox_filename_for_user_disk_file(
-    p_user_id BIGINT,
-    p_filename TEXT
-) RETURNS TEXT
-LANGUAGE plpgsql
-SET plpgsql.variable_conflict = 'use_column'
-AS $$
-BEGIN
-    RETURN (
-        SELECT proxmox_filename FROM disk_files
-        WHERE display_name = p_filename AND user_id = p_user_id
-        LIMIT 1
-    )::TEXT;
-END;
-$$;
-
-
 CREATE FUNCTION create_machine_template(
     p_challenge_template_id BIGINT,
     p_name TEXT,
-    p_disk_file_path TEXT,
+    p_disk_file_id BIGINT,
     p_cores BIGINT,
     p_ram_gb BIGINT
 ) RETURNS BIGINT
@@ -90,13 +73,13 @@ BEGIN
     INSERT INTO machine_templates (
         challenge_template_id,
         name,
-        disk_file_path,
+        disk_file_id,
         cores,
         ram_gb
     ) VALUES (
         p_challenge_template_id,
         p_name,
-        p_disk_file_path,
+        p_disk_file_id,
         p_cores,
         p_ram_gb
     ) RETURNING id INTO new_machine_id;
@@ -274,6 +257,3 @@ BEGIN
     ORDER BY df.upload_date DESC, df.id;
 END;
 $$;
-
-
-

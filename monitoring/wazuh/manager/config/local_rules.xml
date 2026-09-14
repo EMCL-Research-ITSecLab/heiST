@@ -1,150 +1,607 @@
-
 <!-- Local rules -->
 
 <!-- Modify it at your will. -->
 <!-- Copyright (C) 2015, Wazuh Inc. -->
 
-
-<!-- Perfomance -->
 <group name="performance_metric,">
 
-<!-- CPU, Memory and Disk usage -->
-<rule id="100100" level="3">
-  <decoded_as>general_health_check</decoded_as>
-  <description>CPU | MEMORY | DISK usage metrics</description>
-</rule>
+  <!-- CPU + Memory + Disk combined baseline -->
+  <rule id="100100" level="3">
+    <decoded_as>general_health_check</decoded_as>
+    <description>CPU | MEMORY | DISK usage metrics</description>
+  </rule>
 
-<!-- High memory usage -->
-<rule id="100101" level="12">
-  <if_sid>100100</if_sid>
-  <field name="memory_usage_%">^[8-9]\d|100</field>
-  <description>Memory usage is high: $(memory_usage_%)%</description>
-  <options>no_full_log</options>
-</rule>
+  <!-- High memory -->
+  <rule id="100101" level="12">
+    <if_sid>100100</if_sid>
+    <field name="memory_usage_%">^[8-9]\d|100</field>
+    <description>Memory usage is high: $(memory_usage_%)%</description>
+    <options>no_full_log</options>
+  </rule>
 
-<!-- High CPU usage -->
-<rule id="100102" level="12">
-  <if_sid>100100</if_sid>
-  <field name="cpu_usage_%">^[8-9]\d|100</field>
-  <description>CPU usage is high: $(cpu_usage_%)%</description>
-  <options>no_full_log</options>
-</rule>
+  <!-- High CPU -->
+  <rule id="100102" level="12">
+    <if_sid>100100</if_sid>
+    <field name="cpu_usage_%">^[8-9]\d|100</field>
+    <description>CPU usage is high: $(cpu_usage_%)%</description>
+    <options>no_full_log</options>
+  </rule>
 
-<!-- High disk usage -->
-<rule id="100103" level="12">
-  <if_sid>100100</if_sid>
-  <field name="disk_usage_%">^[7-9]\d|100</field>
-  <description>Disk space is running low: $(disk_usage_%)%</description>
-  <options>no_full_log</options>
-</rule>
+  <!-- High disk -->
+  <rule id="100103" level="12">
+    <if_sid>100100</if_sid>
+    <field name="disk_usage_%">^[7-9]\d|100</field>
+    <description>Disk space is running low: $(disk_usage_%)%</description>
+    <options>no_full_log</options>
+  </rule>
 
-<!-- Load average check -->
-<rule id="100104" level="3">
-  <decoded_as>load_average_check</decoded_as>
-  <description>load average metrics</description>
-</rule>
+  <!-- Load average check -->
+  <rule id="100104" level="3">
+    <decoded_as>load_average_check</decoded_as>
+    <description>Load average metrics</description>
+  </rule>
 
-<!-- memory check -->
-<rule id="100105" level="3">
-  <decoded_as>memory_check</decoded_as>
-  <description>Memory metrics</description>
-</rule>
+  <!-- Memory check -->
+  <rule id="100105" level="3">
+    <decoded_as>memory_check</decoded_as>
+    <description>Memory metrics</description>
+  </rule>
 
-<!-- Disk check -->
-<rule id="100106" level="3">
-  <decoded_as>disk_check</decoded_as>
-  <description>Disk metrics</description>
-</rule>
+  <!-- Disk check -->
+  <rule id="100106" level="3">
+    <decoded_as>disk_check</decoded_as>
+    <description>Disk metrics</description>
+  </rule>
+
 </group>
 
-<!-- Active User -->
-<group name="active_user">
+<group name="active_user,">
 
-<!-- active user check -->
+<!-- Linux active user session detail -->
 <rule id="100201" level="3">
   <decoded_as>current_active_users</decoded_as>
-  <description>Active user check</description>
+  <description>Active user session (Linux): $(dstuser) on $(tty) from $(from)</description>
 </rule>
 
-<!-- active user number -->
+<!-- Windows active user session detail -->
 <rule id="100202" level="3">
+  <decoded_as>current_active_users_win</decoded_as>
+  <description>Active user session (Windows): $(dstuser) on $(tty)</description>
+</rule>
+
+<!-- Shared: active user session detail -->
+<rule id="100203" level="3">
+  <if_sid>100201,100202</if_sid>
+  <description>Active user session: $(dstuser) on $(tty)</description>
+</rule>
+
+<!-- Shared: active user count (integer only, both platforms) -->
+<rule id="100204" level="3">
   <decoded_as>current_active_user_number</decoded_as>
-  <description>Active user number check</description>
+  <description>Active user count: $(active_users)</description>
 </rule>
 
 </group>
 
-<!-- Bash Log -->
-<group name="bash_logs">
+<!-- LINUX BASH COMMAND MONITORING -->
+<group name="linux,command_monitoring,">
 
-<!-- bash log-->
+<!-- Baseline: any decoded bash command -->
 <rule id="100401" level="3">
   <decoded_as>bash_commands</decoded_as>
-  <description>Bash command used</description>
+  <description>Bash command executed by $(user) in $(container)</description>
+  <group>command_executed,</group>
 </rule>
 
-<rule id="100402" level="10" frequency="100" timeframe="10">
-    <if_matched_sid>100401</if_matched_sid>
-    <same_field>Command</same_field>
-    <description>Excessive repetition of bash command '$(Command)' (≥100 times in 10s)</description>
-    <group>bash,aggregation,repeated_command</group>
-</rule>
-
-<rule id="100403" level="10" frequency="2" timeframe="300" ignore="600">
-    <if_matched_sid>100402</if_matched_sid>
-    <same_field>Command</same_field>
-    <description>Repeated excessive bash command flood for '$(Command)'</description>
-    <group>bash,aggregation,throttle</group>
+<!-- Alert: command executed -->
+<rule id="100406" level="3">
+  <if_sid>100401</if_sid>
+  <description>Command Executed: $(cmd_line)</description>
+  <group>command_executed,</group>
 </rule>
 
 </group>
 
-<!--heiDPId -->
+<!-- WINDOWS POWERSHELL TRANSCRIPTION LOGGING (legacy, PS < 5) -->
+<group name="powershell,">
+
+<!-- Baseline: any transcription entry with a command -->
+<rule id="100410" level="0">
+  <field name="cmd_line">\.+</field>
+  <description>PowerShell transcription entry received</description>
+  <group>powershell_transcription,</group>
+</rule>
+
+<!-- Pass-through: all commands except Stop-Transcript -->
+<rule id="100411" level="0">
+  <if_sid>100410</if_sid>
+  <field name="cmd_line" type="pcre2" negate="yes">^Stop-Transcript\s*$</field>
+  <description>PowerShell transcription command (non-stop)</description>
+</rule>
+
+<!-- Alert: actual command executed via transcription -->
+<rule id="100412" level="5">
+  <if_sid>100411</if_sid>
+  <description>PowerShell command executed by $(ps_user): $(cmd_line)</description>
+  <group>powershell_transcription,command_executed,</group>
+</rule>
+
+</group>
+
+<!-- heiDPI -->
 <group name="hei_dpi,">
-  <rule id="100501" level="3">  
-    <decoded_as>json</decoded_as>
-    <field name="flow_event_id">\.*</field>
-    <description>heiDPI flow event.</description>
-  </rule>
-  <rule id="100502" level="3">
-    <decoded_as>json</decoded_as>
-    <field name="packet_event_id">\.*</field>
-    <description>heiDPI packet event.</description>
-  </rule>
+<rule id="100501" level="3">
+  <decoded_as>json</decoded_as>
+  <field name="flow_event_id">\.*</field>
+  <description>heiDPI flow event.</description>
+</rule>
+<rule id="100502" level="3">
+  <decoded_as>json</decoded_as>
+  <field name="packet_event_id">\.*</field>
+  <description>heiDPI packet event.</description>
+</rule>
 </group>
 
-<!-- UFW -->
-<group name="ufw_status">
+<!-- WINDOWS POWERSHELL SCRIPT BLOCK LOGGING (Event 4104) -->
+<group name="windows-custom,">
 
-<!-- ufw_status-->
+<!-- Gate: 4104 events with actual script content -->
+<rule id="100527" level="0">
+  <if_sid>91802</if_sid>
+  <field name="win.system.eventID">^4104$</field>
+  <field name="win.eventdata.scriptBlockText">\.+</field>
+  <description>PowerShell script block event with content</description>
+</rule>
+
+<!-- Suppress: known-benign health-check / module script blocks -->
+<rule id="100528" level="0">
+  <if_sid>100527</if_sid>
+  <field name="win.eventdata.scriptBlockText" type="pcre2">
+    (?isx)
+
+    \s*\$global:\?\s* |
+
+    \s*\$global:\?\s* |
+
+    prompt |
+
+    Get-WmiObject\s+Win32_LogicalDisk |
+    Get-WmiObject\s+Win32_OperatingSystem |
+
+    \{\s*\[math\]::Round\s*\(\s*\(\(\$_\.Size\s*-\s*\$_\.FreeSpace\)\s*/\s*\$_\.Size\)\s*\*\s*100\s*,\s*2\s*\)\s*\} |
+
+    \{\s*Set-StrictMode\s+-Version\s+\d+\s*;\s*\$_\.[A-Za-z_]+\s*\} |
+    \{\s*Set-StrictMode\s+-Version\s+\d+\s*;\s*\$this\.Exception\.InnerException\.PSMessageDetails\s*\} |
+
+    \$cpu\s*=\s*\(Get-Counter\s+'\\\\Processor\(_Total\)\\\\% Processor Time'\)\.CounterSamples\.CookedValue\s*;\s*
+    \$mem\s*=\s*Get-WmiObject\s+Win32_OperatingSystem\s*;\s*
+    \$memUsedPct\s*=\s*\[math\]::Round\s*\(\(\(\$mem\.TotalVisibleMemorySize\s*-\s*\$mem\.FreePhysicalMemory\)\s*/\s*\$mem\.TotalVisibleMemorySize\)\s*\*\s*100\s*,\s*2\s*\)\s*;\s*
+    \$disk\s*=\s*Get-WmiObject\s+Win32_LogicalDisk\s*-Filter\s+"DeviceID='C:'"\s*\|\s*Select-Object\s+@\{Name='UsedPct';Expression=\{\[math\]::Round\s*\(\(\(\$_\.Size\s*-\s*\$_\.FreeSpace\)\s*/\s*\$_\.Size\)\s*\*\s*100\s*,\s*2\)\}\}\s*;\s*
+    Write-Output\s+"?\$?\(\[math\]::Round\(\$cpu,2\)\)\s+\$memUsedPct\s+\$?\(\$disk\.UsedPct\)" |
+
+    \$disk\s*=\s*Get-WmiObject\s+Win32_LogicalDisk\s*-Filter\s+"DeviceID='C:'"\s*;\s*
+    \$used\s*=\s*\$disk\.Size\s*-\s*\$disk\.FreeSpace\s*;\s*
+    \$free\s*=\s*\$disk\.FreeSpace\s*;\s*
+    Write-Output\s+"?\$used\s+\$free" |
+
+    \$mem\s*=\s*Get-WmiObject\s+Win32_OperatingSystem\s*;\s*
+    \$used\s*=\s*\(\$mem\.TotalVisibleMemorySize\s*-\s*\$mem\.FreePhysicalMemory\)\s*\*\s*1024\s*;\s*
+    \$free\s*=\s*\$mem\.FreePhysicalMemory\s*\*\s*1024\s*;\s*
+    Write-Output\s+"?\$used\s+\$free" |
+
+    try\s*{\s*\$users\s*=\s*quser\s*2&gt;&amp;1\s*if\s*\(\$LASTEXITCODE\s*-eq\s*0\)\s*{\s*\(\$users\s*\|\s*Select-Object\s*-Skip\s*1\s*\|\s*Measure-Object\)\.Count\s*}\s*else\s*{\s*0\s*}\s*}\s*catch\s*{\s*0\s*} |
+
+    @\{\s*
+    RootModule\s*=\s*'PSModule\.psm1'\s*
+    ModuleVersion\s*=\s*'1\.0\.0\.1'\s*
+    GUID\s*=\s*'1d73a601-4a6c-43c5-ba3f-619b18bbb404'\s*
+    Author\s*=\s*'Microsoft\s*Corporation'\s*
+    CompanyName\s*=\s*'Microsoft\s*Corporation'\s*
+    Copyright\s*=\s*'\(c\)\s*Microsoft\s*Corporation\.\s*All\s*rights\s*reserved\.'\s*
+    Description\s*=\s*'PowerShell\s*module\s*with\s*commands\s*for\s*discovering,\s*installing,\s*updating\s*and\s*publishing\s*the\s*PowerShell\s*artifacts\s*like\s*Modules,\s*DSC\s*Resources,\s*Role\s*Capabilities\s*and\s*Scripts\.'\s*
+    PowerShellVersion\s*=\s*'3\.0'\s*
+    FormatsToProcess\s*=\s*'PSGet\.Format\.ps1xml'\s*
+    FunctionsToExport\s*=\s*@\(\s*'Install-Module',\s*
+    'Find-Module',\s*
+    'Save-Module',\s*
+    'Update-Module',\s*
+    'Publish-Module',\s*
+    'Get-InstalledModule',\s*
+    'Uninstall-Module',\s*
+    'Find-Command',\s*
+    'Find-DscResource',\s*
+    'Find-RoleCapability',\s*
+    'Install-Script',\s*
+    'Find-Script',\s*
+    'Save-Script',\s*
+    'Update-Script',\s*
+    'Publish-Script',\s*
+    'Get-InstalledScript',\s*
+    'Uninstall-Script',\s*
+    'Test-ScriptFileInfo',\s*
+    'New-ScriptFileInfo',\s*
+    'Update-ScriptFileInfo',\s*
+    'Get-PSRepository',\s*
+    'Set-PSRepository',\s*
+    'Register-PSRepository',\s*
+    'Unregister-PSRepository',\s*
+    'Update-ModuleManifest'\s*\)\s*
+    VariablesToExport\s*=\s*\\"\*\\"\s*
+    AliasesToExport\s*=\s*@\(\s*'inmo',\s*
+    'fimo',\s*
+    'upmo',\s*
+    'pumo'\s*\)\s*
+    FileList\s*=\s*@\(\s*'PSModule\.psm1',\s*
+    'PSGet\.Format\.ps1xml',\s*
+    'PSGet\.Resource\.psd1'\s*\)\s*
+    RequiredModules\s*=\s*@\(\s*@\{\s*ModuleName\s*=\s*'PackageManagement'\s*;\s*ModuleVersion\s*=\s*'1\.0\.0\.1'\s*\}\s*\)\s*
+    PrivateData\s*=\s*@\{\s*
+    \\"PackageManagementProviders\\"\s*=\s*'PSModule\.psm1'\s*
+    \\"SupportedPowerShellGetFormatVersions\\"\s*=\s*@\(\s*'1\.x'\s*\)\s*
+    \}\s*
+    HelpInfoURI\s*=\s*'http:\/\/go\.microsoft\.com\/fwlink\/\?LinkId=393271'\s*
+    \} |
+
+    @\{\s*
+    \#\s*Script\s*module\s*or\s*binary\s*module\s*file\s*associated\s*with\s*this\s*manifest\.\s*
+    ModuleToProcess\s*=\s*'Pester\.psm1'\s*
+    \#\s*Version\s*number\s*of\s*this\s*module\.\s*
+    ModuleVersion\s*=\s*'3\.4\.0'\s*
+    \#\s*ID\s*used\s*to\s*uniquely\s*identify\s*this\s*module\s*
+    GUID\s*=\s*'a699dea5-2c73-4616-a270-1f7abb777e71'\s*
+    \#\s*Author\s*of\s*this\s*module\s*
+    Author\s*=\s*'Pester\s*Team'\s*
+    \#\s*Company\s*or\s*vendor\s*of\s*this\s*module\s*
+    CompanyName\s*=\s*'Pester'\s*
+    \#\s*Copyright\s*statement\s*for\s*this\s*module\s*
+    Copyright\s*=\s*'Copyright\s*\(c\)\s*2016\s*by\s*Pester\s*Team,\s*licensed\s*under\s*Apache\s*2\.0\s*License\.'\s*
+    \#\s*Description\s*of\s*the\s*functionality\s*provided\s*by\s*this\s*module\s*
+    Description\s*=\s*'Pester\s*provides\s*a\s*framework\s*for\s*running\s*BDD\s*style\s*Tests\s*to\s*execute\s*and\s*validate\s*PowerShell\s*commands\s*inside\s*of\s*PowerShell\s*and\s*offers\s*a\s*powerful\s*set\s*of\s*Mocking\s*Functions\s*that\s*allow\s*tests\s*to\s*mimic\s*and\s*mock\s*the\s*functionality\s*of\s*any\s*command\s*inside\s*of\s*a\s*piece\s*of\s*powershell\s*code\s*being\s*tested\.\s*Pester\s*tests\s*can\s*execute\s*any\s*command\s*or\s*script\s*that\s*is\s*accesible\s*to\s*a\s*pester\s*test\s*file\.\s*This\s*can\s*include\s*functions,\s*Cmdlets,\s*Modules\s*and\s*scripts\.\s*Pester\s*can\s*be\s*run\s*in\s*ad\s*hoc\s*style\s*in\s*a\s*console\s*or\s*it\s*can\s*be\s*integrated\s*into\s*the\s*Build\s*scripts\s*of\s*a\s*Continuous\s*Integration\s*system\.'\s*
+    \#\s*Minimum\s*version\s*of\s*the\s*Windows\s*PowerShell\s*engine\s*required\s*by\s*this\s*module\s*
+    PowerShellVersion\s*=\s*'2\.0'\s*
+    \#\s*Functions\s*to\s*export\s*from\s*this\s*module\s*
+    FunctionsToExport\s*=\s*@\(\s*
+    'Describe',\s*
+    'Context',\s*
+    'It',\s*
+    'Should',\s*
+    'Mock',\s*
+    'Assert-MockCalled',\s*
+    'Assert-VerifiableMocks',\s*
+    'New-Fixture',\s*
+    'Get-TestDriveItem',\s*
+    'Invoke-Pester',\s*
+    'Setup',\s*
+    'In',\s*
+    'InModuleScope',\s*
+    'Invoke-Mock',\s*
+    'BeforeEach',\s*
+    'AfterEach',\s*
+    'BeforeAll',\s*
+    'AfterAll'\s*
+    'Get-MockDynamicParameters',\s*
+    'Set-DynamicParameterVariables',\s*
+    'Set-TestInconclusive',\s*
+    'SafeGetCommand',\s*
+    'New-PesterOption'\s*
+    \)\s*
+    \#\s*
+    \#\s*Cmdlets\s*to\s*export\s*from\s*this\s*module\s*
+    \#\s*CmdletsToExport\s*=\s*'\*'\s*
+    \#\s*Variables\s*to\s*export\s*from\s*this\s*module\s*
+    VariablesToExport\s*=\s*@\(\s*
+    'Path',\s*
+    'TagFilter',\s*
+    'ExcludeTagFilter',\s*
+    'TestNameFilter',\s*
+    'TestResult',\s*
+    'CurrentContext',\s*
+    'CurrentDescribe',\s*
+    'CurrentTest',\s*
+    'SessionState',\s*
+    'CommandCoverage',\s*
+    'BeforeEach',\s*
+    'AfterEach',\s*
+    'Strict'\s*
+    \)\s*
+    \#\s*
+    \#\s*Aliases\s*to\s*export\s*from\s*this\s*module\s*
+    \#\s*AliasesToExport\s*=\s*'\*'\s*
+    \#\s*List\s*of\s*all\s*modules\s*packaged\s*with\s*this\s*module\s*
+    \#\s*ModuleList\s*=\s*@\(\)\s*
+    \#\s*List\s*of\s*all\s*files\s*packaged\s*with\s*this\s*module\s*
+    \#\s*FileList\s*=\s*@\(\)\s*
+    PrivateData\s*=\s*@\{\s*
+    \#\s*PSData\s*is\s*module\s*packaging\s*and\s*gallery\s*metadata\s*embedded\s*in\s*PrivateData\s*
+    \#\s*It's\s*for\s*rebuilding\s*PowerShellGet\s*\(and\s*PoshCode\)\s*NuGet-style\s*packages\s*
+    \#\s*We\s*had\s*to\s*do\s*this\s*because\s*it's\s*the\s*only\s*place\s*we're\s*allowed\s*to\s*extend\s*the\s*manifest\s*
+    \#\s*https:\/\/connect\.microsoft\.com\/PowerShell\/feedback\/details\/421837\s*
+    PSData\s*=\s*@\{\s*
+    \#\s*The\s*primary\s*categorization\s*of\s*this\s*module\s*\(from\s*the\s*TechNet\s*Gallery\s*tech\s*tree\)\.\s*
+    Category\s*=\s*\\"Scripting\s*Techniques\s*
+    \\"\s*
+    \#\s*Keyword\s*tags\s*to\s*help\s*users\s*find\s*this\s*module\s*via\s*navigations\s*and\s*search\.\s*
+    Tags\s*=\s*@\('powershell','unit\s*testing','bdd','tdd','mocking'\)\s*
+    \#\s*The\s*web\s*address\s*of\s*an\s*icon\s*which\s*can\s*be\s*used\s*in\s*galleries\s*to\s*represent\s*this\s*module\s*
+    IconUri\s*=\s*\\"http:\/\/pesterbdd\.com\/images\/Pester\.png\\"\s*
+    \#\s*The\s*web\s*address\s*of\s*this\s*module's\s*project\s*or\s*support\s*homepage\.\s*
+    ProjectUri\s*=\s*\\"https:\/\/github\.com\/Pester\/Pester\\"\s*
+    \#\s*The\s*web\s*address\s*of\s*this\s*module's\s*license\.\s*Points\s*to\s*a\s*page\s*that's\s*embeddable\s*and\s*linkable\.\s*
+    LicenseUri\s*=\s*\\"http:\/\/www\.apache\.org\/licenses\/LICENSE-2\.0\.html\\"\s*
+    \#\s*Release\s*notes\s*for\s*this\s*particular\s*version\s*of\s*the\s*module\s*
+    \#\s*ReleaseNotes\s*=\s*False\s*
+    \#\s*If\s*true,\s*the\s*LicenseUrl\s*points\s*to\s*an\s*end-user\s*license\s*\(not\s*just\s*a\s*source\s*license\)\s*which\s*requires\s*the\s*user\s*agreement\s*before\s*use\.\s*
+    \#\s*RequireLicenseAcceptance\s*=\s*\\"\\"\s*
+    \#\s*Indicates\s*this\s*is\s*a\s*pre-release\/testing\s*version\s*of\s*the\s*module\.\s*
+    IsPrerelease\s*=\s*'False'\s*
+    \}\s*
+    \}\s*
+    \#\s*HelpInfo\s*URI\s*of\s*this\s*module\s*
+    \#\s*HelpInfoURI\s*=\s*''\s*
+    \#\s*Default\s*prefix\s*for\s*commands\s*exported\s*from\s*this\s*module\.\s*Override\s*the\s*default\s*prefix\s*using\s*Import-Module\s*-Prefix\.\s*
+    \#\s*DefaultCommandPrefix\s*=\s*''\s*
+    \} |
+
+    \{\s*
+    \$line\s=\s\$_\s-replace\s'\\\\s\+',\s'\s'\s-replace\s'\^\\\\s\+',\s''\s*
+    \$parts\s=\s\$line\s-split\s'\s'\s*
+    \$user\s*=\s*if\s*\(\$parts\[0\]\)\s*\{\s*\$parts\[0\]\s*\}\s*else\s*\{\s*\\\"unknown\\\"\s*\}\s*
+    \$session\s*=\s*if\s*\(\$parts\[1\]\)\s*\{\s*\$parts\[1\]\s*\}\s*else\s*\{\s*\\\"unknown\\\"\s*\}\s*
+    \$idle\s*=\s*if\s*\(\$parts\[3\]\)\s*\{\s*\$parts\[3\]\s*\}\s*else\s*\{\s*\\\"\.\\\"\s*\}\s*
+    \$logon\s*=\s*if\s*\(\$parts\[4\]\)\s*\{\s*\$parts\[4\]\s*\}\s*else\s*\{\s*\\\"unknown\\\"\s*\}\s*
+    Write-Output\s*\\\"\$user\s\$session\s\$idle\s\$logon\\\"\s*
+    \} |
+
+    try\s*\{\s*
+    \$users\s*=\s*quser\s2&gt;&amp;1\s*
+    if\s*\(\$LASTEXITCODE\s*-ne\s*0\)\s*\{\s*exit\s0\s*\}\s*
+    \$users\s*\|\s*Select-Object\s*-Skip\s*1\s*\|\s*ForEach-Object\s*\{\s*
+    \$line\s=\s\$_\s-replace\s'\\\\s\+',\s'\s'\s-replace\s'\^\\\\s\+',\s''\s*
+    \$parts\s=\s\$line\s-split\s'\s'\s*
+    \$user\s*=\s*if\s*\(\$parts\[0\]\)\s*\{\s*\$parts\[0\]\s*\}\s*else\s*\{\s*\\\"unknown\\\"\s*\}\s*
+    \$session\s*=\s*if\s*\(\$parts\[1\]\)\s*\{\s*\$parts\[1\]\s*\}\s*else\s*\{\s*\\\"unknown\\\"\s*\}\s*
+    \$idle\s*=\s*if\s*\(\$parts\[3\]\)\s*\{\s*\$parts\[3\]\s*\}\s*else\s*\{\s*\\\"\.\\\"\s*\}\s*
+    \$logon\s*=\s*if\s*\(\$parts\[4\]\)\s*\{\s*\$parts\[4\]\s*\}\s*else\s*\{\s*\\\"unknown\\\"\s*\}\s*
+    Write-Output\s*\\\"\$user\s\$session\s\$idle\s\$logon\\\"\s*
+    \}\s*
+    \}\s*catch\s*\{\s*exit\s0\s*\} |
+
+    \{\s*\$line\s*=\s*\$_\s*if\s*\(\$line\.Length\s*-lt\s*\$colSTATE\)\s*\{\s*return\s*\}\s*\$user\s*=\s*\$line\.Substring\(\$colUSERNAME,\s*\$colSESSION\s*-\s*\$colUSERNAME\)\.Trim\(\)\.TrimStart\('&gt;'\)\s*\$session\s*=\s*\$line\.Substring\(\$colSESSION,\s*\$colID\s*-\s*\$colSESSION\s*\)\.Trim\(\)\s*\$id\s*=\s*\$line\.Substring\(\$colID,\s*\$colSTATE\s*-\s*\$colID\s*\)\.Trim\(\)\s*\$state\s*=\s*\$line\.Substring\(\$colSTATE,\s*\$colIDLE\s*-\s*\$colSTATE\s*\)\.Trim\(\)\s*\$idle\s*=\s*\$line\.Substring\(\$colIDLE,\s*\$colLOGON\s*-\s*\$colIDLE\s*\)\.Trim\(\)\s*\$logon\s*=\s*\$line\.Substring\(\$colLOGON\)\.Trim\(\)\s*if\s*\(-not\s*\$session\)\s*\{\s*\$session\s*=\s*\\"none\\"\s*\}\s*try\s*\{\s*\$formats\s*=\s*@\(\\"M\/d\/yyyy\s*h:mm\s*tt\\",\s*\\"M\/d\/yyyy\s*hh:mm\s*tt\\",\s*\\"dd\.MM\.yyyy\s*HH:mm:ss\\",\s*\\"M\/d\/yyyy\s*H:mm\\"\)\s*\$logonDateTime\s*=\s*\$null\s*foreach\s*\(\$fmt\s*in\s*\$formats\)\s*\{\s*try\s*\{\s*\$logonDateTime\s*=\s*\[datetime\]::ParseExact\(\$logon,\s*\$fmt,\s*\[System\.Globalization\.CultureInfo\]::InvariantCulture\)\s*break\s*\}\s*catch\s*\{\}\s*\}\s*\$logonStr\s*=\s*if\s*\(\$logonDateTime\)\s*\{\s*\$logonDateTime\.ToString\(\\"MM\/dd\/yyyy\s*HH:mm:ss\\"\)\s*\}\s*else\s*\{\s*\$logon\s*\}\s*\}\s*catch\s*\{\s*\$logonStr\s*=\s*\$logon\s*\}\s*Write-LogLine\s*\\"user=\$user\s*session=\$session\s*id=\$id\s*state=\$state\s*idle=\$idle\s*logon=\$logonStr\\"\s*\} |
+
+    \$logFile\s*=\s*\\"C:\\\\Progra~2\\\\ossec-agent\\\\active-users\.log\\"\s*function\s*Write-LogLine\s*\{\s*param\(\[string\]\$line\)\s*try\s*\{\s*\$stream\s*=\s*\[System\.IO\.File\]::Open\(\$logFile,\s*\[System\.IO\.FileMode\]::Append,\s*\[System\.IO\.FileAccess\]::Write,\s*\[System\.IO\.FileShare\]::ReadWrite\)\s*\$writer\s*=\s*New-Object\s*System\.IO\.StreamWriter\(\$stream,\s*\(New-Object\s*System\.Text\.UTF8Encoding\(\$false\)\)\)\s*\$writer\.WriteLine\(\$line\)\s*\$writer\.Flush\(\)\s*\$writer\.Close\(\)\s*\$stream\.Close\(\)\s*\}\s*catch\s*\{\}\s*\}\s*try\s*\{\s*\$quserOutput\s*=\s*quser\s*2&gt;&amp;1\s*\$lines\s*=\s*\$quserOutput\s*\|\s*ForEach-Object\s*\{\s*\$_\.ToString\(\)\.Trim\(\)\s*\}\s*\|\s*Where-Object\s*\{\s*\$_\s*-ne\s*\\"\\"\s*\}\s*if\s*\(\$lines\.Count\s*-lt\s*2\)\s*\{\s*exit\s*0\s*\}\s*\$header\s*=\s*\$lines\[0\]\s*\$colUSERNAME\s*=\s*0\s*\$colSESSION\s*=\s*\$header\.IndexOf\(\\"SESSIONNAME\\"\)\s*\$colID\s*=\s*\$header\.IndexOf\(\\"ID\\"\)\s*\$colSTATE\s*=\s*\$header\.IndexOf\(\\"STATE\\"\)\s*\$colIDLE\s*=\s*\$header\.IndexOf\(\\"IDLE\s*TIME\\"\)\s*\$colLOGON\s*=\s*\$header\.IndexOf\(\\"LOGON\s*TIME\\"\)\s*\$lines\s*\|\s*Select-Object\s*-Skip\s*1\s*\|\s*ForEach-Object\s*\{\s*\$line\s*=\s*\$_\s*if\s*\(\$line\.Length\s*-lt\s*\$colSTATE\)\s*\{\s*return\s*\}\s*\$user\s*=\s*\$line\.Substring\(\$colUSERNAME,\s*\$colSESSION\s*-\s*\$colUSERNAME\)\.Trim\(\)\.TrimStart\('&gt;'\)\s*\$session\s*=\s*\$line\.Substring\(\$colSESSION,\s*\$colID\s*-\s*\$colSESSION\s*\)\.Trim\(\)\s*\$id\s*=\s*\$line\.Substring\(\$colID,\s*\$colSTATE\s*-\s*\$colID\s*\)\.Trim\(\)\s*\$state\s*=\s*\$line\.Substring\(\$colSTATE,\s*\$colIDLE\s*-\s*\$colSTATE\s*\)\.Trim\(\)\s*\$idle\s*=\s*\$line\.Substring\(\$colIDLE,\s*\$colLOGON\s*-\s*\$colIDLE\s*\)\.Trim\(\)\s*\$logon\s*=\s*\$line\.Substring\(\$colLOGON\)\.Trim\(\)\s*if\s*\(-not\s*\$session\)\s*\{\s*\$session\s*=\s*\\"none\\"\s*\}\s*try\s*\{\s*\$formats\s*=\s*@\(\\"M\/d\/yyyy\s*h:mm\s*tt\\",\s*\\"M\/d\/yyyy\s*hh:mm\s*tt\\",\s*\\"dd\.MM\.yyyy\s*HH:mm:ss\\",\s*\\"M\/d\/yyyy\s*H:mm\\"\)\s*\$logonDateTime\s*=\s*\$null\s*foreach\s*\(\$fmt\s*in\s*\$formats\)\s*\{\s*try\s*\{\s*\$logonDateTime\s*=\s*\[datetime\]::ParseExact\(\$logon,\s*\$fmt,\s*\[System\.Globalization\.CultureInfo\]::InvariantCulture\)\s*break\s*\}\s*catch\s*\{\}\s*\}\s*\$logonStr\s*=\s*if\s*\(\$logonDateTime\)\s*\{\s*\$logonDateTime\.ToString\(\\"MM\/dd\/yyyy\s*HH:mm:ss\\"\)\s*\}\s*else\s*\{\s*\$logon\s*\}\s*\}\s*catch\s*\{\s*\$logonStr\s*=\s*\$logon\s*\}\s*Write-LogLine\s*\\"user=\$user\s*session=\$session\s*id=\$id\s*state=\$state\s*idle=\$idle\s*logon=\$logonStr\\"\s*\}\s*\}\s*catch\s*\{\s*exit\s*0\s*\} |
+
+    function\s*Write-LogLine\s*\{\s*param\(\[string\]\$line\)\s*try\s*\{\s*\$stream\s*=\s*\[System\.IO\.File\]::Open\(\$logFile,\s*\[System\.IO\.FileMode\]::Append,\s*\[System\.IO\.FileAccess\]::Write,\s*\[System\.IO\.FileShare\]::ReadWrite\)\s*\$writer\s*=\s*New-Object\s*System\.IO\.StreamWriter\(\$stream,\s*\(New-Object\s*System\.Text\.UTF8Encoding\(\$false\)\)\)\s*\$writer\.WriteLine\(\$line\)\s*\$writer\.Flush\(\)\s*\$writer\.Close\(\)\s*\$stream\.Close\(\)\s*\}\s*catch\s*\{\}\s*\} |
+
+    {\s*\$_\s*-ne\s*\\\"\\\"\s*} |
+
+    {\s*\$_\.ToString\(\)\.Trim\(\)\s*}
+  </field>
+  <description>Ignore benign PowerShell health-check / module script blocks</description>
+</rule>
+
+<!-- Baseline alert for all non-suppressed 4104 events -->
+<rule id="100539" level="3">
+  <if_sid>100527</if_sid>
+  <field name="win.system.eventID">^4104$</field>
+  <field name="win.eventdata.scriptBlockText">\.+</field>
+  <description>PowerShell Script Block: $(win.eventdata.scriptBlockText)</description>
+  <group>powershell,script_block,</group>
+  <options>no_full_log</options>
+</rule>
+
+<rule id="100540" level="5">
+  <if_sid>100539</if_sid>
+  <description>PowerShell Command Executed: $(win.eventdata.scriptBlockText)</description>
+  <group>powershell,script_block,command_executed,</group>
+</rule>
+
+</group>
+
+<!-- WINDOWS PROCESS CREATION (Event 4688) -->
+<group name="windows,process_monitoring,">
+
+<!-- Gate: all 4688 events -->
+<rule id="100648" level="0">
+  <if_sid>67027</if_sid>
+  <description>Windows process creation event (4688) - gate rule</description>
+</rule>
+
+<!-- Suppress: known-benign command lines from Wazuh health scripts -->
+<rule id="100649" level="0">
+  <if_sid>100648</if_sid>
+  <field name="win.eventdata.commandLine">\.+</field>
+  <field name="win.eventdata.commandLine" type="pcre2">
+    (?isx)
+    powershell\.exe\s*-Command\s*\\"\$cpu\s*=\s*\(Get-Counter\s*'\\\\Processor\(_Total\)\\\\%\s*Processor\s*Time'\)\.CounterSamples\.CookedValue;\s*\$mem\s*=\s*Get-WmiObject\s*Win32_OperatingSystem;\s*\$memUsedPct\s*=\s*\[math\]::Round\(\(\(\$mem\.TotalVisibleMemorySize\s*-\s*\$mem\.FreePhysicalmemory\)\s*\/\s*\$mem\.TotalVisibleMemorySize\)\s*\*\s*100,\s*2\);\s*\$disk\s*=\s*Get-WmiObject\s*Win32_LogicalDisk\s*-Filter\s*\\\\\\"DeviceId='C:'\\\\\\"\s*\|\s*Select-Object\s*@{Name='usedPct';expression={\[math\]::Round\(\(\(\$_\.Size\s*-\s*\$_\.FreeSpace\)\s*\/\s*\$_\.Size\)\s*\*\s*100,\s*2\)}};\s*Write-Output\s*\\\\\\"\$\(\[math\]::Round\(\$cpu,2\)\)\s*\$memUsedPct\s*\$\(\$disk\.UsedPct\)\\\\\\"\\" |
+
+    powershell\.exe\s*-Command\s*\\"\$cpu\s*=\s*\(Get-Counter\s*'\\\\Processor\(_Total\)\\\\%\s*Processor\s*Time'\)\.CounterSamples\.CookedValue;\s*\$mem\s*=\s*Get-WmiObject\s*Win32_OperatingSystem;\s*\$memUsedPct\s*=\s*\[math\]::Round\(\(\(\$mem\.TotalVisibleMemorySize\s*-\s*\$mem\.FreePhysicalmemory\)\s*\/\s*\$mem\.TotalVisibleMemorySize\)\s*\*\s*100,\s*2\);\s*\$disk\s*=\s*Get-WmiObject\s*Win32_LogicalDisk\s*-Filter\s*\\\\\\"DeviceId='C:'\\\\\\"\s*\|\s*Select-Object\s*@{Name='usedPct';expression={\[math\]::Round\(\(\(\$_\.Size\s*-\s*\$_\.FreeSpace\)\s*\/\s*\$_\.Size\)\s*\*\s*100,\s*2\)}};\s*Write-Output\s*\\\\\\"\$\(\[math\]::Round\(\$cpu,2\)\)\s*\$memUsedPct\s*\$\(\$disk\.UsedPct\)\\\\\\"\\" |
+
+    powershell\.exe\s*-Command\s*\\"\$disk\s*=\s*Get-WmiObject\s*Win32_LogicalDisk\s*-Filter\s*\\\\\\"DeviceID='C:'\\\\\\";\s*\$used\s*=\s*\$disk\.Size\s*-\s*\$disk\.FreeSpace;\s*\$free\s*=\s*\$disk\.FreeSpace;\s*Write-Output\s*\\\\\\"\$used\s*\$free\\\\\\"\\" |
+
+    powershell\.exe\s*-Command\s*\\"\(quser\s*2&amp;gt;\$null\s*\|\s*Select-Object\s*-Skip\s*1\s*\|\s*Measure-Object\).Count\\" |
+
+    powershell\.exe\s*-Command\s*\\"\$mem\s*=\s*Get-WmiObject\s*Win32_OperatingSystem;\s*\$used\s*=\s*\(\$mem\.TotalVisibleMemorySize\s*-\s*\$mem\.FreePhysicalMemory\)\s*\*\s*1024;\s*\$free\s=\s*\$mem\.FreePhysicalMemory\s*\*\s*1024;\s*Write-Output\s*\\\\\\"\$used\s*\$free\\\\\\"\\" |
+
+    \\\\\?\?\\\\C:\\\\Windows\\\\system32\\\\conhost.exe\s*0xffffffff\s*-ForceV1 |
+
+    \\\\\?\?\\\\C:\\\\Windows\\\\system32\\\\conhost.exe\s*0xffffffff |
+
+    C:\\\\Windows\\\\system32\\\\cmd\.exe\s*\/c\s*powershell\.exe\s*-Command\s*\\"\$cpu\s*=\s*\(Get-Counter\s*'\\\\Processor\(_Total\)\\\\%\s*Processor\s*Time'\)\.CounterSamples\.CookedValue;\s*\$mem\s*=\s*Get-WmiObject\s*Win32_OperatingSystem;\s*\$memUsedPct\s*=\s*\[math\]::Round\(\(\(\$mem\.TotalVisibleMemorySize\s*-\s*\$mem\.FreePhysicalmemory\)\s*\/\s*\$mem\.TotalVisibleMemorySize\)\s*\*\s*100,\s*2\);\s*\$disk\s*=\s*Get-WmiObject\s*Win32_LogicalDisk\s*-Filter\s*\\\\\\"DeviceId='C:'\\\\\\"\s*\|\s*Select-Object\s*@{Name='usedPct';expression={\[math\]::Round\(\(\(\$_\.Size\s*-\s*\$_\.FreeSpace\)\s*\/\s*\$_\.Size\)\s*\*\s*100,\s*2\)}};\s*Write-Output\s*\\\\\\"\$\(\[math\]::Round\(\$cpu,2\)\)\s*\$memUsedPct\s*\$\(\$disk\.UsedPct\)\\\\\\"\\" |
+
+    C:\\\\Windows\\\\system32\\\\cmd\.exe\s*\/c\s*powershell\.exe\s*-Command\s*\\"\$disk\s*=\s*Get-WmiObject\s*Win32_LogicalDisk\s*-Filter\s*\\\\\\"DeviceID='C:'\\\\\\";\s*\$used\s*=\s*\$disk\.Size\s*-\s*\$disk\.FreeSpace;\s*\$free\s*=\s*\$disk\.FreeSpace;\s*Write-Output\s*\\\\\\"\$used\s*\$free\\\\\\"\\" |
+
+    C:\\\\Windows\\\\system32\\\\cmd\.exe\s*\/c\s*powershell\.exe\s*-Command\s*\\"\(quser\s*2&amp;gt;\$null\s*\|\s*Select-Object\s*-Skip\s*1\s*\|\s*Measure-Object\).Count\\" |
+
+    C:\\\\Windows\\\\system32\\\\cmd\.exe\s*\/c\s*powershell\.exe\s*-Command\s*\\"\$mem\s*=\s*Get-WmiObject\s*Win32_OperatingSystem;\s*\$used\s*=\s*\(\$mem\.TotalVisibleMemorySize\s*-\s*\$mem\.FreePhysicalMemory\)\s*\*\s*1024;\s*\$free\s=\s*\$mem\.FreePhysicalMemory\s*\*\s*1024;\s*Write-Output\s*\\\\\\"\$used\s*\$free\\\\\\"\\" |
+
+    C:\\\\Windows\\\\Microsoft\.NET\\\\Framework(64)?\\\\v\d+\.\d+\.\d+\\\\mscorsvw\.exe\s*-StartupEvent\s*\w{3}\s*-InterruptEvent\s*0\s*-NGENProcess\s*\w{3}\s*-Pipe\s*\w{3}\s*-Comment\s*\\"NGen\s*Worker\s*Process\\" |
+
+    powershell\.exe\s*-ExecutionPolicy\s*Bypass\s*-File\s*\\"C:\\\\Program\s*Files\s*\(x86\)\\\\ossec-agent\\\\wazuh-active-users\.ps1\\" |
+
+    C:\\\\Windows\\\\system32\\\\cmd\.exe\s*\/c\s*powershell\.exe\s*-ExecutionPolicy\s*Bypass\s*-File\s*\\"C:\\\\Program\s*Files\s*\(x86\)\\\\ossec-agent\\\\wazuh-active-users\.ps1\\" |
+
+    powershell\.exe\s*-NoProfile\s*-Command\s*\\"\$disk\s*=\s*Get-WmiObject\s*Win32_LogicalDisk\s*-Filter\s*\\\\\\"DeviceID='C:'\\\\\\";\s*\$used\s*=\s*\$disk\.Size\s*-\s*\$disk\.FreeSpace;\s*\$free\s*=\s*\$disk\.FreeSpace;\s*Write-Output\s*\\\\\\"\$used\s*\$free\\\\\\"\\" |
+
+    C:\\\\Windows\\\\system32\\\\cmd\.exe\s*\/c\s*powershell\.exe\s*-NoProfile\s*-Command\s*\\"\$disk\s*=\s*Get-WmiObject\s*Win32_LogicalDisk\s*-Filter\s*\\\\\\"DeviceID='C:'\\\\\\";\s*\$used\s*=\s*\$disk\.Size\s*-\s*\$disk\.FreeSpace;\s*\$free\s*=\s*\$disk\.FreeSpace;\s*Write-Output\s*\\\\\\"\$used\s*\$free\\\\\\"\\" |
+
+    powershell\.exe\s*-ExecutionPolicy\s*Bypass\s*-File\s*\\"C:\\\\Program\s*Files\s*\(x86\)\\\\ossec-agent\\\\wazuh-system-health\.ps1\\" |
+
+    C:\\\\Windows\\\\system32\\\\cmd\.exe\s*\/c\s*powershell\.exe\s*-ExecutionPolicy\s*Bypass\s*-File\s*\\"C:\\\\Program\s*Files\s*\(x86\)\\\\ossec-agent\\\\wazuh-system-health\.ps1\\" |
+
+    \\"C:\\\\Windows\\\\system32\\\\quser\.exe\\" |
+
+    powershell\.exe\s*-NoProfile\s*-Command\s*\\"\$mem\s*=\s*Get-WmiObject\s*Win32_OperatingSystem;\s*\$used\s*=\s*\(\$mem\.TotalVisibleMemorySize\s*-\s*\$mem\.FreePhysicalMemory\)\s*\*\s*1024;\s*\$free\s=\s*\$mem\.FreePhysicalMemory\s*\*\s*1024;\s*Write-Output\s*\\\\\\"\$used\s*\$free\\\\\\"\\" |
+
+    C:\\\\Windows\\\\system32\\\\cmd\.exe\s*\/c\s*powershell\.exe\s*-NoProfile\s*-Command\s*\\"\$mem\s*=\s*Get-WmiObject\s*Win32_OperatingSystem;\s*\$used\s*=\s*\(\$mem\.TotalVisibleMemorySize\s*-\s*\$mem\.FreePhysicalMemory\)\s*\*\s*1024;\s*\$free\s=\s*\$mem\.FreePhysicalMemory\s*\*\s*1024;\s*Write-Output\s*\\\\\\"\$used\s*\$free\\\\\\"\\" |
+
+    powershell\.exe\s*-ExecutionPolicy\sBypass\s-File\s\\"C:\\\\Program\sFiles\s\(x86\)\\\\ossec-agent\\\\wazuh-active-users-detail\.ps1\\" |
+
+    powershell\.exe\s*-NonInteractive\s*-ExecutionPolicy\s*Bypass\s*-File\s*\\"C:\\\\Progra~2\\\\ossec-agent\\\\wazuh-active-users-detail\.ps1\\" |
+
+    powershell\.exe\s*-NonInteractive\s*-ExecutionPolicy\s*Bypass\s*-File\s*C:\\\\Progra~2\\\\ossec-agent\\\\wazuh-active-users-detail\.ps1
+  </field>
+  <description>Ignore benign Wazuh health-check process creations</description>
+</rule>
+
+<!-- Branch A: process has a command line -->
+<rule id="100650" level="3">
+  <if_sid>100648</if_sid>
+  <field name="win.eventdata.commandLine">\.+</field>
+  <description>Process created with command line</description>
+</rule>
+
+<!-- Branch B: process has no command line (Windows 2008 R2 and older) -->
+<rule id="100651" level="3">
+  <if_sid>100648</if_sid>
+  <description>Process created (no command line captured)</description>
+</rule>
+
+<!-- Suppress: known benign no-commandline processes (legacy OS) -->
+<rule id="100652" level="0">
+  <if_sid>100651</if_sid>
+  <field name="win.eventdata.newProcessName" type="pcre2">
+    (?isx)
+
+    C:\\\\Windows\\\\System32\\\\conhost\.exe |
+
+    C:\\\\Windows\\\\System32\\\\conhost\.exe |
+
+    C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1\.0\\\\powershell\.exe |
+
+    C:\\\\Windows\\\\SysWOW64\\\\WindowsPowerShell\\\\v1\.0\\\\powershell\.exe |
+
+    C:\\\\Windows\\\\SysWOW64\\\\cmd\.exe |
+
+    C:\\\\Windows\\\\System32\\\\cmd\.exe |
+
+    C:\\\\Windows\\\\SysWOW64\\\\quser\.exe |
+
+    C:\\\\Windows\\\\System32\\\\quser\.exe |
+
+    C:\\\\Windows\\\\System32\\\\doskey\.exe
+  </field>
+  <description>Ignore benign no-commandline process creation</description>
+  <group>process_creation,</group>
+</rule>
+
+<!-- Alert: legacy process created (name only) -->
+<rule id="100653" level="3">
+  <if_sid>100651</if_sid>
+  <description>Process Created: $(win.eventdata.newProcessName)</description>
+  <group>process_creation,</group>
+</rule>
+
+<!-- Alert: non-PowerShell command executed -->
+<rule id="100655" level="5">
+  <if_sid>100650</if_sid>
+  <field name="win.eventdata.newProcessName" type="pcre2" negate="yes">(?i)\\powershell\.exe$|(?i)\\pwsh\.exe$</field>
+  <description>Command Executed: $(win.eventdata.commandLine)</description>
+  <group>process_creation,command_executed,</group>
+</rule>
+
+<!-- Alert: CMD specifically -->
+<rule id="100656" level="5">
+  <if_sid>100655</if_sid>
+  <field name="win.eventdata.newProcessName" type="pcre2">(?i)\\cmd\.exe$</field>
+  <description>CMD Command Executed: $(win.eventdata.commandLine)</description>
+  <group>process_creation,cmd,command_executed,</group>
+</rule>
+
+<!-- Alert: PowerShell process created (script block logging handles content) -->
+<rule id="100657" level="3">
+  <if_sid>100650</if_sid>
+  <field name="win.eventdata.newProcessName" type="pcre2">(?i)\\powershell\.exe$|(?i)\\pwsh\.exe$</field>
+  <description>PowerShell Process Created: $(win.eventdata.commandLine)</description>
+  <group>process_creation,powershell,</group>
+</rule>
+
+</group>
+
+<!-- UFW FIREWALL (Linux) -->
+<group name="ufw_status,">
+
 <rule id="100600" level="3">
   <decoded_as>ufw_status</decoded_as>
-  <description>UFW Status Check</description>
+  <description>UFW status check</description>
 </rule>
 
 </group>
 
 <group name="firewall,">
-  <rule id="100601" level="5">
-    <if_sid>4100</if_sid>
-    <action>UFW BLOCK</action>
-    <description>Firewall block event.</description>
-    <group>firewall_drop,pci_dss_1.4,gpg13_4.12,gdpr_IV_35.7.d,hipaa_164.312.a.1,nist_800_53_SC.7,tsc_CC6.7,tsc_CC6.8,</group>
-  </rule>
 
-  <rule id="100602" level="10" frequency="18" timeframe="45" ignore="240">
-    <if_matched_sid>100601"</if_matched_sid>
-    <same_source_ip />
-    <description>Multiple Firewall block events from same source.</description>
-    <group>multiple_drops,pci_dss_1.4,pci_dss_10.6.1,gpg13_4.12,gdpr_IV_35.7.d,hipaa_164.312.a.1,hipaa_164.312.b,nist_800_53_SC.7,nist_800_53_AU.6,tsc_CC6.7,tsc_CC6.8,tsc_CC7.2,tsc_CC7.3,</group>
-  </rule>
+<rule id="100601" level="5">
+  <if_sid>4100</if_sid>
+  <action>UFW BLOCK</action>
+  <description>Firewall block event</description>
+  <group>firewall_drop,pci_dss_1.4,gpg13_4.12,gdpr_IV_35.7.d,hipaa_164.312.a.1,nist_800_53_SC.7,tsc_CC6.7,tsc_CC6.8,</group>
+</rule>
+
+<!-- Multiple drops from same source within 45 s -->
+<rule id="100602" level="10" frequency="18" timeframe="45" ignore="240">
+  <if_matched_sid>100601</if_matched_sid>
+  <same_source_ip />
+  <description>Multiple firewall block events from same source</description>
+  <group>multiple_drops,pci_dss_1.4,pci_dss_10.6.1,gpg13_4.12,gdpr_IV_35.7.d,hipaa_164.312.a.1,hipaa_164.312.b,nist_800_53_SC.7,nist_800_53_AU.6,tsc_CC6.7,tsc_CC6.8,tsc_CC7.2,tsc_CC7.3,</group>
+</rule>
 
 </group>
 
-<!-- Wazuh -->
+<!-- GLOBAL SUPPRESSIONS -->
+
+<!-- Suppress all SCA policy check alerts -->
+<group name="suppress,sca,">
+<rule id="100710" level="0">
+  <if_group>sca</if_group>
+  <description>Suppress all SCA alerts (use SCA dashboard instead)</description>
+</rule>
+</group>
+
+<!-- Suppress SELinux AVC denials -->
+<group name="suppress,selinux,">
+<rule id="100711" level="0">
+  <if_sid>80730</if_sid>
+  <description>Suppress SELinux AVC</description>
+</rule>
+</group>
+
+<!-- OPENVPN -->
+<group name="Openvpnas">
+
+<rule id="100720" level="0" noalert="3">
+  <decoded_as>openvpnas_decoder</decoded_as>
+  <description>OpenVPN access server messages grouped</description>
+</rule>
+
+<rule id="100721" level="3">
+  <if_sid>100720</if_sid>
+  <match>Peer Connection Initiated</match>
+  <description>OpenVPN remote connection established</description>
+</rule>
+</group>
+
+<!-- WAZUH AGENT STATUS -->
 <group name="agent">
 
-<!-- agent-->
 <rule id="100801" level="3">
   <decoded_as>current_agents</decoded_as>
   <description>Agent Status Check</description>
@@ -152,18 +609,255 @@
 
 </group>
 
-<!-- OpenVPN -->
-<group name="Openvpnas">
+<!-- UNIFIED COMMAND EXECUTED ALERT -->
+<group name="command_executed,">
 
-  <!-- OpenVPN-->
-  <rule id="100701" level="0" noalert="3">
-    <decoded_as>openvpnas_decoder</decoded_as>
-    <description>OpenVPN access server messages grouped</description>
-  </rule>
+<!-- Single cross-platform alert -->
+<rule id="100900" level="5">
+  <if_group>command_executed</if_group>
+  <description>Command Executed: $(cmd_line)$(win.eventdata.commandLine)$(win.eventdata.scriptBlockText)</description>
+  <group>command_executed,</group>
+</rule>
 
-  <rule id="100702" level="3">
-    <if_sid>100302</if_sid>
-    <match>Peer Connection Initiated</match>
-    <description>OpenVPN remote connection established</description>
-  </rule>
+<!-- Anomaly: high command rate from same source (>=50 in 60 s) -->
+<rule id="100901" level="10" frequency="50" timeframe="60">
+  <if_matched_sid>100900</if_matched_sid>
+  <same_source_ip />
+  <description>High command execution rate from same source</description>
+  <group>command_executed,high_frequency,</group>
+</rule>
+
+<!-- Throttle: suppress repeated flood alerts -->
+<rule id="100902" level="10" frequency="3" timeframe="300" ignore="600">
+  <if_matched_sid>100901</if_matched_sid>
+  <same_source_ip />
+  <description>Repeated command flood from same source - throttled</description>
+  <group>command_executed,throttle,</group>
+</rule>
+
+</group>
+
+<!-- ACTIVE DIRECTORY MONITORING -->
+<group name="windows,active_directory,">
+
+<!-- GATE - catch all AD-relevant Security channel events -->
+<rule id="101000" level="0" noalert="1">
+  <if_group>windows_security</if_group>
+  <field name="win.system.channel">^Security$</field>
+  <field name="win.system.eventID">^4720$|^4722$|^4725$|^4726$|^4728$|^4729$|^4732$|^4733$|^4740$|^4741$|^4743$|^4756$|^4757$|^4767$|^5136$|^5137$|^5141$</field>
+  <description>AD Security event gate (DC)</description>
+</rule>
+
+<!-- USER ACCOUNT LIFECYCLE -->
+
+<!-- 4720 - Domain user account created -->
+<rule id="101001" level="8">
+  <if_sid>101000</if_sid>
+  <field name="win.system.eventID">^4720$</field>
+  <description>AD: Domain user account created - $(win.eventdata.targetUserName) in $(win.eventdata.targetDomainName) by $(win.eventdata.subjectUserName)</description>
+  <group>ad_account_created,account_changed,</group>
+  <mitre>
+    <id>T1136.002</id>
+  </mitre>
+</rule>
+
+<!-- 4726 - Domain user account deleted -->
+<rule id="101002" level="8">
+  <if_sid>101000</if_sid>
+  <field name="win.system.eventID">^4726$</field>
+  <description>AD: Domain user account deleted - $(win.eventdata.targetUserName) in $(win.eventdata.targetDomainName) by $(win.eventdata.subjectUserName)</description>
+  <group>ad_account_deleted,account_changed,</group>
+  <mitre>
+    <id>T1531</id>
+  </mitre>
+</rule>
+
+<!-- 4722 - User account enabled -->
+<rule id="101003" level="5">
+  <if_sid>101000</if_sid>
+  <field name="win.system.eventID">^4722$</field>
+  <description>AD: User account enabled - $(win.eventdata.targetUserName) by $(win.eventdata.subjectUserName)</description>
+  <group>ad_account_enabled,account_changed,</group>
+</rule>
+
+<!-- 4725 - User account disabled -->
+<rule id="101004" level="5">
+  <if_sid>101000</if_sid>
+  <field name="win.system.eventID">^4725$</field>
+  <description>AD: User account disabled - $(win.eventdata.targetUserName) by $(win.eventdata.subjectUserName)</description>
+  <group>ad_account_disabled,account_changed,</group>
+</rule>
+
+<!-- 4740 - User account locked out -->
+<rule id="101005" level="10">
+  <if_sid>101000</if_sid>
+  <field name="win.system.eventID">^4740$</field>
+  <description>AD: User account locked out - $(win.eventdata.targetUserName) (caller: $(win.eventdata.subjectUserName))</description>
+  <group>ad_account_lockout,authentication_failed,</group>
+  <mitre>
+    <id>T1110</id>
+  </mitre>
+</rule>
+
+<!-- 4740 repeated - account locked out 3+ times in 5 min (brute force indicator) -->
+<rule id="101006" level="14" frequency="3" timeframe="300">
+  <if_matched_sid>101005</if_matched_sid>
+  <same_field>win.eventdata.targetUserName</same_field>
+  <description>AD: Repeated account lockouts for $(win.eventdata.targetUserName) - possible brute force</description>
+  <group>ad_account_lockout,brute_force,authentication_failed,</group>
+  <mitre>
+    <id>T1110</id>
+  </mitre>
+</rule>
+
+<!-- 4767 - User account unlocked -->
+<rule id="101007" level="5">
+  <if_sid>101000</if_sid>
+  <field name="win.system.eventID">^4767$</field>
+  <description>AD: User account unlocked - $(win.eventdata.targetUserName) by $(win.eventdata.subjectUserName)</description>
+  <group>ad_account_unlocked,account_changed,</group>
+</rule>
+
+<!-- GROUP MEMBERSHIP CHANGES -->
+
+<!-- 4728,4732,4756 - member added to any security group -->
+<rule id="101010" level="6">
+  <if_sid>101000</if_sid>
+  <field name="win.system.eventID">^4728$|^4732$|^4756$</field>
+  <description>AD: $(win.eventdata.memberName) added to group $(win.eventdata.targetUserName) by $(win.eventdata.subjectUserName)</description>
+  <group>ad_group_change,ad_member_added,account_changed,</group>
+  <mitre>
+    <id>T1098</id>
+  </mitre>
+</rule>
+
+<!-- 4729,4733,4757 - member removed from any security group -->
+<rule id="101011" level="5">
+  <if_sid>101000</if_sid>
+  <field name="win.system.eventID">^4729$|^4733$|^4757$</field>
+  <description>AD: $(win.eventdata.memberName) removed from group $(win.eventdata.targetUserName) by $(win.eventdata.subjectUserName)</description>
+  <group>ad_group_change,ad_member_removed,account_changed,</group>
+</rule>
+
+<!-- 4732,4756 member added to privileged AD group -->
+<rule id="101012" level="14">
+  <if_sid>101010</if_sid>
+  <field name="win.eventdata.targetUserName" type="pcre2">(?i)Domain Admins|Enterprise Admins|Schema Admins|Account Operators|Backup Operators|Group Policy Creator Owners|Print Operators|Server Operators</field>
+  <description>AD: $(win.eventdata.memberName) added to privileged group $(win.eventdata.targetUserName) by $(win.eventdata.subjectUserName)</description>
+  <group>ad_group_change,ad_privileged_group,account_changed,</group>
+  <mitre>
+    <id>T1098</id>
+  </mitre>
+</rule>
+
+<!-- 4733,4757 - member removed from privileged AD group -->
+<rule id="101013" level="10">
+  <if_sid>101011</if_sid>
+  <field name="win.eventdata.targetUserName" type="pcre2">(?i)Domain Admins|Enterprise Admins|Schema Admins|Account Operators|Backup Operators|Group Policy Creator Owners|Print Operators|Server Operators</field>
+  <description>AD: $(win.eventdata.memberName) removed from privileged group $(win.eventdata.targetUserName) by $(win.eventdata.subjectUserName)</description>
+  <group>ad_group_change,ad_privileged_group,account_changed,</group>
+  <mitre>
+    <id>T1531</id>
+  </mitre>
+</rule>
+
+<!-- COMPUTER ACCOUNTS (Domain Joins / Removals) -->
+
+<!-- 4741 - Computer account created (machine joined domain) -->
+<rule id="101020" level="8">
+  <if_sid>101000</if_sid>
+  <field name="win.system.eventID">^4741$</field>
+  <description>AD: Computer account created (domain join) - $(win.eventdata.targetUserName) by $(win.eventdata.subjectUserName)</description>
+  <group>ad_computer_account,ad_domain_join,</group>
+  <mitre>
+    <id>T1078.002</id>
+  </mitre>
+</rule>
+
+<!-- 4743 - Computer account deleted (machine removed from domain) -->
+<rule id="101021" level="8">
+  <if_sid>101000</if_sid>
+  <field name="win.system.eventID">^4743$</field>
+  <description>AD: Computer account deleted (domain removal) - $(win.eventdata.targetUserName) by $(win.eventdata.subjectUserName)</description>
+  <group>ad_computer_account,ad_domain_remove,</group>
+  <mitre>
+    <id>T1531</id>
+  </mitre>
+</rule>
+
+<!-- DIRECTORY SERVICE CHANGES (generic - non-GPO objects) -->
+
+<!-- 5137 - DS object created (OU, contact, etc.) -->
+<rule id="101030" level="8">
+  <if_sid>101000</if_sid>
+  <field name="win.system.eventID">^5137$</field>
+  <description>AD: Directory Service object created - $(win.eventdata.objectDN) by $(win.eventdata.subjectUserName)</description>
+  <group>ad_ds_change,ad_object_created,</group>
+  <mitre>
+    <id>T1484.001</id>
+  </mitre>
+</rule>
+
+<!-- 5136 - DS object attribute modified -->
+<rule id="101031" level="7">
+  <if_sid>101000</if_sid>
+  <field name="win.system.eventID">^5136$</field>
+  <field name="win.eventdata.operationType">%%14674</field>
+  <description>AD: Directory Service object modified - $(win.eventdata.objectDN) attr=$(win.eventdata.attributeLDAPDisplayName) set to $(win.eventdata.attributeValue) by $(win.eventdata.subjectUserName)</description>
+  <group>ad_ds_change,ad_object_modified,</group>
+  <mitre>
+    <id>T1484.001</id>
+  </mitre>
+</rule>
+
+<!-- 5141 - DS object deleted -->
+<rule id="101032" level="8">
+  <if_sid>101000</if_sid>
+  <field name="win.system.eventID">^5141$</field>
+  <description>AD: Directory Service object deleted - $(win.eventdata.objectDN) by $(win.eventdata.subjectUserName)</description>
+  <group>ad_ds_change,ad_object_deleted,</group>
+  <mitre>
+    <id>T1484.001</id>
+  </mitre>
+</rule>
+
+<!-- GPO CHANGES (escalation - subset of DS changes above) -->
+
+<!-- GPO created (5137 where objectClass = groupPolicyContainer) -->
+<rule id="101033" level="12">
+  <if_sid>101000</if_sid>
+  <field name="win.system.eventID">^5137$</field>
+  <field name="win.eventdata.objectClass">^groupPolicyContainer$</field>
+  <description>AD: GPO created - $(win.eventdata.objectDN) by $(win.eventdata.subjectUserName)</description>
+  <group>ad_ds_change,ad_gpo_change,ad_gpo_created,</group>
+  <mitre>
+    <id>T1484.001</id>
+  </mitre>
+</rule>
+
+<!-- GPO modified (5136 where objectDN contains Policies/GPO GUID) -->
+<rule id="101034" level="12">
+  <if_sid>101000</if_sid>
+  <field name="win.system.eventID">^5136$</field>
+  <field name="win.eventdata.operationType">%%14674</field>
+  <field name="win.eventdata.objectDN" type="pcre2">(?i)CN=Policies|GroupPolicyContainer|CN=\{[0-9A-Fa-f\-]{36}\}</field>
+  <description>AD: GPO modified - $(win.eventdata.objectDN) attr=$(win.eventdata.attributeLDAPDisplayName) set to $(win.eventdata.attributeValue) by $(win.eventdata.subjectUserName)</description>
+  <group>ad_ds_change,ad_gpo_change,ad_gpo_modified,</group>
+  <mitre>
+    <id>T1484.001</id>
+  </mitre>
+</rule>
+
+<!-- GPO deleted (5141 where objectDN contains Policies/GPO GUID) -->
+<rule id="101035" level="12">
+  <if_sid>101000</if_sid>
+  <field name="win.system.eventID">^5141$</field>
+  <field name="win.eventdata.objectDN" type="pcre2">(?i)CN=Policies|GroupPolicyContainer|CN=\{[0-9A-Fa-f\-]{36}\}</field>
+  <description>AD: GPO deleted - $(win.eventdata.objectDN) by $(win.eventdata.subjectUserName)</description>
+  <group>ad_ds_change,ad_gpo_change,ad_gpo_deleted,</group>
+  <mitre>
+    <id>T1484.001</id>
+  </mitre>
+</rule>
+
 </group>

@@ -116,29 +116,33 @@ class DBFunctionsTest extends TestCase {
                 "SELECT create_user('qux', 'qux', 'qux', 'qux');",
                 "SELECT create_challenge_template('qux', 'qux', 'web', 'medium', 'qux', true, 1, 'foo', 'qux');"
             ],
-            ["SELECT get_proxmox_filename_for_user_disk_file(9552307442, 'qux');"],
+            ["SELECT get_disk_file_id_for_user(9552307442, 'qux');"],
             [
                 "SELECT create_user('bar', 'bar', 'bar', 'bar');",
                 "SELECT create_challenge_template('bar', 'bar', 'crypto', 'hard', 'bar', true, 1, 'bar', 'bar');",
-                "SELECT create_machine_template(1, 'bar', 'bar', 4562047925, 7145011170);"
+                "SELECT add_user_disk_file(1, 'bar', 'bar', 'linux');",
+                "SELECT create_machine_template(1, 'bar', 1, 4562047925, 7145011170);"
             ],
             [
                 "SELECT create_user('foo', 'foo', 'foo', 'foo');",
                 "SELECT create_challenge_template('foo', 'foo', 'pwn', 'easy', 'foo', true, 1, 'foo', 'foo');",
-                "SELECT create_machine_template(1, 'foo', 'foo', 1234567890, 9876543210);",
+                "SELECT add_user_disk_file(1, 'foo', 'foo', 'linux');",
+                "SELECT create_machine_template(1, 'foo', 1, 1234567890, 9876543210);",
                 "SELECT create_domain_template(900000001, 'foo');"
             ],
             [
                 "SELECT create_user('foo', 'foo', 'foo', 'foo');",
                 "SELECT create_challenge_template('foo', 'foo', 'pwn', 'easy', 'foo', true, 1, 'foo', 'foo');",
-                "SELECT create_machine_template(1, 'foo', 'foo', 1234567890, 9876543210);",
+                "SELECT add_user_disk_file(1, 'foo', 'foo', 'linux');",
+                "SELECT create_machine_template(1, 'foo', 1, 1234567890, 9876543210);",
                 "SELECT create_network_template('foo', true, false, 1);"
             ],
             ["SELECT get_machine_template_id_by_name_and_challenge_id('bar', 4971018084);"],
             [
                 "SELECT create_user('baz', 'baz', 'baz', 'baz');",
                 "SELECT create_challenge_template('baz', 'baz', 'misc', 'medium', 'baz', true, 1, 'baz', 'baz');",
-                "SELECT create_machine_template(1, 'baz', 'baz', 5678901234, 4321098765);",
+                "SELECT add_user_disk_file(1, 'baz', 'baz', 'linux');",
+                "SELECT create_machine_template(1, 'baz', 1, 5678901234, 4321098765);",
                 "SELECT create_network_template('baz', false, true, 1);",
                 "SELECT create_network_connection_template(900000001, 1);"
             ],

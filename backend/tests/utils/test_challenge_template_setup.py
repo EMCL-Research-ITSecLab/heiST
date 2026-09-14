@@ -49,22 +49,34 @@ def test_plain_ubuntu_setup(db_conn, creator_id=None):
         challenge_template["id"] = challenge_template_id
     challenge_template_object = ChallengeTemplate(challenge_template["id"])
 
+    disk_file = {
+        "user_id": creator_id,
+        "display_name": "Plain Ubuntu Base Server",
+        "proxmox_filename": os.path.basename(ubuntu_base_server_ova_path),
+        "guest_os": "linux",
+    }
+    with db_conn.cursor() as cursor:
+        cursor.execute("INSERT INTO disk_files (user_id, display_name, proxmox_filename, guest_os) VALUES (%s, %s, %s, %s) RETURNING id",
+                       (disk_file["user_id"], disk_file["display_name"], disk_file["proxmox_filename"], disk_file["guest_os"]))
+        disk_file_id = cursor.fetchone()[0]
+        disk_file["id"] = disk_file_id
+
     machine_template = {
         "challenge_template_id": challenge_template["id"],
         "name": "Plain Ubuntu Machine",
-        "disk_file_path": ubuntu_base_server_ova_path,
+        "disk_file_id": disk_file_id,
         "cores": 1,
         "ram_gb": 2
     }
     with db_conn.cursor() as cursor:
-        cursor.execute("INSERT INTO machine_templates (challenge_template_id, name, disk_file_path, cores, ram_gb) VALUES (%s, %s, %s, %s, %s) RETURNING id",
-                       (machine_template["challenge_template_id"], machine_template["name"], machine_template["disk_file_path"], machine_template["cores"], machine_template["ram_gb"]))
+        cursor.execute("INSERT INTO machine_templates (challenge_template_id, name, disk_file_id, cores, ram_gb) VALUES (%s, %s, %s, %s, %s) RETURNING id",
+                       (machine_template["challenge_template_id"], machine_template["name"], machine_template["disk_file_id"], machine_template["cores"], machine_template["ram_gb"]))
         machine_template_id = cursor.fetchone()[0]
         machine_template["id"] = machine_template_id
     machine_template_object = MachineTemplate(machine_template["id"], challenge_template_object)
     machine_template_object.set_cores(machine_template["cores"])
     machine_template_object.set_ram(machine_template["ram_gb"] * 1024)  # Convert GB to MB
-    machine_template_object.set_disk_file_path(machine_template["disk_file_path"])
+    machine_template_object.set_disk_file_path(ubuntu_base_server_ova_path)
     challenge_template_object.add_machine_template(machine_template_object)
 
     network_template = {

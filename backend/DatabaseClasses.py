@@ -38,6 +38,7 @@ class MachineTemplate:
         self.disk_file_path = None
         self.cores = 1
         self.ram = 1024
+        self.guest_os = 'linux'
 
     def add_connected_network(self, network):
         self.connected_networks[network.id] = network
@@ -56,6 +57,9 @@ class MachineTemplate:
 
     def set_ram(self, ram):
         self.ram = ram
+
+    def set_guest_os(self, guest_os):
+        self.guest_os = guest_os
 
 
 class NetworkTemplate:

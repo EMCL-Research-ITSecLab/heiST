@@ -579,15 +579,15 @@ class CtfCreationHandler
             $vmName = $vm['name'];
 
             $stmt = $this->pdo->prepare("
-                SELECT get_proxmox_filename_for_user_disk_file(:user_id, :filename) AS proxmox_filename
+                SELECT get_disk_file_id_for_user(:user_id, :filename) AS disk_file_id
             ");
             $stmt->execute([
                 'filename' => $vm['ova_name'],
                 'user_id' => $this->userId
             ]);
-            $proxmoxFilename = $stmt->fetchColumn();
+            $diskFileId = $stmt->fetchColumn();
 
-            if (!$proxmoxFilename) {
+            if (!$diskFileId) {
                 $this->logger->logError("Invalid OVA file reference by user $this->userId: " . $vm['ova_name']);
                 throw new CustomException("Invalid OVA file reference for VM: $vmName", 400);
             }
@@ -596,7 +596,7 @@ class CtfCreationHandler
                 SELECT create_machine_template(
                     :challenge_id,
                     :name,
-                    :ova_file_path,
+                    :disk_file_id,
                     :cores,
                     :ram_gb
                 ) AS id
@@ -605,7 +605,7 @@ class CtfCreationHandler
             $stmt->execute([
                 'challenge_id' => $challengeId,
                 'name' => $vmName,
-                'ova_file_path' => '/var/lib/vz/import/' . $proxmoxFilename,
+                'disk_file_id' => $diskFileId,
                 'cores' => $vm['cores'],
                 'ram_gb' => $vm['ram_gb']
             ]);
@@ -794,7 +794,7 @@ class CtfCreationHandler
     {
         try {
             $stmt = $this->pdo->prepare("
-                SELECT 
+                SELECT
                     id,
                     display_name AS name,
                     upload_date AS date

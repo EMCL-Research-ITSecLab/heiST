@@ -79,6 +79,27 @@ if (!$securityHelper->validateSession() || !$securityHelper->validateAdminAccess
 </div>
 <?php include($_SERVER['DOCUMENT_ROOT'] . '/partials/footer.html'); ?>
 
+<div class="modal-overlay" id="os-modal-overlay">
+    <div class="os-modal" id="os-modal">
+        <h2><i class="fa-solid fa-desktop"></i> Select Guest OS Type</h2>
+        <p>What operating system is this OVA running?</p>
+        <div class="os-options">
+            <button class="os-option" data-os="linux">
+                <i class="fa-brands fa-linux"></i>
+                <span>Linux</span>
+            </button>
+            <button class="os-option" data-os="windows">
+                <i class="fa-brands fa-windows"></i>
+                <span>Windows</span>
+            </button>
+        </div>
+        <div class="os-modal-actions">
+            <button class="button button-secondary" id="os-cancel-btn">Cancel</button>
+            <button class="button button-primary" id="os-next-btn" disabled>Next</button>
+        </div>
+    </div>
+</div>
+
 <script type="module" src="../assets/js/theme-toggle.js"></script>
 <script type="module" src="../assets/js/upload-diskfile.js"></script>
 </body>

@@ -1565,7 +1565,7 @@
               "type": "raw_data"
             }
           ],
-          "query": "rule.id:100202",
+          "query": "rule.id:100204",
           "refId": "A",
           "timeField": "@timestamp"
         }
@@ -1781,6 +1781,54 @@
                 "value": 148
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Session ID (Win)"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 110
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "State (Win)"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Idle (Win)"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Logon Time (Win)"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 150
+              }
+            ]
           }
         ]
       },
@@ -1824,7 +1872,7 @@
               "type": "raw_data"
             }
           ],
-          "query": "rule.id:100201",
+          "query": "rule.id:100203",
           "refId": "A",
           "timeField": "@timestamp"
         }
@@ -1865,6 +1913,22 @@
               "data.tty": {
                 "aggregations": [],
                 "operation": "groupby"
+              },
+              "data.id": {
+                "aggregations": [],
+                "operation": "groupby"
+              },
+              "data.status": {
+                "aggregations": [],
+                "operation": "groupby"
+              },
+              "data.extra_data": {
+                "aggregations": [],
+                "operation": "groupby"
+              },
+              "data.logon_time": {
+                "aggregations": [],
+                "operation": "groupby"
               }
             }
           }
@@ -1879,7 +1943,11 @@
               "data.dstuser": 0,
               "data.from": 2,
               "data.login": 3,
-              "data.tty": 4
+              "data.tty": 4,
+              "data.id": 5,
+              "data.status": 6,
+              "data.extra_data": 7,
+              "data.logon_time": 8
             },
             "renameByName": {
               "agent.ip": "Server",
@@ -1887,7 +1955,11 @@
               "data.dstuser": "User",
               "data.from": "From",
               "data.login": "Login Time",
-              "data.tty": "TTY"
+              "data.tty": "TTY",
+              "data.id": "Session ID (Win)",
+              "data.status": "State (Win)",
+              "data.extra_data": "Idle (Win)",
+              "data.logon_time": "Logon Time (Win)"
             }
           }
         },
@@ -2329,6 +2401,42 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Process (Win)"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 260
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Windows Command"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 500
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "PowerShell Script"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 500
+              }
+            ]
           }
         ]
       },
@@ -2371,127 +2479,48 @@
               "type": "raw_data"
             }
           ],
-          "query": "rule.id:100401 -location:journald",
+          "query": "rule.id:100900 -location:journald",
           "refId": "A",
           "timeField": "@timestamp"
         }
       ],
-      "title": "Bash Commands",
+      "title": "Command Executed (All Platforms)",
       "transformations": [
         {
-          "id": "organize",
+          "id": "filterFieldsByName",
           "options": {
-            "excludeByName": {
-              "_id": true,
-              "_index": true,
-              "_type": true,
-              "agent.id": true,
-              "decoder.name": true,
-              "decoder.parent": true,
-              "full_log": true,
-              "highlight": true,
-              "id": true,
-              "input.type": true,
-              "location": true,
-              "manager.name": true,
-              "predecoder.hostname": true,
-              "predecoder.program_name": true,
-              "predecoder.timestamp": true,
-              "rule.description": true,
-              "rule.firedtimes": true,
-              "rule.groups": true,
-              "rule.id": true,
-              "rule.level": true,
-              "rule.mail": true,
-              "sort": true,
-              "timestamp": true
-            },
-            "includeByName": {},
-            "indexByName": {
-              "@timestamp": 0,
-              "_id": 1,
-              "_index": 2,
-              "_type": 3,
-              "agent.id": 4,
-              "agent.ip": 6,
-              "agent.name": 5,
-              "data.Command": 10,
-              "data.Container": 7,
-              "data.User": 8,
-              "data.WD": 9,
-              "decoder.name": 11,
-              "decoder.parent": 12,
-              "full_log": 13,
-              "highlight": 14,
-              "id": 15,
-              "input.type": 16,
-              "location": 17,
-              "manager.name": 18,
-              "predecoder.program_name": 19,
-              "predecoder.timestamp": 20,
-              "rule.description": 21,
-              "rule.firedtimes": 22,
-              "rule.groups": 23,
-              "rule.id": 24,
-              "rule.level": 25,
-              "rule.mail": 26,
-              "sort": 27,
-              "timestamp": 28
-            },
-            "renameByName": {
-              "@timestamp": "Timestamp",
-              "agent.ip": "Server",
-              "agent.name": "Agent",
-              "data.Command": "Command",
-              "data.Container": "Enviroment",
-              "data.Exit": "Exit",
-              "data.User": "User",
-              "data.WD": "Directory",
-              "sort": "",
-              "timestamp": ""
+            "include": {
+              "pattern": "^@timestamp$|^agent\\.(name|ip)$|^data\\.(cmd_line|dstuser|ps_user|exit_code)$|^data\\.win\\.eventdata\\.(commandLine|scriptBlockText|subjectUserName)$"
             }
           }
         },
         {
-          "disabled": true,
-          "id": "groupBy",
+          "id": "calculateField",
           "options": {
-            "fields": {
-              "Agent": {
-                "aggregations": [],
-                "operation": "groupby"
-              },
-              "Command": {
-                "aggregations": [],
-                "operation": "groupby"
-              },
-              "Container": {
-                "aggregations": [],
-                "operation": "groupby"
-              },
-              "Directory": {
-                "aggregations": [],
-                "operation": "groupby"
-              },
-              "Exit": {
-                "aggregations": [],
-                "operation": "groupby"
-              },
-              "Server": {
-                "aggregations": [],
-                "operation": "groupby"
-              },
-              "Timestamp": {
-                "aggregations": [],
-                "operation": "groupby"
-              },
-              "User": {
-                "aggregations": [],
-                "operation": "groupby"
-              },
-              "agent.name": {
-                "aggregations": []
-              }
+            "alias": "Command",
+            "mode": "reduceRow",
+            "reduce": {
+              "include": [
+                "data.cmd_line",
+                "data.win.eventdata.commandLine",
+                "data.win.eventdata.scriptBlockText"
+              ],
+              "reducer": "firstNotNull"
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "alias": "User",
+            "mode": "reduceRow",
+            "reduce": {
+              "include": [
+                "data.dstuser",
+                "data.ps_user",
+                "data.win.eventdata.subjectUserName"
+              ],
+              "reducer": "firstNotNull"
             }
           }
         },
@@ -2502,9 +2531,41 @@
               {
                 "destinationType": "string",
                 "targetField": "Command"
+              },
+              {
+                "destinationType": "string",
+                "targetField": "User"
               }
             ],
             "fields": {}
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "data.cmd_line": true,
+              "data.dstuser": true,
+              "data.ps_user": true,
+              "data.win.eventdata.commandLine": true,
+              "data.win.eventdata.scriptBlockText": true,
+              "data.win.eventdata.subjectUserName": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "@timestamp": 0,
+              "agent.name": 1,
+              "agent.ip": 2,
+              "User": 3,
+              "Command": 4,
+              "data.exit_code": 5
+            },
+            "renameByName": {
+              "@timestamp": "Timestamp",
+              "agent.ip": "Server",
+              "agent.name": "Agent",
+              "data.exit_code": "Exit Code"
+            }
           }
         },
         {
@@ -2533,7 +2594,7 @@
         "type": "elasticsearch",
         "uid": "${DS_WAZUH-2}"
       },
-      "description": "Only commands executed by the super user",
+      "description": "Windows process creations that never surface in the unified Command Executed panel (no resolvable command line, or PowerShell host process spawns)",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2567,30 +2628,6 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "data.srcuser"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 145
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "data.dstuser"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 134
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
               "options": "@timestamp"
             },
             "properties": [
@@ -2615,7 +2652,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Source User"
+              "options": "User"
             },
             "properties": [
               {
@@ -2627,7 +2664,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Target User"
+              "options": "Process"
             },
             "properties": [
               {
@@ -2677,110 +2714,43 @@
               "type": "logs"
             }
           ],
-          "query": "rule.id:5402",
+          "query": "rule.groups:\"process_creation\" -rule.groups:\"command_executed\"",
           "refId": "A",
           "timeField": "@timestamp"
         }
       ],
-      "title": "Sudo Bash Commands",
+      "title": "Process Created",
       "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "pattern": "^@timestamp$|^agent\\.(name|ip)$|^data\\.win\\.eventdata\\.(newProcessName|parentProcessName|commandLine|subjectUserName)$"
+            }
+          }
+        },
         {
           "id": "organize",
           "options": {
-            "excludeByName": {
-              "_id": true,
-              "_index": true,
-              "_source": true,
-              "_type": true,
-              "agent.id": true,
-              "agent.name": false,
-              "data.pwd": true,
-              "data.tty": true,
-              "decoder.ftscomment": false,
-              "decoder.name": true,
-              "decoder.parent": true,
-              "full_log": true,
-              "highlight": true,
-              "id": true,
-              "input.type": true,
-              "location": true,
-              "manager.name": true,
-              "predecoder.hostname": true,
-              "predecoder.program_name": true,
-              "predecoder.timestamp": true,
-              "rule.description": true,
-              "rule.firedtimes": true,
-              "rule.gdpr": true,
-              "rule.gpg13": true,
-              "rule.groups": true,
-              "rule.hipaa": true,
-              "rule.id": true,
-              "rule.level": true,
-              "rule.mail": true,
-              "rule.mitre.id": true,
-              "rule.mitre.tactic": true,
-              "rule.mitre.technique": true,
-              "rule.nist_800_53": true,
-              "rule.pci_dss": true,
-              "rule.tsc": true,
-              "sort": true,
-              "timestamp": true
-            },
+            "excludeByName": {},
             "includeByName": {},
             "indexByName": {
               "@timestamp": 0,
-              "_id": 1,
-              "_index": 2,
-              "_source": 3,
-              "_type": 4,
-              "agent.id": 5,
-              "agent.ip": 6,
-              "agent.name": 7,
-              "data.command": 10,
-              "data.dstuser": 9,
-              "data.pwd": 11,
-              "data.srcuser": 8,
-              "data.tty": 12,
-              "decoder.ftscomment": 13,
-              "decoder.name": 14,
-              "decoder.parent": 15,
-              "full_log": 16,
-              "highlight": 17,
-              "id": 18,
-              "input.type": 19,
-              "location": 20,
-              "manager.name": 21,
-              "predecoder.hostname": 22,
-              "predecoder.program_name": 23,
-              "predecoder.timestamp": 24,
-              "rule.description": 25,
-              "rule.firedtimes": 26,
-              "rule.gdpr": 27,
-              "rule.gpg13": 28,
-              "rule.groups": 29,
-              "rule.hipaa": 30,
-              "rule.id": 31,
-              "rule.level": 32,
-              "rule.mail": 33,
-              "rule.mitre.id": 34,
-              "rule.mitre.tactic": 35,
-              "rule.mitre.technique": 36,
-              "rule.nist_800_53": 37,
-              "rule.pci_dss": 38,
-              "rule.tsc": 39,
-              "sort": 40,
-              "timestamp": 41
+              "agent.name": 1,
+              "agent.ip": 2,
+              "data.win.eventdata.subjectUserName": 3,
+              "data.win.eventdata.newProcessName": 4,
+              "data.win.eventdata.commandLine": 5,
+              "data.win.eventdata.parentProcessName": 6
             },
             "renameByName": {
               "@timestamp": "Timestamp",
               "agent.ip": "Server",
-              "agent.name": "Agent name",
-              "data.command": "Command",
-              "data.dstuser": "Target User",
-              "data.pwd": "",
-              "data.srcuser": "Source User",
-              "data.tty": "",
-              "decoder.ftscomment": "Comment"
+              "agent.name": "Agent",
+              "data.win.eventdata.commandLine": "Command Line",
+              "data.win.eventdata.newProcessName": "Process",
+              "data.win.eventdata.parentProcessName": "Parent Process",
+              "data.win.eventdata.subjectUserName": "User"
             }
           }
         },
@@ -2795,7 +2765,7 @@
                     "value": "${agent:regex}"
                   }
                 },
-                "fieldName": "Agent name"
+                "fieldName": "Agent"
               }
             ],
             "match": "any",
@@ -3158,13 +3128,540 @@
         }
       ],
       "type": "table"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 73
+      },
+      "id": 40,
+      "panels": [],
+      "title": "Active Directory (Windows)",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_WAZUH-2}"
+      },
+      "description": "Repeated account lockouts for the same user within 5 minutes - possible brute force",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 74
+      },
+      "id": 41,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "count"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "alias": "",
+          "bucketAggs": [],
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_WAZUH-2}"
+          },
+          "metrics": [
+            {
+              "id": "1",
+              "type": "count"
+            }
+          ],
+          "query": "rule.id:101006",
+          "refId": "A",
+          "timeField": "@timestamp"
+        }
+      ],
+      "title": "AD Account Lockouts (Possible Brute Force)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_WAZUH-2}"
+      },
+      "description": "Domain user account lifecycle (create/delete/enable/disable/lockout) and security group membership changes",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 8
+              },
+              {
+                "color": "red",
+                "value": 12
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "@timestamp"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 200
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "agent.name"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 160
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rule.description"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 650
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rule.level"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rule.mitre.id"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 110
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 18,
+        "x": 6,
+        "y": 74
+      },
+      "id": 42,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "enablePagination": true,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "@timestamp"
+          }
+        ]
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "alias": "",
+          "bucketAggs": [],
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_WAZUH-2}"
+          },
+          "metrics": [
+            {
+              "id": "1",
+              "settings": {
+                "size": "500"
+              },
+              "type": "raw_data"
+            }
+          ],
+          "query": "rule.id:[101001 TO 101013]",
+          "refId": "A",
+          "timeField": "@timestamp"
+        }
+      ],
+      "title": "AD Account & Group Changes",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "_id": true,
+              "_index": true,
+              "_type": true,
+              "agent.id": true,
+              "decoder.name": true,
+              "decoder.parent": true,
+              "full_log": true,
+              "highlight": true,
+              "id": true,
+              "input.type": true,
+              "location": true,
+              "manager.name": true,
+              "predecoder.hostname": true,
+              "predecoder.program_name": true,
+              "predecoder.timestamp": true,
+              "rule.firedtimes": true,
+              "rule.groups": true,
+              "rule.id": true,
+              "rule.mail": true,
+              "sort": true,
+              "timestamp": true,
+              "win.system.eventID": true,
+              "win.system.channel": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "@timestamp": 0,
+              "agent.name": 1,
+              "rule.description": 2,
+              "rule.level": 3,
+              "rule.mitre.id": 4
+            },
+            "renameByName": {
+              "agent.name": "Domain Controller"
+            }
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "regex",
+                  "options": {
+                    "value": "${agent:regex}"
+                  }
+                },
+                "fieldName": "Domain Controller"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_WAZUH-2}"
+      },
+      "description": "Computer account (domain join/remove) and Directory Service object changes, including Group Policy Object create/modify/delete",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 8
+              },
+              {
+                "color": "red",
+                "value": 12
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "@timestamp"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 200
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "agent.name"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 160
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rule.description"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 800
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rule.level"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rule.mitre.id"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 110
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 82
+      },
+      "id": 43,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "enablePagination": true,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "@timestamp"
+          }
+        ]
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "alias": "",
+          "bucketAggs": [],
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_WAZUH-2}"
+          },
+          "metrics": [
+            {
+              "id": "1",
+              "settings": {
+                "size": "500"
+              },
+              "type": "raw_data"
+            }
+          ],
+          "query": "rule.id:[101020 TO 101035]",
+          "refId": "A",
+          "timeField": "@timestamp"
+        }
+      ],
+      "title": "AD Computer, GPO & Directory Service Changes",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "_id": true,
+              "_index": true,
+              "_type": true,
+              "agent.id": true,
+              "decoder.name": true,
+              "decoder.parent": true,
+              "full_log": true,
+              "highlight": true,
+              "id": true,
+              "input.type": true,
+              "location": true,
+              "manager.name": true,
+              "predecoder.hostname": true,
+              "predecoder.program_name": true,
+              "predecoder.timestamp": true,
+              "rule.firedtimes": true,
+              "rule.groups": true,
+              "rule.id": true,
+              "rule.mail": true,
+              "sort": true,
+              "timestamp": true,
+              "win.system.eventID": true,
+              "win.system.channel": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "@timestamp": 0,
+              "agent.name": 1,
+              "rule.description": 2,
+              "rule.level": 3,
+              "rule.mitre.id": 4
+            },
+            "renameByName": {
+              "agent.name": "Domain Controller"
+            }
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "regex",
+                  "options": {
+                    "value": "${agent:regex}"
+                  }
+                },
+                "fieldName": "Domain Controller"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        }
+      ],
+      "type": "table"
     }
   ],
   "preload": false,
   "schemaVersion": 41,
   "tags": [
-    "Wazuh",
-    "heiDPI"
+    "Wazuh"
   ],
   "templating": {
     "list": [
@@ -3222,6 +3719,6 @@
   "timezone": "Europe/Berlin",
   "title": "System Monitoring",
   "uid": "ee5oyzl487bwga",
-  "version": 23
+  "version": 24
 }
   }

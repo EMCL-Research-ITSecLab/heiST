@@ -22,23 +22,32 @@
 -->
 
 <decoder name="local_decoder_example">
-    <program_name>local_decoder_example</program_name>
+  <program_name>local_decoder_example</program_name>
 </decoder>
 
-
-<decoder name="decoder_bash">
-   <program_name>user_command</program_name>
+<!-- Bash Commands -->
+<decoder name="bash_commands">
+  <program_name>bash_commands</program_name>
+  <prematch>Container</prematch>
 </decoder>
 
-<decoder name="decoder_bash_log">
-  <parent>decoder_bash</parent>
-  <regex>[(\S+)] (\d+) [(\.+)] [(\d+.\d+.\d+.\d+)|(\S+)] (\.*)</regex>
-  <order>pwd, number, time, ip, command</order>
+<decoder name="bash_commands1">
+  <parent>bash_commands</parent>
+  <prematch>\.</prematch>
+  <regex>Container (\S+) User (\S+) @ (\S+) Exit (\S+) \p\d+\p:(\.+)</regex>
+  <order>container, user, working_dir, exit_code, cmd_line</order>
+</decoder>
+
+<!-- PowerShell Transcription (PS < 5 fallback) -->
+<decoder name="powershell-transcription">
+  <prematch>PSTRANS PS</prematch>
+  <regex type="pcre2">PSTRANS PS ([^:]+):\\Users\\(\w+)> (.+)$</regex>
+  <order>ps_drive, ps_user, cmd_line</order>
 </decoder>
 
 <!-- CPU, memory, disk metric -->
 <decoder name="general_health_check">
-     <program_name>general_health_check</program_name>
+  <program_name>general_health_check</program_name>
 </decoder>
 
 <decoder name="general_health_check1">
@@ -48,9 +57,9 @@
   <order>cpu_usage_%, memory_usage_%, disk_usage_%</order>
 </decoder>
 
-<!-- load average metric -->
+<!-- load average metric (Linux only) -->
 <decoder name="load_average_check">
-     <program_name>load_average_check</program_name>
+  <program_name>load_average_check</program_name>
 </decoder>
 
 <decoder name="load_average_check1">
@@ -62,7 +71,7 @@
 
 <!-- Memory metric -->
 <decoder name="memory_check">
-     <program_name>memory_check</program_name>
+  <program_name>memory_check</program_name>
 </decoder>
 
 <decoder name="memory_check1">
@@ -74,7 +83,7 @@
 
 <!-- Disk metric -->
 <decoder name="disk_check">
-     <program_name>disk_check</program_name>
+  <program_name>disk_check</program_name>
 </decoder>
 
 <decoder name="disk_check1">
@@ -85,20 +94,32 @@
 </decoder>
 
 <!-- Active User -->
+<decoder name="current_active_users_win">
+ <prematch>current_active_users_win:</prematch>
+</decoder>
+
+<decoder name="current_active_users_win1">
+  <parent>current_active_users_win</parent>
+  <prematch>current_active_users_win:</prematch>
+  <regex offset="after_prematch">user=(\S+) session=(\S+) id=(\S+) state=(\S+) idle=(\S+) logon=(\S+ \S+)</regex>
+  <order>dstuser, tty, id, status, extra_data, logon_time</order>
+</decoder>
+
+<!-- Active User (Linux) -->
 <decoder name="current_active_users">
-     <program_name>current_active_users</program_name>
+  <program_name>current_active_users</program_name>
 </decoder>
 
 <decoder name="current_active_users1">
   <parent>current_active_users</parent>
   <prematch>ossec: output: 'current_active_users':\.</prematch>
   <regex offset="after_prematch">(\S+) (\S+) (\S+) (\S+)</regex>
-  <order>user, tty, from, login</order>
+  <order>dstuser, tty, from, login</order>
 </decoder>
 
 <!-- Active User Number -->
 <decoder name="current_active_user_number">
-     <program_name>current_active_user_number</program_name>
+  <program_name>current_active_user_number</program_name>
 </decoder>
 
 <decoder name="current_active_user_number1">
@@ -108,22 +129,11 @@
   <order>active_users</order>
 </decoder>
 
-<!-- Bash Commands -->
-<decoder name="bash_commands">
-  <program_name>bash_commands</program_name>
-</decoder>
-
-<decoder name="bash_commands1">
-  <parent>bash_commands</parent>
-  <prematch>\.</prematch> 
-  <regex>Container (\S+) User (\S+) @ (\S+) Exit (\S+) \p\d+\p:(\.+)</regex>
-  <order>Container, User, WD, Exit, Command</order>
-</decoder>
-
 <!-- UFW Status -->
 <decoder name="ufw_status">
-     <program_name>ufw_status</program_name>
+  <program_name>ufw_status</program_name>
 </decoder>
+
 <decoder name="ufw_status1">
   <parent>ufw_status</parent>
   <prematch>ossec: output: 'ufw_status':</prematch>
@@ -133,8 +143,9 @@
 
 <!-- Agents -->
 <decoder name="current_agents">
-     <program_name>current_agents</program_name>
+  <program_name>current_agents</program_name>
 </decoder>
+
 <decoder name="current_agents1">
   <parent>current_agents</parent>
   <prematch></prematch>
@@ -144,20 +155,23 @@
 
 <!-- OpenVPN -->
 <decoder name="openvpnas_decoder">
-    <prematch type="pcre2">\[OVPN \d+\] </prematch>
+  <prematch type="pcre2">\[OVPN \d+\]</prematch>
 </decoder>
+
 <decoder name="openvpnas_decoder_child">
-    <parent>openvpnas_decoder</parent>
-    <regex type="pcre2">(\d\d\d\d-\d\d-\d\d\w\d\d:\d\d:\d\d.\d\d\d\d)</regex>
-    <order>timestamp</order>
+  <parent>openvpnas_decoder</parent>
+  <regex type="pcre2">(\d\d\d\d-\d\d-\d\d\w\d\d:\d\d:\d\d.\d\d\d\d)</regex>
+  <order>timestamp</order>
 </decoder>
+
 <decoder name="openvpnas_decoder_child">
-    <parent>openvpnas_decoder</parent>
-    <regex type="pcre2">(\d+\.\d+\.\d+\.\d+):(\d+) \[(\S+)\]</regex>
-    <order>srcip, srcport, srcuser</order>
+  <parent>openvpnas_decoder</parent>
+  <regex type="pcre2">(\d+\.\d+\.\d+\.\d+):(\d+) \[(\S+)\]</regex>
+  <order>srcip, srcport, srcuser</order>
 </decoder>
+
 <decoder name="openvpnas_decoder_child">
-    <parent>openvpnas_decoder</parent>
-    <regex type="pcre2">Peer Connection (\w+) with \[(\w+)\]</regex>
-    <order>action, interface</order>
+  <parent>openvpnas_decoder</parent>
+  <regex type="pcre2">Peer Connection (\w+) with \[(\w+)\]</regex>
+  <order>action, interface</order>
 </decoder>

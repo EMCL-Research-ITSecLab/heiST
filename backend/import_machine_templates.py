@@ -3,23 +3,32 @@ import random
 import os
 import subprocess
 import time
-import base64
 
 
 from backend.qemu_ga_wrapper import GuestAgent, GuestAgentError
 from backend.DatabaseClasses import MachineTemplate, ChallengeTemplate
 from backend.proxmox_api_calls import (
-    attach_cloud_init_drive,
     add_network_device_api_call,
     initial_configuration_api_call,
     launch_vm_api_call,
     shutdown_vm_api_call,
     vm_is_stopped_api_call,
-    detach_cloud_init_drive,
     detach_network_device_api_call,
     convert_vm_to_template_api_call,
     delete_vm_api_call
 )
+
+PROXMOX_STORAGE_BASE_DIR = "/var/lib/vz/import"
+_LINUX_AGENT_CONFIG_DIR  = "/root/heiST/monitoring/wazuh/agent/linux"
+_WINDOWS_AGENT_CONFIG_DIR = "/root/heiST/monitoring/wazuh/agent/windows"
+
+_LINUX_REMOTE_BASE   = "/var/monitoring/wazuh-agent"
+_WINDOWS_REMOTE_BASE = r"C:\Windows\Temp\wazuh-agent"
+
+_LINUX_SETUP_FLAG   = "/var/run/wazuh-setup-complete.flag"
+_WINDOWS_SETUP_FLAG = r"C:\ProgramData\WazuhSetup\wazuh-setup-complete.flag"
+
+_DNS_SERVERS = ("8.8.8.8", "1.1.1.1")
 
 def import_machine_templates(challenge_template_id, db_conn, ip_pool):
     """
@@ -91,12 +100,18 @@ def fetch_machine_templates(challenge_template, db_conn):
     machines_fetched = 0
 
     with db_conn.cursor() as cursor:
-        cursor.execute("SELECT id, disk_file_path, cores, ram_gb "
-                       "FROM machine_templates "
-                       "WHERE challenge_template_id = %s", (challenge_template.id,))
+        cursor.execute(
+            "SELECT mt.id, df.proxmox_filename, mt.cores, mt.ram_gb, df.guest_os "
+            "FROM machine_templates mt "
+            "JOIN disk_files df ON df.id = mt.disk_file_id "
+            "WHERE mt.challenge_template_id = %s",
+            (challenge_template.id,)
+        )
 
-        for machine_template_id, disk_file_path, cores, ram_gb in cursor.fetchall():
-            print(f"[Debug] Processing machine template {machine_template_id}", flush=True)
+        for machine_template_id, proxmox_filename, cores, ram_gb, guest_os in cursor.fetchall():
+            print(f"[Debug] Processing machine template {machine_template_id} (guest_os={guest_os})", flush=True)
+
+            disk_file_path = os.path.join(PROXMOX_STORAGE_BASE_DIR, proxmox_filename)
 
             # Check if the disk file path is valid
             if not os.path.exists(disk_file_path):
@@ -119,6 +134,7 @@ def fetch_machine_templates(challenge_template, db_conn):
             machine_template.set_cores(cores)
             machine_template.set_ram(ram_gb * 1024)  # Convert GB to MB
             machine_template.set_disk_file_path(disk_file_path)
+            machine_template.set_guest_os(guest_os)
             challenge_template.add_machine_template(machine_template)
             machines_fetched += 1
             print(f"[Info] Successfully added machine template {machine_template_id} to challenge", flush=True)
@@ -268,253 +284,299 @@ def convert_iso_to_machine_template(disk_file_path, machine_template_id):
 
         raise RuntimeError(f"Failed to import ISO file: {e1}")
 
-
-def wait_for_cloud_init_completion(machine, timeout=600):
+def _collect_agent_files(config_dir):
     """
-    Wait until Cloud-init finishes and the setup script completes.
-    Checks for a flag file created by the setup script and verifies systemd timer.
+    Walk config_dir and return a list of (local_abs_path, rel_path) tuples
     """
-    _PING_TIMEOUT = 120
-    _CLOUD_INIT_EXEC_TIMEOUT = max(timeout - 180, 120) # 120+4*15=180
-    _FAST_EXEC_TIMEOUT = 15
-
-    checks = {
-        'cloud_init': False,
-        'bash_logging_timer': False,
-        'setup_complete': False
-    }
-
-    start_time = time.monotonic()
-    deadline = start_time + timeout
-
-    with GuestAgent(vmid=machine.id) as ga:
-        ping_deadline = time.monotonic() + _PING_TIMEOUT
-        while not ga.ping():
-            if time.monotonic() > ping_deadline:
-                raise TimeoutError(
-                    f"QEMU GA on VM {machine.id} did not become responsive within {_PING_TIMEOUT}s"
-                )
-            time.sleep(2)
-
-        print(f"[Info] GA responsive on VM {machine.id}, starting cloud-init wait", flush=True)
-
-        while time.monotonic() < deadline:
-            elapsed = int(time.monotonic() - start_time)
-
-            try:
-                if not checks['cloud_init']:
-                    result = ga.exec(
-                        "cloud-init status",
-                        capture_output=True,
-                        timeout=_CLOUD_INIT_EXEC_TIMEOUT,
-                    )
-                    if result.exit_code == 0 or "done" in result.stdout.lower():
-                        checks['cloud_init'] = True
-                    else:
-                        print(f"[{elapsed}s] cloud-init not done yet: {result.stdout.strip()!r}", flush=True)
-                    time.sleep(10)
-                    continue
-
-                if not checks['bash_logging_timer']:
-                    result = ga.exec(
-                        ["systemctl", "is-active", "bash_loggin_timer.timer"],
-                        capture_output=True,
-                        timeout=_FAST_EXEC_TIMEOUT,
-                    )
-                    if result.stdout.strip() == "active":
-                        checks['bash_logging_timer'] = True
-                    else:
-                        print(f"[{elapsed}s] bash_loggin_timer not active yet: {result.stdout.strip()!r}", flush=True)
-                    time.sleep(10)
-                    continue
-
-                flag_result = ga.exec(
-                    ["test", "-f", "/var/run/wazuh-setup-complete.flag"],
-                    capture_output=False,
-                    timeout=_FAST_EXEC_TIMEOUT,
-                )
-                timer_result = ga.exec(
-                    ["systemctl", "is-active", "bash_loggin_timer.timer"],
-                    capture_output=True,
-                    timeout=_FAST_EXEC_TIMEOUT,
-                )
-                if flag_result.exit_code == 0 and timer_result.stdout.strip() == "active":
-                    checks['setup_complete'] = True
-                    time.sleep(15)  # stability buffer
-                    return True
-                else:
-                    print(
-                        f"[{elapsed}s] waiting for setup: "
-                        f"flag={'present' if flag_result.exit_code == 0 else 'missing'} "
-                        f"timer={timer_result.stdout.strip()!r}",
-                        flush=True,
-                    )
-
-            except GuestAgentError as e:
-                print(f"[{elapsed}s] Guest agent error for VM {machine.id}: {type(e).__name__}: {e}", flush=True)
-            except Exception as e:
-                print(f"[{elapsed}s] Unexpected error for VM {machine.id}: {type(e).__name__}: {e}", flush=True)
-
-            time.sleep(10)
-
-    incomplete = [k for k, v in checks.items() if not v]
-    raise TimeoutError(
-        f"Setup did not complete within {timeout}s for VM {machine.id}. Incomplete: {', '.join(incomplete)}")
-
-
-
-def write_user_data_snippet(snippets_path="/var/lib/vz/snippets/user-data.yaml",
-                            config_dir="/root/heiST/monitoring/wazuh/agent"):
-    """
-    Write a Cloud-Init user-data.yaml snippet with files encoded in Base64.
-    Includes all files from config_dir/config/* and the .sh script.
-    Returns the Proxmox volume path for cicustom.
-    """
-    print(f"[Info] Writing cloud-init user-data snippet to {snippets_path}", flush=True)
-    print(f"[Debug] Config directory: {config_dir}", flush=True)
-
-    os.makedirs(os.path.dirname(snippets_path), exist_ok=True)
-
-    user_data_content = """#cloud-config
-write_files:
-"""
-
-    files_to_include = []
+    files = []
 
     config_subdir = os.path.join(config_dir, "config")
-    print(f"[Debug] Searching for files in {config_subdir}", flush=True)
-    for root, dirs, files in os.walk(config_subdir):
-        for fname in files:
-            files_to_include.append(os.path.join(root, fname))
-            print(f"[Debug] Found config file: {fname}", flush=True)
+    if os.path.isdir(config_subdir):
+        for root, _, fnames in os.walk(config_subdir):
+            for fname in fnames:
+                abs_path = os.path.join(root, fname)
+                rel_path = os.path.relpath(abs_path, config_dir)
+                files.append((abs_path, rel_path))
 
-    setup_script = os.path.join(config_dir, "setup_wazuh.sh")
-    if os.path.isfile(setup_script):
-        files_to_include.append(setup_script)
-        print(f"[Debug] Found setup script: setup_wazuh.sh", flush=True)
+    for script in ("setup_wazuh.sh", "setup_wazuh.ps1"):
+        script_path = os.path.join(config_dir, script)
+        if os.path.isfile(script_path):
+            files.append((script_path, script))
 
-    print(f"[Info] Including {len(files_to_include)} files in cloud-init configuration", flush=True)
+    return files
 
-    files_encoded = 0
-    for local_path in files_to_include:
-        rel_path = os.path.relpath(local_path, config_dir)
-        target_path = f"/var/monitoring/wazuh-agent/{rel_path}"
 
-        target_path = target_path.replace("\\", "/")
+def _copy_agent_files_linux(ga, config_dir, remote_base, vmid):
+    """
+    Copy all agent files to a Linux guest via GA, preserving the relative directory structure under remote_base.
+    """
+    files = _collect_agent_files(config_dir)
+    print(f"[Info] Copying {len(files)} agent files to Linux VM {vmid}", flush=True)
 
-        print(f"[Debug] Encoding file: {rel_path} -> {target_path}", flush=True)
-        with open(local_path, "rb") as f:
-            encoded = base64.b64encode(f.read()).decode("utf-8")
+    for abs_path, rel_path in files:
+        remote_path = remote_base + "/" + rel_path.replace("\\", "/")
+        remote_dir  = remote_path.rsplit("/", 1)[0]
 
-        user_data_content += f"""  - path: {target_path}
-    owner: root:root
-    permissions: '0755'
-    encoding: b64
-    content: |
-      {encoded}
-"""
-        files_encoded += 1
+        ga.exec(["mkdir", "-p", remote_dir], capture_output=False, timeout=10)
+        ga.write_local_file(abs_path, remote_path)  # preserves local mode bits
+        print(f"[Debug] Wrote {rel_path} -> {remote_path} on VM {vmid}", flush=True)
 
-    user_data_content += """bootcmd:
-  - systemctl mask systemd-networkd-wait-online.service
-runcmd:
-  - apt-get update -y
-  - DEBIAN_FRONTEND=noninteractive apt-get install -y curl wget
-  - [ /var/monitoring/wazuh-agent/setup_wazuh.sh, --install , --yes ]
-"""
-    with open(snippets_path, "w") as f:
-        f.write(user_data_content)
+    print(f"[Info] Agent files staged on Linux VM {vmid}", flush=True)
 
-    print(f"[Info] Successfully wrote cloud-init configuration with {files_encoded} encoded files", flush=True)
-    print(f"[Debug] User-data snippet path: local:snippets/user-data.yaml", flush=True)
-    return "local:snippets/user-data.yaml"
+
+def _copy_agent_files_windows(ga, config_dir, remote_base, vmid):
+    """
+    Copy all agent files to a Windows guest via GA, preserving the relative directory structure under remote_base.
+    """
+    files = _collect_agent_files(config_dir)
+    print(f"[Info] Copying {len(files)} agent files to Windows VM {vmid}", flush=True)
+
+    for abs_path, rel_path in files:
+        remote_path = remote_base + "\\" + rel_path.replace("/", "\\")
+        remote_dir  = remote_path.rsplit("\\", 1)[0]
+
+        ga.exec(
+            ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command",
+             f'New-Item -ItemType Directory -Force -Path "{remote_dir}" | Out-Null'],
+            capture_output=False,
+            timeout=90,
+        )
+
+        with open(abs_path, "rb") as f:
+            data = f.read()
+        ga.write_file(remote_path, data)
+        print(f"[Debug] Wrote {rel_path} -> {remote_path} on VM {vmid}", flush=True)
+
+    print(f"[Info] Agent files staged on Windows VM {vmid}", flush=True)
+
+
+def _wait_for_ga(ga, vmid, ping_timeout, poll_interval=2):
+    ping_deadline = time.monotonic() + ping_timeout
+    while not ga.ping():
+        if time.monotonic() > ping_deadline:
+            raise TimeoutError(
+                f"QEMU GA on VM {vmid} did not become responsive within {ping_timeout}s"
+            )
+        time.sleep(poll_interval)
+    print(f"[Info] GA responsive on VM {vmid}", flush=True)
 
 
 def configure_vms(challenge_template, ip_pool):
     """
-    Configure VMs with proper IP pool management.
+    Configure VMs with proper IP pool management
     """
     print(f"[Info] Starting VM configuration for {len(challenge_template.machine_templates)} machines", flush=True)
     vms_configured = 0
+    allocated_ips = {}
 
-    # Phase 1: VM Setup and Launch
     for machine_template in challenge_template.machine_templates.values():
-        allocated_ip = None
-
         try:
-            print(f"[Info] Configuring machine template {machine_template.id}", flush=True)
+            print(f"[Info] Configuring machine template {machine_template.id} (guest_os={machine_template.guest_os})", flush=True)
+
             allocated_ip = ip_pool.allocate_ip(machine_template.id)
             if not allocated_ip:
-                print(f"[Error] Could not allocate IP for VM {machine_template.id}", flush=True)
                 raise RuntimeError(f"Could not allocate IP for VM {machine_template.id}")
-
+            allocated_ips[machine_template.id] = allocated_ip
             print(f"[Debug] Allocated IP {allocated_ip} for VM {machine_template.id}", flush=True)
 
-            print(f"[Debug] Attaching cloud-init drive to VM {machine_template.id}", flush=True)
-            attach_cloud_init_drive(machine_template.id)
-
-            print(f"[Debug] Writing cloud-init user-data snippet", flush=True)
-            ci_custom_path = write_user_data_snippet()
-
-            print(f"[Debug] Adding network device to VM {machine_template.id}", flush=True)
             add_network_device_api_call(machine_template.id)
+            print(f"[Debug] Temporary cloud NIC attached to VM {machine_template.id}", flush=True)
 
-            print(f"[Debug] Performing initial configuration for VM {machine_template.id}", flush=True)
-            initial_configuration_api_call(machine_template, allocated_ip, ci_custom_path)
+            initial_configuration_api_call(machine_template)
+            print(f"[Debug] Base Proxmox config applied for VM {machine_template.id}", flush=True)
 
-            print(f"[Info] Launching VM {machine_template.id}", flush=True)
             time.sleep(5)
             launch_vm_api_call(machine_template)
             vms_configured += 1
-            print(f"[Info] VM {machine_template.id} launched successfully", flush=True)
+            print(f"[Info] VM {machine_template.id} launched", flush=True)
 
         except Exception as e:
             print(f"[Error] Failed to configure VM {machine_template.id}: {e}", flush=True)
             raise RuntimeError(f"Failed to configure VM {machine_template.id}: {e}")
 
-    print(f"[Info] Launched {vms_configured} VMs, waiting for cloud-init completion", flush=True)
+    print(f"[Info] Launched {vms_configured} VMs, starting GA-based setup", flush=True)
 
-    # Phase 2: Wait for completion and shutdown
     vms_completed = 0
     for machine_template in challenge_template.machine_templates.values():
         try:
-            print(f"[Info] Waiting for cloud-init completion on VM {machine_template.id}", flush=True)
-            wait_for_cloud_init_completion(machine_template)
-            print(f"[Info] Cloud-init completed on VM {machine_template.id}, shutting down", flush=True)
+            allocated_ip = allocated_ips[machine_template.id]
+            if machine_template.guest_os == 'windows':
+                install_wazuh_windows(machine_template=machine_template, allocated_ip=allocated_ip)
+            else:
+                install_wazuh_linux(machine_template=machine_template, allocated_ip=allocated_ip)
 
+            print(f"[Info] Setup complete on VM {machine_template.id}, shutting down", flush=True)
             shutdown_vm_api_call(machine_template)
+
             max_wait = 900
             start_time = time.time()
-
             while time.time() - start_time < max_wait:
                 if vm_is_stopped_api_call(machine_template):
-                    print(f"[Info] VM {machine_template.id} shutdown completed", flush=True)
+                    print(f"[Info] VM {machine_template.id} stopped", flush=True)
                     break
                 elapsed = int(time.time() - start_time)
-                if elapsed % 60 == 0:  # Log every 60 seconds
+                if elapsed % 60 == 0:
                     print(f"[Debug] Waiting for VM {machine_template.id} to stop ({elapsed}s elapsed)", flush=True)
                 time.sleep(30)
             else:
-                print(f"[Error] VM {machine_template.id} did not shut down within {max_wait}s", flush=True)
-                raise RuntimeError(f"Cloud-init timed out for VM {machine_template.id}")
+                raise RuntimeError(f"VM {machine_template.id} did not stop within {max_wait}s")
 
-            print(f"[Debug] Detaching cloud-init drive from VM {machine_template.id}", flush=True)
-            detach_cloud_init_drive(machine_template.id)
-
-            print(f"[Debug] Detaching network device from VM {machine_template.id}", flush=True)
             detach_network_device_api_call(vmid=machine_template.id, nic="net30")
+            print(f"[Debug] Temporary cloud NIC detached from VM {machine_template.id}", flush=True)
 
-            print(f"[Debug] Releasing IP {ip_pool} for VM {machine_template.id}", flush=True)
             ip_pool.release_ip(machine_template.id)
             vms_completed += 1
-            print(f"[Info] VM {machine_template.id} cleanup completed", flush=True)
+            print(f"[Info] VM {machine_template.id} cleanup complete", flush=True)
 
         except Exception as e:
-            print(f"[Error] Failed to complete cloud-init for VM {machine_template.id}: {e}", flush=True)
+            print(f"[Error] Failed to complete setup for VM {machine_template.id}: {e}", flush=True)
             raise
 
-    print(f"[Info] Successfully completed configuration for {vms_completed} VMs", flush=True)
+    print(f"[Info] Successfully configured {vms_completed} VMs", flush=True)
 
+
+def install_wazuh_linux(machine_template, allocated_ip,timeout=600):
+    """
+    Install Wazuh on a Linux VM via QEMU Guest Agent
+    """
+
+    _PING_TIMEOUT    = 120
+    _INSTALL_TIMEOUT = max(timeout - 60, 120)
+    _FAST_TIMEOUT    = 15
+
+    start_time = time.monotonic()
+    deadline   = start_time + timeout
+
+    print(f"[Info] Starting Linux Wazuh install on VM {machine_template.id}", flush=True)
+
+    with GuestAgent(vmid=machine_template.id) as ga:
+        _wait_for_ga(ga, machine_template.id, _PING_TIMEOUT)
+
+        nic_cmd = (
+            "iface=$(ip -o link | awk '/0a:00/ {print $2; exit}' | tr -d :) && "
+            "ip link set $iface up && "
+            f"ip addr add {allocated_ip}/20 dev $iface && "
+            "ip route add default via 10.32.0.1 && "
+            f"printf 'nameserver {_DNS_SERVERS[0]}\\nnameserver {_DNS_SERVERS[1]}\\n' > /etc/resolv.conf"
+        )
+        result = ga.exec(nic_cmd, capture_output=True, timeout=30)
+        if result.exit_code != 0:
+            print(f"[Warning] NIC setup non-zero on VM {machine_template.id}: {result.stderr.strip()!r}", flush=True)
+
+        _copy_agent_files_linux(ga, _LINUX_AGENT_CONFIG_DIR, _LINUX_REMOTE_BASE, machine_template.id)
+
+        install_cmd = (
+            f"{_LINUX_REMOTE_BASE}/setup_wazuh.sh --install --yes"
+        )
+        print(f"[Info] Running setup_wazuh.sh --install on VM {machine_template.id}", flush=True)
+        result = ga.exec(install_cmd, capture_output=True, timeout=_INSTALL_TIMEOUT)
+        if result.exit_code != 0:
+            raise RuntimeError(
+                f"setup_wazuh.sh --install failed on VM {machine_template.id} "
+                f"(exit={result.exit_code}): {result.stderr.strip()!r}"
+            )
+        print(f"[Info] setup_wazuh.sh --install completed on VM {machine_template.id}", flush=True)
+
+        while time.monotonic() < deadline:
+            elapsed = int(time.monotonic() - start_time)
+            try:
+                flag_result = ga.exec(
+                    ["test", "-f", _LINUX_SETUP_FLAG],
+                    capture_output=False,
+                    timeout=_FAST_TIMEOUT,
+                )
+                timer_result = ga.exec(
+                    ["systemctl", "is-active", "bash_loggin_timer.timer"],
+                    capture_output=True,
+                    timeout=_FAST_TIMEOUT,
+                )
+                if flag_result.exit_code == 0 and timer_result.stdout.strip() == "active":
+                    time.sleep(15)  # stability buffer
+                    print(f"[Info] Linux setup complete on VM {machine_template.id}", flush=True)
+                    return
+                print(
+                    f"[{elapsed}s] waiting: "
+                    f"flag={'present' if flag_result.exit_code == 0 else 'missing'} "
+                    f"timer={timer_result.stdout.strip()!r}",
+                    flush=True,
+                )
+            except GuestAgentError as e:
+                print(f"[{elapsed}s] GA error on VM {machine_template.id}: {type(e).__name__}: {e}", flush=True)
+            except Exception as e:
+                print(f"[{elapsed}s] Unexpected error on VM {machine_template.id}: {type(e).__name__}: {e}", flush=True)
+            time.sleep(10)
+
+    raise TimeoutError(f"Linux setup did not complete within {timeout}s for VM {machine_template.id}")
+
+
+def install_wazuh_windows(machine_template, allocated_ip, timeout=900):
+    """
+    Install Wazuh on a Windows VM via QEMU Guest Agent
+    """
+    _PING_TIMEOUT    = 180
+    _INSTALL_TIMEOUT = max(timeout - 120, 300)
+    _FAST_TIMEOUT    = 40
+
+    start_time = time.monotonic()
+    deadline   = start_time + timeout
+
+    print(f"[Info] Starting Windows Wazuh install on VM {machine_template.id}", flush=True)
+
+    with GuestAgent(vmid=machine_template.id, windows=True) as ga:
+        _wait_for_ga(ga, machine_template.id, _PING_TIMEOUT, poll_interval=5)
+
+        nic_cmd = (
+            '$nic = Get-NetAdapter | Where-Object { $_.MacAddress -like "0A-00*" } | Select-Object -First 1; '
+            'Remove-NetIPAddress -InterfaceIndex $nic.ifIndex -AddressFamily IPv4 -Confirm:$false -ErrorAction SilentlyContinue; '
+            'Remove-NetRoute -InterfaceIndex $nic.ifIndex -DestinationPrefix "0.0.0.0/0" -Confirm:$false -ErrorAction SilentlyContinue; '
+            f'New-NetIPAddress -InterfaceIndex $nic.ifIndex -IPAddress {allocated_ip} -PrefixLength 20 -DefaultGateway 10.32.0.1; '
+            f'Set-DnsClientServerAddress -InterfaceIndex $nic.ifIndex -ServerAddresses ("{_DNS_SERVERS[0]}","{_DNS_SERVERS[1]}")'
+        )
+        result = ga.exec(
+            ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", nic_cmd],
+            capture_output=True,
+            timeout=90,
+        )
+        if result.exit_code != 0:
+            print(f"[Warning] NIC setup non-zero on Windows VM {machine_template.id}: {result.stderr.strip()!r}", flush=True)
+
+        _copy_agent_files_windows(ga, _WINDOWS_AGENT_CONFIG_DIR, _WINDOWS_REMOTE_BASE, machine_template.id)
+
+        ps1_remote = _WINDOWS_REMOTE_BASE + "\\setup_wazuh.ps1"
+        print(f"[Info] Running setup_wazuh.ps1 --install on VM {machine_template.id}", flush=True)
+        result = ga.exec(
+            ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", ps1_remote, "--install", "--yes"],
+            capture_output=True,
+            timeout=_INSTALL_TIMEOUT,
+        )
+        if result.exit_code != 0:
+            raise RuntimeError(
+                f"setup_wazuh.ps1 --install failed on VM {machine_template.id} "
+                f"(exit={result.exit_code}): {result.stderr.strip()!r}"
+            )
+        print(f"[Info] setup_wazuh.ps1 --install completed on VM {machine_template.id}", flush=True)
+
+        while time.monotonic() < deadline:
+            elapsed = int(time.monotonic() - start_time)
+            try:
+                flag_result = ga.exec(
+                    ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command",
+                     f'if (Test-Path "{_WINDOWS_SETUP_FLAG}") {{ exit 0 }} else {{ exit 1 }}'],
+                    capture_output=False,
+                    timeout=_FAST_TIMEOUT,
+                )
+                if flag_result.exit_code == 0:
+                    time.sleep(15)  # stability buffer
+                    print(f"[Info] Windows setup complete on VM {machine_template.id}", flush=True)
+                    return
+                print(f"[{elapsed}s] waiting: setup flag not yet present on VM {machine_template.id}", flush=True)
+            except GuestAgentError as e:
+                print(f"[{elapsed}s] GA error on Windows VM {machine_template.id}: {type(e).__name__}: {e}", flush=True)
+            except Exception as e:
+                print(f"[{elapsed}s] Unexpected error on Windows VM {machine_template.id}: {type(e).__name__}: {e}", flush=True)
+            time.sleep(15)
+
+    raise TimeoutError(f"Windows setup did not complete within {timeout}s for VM {machine_template.id}")
 
 def convert_machine_template_vms_to_templates(challenge_template):
     """
@@ -582,4 +644,3 @@ def undo_import_machine_templates(challenge_template):
                 print(f"[Warning] Failed to destroy VM {machine_template.id}: {e3}", flush=True)
 
     print(f"[Info] Cleanup completed - {vms_deleted} VMs deleted during undo process", flush=True)
-

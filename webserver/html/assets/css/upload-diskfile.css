@@ -188,7 +188,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
+    margin-bottom: 5px;
 }
 
 .ova-name {
@@ -199,6 +199,15 @@
 
 .ova-date {
     font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.ova-details {
+    margin-bottom: 15px;
+}
+
+.ova-guest-os {
+    padding-left: 5px;
     color: rgba(255, 255, 255, 0.6);
 }
 
@@ -240,6 +249,107 @@
 #cancel-btn:disabled {
     cursor: not-allowed;
     opacity: 0.5;
+}
+
+/* ===== OS SELECTION MODAL ===== */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.os-modal {
+    background: var(--color-feature-bg);
+    border-radius: 14px;
+    padding: 36px 40px;
+    width: 100%;
+    max-width: 460px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: modal-in 0.2s ease;
+}
+
+@keyframes modal-in {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+.os-modal h2 {
+    margin: 0 0 8px;
+    font-size: 1.3rem;
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.os-modal > p {
+    margin: 0 0 28px;
+    color: rgba(var(--color-text-rgb), 0.7);
+    font-size: 0.95rem;
+}
+
+.os-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 28px;
+}
+
+.os-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 28px 20px;
+    background: rgba(var(--color-text-rgb), 0.05);
+    border: 2px solid rgba(var(--color-text-rgb), 0.1);
+    border-radius: 10px;
+    color: var(--color-text);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+}
+
+.os-option i {
+    font-size: 2.4rem;
+    color: rgba(var(--color-text-rgb), 0.5);
+    transition: color 0.2s ease;
+}
+
+.os-option:hover {
+    border-color: var(--color-primary);
+    background: rgba(var(--color-primary-rgb), 0.06);
+    transform: translateY(-2px);
+}
+
+.os-option:hover i {
+    color: var(--color-primary);
+}
+
+.os-option.selected {
+    border-color: var(--color-primary);
+    background: rgba(var(--color-primary-rgb), 0.12);
+}
+
+.os-option.selected i {
+    color: var(--color-primary);
+}
+
+.os-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
 }
 
 /* ===== RESPONSIVE STYLES ===== */

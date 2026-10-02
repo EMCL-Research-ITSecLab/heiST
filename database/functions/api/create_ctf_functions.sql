@@ -244,7 +244,8 @@ CREATE FUNCTION get_user_available_disk_files(
 ) RETURNS TABLE (
     id BIGINT,
     display_name TEXT,
-    upload_date TIMESTAMP
+    upload_date TIMESTAMP,
+    guest_os guest_os
 )
 LANGUAGE plpgsql
 SET plpgsql.variable_conflict = 'use_column'
@@ -253,8 +254,9 @@ BEGIN
     RETURN QUERY
     SELECT
         df.id::BIGINT,
-        df.display_name::TEXT AS name,
-        df.upload_date::TIMESTAMP AS date
+        df.display_name::TEXT,
+        df.upload_date::TIMESTAMP,
+        df.guest_os
     FROM disk_files df
     WHERE df.user_id = p_user_id
     ORDER BY df.upload_date DESC, df.id;

@@ -19,7 +19,7 @@ from backend.DatabaseClasses import (
 )
 from backend.proxmox_api_calls import clone_vm_api_call
 from backend.stop_challenge import stop_challenge
-from backend.warmup_challenge import warmup_challenge
+from backend.warmup_challenge import warmup_challenge, stop_dnsmasq_process, start_dnsmasq_process
 from backend.launch_timing_logger import launch_timing_logger
 from backend.get_db_connection import db_connection_context
 from backend.qemu_ga_wrapper import GuestAgent, GuestAgentError
@@ -844,15 +844,7 @@ def start_dnsmasq_instances(challenge, user_vpn_ip):
         print(f"[Info] Log path: {log_path}", flush=True)
         print(f"[Info] Pidfile path: {pidfile_path}", flush=True)
 
-        # Launch the isolated dnsmasq instance
-        process = subprocess.Popen([
-            "dnsmasq",
-            f"--conf-file={config_path}",
-            f"--pid-file={pidfile_path}",
-            f"--dhcp-leasefile={leases_path}",
-            f"--log-facility={log_path}",
-        ])
-
-        print(f"[Info] Started dnsmasq process (PID: {process.pid}) for network {network.id} on device {network.host_device}", flush=True)
+        stop_dnsmasq_process(pidfile_path)
+        start_dnsmasq_process(network)
 
     print(f"[Info] All dnsmasq instances started for challenge {challenge.id}", flush=True)

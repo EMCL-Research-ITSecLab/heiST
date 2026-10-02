@@ -6,6 +6,7 @@ import time
 from dotenv import load_dotenv, find_dotenv
 import os
 import subprocess
+import signal
 
 
 from backend.DatabaseClasses import (
@@ -103,6 +104,8 @@ def warmup_challenge(pre_assigned_user_id, challenge_template_id, vpn_monitoring
             attach_networks_to_vms(challenge)
             print(f"[Info] Configuring dnsmasq instances", flush=True)
             configure_dnsmasq_instances(challenge)
+            print(f"[Info] Starting dnsmasq instances", flush=True)
+            start_dnsmasq_processes(challenge)
             launch_timing_logger(start_time_network, "[WARMUP NETWORK SETUP COMPLETE]", challenge_template_id, pre_assigned_user_id)
 
             start_time_vm_boot = time.time()
@@ -843,6 +846,112 @@ def launch_machines(challenge):
     print(f"[Info] All VMs are ready with QEMU Guest Agent responding", flush=True)
 
 
+def _dnsmasq_file_paths(network):
+    base = os.path.join(DNSMASQ_INSTANCES_DIR, f"dnsmasq_{network.host_device}")
+    return {
+        "conf": f"{base}.conf",
+        "pid": f"{base}.pid",
+        "leases": f"{base}.leases",
+        "log": f"{base}.log",
+    }
+
+
+def stop_dnsmasq_process(pidfile_path, timeout=5):
+    """
+    Stop a running dnsmasq instance (if any) and wait until it has exited.
+    """
+    try:
+        with open(pidfile_path, "r") as f:
+            pid = int(f.read().strip())
+    except (FileNotFoundError, ValueError):
+        return
+
+    # Guard against PID reuse
+    try:
+        with open(f"/proc/{pid}/cmdline", "rb") as f:
+            if b"dnsmasq" not in f.read():
+                return
+    except FileNotFoundError:
+        return
+
+    try:
+        os.kill(pid, signal.SIGTERM)
+    except ProcessLookupError:
+        return
+
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return
+        time.sleep(0.1)
+
+    try:
+        os.kill(pid, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
+
+
+def start_dnsmasq_process(network, attempts=5, retry_delay=1.0):
+    """
+    Start the isolated dnsmasq instance for one network.
+    """
+    paths = _dnsmasq_file_paths(network)
+    cmd = [
+        "dnsmasq",
+        f"--conf-file={paths['conf']}",
+        f"--pid-file={paths['pid']}",
+        f"--dhcp-leasefile={paths['leases']}",
+        f"--log-facility={paths['log']}",
+    ]
+
+    last_error = ""
+    for attempt in range(1, attempts + 1):
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode == 0:
+            print(f"[Info] dnsmasq started for network {network.id} on {network.host_device} "
+                  f"(attempt {attempt})", flush=True)
+            return
+        last_error = (result.stderr or result.stdout).strip()
+        print(f"[Warning] dnsmasq failed to start on {network.host_device} "
+              f"(attempt {attempt}/{attempts}): {last_error}", flush=True)
+        time.sleep(retry_delay)
+
+    raise RuntimeError(f"Could not start dnsmasq on {network.host_device}: {last_error}")
+
+
+def start_dnsmasq_processes(challenge):
+    """
+    Start a dnsmasq process for every network of the challenge using the configs written by
+    configure_dnsmasq_instances(). Already running instances are restarted.
+    """
+    for network in challenge.networks.values():
+        stop_dnsmasq_process(_dnsmasq_file_paths(network)["pid"])
+        start_dnsmasq_process(network)
+
+
+def _describe_guest_network_state(machine):
+    """
+    Best-effort snapshot of the DC's IPv4 addresses and LDAP listener, for timeout diagnostics.
+    """
+    ps = (
+        "Get-NetIPAddress -AddressFamily IPv4 | ForEach-Object { \"$($_.InterfaceAlias)=$($_.IPAddress)\" }; "
+        "\"ldap_listening=$((Get-NetTCPConnection -LocalPort 389 -State Listen -ErrorAction SilentlyContinue "
+        "| Measure-Object).Count -gt 0)\""
+    )
+    try:
+        with GuestAgent(vmid=machine.id, windows=True, socket_wait_timeout=5) as ga:
+            result = ga.exec(
+                ["powershell.exe", "-ExecutionPolicy", "Bypass", "-Command", ps],
+                capture_output=True,
+                timeout=30,
+            )
+        return " | ".join(line.strip() for line in result.stdout.splitlines() if line.strip())
+    except Exception as e:
+        return f"unavailable ({e})"
+
+
 def wait_for_ldap(machine, port=389, timeout=240, interval=3):
     """
     Wait until a Domain Controller's LDAP port answers a TCP connection."""
@@ -851,7 +960,8 @@ def wait_for_ldap(machine, port=389, timeout=240, interval=3):
     if not candidate_ips:
         raise RuntimeError(f"Domain Controller VM {machine.id} has no network connections to check LDAP on")
 
-    deadline = time.monotonic() + timeout
+    start = time.monotonic()
+    deadline = start + timeout
     attempt = 0
 
     while time.monotonic() < deadline:
@@ -865,11 +975,16 @@ def wait_for_ldap(machine, port=389, timeout=240, interval=3):
             except OSError:
                 continue
 
+        if attempt % 10 == 0:
+            print(f"[Info] Still waiting for LDAP on Domain Controller VM {machine.id} "
+                  f"({int(time.monotonic() - start)}s elapsed, tried {', '.join(candidate_ips)}:{port})", flush=True)
+
         time.sleep(interval)
 
+    guest_state = _describe_guest_network_state(machine)
     raise TimeoutError(
         f"Timed out after {timeout}s waiting for LDAP on Domain Controller VM {machine.id} "
-        f"(tried {', '.join(candidate_ips)}:{port})"
+        f"(tried {', '.join(candidate_ips)}:{port}). Guest reports: {guest_state}"
     )
 
 

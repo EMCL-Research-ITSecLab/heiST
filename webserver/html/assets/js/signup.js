@@ -11,7 +11,9 @@ class SignupForm {
             'Username': 'username',
             'Email': 'email',
             'Password': 'password',
-            'Confirm Password': 'confirm-password'
+            'Confirm Password': 'confirm-password',
+            'Token': 'token',
+            'Terms': 'agree-tos'
         };
 
         this.loadConfig().then(() => {
@@ -26,6 +28,7 @@ class SignupForm {
         this.setupPasswordToggles();
         this.setupFormSubmission();
         this.setupRealTimeValidation();
+        this.setupTosValidation();
     }
 
     async loadConfig() {
@@ -41,11 +44,23 @@ class SignupForm {
         }
     }
 
+    setupTosValidation() {
+        const tosCheckbox = document.getElementById('agree-tos');
+        if (!tosCheckbox) return;
+
+        tosCheckbox.addEventListener('change', () => {
+            if (tosCheckbox.checked) {
+                this.clearTosError();
+            }
+        });
+    }
+
     setupRealTimeValidation() {
         const usernameField = this.form.querySelector('#username');
         const emailField = this.form.querySelector('#email');
         const passwordField = this.form.querySelector('#password');
         const confirmPasswordField = this.form.querySelector('#confirm-password');
+        const tokenField = this.form.querySelector('#token');
 
         if (usernameField) {
             usernameField.addEventListener('blur', () => this.validateUsername(usernameField.value));
@@ -65,6 +80,10 @@ class SignupForm {
                     this.validatePasswordMatch(passwordField.value, confirmPasswordField.value);
                 }
             });
+        }
+
+        if (tokenField) {
+            tokenField.addEventListener('blur', () => this.validateToken(tokenField.value));
         }
     }
 
@@ -143,6 +162,57 @@ class SignupForm {
         return true;
     }
 
+    validateToken(token) {
+        if (!token) {
+            this.showError('token', 'Token is required');
+            return false;
+        }
+
+        this.clearError('token');
+        return true;
+    }
+
+    validateTos() {
+        const tosCheckbox = document.getElementById('agree-tos');
+        if (!tosCheckbox) return true;
+
+        if (!tosCheckbox.checked) {
+            this.showTosError('You must agree to the Terms of Service and Privacy Policy');
+            return false;
+        }
+
+        this.clearTosError();
+        return true;
+    }
+
+    showTosError(message) {
+        const tosCheckbox = document.getElementById('agree-tos');
+        if (!tosCheckbox) return;
+
+        const customCheckbox = tosCheckbox.parentElement?.querySelector('.custom-checkbox');
+
+        if (customCheckbox) {
+            customCheckbox.style.borderColor = '#ff6b6b';
+            customCheckbox.style.border = '2px solid #ff6b6b';
+        }
+
+        // Scroll to checkbox so user sees it
+        tosCheckbox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    clearTosError() {
+        const tosCheckbox = document.getElementById('agree-tos');
+        if (!tosCheckbox) return;
+
+        const customCheckbox = tosCheckbox.parentElement?.querySelector('.custom-checkbox');
+
+        if (customCheckbox) {
+            customCheckbox.style.borderColor = '';
+            customCheckbox.style.border = '';
+        }
+    }
+
+
     clearError(fieldId) {
         const field = document.getElementById(fieldId);
         if (!field) return;
@@ -167,13 +237,16 @@ class SignupForm {
             const email = this.form.querySelector('#email')?.value;
             const password = this.form.querySelector('#password')?.value;
             const confirmPassword = this.form.querySelector('#confirm-password')?.value;
+            const token = this.form.querySelector('#token')?.value;
 
             const isUsernameValid = this.validateUsername(username);
             const isEmailValid = this.validateEmail(email);
             const isPasswordValid = this.validatePassword(password);
             const isPasswordMatchValid = this.validatePasswordMatch(password, confirmPassword);
+            const isTokenValid = this.validateToken(token);
+            const isTosValid = this.validateTos();
 
-            if (!isUsernameValid || !isEmailValid || !isPasswordValid || !isPasswordMatchValid) {
+            if (!isUsernameValid || !isEmailValid || !isPasswordValid || !isPasswordMatchValid || !isTokenValid || !isTosValid) {
                 return;
             }
 
@@ -240,7 +313,11 @@ class SignupForm {
         let fieldFound = false;
         for (const [keyword, fieldId] of Object.entries(this.errorMapping)) {
             if (data.message.toLowerCase().includes(keyword.toLowerCase())) {
-                this.showError(fieldId, data.message);
+                if (fieldId === 'agree-tos') {
+                    this.showTosError(data.message);
+                } else {
+                    this.showError(fieldId, data.message);
+                }
 
                 fieldFound = true;
                 if (keyword === 'Password') {
@@ -300,6 +377,8 @@ class SignupForm {
             this.formFeedback.textContent = '';
             this.formFeedback.className = 'form-feedback';
         }
+
+        this.clearTosError();
     }
 }
 

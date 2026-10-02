@@ -281,7 +281,7 @@ class ChallengePage {
         entrypointsList.className = 'entrypoints-info';
 
         const title = document.createElement('h4');
-        title.textContent = 'Entry Points:';
+        title.textContent = 'Entry Points: (Make sure that you are connected to the VPN, you can find your VPN config in your profile)';
         entrypointsList.appendChild(title);
 
         const list = document.createElement('ul');

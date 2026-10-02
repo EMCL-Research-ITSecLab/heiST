@@ -35,17 +35,17 @@ $csrf_token = $securityHelper->generateCsrfToken();
         <input type="hidden" name="csrf_token" value="<?php echo (new SecurityHelper())->generateCsrfToken();?>">
         <h2>Sign Up</h2>
         <div class="input-group has-icon">
-            <label for="username">Username</label>
+            <label for="username">Username (Uni-ID)</label>
             <div class="input-wrapper">
-                <input type="text" id="username" name="username" placeholder="Enter your username" required>
+                <input type="text" id="username" name="username" placeholder="Enter your Uni-ID" required>
                 <i class="fa-solid fa-circle-exclamation input-error-icon" id="username-icon"></i>
             </div>
             <small class="error-message" id="username-error"></small>
         </div>
         <div class="input-group has-icon">
-            <label for="email">Email</label>
+            <label for="email">Email (Same as registered in Moodle)</label>
             <div class="input-wrapper">
-                <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                <input type="email" id="email" name="email" placeholder="Enter your moodle email" required>
                 <i class="fa-solid fa-circle-exclamation input-error-icon" id="email-icon"></i>
             </div>
             <small class="error-message" id="email-error"></small>
@@ -73,6 +73,28 @@ $csrf_token = $securityHelper->generateCsrfToken();
             </div>
             <small class="error-message" id="confirm-password-error"></small>
         </div>
+        <div class="input-group has-icon">
+            <label for="token">Token</label>
+            <div class="input-wrapper">
+                <input type="text" id="token" name="token" placeholder="Enter your token" required>
+                <i class="fa-solid fa-circle-exclamation input-error-icon" id="token-icon"></i>
+            </div>
+            <small class="error-message" id="token-error"></small>
+        </div>
+        <div class="input-group tos">
+            <label class="remember-me tos-label">
+                <div>
+                    <input type="checkbox" id="agree-tos" name="agree_tos">
+                    <span class="custom-checkbox"></span>
+                </div>
+                <div>
+                    I have read and agree to the
+                    <a href="/terms-of-service" target="_blank" class="tos-link">Terms of Service</a>
+                    and
+                    <a href="/privacy-policy" target="_blank" class="tos-link">Privacy Policy</a>
+                </div>
+            </label>
+        </div>
         <button type="submit" class="button button-primary">Sign Up</button>
         <div class="form-feedback" id="form-feedback"></div>
         <p class="create-account">
@@ -80,6 +102,7 @@ $csrf_token = $securityHelper->generateCsrfToken();
         </p>
     </form>
 </div>
+<?php include($_SERVER['DOCUMENT_ROOT'] . '/partials/footer.html'); ?>
 <script type="module" src="../assets/js/theme-toggle.js"></script>
 <script type="module" src="../assets/js/signup.js"></script>
 <script type="module" src="../assets/js/logo-toggle.js"></script>

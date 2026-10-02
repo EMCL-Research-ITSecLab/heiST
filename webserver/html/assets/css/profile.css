@@ -707,6 +707,85 @@
     text-decoration: underline;
 }
 
+/* ===== Privacy Section ===== */
+.privacy-section {
+    margin-top: 2rem;
+    padding-top: 2rem;
+}
+
+.privacy-header {
+    margin-bottom: 1rem;
+}
+
+.privacy-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+.privacy-info {
+    flex: 1;
+}
+
+.privacy-title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.option-switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 24px;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+.option-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.option-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--color-background);
+    transition: 0.3s;
+    border-radius: 12px;
+}
+
+[data-theme="light"] .option-slider{
+    background-color: rgba(var(--color-text-rgb),0.6);
+}
+
+.option-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: var(--color-slider-bg);
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+input:checked + .option-slider {
+    background-color: var(--color-primary, #00bcd4);
+}
+
+input:checked + .option-slider:before {
+    transform: translateX(24px);
+}
+
 /* ===== Danger Zone ===== */
 .danger-zone {
     margin-top: 7rem;

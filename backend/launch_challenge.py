@@ -56,7 +56,6 @@ def launch_challenge(challenge_template_id, user_id, vpn_monitoring_device, dmz_
                 print(f"[Info] DB fetch started for user {user_id} and challenge template {challenge_template_id}", flush=True)
                 user_vpn_ip = fetch_user_vpn_ip(user_id, db_conn)
                 user_email = fetch_user_email(user_id, db_conn)
-                user_unique_id = fetch_user_unique_id(user_id, db_conn)
                 challenge_template = ChallengeTemplate(challenge_template_id)
                 fetch_challenge_flags(challenge_template, db_conn)
 
@@ -119,7 +118,7 @@ def launch_challenge(challenge_template_id, user_id, vpn_monitoring_device, dmz_
 
                 start_time_user_flags = time.time()
                 print(f"[Info] Starting user-specific flag processing for challenge {challenge.id} and user {user_id}", flush=True)
-                process_all_user_specific_flags(challenge, user_email, user_unique_id)
+                process_all_user_specific_flags(challenge, user_email)
                 launch_timing_logger(start_time_user_flags, "[USER FLAGS COMPLETE]", challenge_template_id, user_id)
 
                 start_time_firewall = time.time()
@@ -437,20 +436,20 @@ def vmid_to_ipv6(vmid, offset=0x1000):
     return f"fd12:3456:789a:1::{high:x}:{low:x}"
 
 
-def generate_user_specific_flag(flag_secret, user_unique_id):
+def generate_user_specific_flag(flag_secret, user_email):
     """
-    Generate a user-specific flag using the secret and user unique id.
-    Format: ITSEC{sha1.hmac_hash(key=secret,message=unique_id)}
+    Generate a user-specific flag using the secret and user email.
+    Format: ITSEC{sha1.hmac_hash(key=secret,message=email)}
     """
     hash_value = hmac.new(
         flag_secret.encode('utf-8'),
-        user_unique_id.encode('utf-8'),
+        user_email.encode('utf-8'),
         hashlib.sha1
     ).hexdigest()
     return f"ITSEC{{{hash_value}}}"
 
 
-def process_all_user_specific_flags(challenge, user_email, user_unique_id):
+def process_all_user_specific_flags(challenge, user_email):
     """
     Process all user-specific flags for the challenge.
     Generates personalized flags and writes them to the appropriate VMs.
@@ -482,8 +481,8 @@ def process_all_user_specific_flags(challenge, user_email, user_unique_id):
 
                 print(f"[Info] Processing flag {flag} for machine {machine.id}", flush=True)
 
-                user_flag = generate_user_specific_flag(flag['flag'], user_unique_id)
-                print(f"[Info] Generated user-specific flag for {user_unique_id}: {user_flag}", flush=True)
+                user_flag = generate_user_specific_flag(flag['flag'], user_email)
+                print(f"[Info] Generated user-specific flag for {user_email}: {user_flag}", flush=True)
                 flag_path = f"/root/flag_{flag['order_index']}.txt"
                 flags_by_machine[machine.id].append({
                     'flag': user_flag,
@@ -642,20 +641,6 @@ def fetch_user_email(user_id, db_conn):
 
     print(f"[Info] Successfully fetched email {user_email} for user {user_id}", flush=True)
     return user_email
-
-
-def fetch_user_unique_id(user_id, db_conn):
-    """
-    Fetch the unique id for the given user ID.
-    """
-    with db_conn.cursor() as cursor:
-        cursor.execute("SELECT unique_id FROM users WHERE id = %s", (user_id,))
-        unique_id = cursor.fetchone()[0]
-
-    if unique_id is None:
-        raise ValueError("User unique id not found")
-
-    return unique_id
 
 
 def fetch_challenge_flags(challenge_template, db_conn):

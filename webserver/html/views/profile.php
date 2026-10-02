@@ -233,6 +233,23 @@ if (!$securityHelper->validateSession()) {
                                 <span class="field-label">Last Login</span>
                                 <span class="field-value" id="last-login-display">Never</span>
                             </div>
+                        <div class="info-field privacy-section">
+                                <div class="privacy-header">
+                                    <span class="field-label">Privacy & Data Usage</span>
+                                </div>
+                                <div class="privacy-option">
+                                    <div class="privacy-info">
+                                        <div class="privacy-title">AI Training Data</div>
+                                        <div class="privacy-description">
+                                            Allow your anonymized data to be used for improving our AI models
+                                        </div>
+                                    </div>
+                                    <label class="option-switch">
+                                        <input type="checkbox" id="ai-training-consent-toggle">
+                                        <span class="option-slider round"></span>
+                                    </label>
+                                </div>
+                            </div>
                             <div class="info-field danger-zone">
                                 <span class="field-label">Account Deletion</span>
                                 <div class="field-with-action">

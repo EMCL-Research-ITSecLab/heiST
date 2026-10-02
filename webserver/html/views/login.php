@@ -71,6 +71,7 @@ $csrf_token = $securityHelper->generateCsrfToken();
         </p>
     </form>
 </div>
+<?php include($_SERVER['DOCUMENT_ROOT'] . '/partials/footer.html'); ?>
 <script type="module" src="../assets/js/theme-toggle.js"></script>
 <script type="module" src="../assets/js/login.js"></script>
 <script type="module" src="../assets/js/logo-toggle.js"></script>

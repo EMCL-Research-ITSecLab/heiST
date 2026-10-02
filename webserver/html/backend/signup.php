@@ -11,6 +11,8 @@ class RegistrationHandler
     private string $password;
     private string $confirmPassword;
     private string $csrfToken;
+    private string $token;
+    private bool $agreeTos;
     private array $generalConfig;
     private string $route;
 
@@ -93,6 +95,9 @@ class RegistrationHandler
         $this->email = trim($this->post['email'] ?? '');
         $this->password = $this->post['password'] ?? '';
         $this->confirmPassword = $this->post['confirm-password'] ?? '';
+        $this->token = trim($this->post['token'] ?? '');
+        $this->agreeTos = isset($this->post['agree_tos']) &&
+            ($this->post['agree_tos'] === 'on' || $this->post['agree_tos'] === '1' || $this->post['agree_tos'] === true);
     }
 
     public function handleRequest(): void
@@ -100,6 +105,7 @@ class RegistrationHandler
         try {
             $this->validateInput();
             $this->validateCsrfToken();
+            $this->validateToken();
             $this->checkCredentialsAvailability();
             $create_data = $this->createUserAccount();
             $userId = $create_data['user_id'];
@@ -119,9 +125,16 @@ class RegistrationHandler
      */
     private function validateInput(): void
     {
-        if (empty($this->username) || empty($this->email) || empty($this->password) || empty($this->confirmPassword)) {
+        if (empty($this->username) || empty($this->email) || empty($this->password) || empty($this->confirmPassword) || empty($this->token)) {
             throw new CustomException('All fields are required', 400);
-        } elseif (strlen($this->username) < $this->generalConfig['user']['MIN_USERNAME_LENGTH']) {
+        }
+
+        if (!$this->agreeTos) {
+            $this->logger->logWarning("Registration attempt without ToS agreement - Username: $this->username, IP: " . $this->logger->anonymizeIp($this->server['REMOTE_ADDR'] ?? 'unknown'));
+            throw new CustomException('You must agree to the Terms of Service and Privacy Policy', 400);
+        }
+
+        if (strlen($this->username) < $this->generalConfig['user']['MIN_USERNAME_LENGTH']) {
             throw new CustomException('Username must be at least' . $this->generalConfig['user']['MIN_USERNAME_LENGTH'] . 'characters long', 400);
         } elseif (strlen($this->username) > $this->generalConfig['user']['MAX_USERNAME_LENGTH']) {
             throw new CustomException('Username must not exceed ' . $this->generalConfig['user']['MAX_USERNAME_LENGTH'] . 'characters', 400);
@@ -144,6 +157,26 @@ class RegistrationHandler
         if ($this->password !== $this->confirmPassword) {
             throw new CustomException('Passwords do not match', 400);
         }
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function validateToken(): void
+    {
+        $lectureSignupToken = $this->env['LECTURE_SIGNUP_TOKEN'] ?? '';
+
+        if (empty($lectureSignupToken)) {
+            $this->logger->logError("LECTURE_SIGNUP_TOKEN environment variable is not set");
+            throw new CustomException('Registration is currently unavailable', 500);
+        }
+
+        if ($this->token !== $lectureSignupToken) {
+            $this->logger->logWarning("Invalid token provided for registration attempt. Username: " . $this->username . ", IP: " . $this->logger->anonymizeIp($this->server['REMOTE_ADDR'] ?? 'unknown'));
+            throw new CustomException('Invalid token', 400);
+        }
+
+        $this->logger->logDebug("Token validation successful for username: " . $this->username);
     }
 
     /**

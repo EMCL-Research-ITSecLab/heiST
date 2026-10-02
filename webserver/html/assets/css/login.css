@@ -162,6 +162,36 @@ body {
     transform: translate(-50%, -50%) scale(1);
 }
 
+
+/* ===== Terms of Service Links ===== */
+.tos {
+    max-width: 400px;
+    margin-top: 2rem;
+}
+
+.tos-label {
+    display: flex !important;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.remember-me .tos-link {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.remember-me .tos-link:hover {
+    color: var(--color-primary-hover);
+    text-decoration: underline;
+}
+
+.remember-me label {
+    cursor: pointer;
+    user-select: none;
+    max-width: 400px
+}
+
 .forgot-password {
     text-decoration: none;
     font-weight: bold;
@@ -204,6 +234,15 @@ body {
 
 .create-account a:hover {
     color: var(--color-primary-hover);
+}
+
+footer {
+    padding-top: 50px !important;
+    background-color: var(--color-transparent) !important;
+}
+
+footer .container{
+    width: 100% !important;
 }
 
 /* ===== Animations ===== */

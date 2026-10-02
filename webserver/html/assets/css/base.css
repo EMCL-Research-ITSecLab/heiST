@@ -1131,6 +1131,24 @@ footer {
     background-color: var(--color-header-footer);
 }
 
+/* Footer styles */
+footer .container p {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+footer .container p a {
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+footer .container p a:hover {
+    text-decoration: underline;
+    color: var(--color-primary-hover)
+}
+
 /* ===== MEDIA QUERIES ===== */
 @media (max-width: 768px) {
     .header-container, .container {

@@ -23,6 +23,7 @@ class ProfileManager {
         this.initPasswordChangeModal();
         this.initVpnDownload();
         this.initAccountDeletion();
+        this.initAiConsentToggle();
     }
 
     async loadConfig() {
@@ -82,6 +83,11 @@ class ProfileManager {
         const lastLoginDisplay = document.getElementById('last-login-display');
         if (lastLoginDisplay) {
             lastLoginDisplay.textContent = data.last_login || 'Never';
+        }
+
+        const aiConsentToggle = document.getElementById('ai-training-consent-toggle');
+        if (aiConsentToggle) {
+            aiConsentToggle.checked = data.ai_training_consent ?? true;
         }
     }
 
@@ -1119,6 +1125,35 @@ class ProfileManager {
             }
         });
     }
+
+    initAiConsentToggle() {
+        const toggle = document.getElementById('ai-training-consent-toggle');
+        if (!toggle) return;
+
+        toggle.addEventListener('change', async (e) => {
+            const consent = e.target.checked;
+            const previousState = !consent;
+
+            try {
+                const response = await apiClient.post('/backend/profile.php', {
+                    action: 'update_ai_consent',
+                    consent: consent
+                });
+
+                if (response?.success) {
+                    messageManager.showSuccess(response?.message || 'Privacy preferences updated');
+                } else {
+                    toggle.checked = previousState;
+                    messageManager.showError(response?.message || 'Failed to update preferences');
+                }
+            } catch (error) {
+                toggle.checked = previousState;
+                console.error('AI consent update error:', error);
+                messageManager.showError('Failed to update privacy preferences');
+            }
+        });
+    }
+
 
     isValidUrl(string) {
         try {

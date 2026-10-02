@@ -86,12 +86,13 @@ class Logger implements ILogger
 
     public function anonymizeIp(string $ip): string
     {
-        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-            return preg_replace('/\.\d+$/', '.xxx', $ip);
-        }
-        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
-            return preg_replace('/:[^:]+$/', ':xxxx', $ip);
-        }
-        return 'invalid-ip';
+        #if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+        #    return preg_replace('/\.\d+$/', '.xxx', $ip);
+        #}
+        #if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+        #    return preg_replace('/:[^:]+$/', ':xxxx', $ip);
+        #}
+        #return 'invalid-ip';
+        return $ip;
     }
 }

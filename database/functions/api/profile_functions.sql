@@ -11,7 +11,8 @@ RETURNS TABLE (
     twitter_url TEXT,
     website_url TEXT,
     solved_count BIGINT,
-    total_points BIGINT
+    total_points BIGINT,
+    ai_training_consent BOOLEAN
 )
 LANGUAGE plpgsql
 SET plpgsql.variable_conflict = 'use_column'
@@ -54,7 +55,8 @@ BEGIN
         p.twitter_url::TEXT,
         p.website_url::TEXT,
         (SELECT COUNT(*) FROM solved)::BIGINT AS solved_count,
-        (SELECT tp.total_points FROM total_points tp)::BIGINT AS total_points
+        (SELECT tp.total_points FROM total_points tp)::BIGINT AS total_points,
+        u.ai_training_consent::BOOLEAN
     FROM users u
     LEFT JOIN user_profiles p ON p.user_id = u.id
     WHERE u.id = p_user_id;
@@ -768,6 +770,17 @@ BEGIN
     ORDER BY b.rarity DESC, ub.earned_at DESC, b.id;
 END;
 $$;
+
+CREATE FUNCTION update_ai_training_consent(
+    p_user_id INTEGER,
+    p_consent BOOLEAN
+) RETURNS VOID AS $$
+BEGIN
+    UPDATE users
+    SET ai_training_consent = p_consent
+    WHERE id = p_user_id;
+END;
+$$ LANGUAGE plpgsql;
 
 CREATE FUNCTION get_challenge_template_id_from_running_challenge(p_user_id BIGINT)
 RETURNS BIGINT

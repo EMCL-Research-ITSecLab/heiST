@@ -37,17 +37,11 @@ AS $$
 DECLARE
     v_user_id BIGINT;
     v_vpn_ip INET;
-    v_unique_id TEXT;
 BEGIN
     v_user_id := allocate_user_id();
 
-    v_unique_id := encode(
-        digest(p_username || p_email || now()::TEXT || encode(gen_random_bytes(8), 'hex'), 'sha256'),
-        'hex'
-    );
-
-    INSERT INTO users (id, username, email, password_hash, password_salt, unique_id)
-    VALUES (v_user_id, p_username, p_email, p_password_hash, p_password_salt, v_unique_id);
+    INSERT INTO users (id, username, email, password_hash, password_salt)
+    VALUES (v_user_id, p_username, p_email, p_password_hash, p_password_salt);
 
     v_vpn_ip := assign_lowest_vpn_ip(v_user_id);
 

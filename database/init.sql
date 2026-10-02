@@ -389,6 +389,7 @@ CREATE TABLE users (
     running_challenge BIGINT,
     is_admin BOOLEAN DEFAULT FALSE,
     vpn_static_ip INET REFERENCES vpn_static_ips(vpn_static_ip) ON DELETE SET NULL,
+    ai_training_consent BOOLEAN DEFAULT TRUE,
     unique_id TEXT UNIQUE,
     password_reset BOOLEAN DEFAULT False,
     password_reset_timestamp TIMESTAMP DEFAULT NULL

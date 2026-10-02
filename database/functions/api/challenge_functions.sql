@@ -136,9 +136,9 @@ LANGUAGE plpgsql
 SET plpgsql.variable_conflict = 'use_column'
 AS $$
 DECLARE
-    v_user_unique_id TEXT;
+    v_user_email TEXT;
 BEGIN
-    SELECT u.unique_id INTO v_user_unique_id
+    SELECT u.email INTO v_user_email
     FROM users u
     WHERE u.id = p_user_id;
 
@@ -154,7 +154,7 @@ BEGIN
         OR
         -- User-specific flag: HMAC match using unique_id
         (cf.user_specific = true AND
-         'ITSEC{' || encode(hmac(v_user_unique_id::bytea, cf.flag::bytea, 'sha1'), 'hex') || '}' = p_submitted_flag)
+         'ITSEC{' || encode(hmac(v_user_email::bytea, cf.flag::bytea, 'sha1'), 'hex') || '}' = p_submitted_flag)
     )
     FOR UPDATE;
 END;

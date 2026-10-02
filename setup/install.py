@@ -554,7 +554,7 @@ DEFAULTS = {
     "PROXMOX_INTERNAL_IP": "10.0.3.4",
     "PROXMOX_EXTERNAL_IP": "10.0.3.4",
     "PROXMOX_HOSTNAME": "pve",
-    "UBUNTU_BASE_SERVER_URL": "https://heibox.uni-heidelberg.de/f/ed47eb217b8b421ab9ef/?dl=1",
+    "UBUNTU_BASE_SERVER_URL": "https://heibox.uni-heidelberg.de/f/004597b1f84040f79dbf/?dl=1",
 
     # Paths / database / webserver
     "DATABASE_FILES_DIR": "/root/heiST/database",

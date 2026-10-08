@@ -109,7 +109,7 @@ class ChallengePage {
     populateBasicInfo(challenge) {
         this.challengeTitle.textContent = challenge.name;
         this.challengeDescription.innerHTML = `
-            ${this.escapeHtml(challenge.description)}<br><br>
+            ${this.escapeHtml(challenge.description).replace(/\r?\n/g, '<br>')}<br><br>
             <em>~ by ${this.escapeHtml(challenge.creator_username || 'unknown')}</em>
         `;
 

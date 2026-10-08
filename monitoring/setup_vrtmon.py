@@ -232,15 +232,17 @@ def add_to_interfaces():
     """Add persistent bridge configuration to network interfaces file"""
     log_section("Adding Persistent Bridge Configuration")
 
+    wazuh_ip = WAZUH_MANAGER_IPV6.split('/')[0]
+
     # Build firewall rules for post-up commands
     firewall_rules = ""
     for port in ALLOWED_PORTS:
         # TCP rules
-        firewall_rules += f'    post-up ip6tables -A FORWARD -s {TARGET_NETWORK} -p tcp --dport {port} -m state --state NEW -j ACCEPT\n'
-        firewall_rules += f'    post-up ip6tables -A FORWARD -d {TARGET_NETWORK} -p tcp --sport {port} -m state --state NEW -j ACCEPT\n'
+        firewall_rules += f'    post-up ip6tables -A FORWARD -s {TARGET_NETWORK} -d {wazuh_ip} -p tcp --dport {port} -m state --state NEW -j ACCEPT\n'
+        firewall_rules += f'    post-up ip6tables -A FORWARD -s {wazuh_ip} -d {TARGET_NETWORK} -p tcp --dport {port} -m state --state NEW -j ACCEPT\n'
         # UDP rules
-        firewall_rules += f'    post-up ip6tables -A FORWARD -s {TARGET_NETWORK} -p udp --dport {port} -j ACCEPT\n'
-        firewall_rules += f'    post-up ip6tables -A FORWARD -d {TARGET_NETWORK} -p udp --sport {port} -j ACCEPT\n'
+        firewall_rules += f'    post-up ip6tables -A FORWARD -s {TARGET_NETWORK} -d {wazuh_ip} -p udp --dport {port} -j ACCEPT\n'
+        firewall_rules += f'    post-up ip6tables -A FORWARD -s {wazuh_ip} -d {TARGET_NETWORK} -p udp --dport {port} -j ACCEPT\n'
 
     config_content = f'''
 # IPv6 VM Network Bridge with restricted TCP/UDP access

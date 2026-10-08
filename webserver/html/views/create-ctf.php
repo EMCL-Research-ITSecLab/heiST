@@ -82,6 +82,7 @@ if (!$securityHelper->validateSession() || !$securityHelper->validateAdminAccess
       cores: 2
       ram_gb: 4
       domain_name: "web.challenge.local"
+      ad_role: "none"
 
     database:
       ova_name: "Ubuntu 20.04"
@@ -252,6 +253,15 @@ if (!$securityHelper->validateSession() || !$securityHelper->validateAdminAccess
                     <div class="form-group">
                         <label for="vm-ip">Domain</label>
                         <input type="text" id="vm-ip" name="vm-ip" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="vm-ad-role">Active Directory Role</label>
+                        <select id="vm-ad-role" name="vm-ad-role">
+                            <option value="none">None</option>
+                            <option value="dc">Domain Controller</option>
+                            <option value="member">Domain Member</option>
+                        </select>
+                        <span class="ad-role-hint" id="ad-role-hint"></span>
                     </div>
                     <button type="submit" class="button button-primary">Add VM</button>
                 </form>

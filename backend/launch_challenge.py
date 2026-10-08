@@ -19,7 +19,7 @@ from backend.DatabaseClasses import (
 )
 from backend.proxmox_api_calls import clone_vm_api_call
 from backend.stop_challenge import stop_challenge
-from backend.warmup_challenge import warmup_challenge
+from backend.warmup_challenge import warmup_challenge, stop_dnsmasq_process, start_dnsmasq_process
 from backend.launch_timing_logger import launch_timing_logger
 from backend.get_db_connection import db_connection_context
 from backend.qemu_ga_wrapper import GuestAgent, GuestAgentError
@@ -31,6 +31,8 @@ CHALLENGES_ROOT_SUBNET_MASK = os.getenv("CHALLENGES_ROOT_SUBNET_MASK", "255.128.
 CHALLENGES_ROOT_SUBNET_MASK_INT = sum(bin(int(x)).count('1') for x in CHALLENGES_ROOT_SUBNET_MASK.split('.'))
 CHALLENGES_ROOT_SUBNET_CIDR = f"{CHALLENGES_ROOT_SUBNET}/{CHALLENGES_ROOT_SUBNET_MASK_INT}"
 WAZUH_ENROLLMENT_PASSWORD = os.getenv("WAZUH_ENROLLMENT_PASSWORD")
+
+WINDOWS_FLAG_DIR = os.getenv("WINDOWS_FLAG_DIR", r"C:\Users\Administrator")
 
 DNSMASQ_INSTANCES_DIR = "/etc/dnsmasq-instances/"
 os.makedirs(DNSMASQ_INSTANCES_DIR, exist_ok=True)
@@ -477,15 +479,16 @@ def process_all_user_specific_flags(challenge, user_email, user_unique_id):
                     print(f"[Warning] Machine template {machine_template_id} not found in challenge", flush=True)
                     continue
 
+                guest_os = (getattr(machine.template, "guest_os", None) or "linux").lower()
                 if machine.id not in flags_by_machine:
-                    flags_by_machine[machine.id] = []
+                    flags_by_machine[machine.id] = {"guest_os": guest_os, "flags": []}
 
                 print(f"[Info] Processing flag {flag} for machine {machine.id}", flush=True)
 
                 user_flag = generate_user_specific_flag(flag['flag'], user_unique_id)
                 print(f"[Info] Generated user-specific flag for {user_unique_id}: {user_flag}", flush=True)
-                flag_path = f"/root/flag_{flag['order_index']}.txt"
-                flags_by_machine[machine.id].append({
+                flag_path = get_flag_path(guest_os, flag['order_index'])
+                flags_by_machine[machine.id]["flags"].append({
                     'flag': user_flag,
                     'path': flag_path,
                 })
@@ -498,9 +501,19 @@ def process_all_user_specific_flags(challenge, user_email, user_unique_id):
     print(f"[Info] Finished generating user-specific flags for challenge {challenge.id} and user {user_email}", flush=True)
 
     try:
-        flag_write_threads = []
-        for machine_id, flags in flags_by_machine.items():
-            flag_write_threads.append(threading.Thread(target=write_user_specific_flags_to_vm, args=(machine_id, flags)))
+        errors = []
+
+        def _flag_worker(machine_id, entry):
+            try:
+                write_user_specific_flags_to_vm(machine_id, entry["flags"], entry["guest_os"])
+            except Exception as worker_e:
+                print(f"[Error] Flag write failed on VM {machine_id}: {worker_e}", flush=True)
+                errors.append((machine_id, worker_e))
+
+        flag_write_threads = [
+            threading.Thread(target=_flag_worker, args=(machine_id, entry))
+            for machine_id, entry in flags_by_machine.items()
+        ]
 
         print("[Info] Starting threads", flush=True)
 
@@ -509,6 +522,10 @@ def process_all_user_specific_flags(challenge, user_email, user_unique_id):
 
         for thread in flag_write_threads:
             thread.join()
+
+        if errors:
+            raise RuntimeError("Failed to write user-specific flags to VM(s): "
+                               + "; ".join(f"{mid}: {err}" for mid, err in errors))
 
     except Exception as e:
         print(f"[Error] Failed to write user-specific flags to VMs: {e}", flush=True)
@@ -552,33 +569,44 @@ def _force_dhcp_renew_on_vm(machine_id):
         print(f"[Warning] Guest agent error forcing DHCP renew on VM {machine_id}: {e}", flush=True)
 
 
-def write_user_specific_flags_to_vm(machine_id, flags):
+def get_flag_path(guest_os, order_index):
+    """
+    Return the in-guest path for a flag file, depending on the guest OS.
+    """
+    if (guest_os or "").lower() == "windows":
+        return f"{WINDOWS_FLAG_DIR}\\flag_{order_index}.txt"
+    return f"/root/flag_{order_index}.txt"
+
+
+def write_user_specific_flags_to_vm(machine_id, flags, guest_os="linux"):
     """
     Write user-specific flags to a VM via QEMU Guest Agent.
     """
     start_flag_write_time = time.time()
+    is_windows = (guest_os or "").lower() == "windows"
 
-    flag_write_command = ""
-    for flag in flags:
-        escaped_flag = shlex.quote(flag['flag'])
-        flag_path = flag['path']
+    print(f"[Info] Writing {len(flags)} flag(s) to VM {machine_id} (guest_os={guest_os}): "
+          f"{[f['path'] for f in flags]}", flush=True)
 
-        flag_write_command += f"echo {escaped_flag} > {flag_path} && chmod 600 {flag_path} && "
+    try:
+        with GuestAgent(vmid=machine_id, windows=is_windows) as ga:
+            for flag in flags:
+                ga.write_file(flag['path'], flag['flag'] + "\n",
+                              unix_mode=None if is_windows else 0o600)
 
-    print(f"[Info] Writing flags to VM {machine_id}: {flag_write_command}", flush=True)
-
-    if flag_write_command != "":
-        flag_write_command = flag_write_command.rstrip(" && ")
-        try:
-            with GuestAgent(vmid=machine_id) as ga:
-                result = ga.exec(flag_write_command)
-        except GuestAgentError as e:
-            raise RuntimeError(f"Guest agent error while writing flags to VM {machine_id}: {e}") from e
-
-        if not result:
-            raise RuntimeError(
-                f"Failed to write flags to VM {machine_id}: {result.stderr}"
-            )
+                if is_windows:
+                    result = ga.exec(
+                        ["icacls", flag['path'], "/inheritance:r",
+                         "/grant", "*S-1-5-32-544:F", "*S-1-5-18:F"],
+                        timeout=30,
+                    )
+                    if not result:
+                        raise RuntimeError(
+                            f"icacls failed on VM {machine_id} for {flag['path']} "
+                            f"(exit={result.exit_code}): {result.stderr.strip()!r}"
+                        )
+    except GuestAgentError as e:
+        raise RuntimeError(f"Guest agent error while writing flags to VM {machine_id}: {e}") from e
 
     launch_timing_logger(start_flag_write_time, f"[FLAG WRITE COMPLETE]", None, None, VM_ID=machine_id)
 
@@ -844,15 +872,7 @@ def start_dnsmasq_instances(challenge, user_vpn_ip):
         print(f"[Info] Log path: {log_path}", flush=True)
         print(f"[Info] Pidfile path: {pidfile_path}", flush=True)
 
-        # Launch the isolated dnsmasq instance
-        process = subprocess.Popen([
-            "dnsmasq",
-            f"--conf-file={config_path}",
-            f"--pid-file={pidfile_path}",
-            f"--dhcp-leasefile={leases_path}",
-            f"--log-facility={log_path}",
-        ])
-
-        print(f"[Info] Started dnsmasq process (PID: {process.pid}) for network {network.id} on device {network.host_device}", flush=True)
+        stop_dnsmasq_process(pidfile_path)
+        start_dnsmasq_process(network)
 
     print(f"[Info] All dnsmasq instances started for challenge {challenge.id}", flush=True)

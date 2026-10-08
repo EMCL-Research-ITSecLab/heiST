@@ -20,6 +20,7 @@ return [
         'EXTENSION_HOURS' => 1,
         'VALID_CATEGORIES' => ['web', 'crypto', 'forensics', 'reverse', 'pwn', 'misc'],
         'VALID_DIFFICULTIES' => ['easy', 'medium', 'hard'],
+        'VALID_AD_ROLES' => ['none', 'dc', 'member'],
         'UPLOAD_DIR' => '/uploads/challenge_images/',
     ],
     'upload' => [

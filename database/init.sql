@@ -4,8 +4,8 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE OR REPLACE FUNCTION generate_random_default_avatar()
 RETURNS TEXT
 LANGUAGE plpgsql
-SET plpgsql.variable_conflict = 'use_column'
 AS $$
+#variable_conflict use_column
 BEGIN
     RETURN '/assets/avatars/avatar' || (FLOOR(1 + RANDOM() * 3))::BIGINT::TEXT || '.png';
 END;
@@ -16,8 +16,8 @@ $$;
 CREATE OR REPLACE FUNCTION assign_lowest_vpn_ip(user_id_param BIGINT)
 RETURNS INET
 LANGUAGE plpgsql
-SET plpgsql.variable_conflict = 'use_column'
 AS $$
+#variable_conflict use_column
 DECLARE
     selected_ip INET;
 BEGIN
@@ -44,8 +44,8 @@ $$;
 CREATE OR REPLACE FUNCTION assign_challenge_subnet()
 RETURNS INET
 LANGUAGE plpgsql
-SET plpgsql.variable_conflict = 'use_column'
 AS $$
+#variable_conflict use_column
 DECLARE
     selected_subnet INET;
 BEGIN
@@ -81,8 +81,8 @@ CREATE TABLE user_id_reclaim (
 CREATE OR REPLACE FUNCTION allocate_user_id()
 RETURNS BIGINT
 LANGUAGE plpgsql
-SET plpgsql.variable_conflict = 'use_column'
 AS $$
+#variable_conflict use_column
 DECLARE
     new_id BIGINT;
 BEGIN
@@ -106,8 +106,8 @@ $$;
 CREATE OR REPLACE FUNCTION reclaim_user_id()
 RETURNS TRIGGER
 LANGUAGE plpgsql
-SET plpgsql.variable_conflict = 'use_column'
 AS $$
+#variable_conflict use_column
 BEGIN
     INSERT INTO user_id_reclaim (id) VALUES (OLD.id)
         ON CONFLICT DO NOTHING;
@@ -130,8 +130,8 @@ CREATE TABLE machine_id_reclaim (
 CREATE OR REPLACE FUNCTION allocate_machine_id()
 RETURNS BIGINT
 LANGUAGE plpgsql
-SET plpgsql.variable_conflict = 'use_column'
 AS $$
+#variable_conflict use_column
 DECLARE
     new_id BIGINT;
 BEGIN
@@ -154,8 +154,8 @@ $$;
 CREATE OR REPLACE FUNCTION reclaim_machine_id()
 RETURNS TRIGGER
 LANGUAGE plpgsql
-SET plpgsql.variable_conflict = 'use_column'
 AS $$
+#variable_conflict use_column
 BEGIN
     INSERT INTO machine_id_reclaim (id) VALUES (OLD.id)
         ON CONFLICT DO NOTHING;
@@ -178,8 +178,8 @@ CREATE TABLE machine_template_id_reclaim (
 CREATE OR REPLACE FUNCTION allocate_machine_template_id()
 RETURNS BIGINT
 LANGUAGE plpgsql
-SET plpgsql.variable_conflict = 'use_column'
 AS $$
+#variable_conflict use_column
 DECLARE
     new_id BIGINT;
 BEGIN
@@ -202,8 +202,8 @@ $$;
 CREATE OR REPLACE FUNCTION reclaim_machine_template_id()
 RETURNS TRIGGER
 LANGUAGE plpgsql
-SET plpgsql.variable_conflict = 'use_column'
 AS $$
+#variable_conflict use_column
 BEGIN
     INSERT INTO machine_template_id_reclaim (id) VALUES (OLD.id)
         ON CONFLICT DO NOTHING;
@@ -225,8 +225,8 @@ CREATE TABLE network_id_reclaim (
 CREATE OR REPLACE FUNCTION allocate_network_id()
 RETURNS BIGINT
 LANGUAGE plpgsql
-SET plpgsql.variable_conflict = 'use_column'
 AS $$
+#variable_conflict use_column
 DECLARE
     new_id BIGINT;
 BEGIN
@@ -249,8 +249,8 @@ $$;
 CREATE OR REPLACE FUNCTION reclaim_network_id()
 RETURNS TRIGGER
 LANGUAGE plpgsql
-SET plpgsql.variable_conflict = 'use_column'
 AS $$
+#variable_conflict use_column
 BEGIN
     INSERT INTO network_id_reclaim (id) VALUES (OLD.id)
         ON CONFLICT DO NOTHING;
@@ -272,8 +272,8 @@ CREATE TABLE challenge_id_reclaim (
 CREATE OR REPLACE FUNCTION allocate_challenge_id()
 RETURNS BIGINT
 LANGUAGE plpgsql
-SET plpgsql.variable_conflict = 'use_column'
 AS $$
+#variable_conflict use_column
 DECLARE
     new_id BIGINT;
 BEGIN
@@ -296,8 +296,8 @@ $$;
 CREATE OR REPLACE FUNCTION reclaim_challenge_id()
 RETURNS TRIGGER
 LANGUAGE plpgsql
-SET plpgsql.variable_conflict = 'use_column'
 AS $$
+#variable_conflict use_column
 BEGIN
     INSERT INTO challenge_id_reclaim (id) VALUES (OLD.id)
         ON CONFLICT DO NOTHING;
@@ -486,6 +486,11 @@ CREATE TABLE user_profiles (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+CREATE TYPE machine_ad_role AS ENUM (
+    'none',
+    'dc',
+    'member'
+);
 
 CREATE TABLE machine_templates (
     id BIGINT PRIMARY KEY DEFAULT allocate_machine_template_id(),
@@ -493,7 +498,8 @@ CREATE TABLE machine_templates (
     name TEXT NOT NULL,
     disk_file_id BIGINT NOT NULL,
     cores BIGINT NOT NULL CHECK (cores > 0),
-    ram_gb BIGINT NOT NULL CHECK (ram_gb > 0)
+    ram_gb BIGINT NOT NULL CHECK (ram_gb > 0),
+    ad_role machine_ad_role NOT NULL DEFAULT 'none'
 );
 
 
@@ -524,6 +530,114 @@ CREATE TABLE network_connection_templates (
     network_template_id BIGINT NOT NULL REFERENCES network_templates(id) ON DELETE CASCADE,
     PRIMARY KEY (machine_template_id, network_template_id)
 );
+
+
+CREATE OR REPLACE FUNCTION validate_ad_topology(p_challenge_template_id BIGINT)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+#variable_conflict use_column
+DECLARE
+    dc_count BIGINT;
+    bad_subnet RECORD;
+    orphan_member RECORD;
+BEGIN
+    SELECT COUNT(*) INTO dc_count
+    FROM machine_templates
+    WHERE challenge_template_id = p_challenge_template_id
+      AND ad_role = 'dc';
+
+    FOR bad_subnet IN
+        SELECT nt.name AS network_name, COUNT(*) AS dc_count
+        FROM network_connection_templates nct
+        JOIN machine_templates mt ON mt.id = nct.machine_template_id
+        JOIN network_templates nt ON nt.id = nct.network_template_id
+        WHERE nt.challenge_template_id = p_challenge_template_id
+          AND mt.ad_role = 'dc'
+        GROUP BY nt.id, nt.name
+        HAVING COUNT(*) > 1
+    LOOP
+        RAISE EXCEPTION
+            'Subnet "%" has more than one Domain Controller attached; only one DC is supported per subnet',
+            bad_subnet.network_name;
+    END LOOP;
+
+    FOR orphan_member IN
+        SELECT mt.name AS machine_name
+        FROM machine_templates mt
+        WHERE mt.challenge_template_id = p_challenge_template_id
+          AND mt.ad_role = 'member'
+          AND (
+              dc_count = 0
+              OR NOT EXISTS (
+                  SELECT 1
+                  FROM network_connection_templates member_nct
+                  JOIN network_connection_templates dc_nct
+                    ON dc_nct.network_template_id = member_nct.network_template_id
+                  JOIN machine_templates dc_mt
+                    ON dc_mt.id = dc_nct.machine_template_id
+                   AND dc_mt.ad_role = 'dc'
+                  WHERE member_nct.machine_template_id = mt.id
+              )
+          )
+    LOOP
+        RAISE EXCEPTION
+            'Domain member "%" is not on the same subnet as any Domain Controller (or no Domain Controller exists in this challenge)',
+            orphan_member.machine_name;
+    END LOOP;
+END;
+$$;
+
+
+CREATE OR REPLACE FUNCTION trg_fn_validate_ad_topology_on_connection()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+#variable_conflict use_column
+DECLARE
+    v_challenge_template_id BIGINT;
+BEGIN
+    SELECT challenge_template_id INTO v_challenge_template_id
+    FROM machine_templates
+    WHERE id = COALESCE(NEW.machine_template_id, OLD.machine_template_id);
+
+    IF v_challenge_template_id IS NOT NULL THEN
+        PERFORM validate_ad_topology(v_challenge_template_id);
+    END IF;
+
+    RETURN NULL;
+END;
+$$;
+
+CREATE CONSTRAINT TRIGGER trg_validate_ad_topology_on_connection
+AFTER INSERT OR UPDATE OR DELETE ON network_connection_templates
+DEFERRABLE INITIALLY DEFERRED
+FOR EACH ROW
+EXECUTE FUNCTION trg_fn_validate_ad_topology_on_connection();
+
+
+CREATE OR REPLACE FUNCTION trg_fn_validate_ad_topology_on_machine()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+#variable_conflict use_column
+BEGIN
+    PERFORM validate_ad_topology(COALESCE(NEW.challenge_template_id, OLD.challenge_template_id));
+    RETURN NULL;
+END;
+$$;
+
+CREATE CONSTRAINT TRIGGER trg_validate_ad_topology_on_machine
+AFTER INSERT OR DELETE OR UPDATE OF ad_role, challenge_template_id ON machine_templates
+DEFERRABLE INITIALLY DEFERRED
+FOR EACH ROW
+EXECUTE FUNCTION trg_fn_validate_ad_topology_on_machine();
 
 
 CREATE TABLE challenge_flags (

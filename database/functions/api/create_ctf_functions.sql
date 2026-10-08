@@ -62,7 +62,8 @@ CREATE FUNCTION create_machine_template(
     p_name TEXT,
     p_disk_file_id BIGINT,
     p_cores BIGINT,
-    p_ram_gb BIGINT
+    p_ram_gb BIGINT,
+    p_ad_role machine_ad_role
 ) RETURNS BIGINT
 LANGUAGE plpgsql
 SET plpgsql.variable_conflict = 'use_column'
@@ -75,13 +76,15 @@ BEGIN
         name,
         disk_file_id,
         cores,
-        ram_gb
+        ram_gb,
+        ad_role
     ) VALUES (
         p_challenge_template_id,
         p_name,
         p_disk_file_id,
         p_cores,
-        p_ram_gb
+        p_ram_gb,
+        p_ad_role
     ) RETURNING id INTO new_machine_id;
     RETURN new_machine_id::BIGINT;
 END;
@@ -241,7 +244,8 @@ CREATE FUNCTION get_user_available_disk_files(
 ) RETURNS TABLE (
     id BIGINT,
     display_name TEXT,
-    upload_date TIMESTAMP
+    upload_date TIMESTAMP,
+    guest_os guest_os
 )
 LANGUAGE plpgsql
 SET plpgsql.variable_conflict = 'use_column'
@@ -250,8 +254,9 @@ BEGIN
     RETURN QUERY
     SELECT
         df.id::BIGINT,
-        df.display_name::TEXT AS name,
-        df.upload_date::TIMESTAMP AS date
+        df.display_name::TEXT,
+        df.upload_date::TIMESTAMP,
+        df.guest_os
     FROM disk_files df
     WHERE df.user_id = p_user_id
     ORDER BY df.upload_date DESC, df.id;

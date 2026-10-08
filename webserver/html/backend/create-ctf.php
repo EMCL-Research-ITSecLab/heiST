@@ -276,6 +276,8 @@ class CtfCreationHandler
         }
 
         $vmNames = [];
+        $vmAdRoles = [];
+        $ovaGuestOsMap = $this->getOvaGuestOsMap();
         foreach ($vms as $vm) {
             $vmName = trim($vm['name'] ?? '');
             if (empty($vmName)) {
@@ -288,6 +290,22 @@ class CtfCreationHandler
                 $errors[] = "Duplicate VM name found: $vmName";
             }
             $vmNames[] = $vmName;
+
+            $adRole = trim($vm['ad_role'] ?? 'none');
+            if (!in_array($adRole, $this->config['challenge']['VALID_AD_ROLES'], true)) {
+                $errors[] = "VM $vmName: invalid Active Directory role '$adRole'";
+                $adRole = 'none';
+            }
+
+            if ($adRole !== 'none') {
+                $ovaName = trim($vm['ova_name'] ?? '');
+                $guestOs = $ovaGuestOsMap[$ovaName] ?? null;
+                if ($guestOs !== null && $guestOs !== 'windows') {
+                    $roleLabel = $adRole === 'dc' ? 'Domain Controller' : 'Domain Member';
+                    $errors[] = "VM $vmName: $roleLabel role requires a Windows OVA (selected OVA '$ovaName' is '$guestOs')";
+                }
+            }
+            $vmAdRoles[$vmName] = $adRole;
 
             $cores = $vm['cores'] ?? 0;
             if ($cores < 1 || $cores > $this->generalConfig['ctf']['MAX_VM_CORES']) {
@@ -306,6 +324,14 @@ class CtfCreationHandler
                 $errors[] = "VM $vmName: Domain name cannot exceed " . $this->generalConfig['ctf']['MAX_VM_DOMAIN_LENGTH'];
             } elseif (!preg_match('/' . $this->generalConfig['ctf']['DOMAIN_REGEX'] . '/', $domain)) {
                 $errors[] = "VM $vmName: Domain name contains invalid characters or has invalid structure";
+            }
+        }
+
+        $hasAnyDc = in_array('dc', $vmAdRoles, true);
+        if (!$hasAnyDc) {
+            $orphanMembers = array_keys(array_filter($vmAdRoles, fn($role) => $role === 'member'));
+            if (!empty($orphanMembers)) {
+                $errors[] = "Domain member(s) defined without a Domain Controller: " . implode(', ', $orphanMembers);
             }
         }
 
@@ -592,13 +618,15 @@ class CtfCreationHandler
                 throw new CustomException("Invalid OVA file reference for VM: $vmName", 400);
             }
 
+            $adRole = $vm['ad_role'] ?? 'none';
             $stmt = $this->pdo->prepare("
                 SELECT create_machine_template(
                     :challenge_id,
                     :name,
                     :disk_file_id,
                     :cores,
-                    :ram_gb
+                    :ram_gb,
+                    :ad_role
                 ) AS id
             ");
 
@@ -607,7 +635,8 @@ class CtfCreationHandler
                 'name' => $vmName,
                 'disk_file_id' => $diskFileId,
                 'cores' => $vm['cores'],
-                'ram_gb' => $vm['ram_gb']
+                'ram_gb' => $vm['ram_gb'],
+                'ad_role' => $adRole
             ]);
 
             $machineId = $stmt->fetchColumn();
@@ -797,7 +826,8 @@ class CtfCreationHandler
                 SELECT
                     id,
                     display_name AS name,
-                    upload_date AS date
+                    upload_date AS date,
+                    guest_os
                 FROM get_user_available_disk_files(:user_id)
             ");
 
@@ -806,6 +836,28 @@ class CtfCreationHandler
         } catch (PDOException $e) {
             $this->logger->logError("Error fetching OVAs for user $this->userId: " . $e->getMessage());
             throw new CustomException('Could not retrieve OVAs', 500);
+        }
+    }
+
+    private function getOvaGuestOsMap(): array
+    {
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT
+                    display_name,
+                    guest_os
+                FROM get_user_available_disk_files(:user_id)
+            ");
+            $stmt->execute(['user_id' => $this->userId]);
+
+            $map = [];
+            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $map[$row['display_name']] = $row['guest_os'];
+            }
+            return $map;
+        } catch (PDOException $e) {
+            $this->logger->logError("Error fetching OVA guest_os map for user $this->userId: " . $e->getMessage());
+            throw new CustomException('Could not validate OVA templates', 500);
         }
     }
 
@@ -849,6 +901,82 @@ class CtfCreationHandler
                 "Unreachable VMs detected (no path to public subnets): " .
                 implode(', ', $unreachableVms)
             );
+        }
+
+        $dcVms = array_values(array_filter($vms, fn($vm) => ($vm['ad_role'] ?? 'none') === 'dc'));
+
+        if (!empty($dcVms)) {
+            foreach ($subnets as $subnet) {
+                $dcNamesOnSubnet = array_values(array_intersect(
+                    $subnet['attached_vms'],
+                    array_map(fn($dc) => $dc['name'], $dcVms)
+                ));
+                if (count($dcNamesOnSubnet) > 1) {
+                    throw new CustomException(
+                        "Subnet '{$subnet['name']}' has more than one Domain Controller attached (" .
+                        implode(', ', $dcNamesOnSubnet) . "). Only one DC is supported per subnet."
+                    );
+                }
+            }
+
+            $strandedMembers = [];
+            foreach ($vms as $vm) {
+                if (($vm['ad_role'] ?? 'none') !== 'member') {
+                    continue;
+                }
+                $memberSubnets = $vmSubnetMap[$vm['name']] ?? [];
+                $sharesDcSubnet = false;
+                foreach ($dcVms as $dc) {
+                    $dcSubnets = $vmSubnetMap[$dc['name']] ?? [];
+                    if (!empty(array_intersect($dcSubnets, $memberSubnets))) {
+                        $sharesDcSubnet = true;
+                        break;
+                    }
+                }
+                if (!$sharesDcSubnet) {
+                    $strandedMembers[] = $vm['name'];
+                }
+            }
+
+            if (!empty($strandedMembers)) {
+                throw new CustomException(
+                    "Domain member(s) not on the same subnet as any Domain Controller: " .
+                    implode(', ', $strandedMembers)
+                );
+            }
+
+            $domainMismatches = [];
+            foreach ($vms as $vm) {
+                if (($vm['ad_role'] ?? 'none') !== 'member') {
+                    continue;
+                }
+
+                $memberDomain = strtolower(trim($vm['domain_name'] ?? ''));
+                $memberSubnets = $vmSubnetMap[$vm['name']] ?? [];
+
+                $matchesDc = false;
+                foreach ($dcVms as $dc) {
+                    $dcDomain = strtolower(trim($dc['domain_name'] ?? ''));
+                    $dcSubnets = $vmSubnetMap[$dc['name']] ?? [];
+
+                    if ($dcDomain === $memberDomain && !empty(array_intersect($dcSubnets, $memberSubnets))) {
+                        $matchesDc = true;
+                        break;
+                    }
+                }
+
+                if (!$matchesDc) {
+                    $domainMismatches[] = $vm['name'];
+                }
+            }
+
+            if (!empty($domainMismatches)) {
+                throw new CustomException(
+                    "Domain member(s) domain_name does not match a Domain Controller sharing their subnet " .
+                    "(the domain_name must be identical to the DC's for AD DNS delegation to work): " .
+                    implode(', ', $domainMismatches)
+                );
+            }
         }
 
         foreach ($subnets as $subnet) {

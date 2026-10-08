@@ -82,6 +82,7 @@ if (!$securityHelper->validateSession() || !$securityHelper->validateAdminAccess
       cores: 2
       ram_gb: 4
       domain_name: "web.challenge.local"
+      ad_role: "none"
 
     database:
       ova_name: "Ubuntu 20.04"

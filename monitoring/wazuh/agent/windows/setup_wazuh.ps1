@@ -225,18 +225,17 @@ function Ensure-WazuhService {
 
         Pop-Location
 
-        if ($exitCode -ne 0) {
-            print_error "wazuh-agent.exe install-service failed with exit code $exitCode"
-            return $false
-        }
-
-        Start-Sleep -Milliseconds 500
+        Start-Sleep -Milliseconds 1000
 
         $service = Get-Service -Name "WazuhSvc" -ErrorAction SilentlyContinue
 
         if (-not $service) {
             print_error "install-service completed but WazuhSvc was not found."
             return $false
+        }
+
+        if ($exitCode -ne 0) {
+            print_warning "install-service returned exit code $exitCode, but WazuhSvc exists - continuing"
         }
 
         print_info "WazuhSvc successfully registered."

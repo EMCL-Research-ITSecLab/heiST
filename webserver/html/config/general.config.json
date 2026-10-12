@@ -23,7 +23,12 @@
     "MAX_ORDER_INDEX": 1000,
     "CTF_NAME_REGEX": "^[a-zA-Z0-9\\-_ ]+$",
     "VM_SUBNET_NAME_REGEX": "^[a-zA-Z0-9\\-_]+$",
-    "DOMAIN_REGEX": "^([a-zA-Z0-9](?:[a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?)(\\.[a-zA-Z0-9](?:[a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?)*$"
+    "DOMAIN_REGEX": "^([a-zA-Z0-9](?:[a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?)(\\.[a-zA-Z0-9](?:[a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?)*$",
+    "AD_ROLES": {
+       "NONE":   { "value": "none",   "label": "None" },
+       "DC":     { "value": "dc",     "label": "Domain Controller" },
+       "MEMBER": { "value": "member", "label": "Domain Member" }
+     }
   },
   "announcement": {
     "MAX_ANNOUNCEMENT_NAME_LENGTH": 100,

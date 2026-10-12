@@ -8,6 +8,8 @@ class CTFCreator {
         this.hints = [];
         this.availableOVAs = [];
         this.config = null;
+        this.adRole = {};
+        this.adRoleLabel = {};
 
         this.selectedVM = null;
         this.selectedSubnet = null;
@@ -34,6 +36,14 @@ class CTFCreator {
             this.config.CTF_NAME_REGEX = new RegExp(this.config.CTF_NAME_REGEX);
             this.config.VM_SUBNET_NAME_REGEX = new RegExp(this.config.VM_SUBNET_NAME_REGEX);
             this.config.DOMAIN_REGEX = new RegExp(this.config.DOMAIN_REGEX);
+
+            const roles = this.config.AD_ROLES;
+            this.adRole = Object.fromEntries(
+                Object.entries(roles).map(([key, role]) => [key, role.value])
+            );
+            this.adRoleLabel = Object.fromEntries(
+                Object.values(roles).map(role => [role.value, role.label])
+            );
         } catch (error) {
             console.error('Failed to load config:', error);
         }
@@ -92,6 +102,9 @@ class CTFCreator {
 
         this.ovaDropdown = document.getElementById('vm-ova');
 
+        this.adRoleSelect = document.getElementById('vm-ad-role');
+        this.adRoleHint = document.getElementById('ad-role-hint');
+
 
         [this.vmForm, this.subnetForm, this.flagForm, this.hintForm].forEach(form => {
             form.setAttribute('novalidate', '');
@@ -123,6 +136,14 @@ class CTFCreator {
             userSpecificCheckbox.addEventListener('change', () => {
                 this.toggleFlagVMDropdown();
             });
+        }
+
+        if (this.adRoleSelect) {
+            this.adRoleSelect.addEventListener('change', () => this.updateADRoleHint());
+        }
+
+        if (this.ovaDropdown) {
+            this.ovaDropdown.addEventListener('change', () => this.updateADRoleHint());
         }
 
         this.numberBtns.forEach(btn => {
@@ -210,6 +231,7 @@ class CTFCreator {
             this.selectedVM.cores = this.vmForm['vm-cores'].value;
             this.selectedVM.ram = this.vmForm['vm-ram'].value;
             this.selectedVM.ip = this.vmForm['vm-ip'].value;
+            this.selectedVM.ad_role = this.vmForm['vm-ad-role'].value || this.adRole.NONE;
 
             this.updateVMIcon(this.selectedVM);
             this.updateSubnetVMsDropdown();
@@ -234,6 +256,7 @@ class CTFCreator {
                 return;
             }
 
+            const adRole = this.vmForm['vm-ad-role'].value || this.adRole.NONE;
             const vm = {
                 name: this.vmForm['vm-name'].value,
                 ova_id: this.vmForm['vm-ova'].value,
@@ -241,6 +264,7 @@ class CTFCreator {
                 cores: this.vmForm['vm-cores'].value,
                 ram: this.vmForm['vm-ram'].value,
                 ip: this.vmForm['vm-ip'].value,
+                ad_role: adRole,
                 id: this.generateId()
             };
             this.vms.push(vm);
@@ -383,7 +407,8 @@ class CTFCreator {
                     ova_name: vm.ova_name,
                     cores: vm.cores,
                     ram_gb: vm.ram,
-                    domain_name: vm.ip
+                    domain_name: vm.ip,
+                    ad_role: vm.ad_role || this.adRole.NONE
                 };
             })));
 
@@ -579,6 +604,16 @@ class CTFCreator {
         if (!this.vmForm['vm-ova'].value) {
             errors.push('Please select an OVA template');
             fields.push('vm-ova');
+        } else {
+            const adRole = this.vmForm['vm-ad-role'] ? (this.vmForm['vm-ad-role'].value || this.adRole.NONE) : this.adRole.NONE;
+            if (adRole !== this.adRole.NONE) {
+                const selectedOva = this.availableOVAs.find(ova => ova.id == this.vmForm['vm-ova'].value);
+                if (selectedOva && selectedOva.guest_os && selectedOva.guest_os !== 'windows') {
+                    const roleLabel = this.adRoleLabel[adRole];
+                    errors.push(`${roleLabel} role requires a Windows OVA (selected OVA is ${selectedOva.guest_os})`);
+                    fields.push('vm-ova', 'vm-ad-role');
+                }
+            }
         }
 
         const cores = parseInt(this.vmForm['vm-cores'].value);
@@ -787,6 +822,61 @@ class CTFCreator {
             }
         }
 
+        const dcVms = vms.filter(v => v.ad_role === this.adRole.DC);
+
+        if (dcVms.length > 0) {
+            const dcNames = new Set(dcVms.map(v => v.name));
+
+            for (const subnet of subnets) {
+                const dcsOnSubnet = subnet.attached_vms.filter(name => dcNames.has(name));
+                if (dcsOnSubnet.length > 1) {
+                    throw new Error(
+                        `Subnet '${subnet.name}' has more than one ${this.adRoleLabel[this.adRole.DC]} attached (${dcsOnSubnet.join(', ')}). ` +
+                        `Only one DC is supported per subnet.`
+                    );
+                }
+            }
+
+            const strandedMembers = vms.filter(v => {
+                if (v.ad_role !== this.adRole.MEMBER) return false;
+                const memberSubnets = new Set(vmSubnetMap[v.name] || []);
+                return !dcVms.some(dc => (vmSubnetMap[dc.name] || []).some(s => memberSubnets.has(s)));
+            });
+
+            if (strandedMembers.length > 0) {
+                throw new Error(
+                    `${this.adRoleLabel[this.adRole.MEMBER]}(s) not on the same subnet as any ${this.adRoleLabel[this.adRole.DC]}: ` +
+                    strandedMembers.map(v => v.name).join(', ')
+                );
+            }
+
+            const domainMismatches = vms.filter(v => {
+                if (v.ad_role !== this.adRole.MEMBER) return false;
+                const memberDomain = (v.ip || '').trim().toLowerCase();
+                const memberSubnets = new Set(vmSubnetMap[v.name] || []);
+                return !dcVms.some(dc => {
+                    const dcDomain = (dc.ip || '').trim().toLowerCase();
+                    const dcSubnets = vmSubnetMap[dc.name] || [];
+                    return dcDomain === memberDomain && dcSubnets.some(s => memberSubnets.has(s));
+                });
+            });
+
+            if (domainMismatches.length > 0) {
+                throw new Error(
+                    `${this.adRoleLabel[this.adRole.MEMBER]}(s) Domain field does not match a ${this.adRoleLabel[this.adRole.DC]} sharing their subnet ` +
+                    `(must be identical for AD DNS to work): ` +
+                    domainMismatches.map(v => v.name).join(', ')
+                );
+            }
+        } else {
+            const orphanMembers = vms.filter(v => v.ad_role === this.adRole.MEMBER);
+            if (orphanMembers.length > 0) {
+                throw new Error(
+                    `${this.adRoleLabel[this.adRole.MEMBER]}(s) defined without a ${this.adRoleLabel[this.adRole.DC]}: ${orphanMembers.map(v => v.name).join(', ')}`
+                );
+            }
+        }
+
         const isVMReachable = (vmName, vmSubnetMap, subnetVmMap, publicSubnets) => {
             const visitedSubnets = new Set();
             const queue = [...(vmSubnetMap[vmName] || [])];
@@ -861,6 +951,33 @@ class CTFCreator {
                 vmDropdownContainer.style.display = 'none';
             }
         }
+    }
+
+    updateADRoleHint() {
+        if (!this.adRoleSelect || !this.adRoleHint) return;
+
+        const role = this.adRoleSelect.value;
+        const existingDC = this.vms.find(v => v.ad_role === this.adRole.DC && v.id !== this.selectedVM?.id);
+
+        const selectedOva = this.availableOVAs.find(ova => ova.id == this.vmForm['vm-ova'].value);
+        const isNonWindowsOva = role !== this.adRole.NONE && selectedOva && selectedOva.guest_os && selectedOva.guest_os !== 'windows';
+
+        if (isNonWindowsOva) {
+            this.adRoleHint.textContent = `This OVA is ${selectedOva.guest_os}; ${this.adRoleLabel[this.adRole.DC]}/${this.adRoleLabel[this.adRole.MEMBER]} roles require a Windows OVA`;
+            this.adRoleHint.className = 'ad-role-hint ad-role-hint-warning';
+        } else if (role === this.adRole.DC) {
+            this.adRoleHint.textContent = 'This VM will run AD DS and its own DNS server';
+            this.adRoleHint.className = 'ad-role-hint ad-role-hint-dc';
+        } else if (role === this.adRole.MEMBER) {
+            this.adRoleHint.textContent = existingDC
+                ? `Will join a domain, as long as it shares a subnet AND its Domain field exactly matches the ${this.adRoleLabel[this.adRole.DC]}'s`
+                : `No ${this.adRoleLabel[this.adRole.DC]} added yet`;
+            this.adRoleHint.className = 'ad-role-hint' + (existingDC ? ' ad-role-hint-member' : ' ad-role-hint-warning');
+        } else {
+            this.adRoleHint.textContent = '';
+            this.adRoleHint.className = 'ad-role-hint';
+        }
+
     }
 
     updateFlagVMDropdown() {
@@ -1074,14 +1191,31 @@ class CTFCreator {
     }
 
 
+    adRoleIconClass(vm) {
+        if (vm.ad_role === this.adRole.DC) return ' vm-icon-ad-dc';
+        if (vm.ad_role === this.adRole.MEMBER) return ' vm-icon-ad-member';
+        return '';
+    }
+
+    adRoleBadge(vm) {
+        if (vm.ad_role === this.adRole.DC) {
+            return `<span class="vm-ad-badge vm-ad-badge-dc" title="${this.adRoleLabel[this.adRole.DC]}"><i class="fa-solid fa-crown crown-icon"></i></span>`;
+        }
+        if (vm.ad_role === this.adRole.MEMBER) {
+            return `<span class="vm-ad-badge vm-ad-badge-member" title="${this.adRoleLabel[this.adRole.MEMBER]}"><i class="fa-solid fa-link member-icon"></i></span>`;
+        }
+        return '';
+    }
+
     createVMIcon(vm) {
         const icon = document.createElement('div');
-        icon.className = 'vm-icon';
+        icon.className = 'vm-icon' + this.adRoleIconClass(vm);
         icon.setAttribute('data-id', vm.id);
         icon.draggable = true;
 
         icon.innerHTML = `
             <button class="remove-vm-btn" title="Remove">&times;</button>
+            ${this.adRoleBadge(vm)}
             <i class="fa-solid fa-desktop"></i>
             <span>${vm.name}</span>
             <small>${vm.ip}</small>
@@ -1110,8 +1244,10 @@ class CTFCreator {
     updateVMIcon(vm) {
         const icon = this.vmIconsContainer.querySelector(`.vm-icon[data-id="${vm.id}"]`);
         if (icon) {
+            icon.className = 'vm-icon' + this.adRoleIconClass(vm);
             icon.innerHTML = `
                 <button class="remove-vm-btn" title="Remove">&times;</button>
+                ${this.adRoleBadge(vm)}
                 <i class="fa-solid fa-desktop"></i>
                 <span>${vm.name}</span>
                 <small>${vm.ip}</small>
@@ -1223,11 +1359,13 @@ class CTFCreator {
                 const icon = document.createElement('div');
                 icon.className = 'vm-icon' +
                     (totalSubnets === 2 && vmCount >= 5 ? ' vm-icon-small' : '') +
-                    (totalSubnets >= 3 && vmCount >= 3 ? ' vm-icon-smallest' : '');
+                    (totalSubnets >= 3 && vmCount >= 3 ? ' vm-icon-smallest' : '') +
+                    this.adRoleIconClass(vm);
                 icon.setAttribute('data-id', vm.id);
 
                 icon.innerHTML = `
                     <button class="remove-vm-btn" title="Remove">&times;</button>
+                    ${this.adRoleBadge(vm)}
                     <i class="fa-solid fa-desktop"></i>
                     <span>${vm.name}</span>
                     <small>${vm.ip}</small>
@@ -1275,9 +1413,11 @@ class CTFCreator {
         this.vmForm['vm-cores'].value = vm.cores;
         this.vmForm['vm-ram'].value = vm.ram;
         this.vmForm['vm-ip'].value = vm.ip;
+        this.vmForm['vm-ad-role'].value = vm.ad_role || this.adRole.NONE;
         this.vmSubmitButton.textContent = 'Update VM';
 
         this.selectedVM = vm;
+        this.updateADRoleHint();
     }
 
     selectSubnet(subnet) {
@@ -1484,6 +1624,7 @@ class CTFCreator {
         this.updateSubnetVMsDropdown();
         this.toggleFlagVMDropdown();
         this.updateFlagOrderInput();
+        this.updateADRoleHint();
     }
 
     updateLayout() {
@@ -2624,6 +2765,7 @@ class CTFCreator {
                         cores: vmData.cores,
                         ram: vmData.ram_gb,
                         ip: vmData.domain_name,
+                        ad_role: vmData.ad_role || this.adRole.NONE,
                         id: this.generateId()
                     };
                     this.vms.push(vm);
@@ -2730,6 +2872,7 @@ ctf:
       cores: <NUM_CORES>
       ram_gb: <RAM_GB>
       domain_name: <DOMAIN_NAME_1>
+      ad_role: <${Object.values(this.adRole).join('|')}>
     # ...
 
   subnets:

@@ -39,6 +39,7 @@ class MachineTemplate:
         self.cores = 1
         self.ram = 1024
         self.guest_os = 'linux'
+        self.ad_role = 'none'
 
     def add_connected_network(self, network):
         self.connected_networks[network.id] = network
@@ -60,6 +61,9 @@ class MachineTemplate:
 
     def set_guest_os(self, guest_os):
         self.guest_os = guest_os
+
+    def set_ad_role(self, ad_role):
+        self.ad_role = ad_role
 
 
 class NetworkTemplate:

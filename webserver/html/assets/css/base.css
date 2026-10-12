@@ -26,6 +26,10 @@
     --color-danger: #ff4c29;
     --color-success: #4cff29;
     --color-error: var(--color-danger);
+    --color-ad-dc: #e8b339;
+    --color-ad-dc-rgb: 232, 179, 57;
+    --color-ad-member: #4a9de8;
+    --color-ad-member-rgb: 74, 157, 232;
 }
 
 [data-theme="light"] {
@@ -50,6 +54,10 @@
     --color-danger: #dc3545;
     --color-success: #198754;
     --color-error: #dc3545;
+    --color-ad-dc: #b45309;
+    --color-ad-dc-rgb: 180, 83, 9;
+    --color-ad-member: #2563eb;
+    --color-ad-member-rgb: 37, 99, 235;
 }
 
 body {

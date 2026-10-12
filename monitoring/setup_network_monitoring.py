@@ -337,8 +337,8 @@ def set_backend_nfqueue_rules():
     log_section("Setting up NFQueue Rules")
 
     commands = [
-        "iptables -I FORWARD -i vmbr0 -o backend -j NFQUEUE --queue-num 0 --queue-bypass",
-        "iptables -I FORWARD -i backend -o vmbr0 -j NFQUEUE --queue-num 0 --queue-bypass"
+        "iptables -I FORWARD -i vmbr0 -o vrt_backend: -j NFQUEUE --queue-num 0 --queue-bypass",
+        "iptables -I FORWARD -i vrt_backend: -o vmbr0 -j NFQUEUE --queue-num 0 --queue-bypass"
     ]
 
     for cmd in commands:

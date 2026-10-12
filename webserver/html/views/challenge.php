@@ -104,7 +104,16 @@
                 </div>
 
                 <div class="flag-section">
-                    <h2>Submit Flag</h2>
+                    <div class="flag-section-header">
+                        <h2>Submit Flag</h2>
+                        <div class="flag-progress empty" id="flag-progress">
+                            <svg viewBox="0 0 80 80" class="flag-progress-ring" aria-hidden="true">
+                                <circle class="flag-progress-track" cx="40" cy="40" r="34" pathLength="100"/>
+                                <circle class="flag-progress-bar" id="flag-progress-bar" cx="40" cy="40" r="34" pathLength="100"/>
+                            </svg>
+                            <span class="flag-progress-label" id="flag-progress-label">0/0</span>
+                        </div>
+                    </div>
                     <div class="flag-form">
                         <input type="text" id="flag-input" placeholder="Enter flag..." class="flag-input">
                         <button id="submit-flag" class="button button-primary">

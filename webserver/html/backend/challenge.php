@@ -734,6 +734,7 @@ class ChallengeHandler
             $completedFlagIds = $this->getCompletedFlagIds($challengeId);
             $userPoints = $this->calculateUserPoints($flags, $completedFlagIds);
             $challengePoints = $this->calculateChallengePoints($flags);
+            $flagProgress = $this->calculateFlagProgress($flags, $completedFlagIds);
             $hints = $this->getChallengeHints($challengeId, $userPoints);
             $entrypoints = $this->getEntrypointsIfRunning($challengeStatus);
             $elapsedSeconds = $this->challengeHelper->getElapsedSecondsForChallenge($this->pdo,$this->userId,$challengeId);
@@ -755,6 +756,8 @@ class ChallengeHandler
                     'remaining_extensions' => $remainingExtensions,
                     'isSolved' => $isSolved,
                     'leaderboard' => $leaderboard,
+                    'flags_submitted' => $flagProgress['submitted'],
+                    'flags_total' => $flagProgress['total'],
                 ])
             ]);
         } catch (CustomException $e) {
@@ -772,7 +775,7 @@ class ChallengeHandler
     private function getChallengeDetails(int $challengeId)
     {
         $stmt = $this->pdo->prepare("
-            SELECT 
+            SELECT
                 id,
                 name,
                 description,
@@ -863,7 +866,7 @@ class ChallengeHandler
                 id,
                 challenge_template_id,
                 flag,
-                description,    
+                description,
                 points,
                 order_index
             FROM get_challenge_flags(:id)
@@ -903,7 +906,7 @@ class ChallengeHandler
     private function getCompletedFlagIds(int $challengeId): array
     {
         $stmt = $this->pdo->prepare("
-            SELECT flag_id 
+            SELECT flag_id
             FROM get_completed_flag_ids_for_user(:user_id, :challenge_id)
         ");
         $stmt->execute(['user_id' => $this->userId, 'challenge_id' => $challengeId]);
@@ -919,6 +922,21 @@ class ChallengeHandler
             }
         }
         return $userPoints;
+    }
+
+    private function calculateFlagProgress(array $flags, array $completedFlagIds): array
+    {
+        $submitted = 0;
+        foreach ($flags as $flag) {
+            if (in_array($flag['id'], $completedFlagIds)) {
+                $submitted++;
+            }
+        }
+
+        return [
+            'submitted' => $submitted,
+            'total' => count($flags)
+        ];
     }
 
     private function getEntrypointsIfRunning(array $challengeStatus): array

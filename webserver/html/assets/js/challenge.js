@@ -43,6 +43,9 @@ class ChallengePage {
         this.flagInput = document.getElementById('flag-input');
         this.submitFlag = document.getElementById('submit-flag');
         this.flagFeedback = document.getElementById('flag-feedback');
+        this.flagProgress = document.getElementById('flag-progress');
+        this.flagProgressBar = document.getElementById('flag-progress-bar');
+        this.flagProgressLabel = document.getElementById('flag-progress-label');
 
         this.timerInterval = null;
         this.challengeTimerInterval = null;
@@ -101,6 +104,7 @@ class ChallengePage {
     populateChallenge(challenge) {
         this.populateBasicInfo(challenge);
         this.populateHints(challenge);
+        this.updateFlagProgress(challenge.flags_submitted, challenge.flags_total);
         this.updateChallengeStatus(challenge.challenge_status?.challenge_status || 'not_tried');
         this.handleDeploymentState(challenge);
         this.populateLeaderboard(challenge);
@@ -214,6 +218,18 @@ class ChallengePage {
     updateChallengeStatus(status) {
         this.challengeStatus.textContent = status.replace('_', ' ');
         this.challengeStatus.className = `challenge-status ${status}`;
+    }
+
+    updateFlagProgress(submitted = 0, total = 0) {
+        if (!this.flagProgress) return;
+
+        const pct = total > 0 ? (submitted / total) * 100 : 0;
+
+        this.flagProgressBar.style.strokeDashoffset = 100 - pct;
+        this.flagProgressLabel.textContent = `${submitted}/${total}`;
+        this.flagProgress.title = `${submitted} of ${total} flags submitted`;
+
+        this.flagProgress.classList.toggle('empty', submitted === 0);
     }
 
     showInactiveBanner() {

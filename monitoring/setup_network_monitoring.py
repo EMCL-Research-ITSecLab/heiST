@@ -1143,7 +1143,7 @@ def setup_suricata_dmz_config(args):
 pfring:
   - interface: {MONITORING_DMZ_INTERFACE}
     threads: auto
-    cluster-id: 99
+    cluster-id: 100
     cluster-type: cluster_flow
     bypass: yes
     use-mmap: yes
@@ -1157,7 +1157,7 @@ pfring:
 # Standard af-packet configuration
 af-packet:
   - interface: {MONITORING_DMZ_INTERFACE}
-    cluster-id: 99
+    cluster-id: 100
     cluster-type: cluster_flow
     threads: auto
     tpacket-v3: yes

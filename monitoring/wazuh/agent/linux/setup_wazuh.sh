@@ -314,7 +314,14 @@ fi
 # INSTALL MODE
 if [ "$MODE" == "full" ] || [ "$MODE" == "install" ]; then
     print_info "Downloading and Installing Agent..."
-    eval "$CMD_INSTALL"
+    script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+    package_cache="$script_dir/config/packages/$OS_TYPE"
+    if [ -d "$package_cache" ]; then
+        # Optional administrator-staged packages permit import without egress.
+        bash "$script_dir/config/install_cached_agent.sh" "$OS_TYPE" "$package_cache" || exit 1
+    else
+        eval "$CMD_INSTALL" || { print_error "Agent package installation failed"; exit 1; }
+    fi
 
     print_info "Adding Localfiles..."
     if [ -f /var/monitoring/wazuh-agent/config/localfile_ossec_config ]; then
@@ -333,11 +340,7 @@ if [ "$MODE" == "full" ] || [ "$MODE" == "install" ]; then
 
     if [ "$BASH_LOG" == "true" ]; then
       if [ -x /var/monitoring/wazuh-agent/config/bash_loggin_set_up.sh ]; then
-        mkdir -p /etc/monitoring
-        mv /var/monitoring/wazuh-agent/config/bash_loggin_set_up.sh /etc/monitoring
-        chmod +x /etc/monitoring/bash_loggin_set_up.sh
-        mv /var/monitoring/wazuh-agent/config/bash_loggin_systemd.service /etc/systemd/system/
-        mv /var/monitoring/wazuh-agent/config/bash_loggin_timer.timer /etc/systemd/system/
+        bash "$script_dir/config/install_logging_files.sh" "$script_dir/config" || exit 1
         systemctl daemon-reload
         systemctl enable bash_loggin_systemd.service
         systemctl enable bash_loggin_timer.timer
@@ -371,7 +374,7 @@ fi
 # REGISTRATION
 if [ "$MODE" == "full" ] || [ "$MODE" == "register" ] || [ "$REREGISTER" == "true" ]; then
     # Update manager address in config
-    update_ossec_config "$MANAGER_IP_ADDRESS"
+    update_ossec_config "$MANAGER_IP_ADDRESS" || exit 1
 
     # Register or re-register
     if [ "$REREGISTER" == "true" ]; then
@@ -382,6 +385,7 @@ if [ "$MODE" == "full" ] || [ "$MODE" == "register" ] || [ "$REREGISTER" == "tru
 
     if [ $? -ne 0 ]; then
         print_error "Registration failed. Please check the error messages above."
+        exit 1
     fi
 
     if [ "$MODE" == "register" ]; then
@@ -392,7 +396,7 @@ fi
 # START AGENT
 if [ "$MODE" == "full" ] || [ "$MODE" == "register" ] || [ "$MODE" == "reregister" ]; then
     print_info "Starting Wazuh Agent..."
-    eval "$CMD_RUN"
+    eval "$CMD_RUN" || { print_error "Agent startup failed"; exit 1; }
     print_info "Wazuh Agent is now running!"
 fi
 

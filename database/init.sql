@@ -473,6 +473,9 @@ ADD CONSTRAINT fk_running_challenge
 FOREIGN KEY (running_challenge)
 REFERENCES challenges(id) ON DELETE SET NULL;
 
+CREATE UNIQUE INDEX users_running_challenge_exclusive
+    ON users (running_challenge) WHERE running_challenge IS NOT NULL;
+
 
 CREATE TABLE user_profiles (
     user_id BIGINT PRIMARY KEY,

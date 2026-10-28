@@ -6,6 +6,7 @@ import random
 import requests
 import subprocess
 import os
+from backend.network_input import remove_network_input_filter
 
 from backend.DatabaseClasses import (
     ChallengeTemplate,
@@ -268,6 +269,8 @@ def delete_network_devices(challenge):
             delete_network_api_call(network)
         except Exception:
             pass
+
+        remove_network_input_filter(network.host_device)
 
     reload_network_api_call()
 

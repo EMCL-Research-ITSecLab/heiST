@@ -6,7 +6,7 @@ Wants=network.target
 [Service]
 Type=oneshot
 # Path to your setup script
-ExecStart=/etc/monitoring/bash_loggin_set_up.sh
+ExecStart=/usr/local/sbin/heist-bash-logging
 RemainAfterExit=no
 StandardOutput=journal
 StandardError=journal

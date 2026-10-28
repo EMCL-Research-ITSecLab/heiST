@@ -1,4 +1,6 @@
+from backend.network_input import install_network_input_filter
 import threading
+from backend.linux_dhcp import add_user_route, renew_linux_entrypoints
 import shlex
 from dotenv import find_dotenv, load_dotenv
 import hashlib
@@ -22,6 +24,7 @@ from backend.stop_challenge import stop_challenge
 from backend.warmup_challenge import warmup_challenge, stop_dnsmasq_process, start_dnsmasq_process
 from backend.launch_timing_logger import launch_timing_logger
 from backend.get_db_connection import db_connection_context
+from backend.instance_ownership import take_ready_instance, assign_instance
 from backend.qemu_ga_wrapper import GuestAgent, GuestAgentError
 
 load_dotenv(find_dotenv())
@@ -69,7 +72,7 @@ def launch_challenge(challenge_template_id, user_id, vpn_monitoring_device, dmz_
             try:
                 print(f"[Info] Attempting to get ready challenge for template {challenge_template_id} and user {user_id}",
                       flush=True)
-                challenge = get_ready_challenge(challenge_template, db_conn)
+                challenge = get_ready_challenge(challenge_template, db_conn, user_id)
                 if challenge is None:
                     running_warmup_challenge_id = try_attach_to_running_warmup(challenge_template_id, user_id, db_conn)
                     if running_warmup_challenge_id is not None:
@@ -91,6 +94,9 @@ def launch_challenge(challenge_template_id, user_id, vpn_monitoring_device, dmz_
                         flush=True)
                     challenge = warmup_challenge(user_id, challenge_template.id, vpn_monitoring_device,
                                                  dmz_monitoring_device)
+                    # Warmup returns its own template object, without the flags
+                    # loaded above. Use the launch template for both paths.
+                    challenge.template = challenge_template
 
                 print(f"[Info] Adding running challenge {challenge.id} to user {user_id}", flush=True)
                 add_running_challenge_to_user(challenge, user_id, db_conn)
@@ -115,8 +121,9 @@ def launch_challenge(challenge_template_id, user_id, vpn_monitoring_device, dmz_
                 # Network setup
                 start_time_network = time.time()
                 print(f"[Info] Starting network setup for challenge {challenge.id} and user {user_id}", flush=True)
-                start_dnsmasq_instances(challenge, user_vpn_ip)
+                user_routes = start_dnsmasq_instances(challenge, user_vpn_ip)
                 force_dhcp_renew_on_windows_machines(challenge)
+                renew_linux_entrypoints(challenge, user_vpn_ip, user_routes)
                 launch_timing_logger(start_time_network, "[NETWORK SETUP COMPLETE]", challenge_template_id, user_id)
 
                 start_time_user_flags = time.time()
@@ -336,66 +343,12 @@ def fetch_networks_and_connections(challenge, db_conn):
         print(f"[Info] Successfully processed {len(connections_fetched)} connections for challenge {challenge.id}", flush=True)
 
 
-def get_ready_challenge(challenge_template, db_conn, user_id=None):
-    """
-    Get a ready challenge from the database.
-    """
-    print(f"[Info] Getting ready challenge for template {challenge_template.id} (user_id={user_id})", flush=True)
-
-    with db_conn.cursor() as cursor:
-        if user_id is None:
-            print(f"[Debug] Querying for any available ready challenge", flush=True)
-            cursor.execute("""
-                           WITH ready_challenges AS (SELECT id, subnet
-                                                     FROM challenges
-                                                     WHERE challenge_template_id = %s
-                                                       AND lifecycle_state = 'READY'
-                                                     ORDER BY id
-                                                     LIMIT 1 FOR UPDATE SKIP LOCKED)
-                           UPDATE challenges
-                           SET lifecycle_state = 'ASSIGNED'
-                           WHERE id IN (SELECT id FROM ready_challenges)
-                           RETURNING id, subnet;
-                           """, (challenge_template.id,))
-            row = cursor.fetchone()
-
-            if row is None:
-                print(f"[Info] No ready challenge found for template {challenge_template.id}", flush=True)
-                return None
-
-            challenge_id = row[0]
-            subnet = row[1]
-            print(f"[Info] Found ready challenge {challenge_id} with subnet {subnet}", flush=True)
-
-            challenge = Challenge(challenge_id=challenge_id, template=challenge_template, subnet=subnet)
-            return challenge
-        else:
-            print(f"[Debug] Querying for ready challenge pre-assigned to user {user_id}", flush=True)
-            cursor.execute("""
-                           WITH ready_challenges AS (SELECT id, subnet
-                                                     FROM challenges
-                                                     WHERE pre_assigned_user_id = %s
-                                                       AND challenge_template_id = %s
-                                                       AND lifecycle_state = 'READY'
-                                                     ORDER BY id
-                                                     LIMIT 1 FOR UPDATE SKIP LOCKED)
-                           UPDATE challenges
-                           SET lifecycle_state = 'ASSIGNED'
-                           WHERE id IN (SELECT id FROM ready_challenges)
-                           RETURNING id, subnet;
-                           """, (user_id, challenge_template.id))
-            row = cursor.fetchone()
-
-            if row is None:
-                print(f"[Info] No ready challenge found for user {user_id} and template {challenge_template.id}", flush=True)
-                return None
-
-            challenge_id = row[0]
-            subnet = row[1]
-            print(f"[Info] Found ready challenge {challenge_id} with subnet {subnet} for user {user_id}", flush=True)
-
-            challenge = Challenge(challenge_id=challenge_id, template=challenge_template, subnet=subnet)
-            return challenge
+def get_ready_challenge(challenge_template, db_conn, user_id):
+    """Reserve a ready instance without taking another user's cold warmup."""
+    row = take_ready_instance(db_conn, challenge_template.id, user_id)
+    if row is None:
+        return None
+    return Challenge(challenge_id=row[0], template=challenge_template, subnet=row[1])
 
 
 
@@ -734,18 +687,8 @@ def add_iptables_rules(challenge, user_vpn_ip, vpn_monitoring_device, dmz_monito
             check=True)
         print(f"[Debug] Allowed intra-network traffic on {network.host_device}", flush=True)
 
-        # Allow DNS traffic to the router IP
-        subprocess.run(
-            ["iptables", "-A", "INPUT", "-i", network.host_device, "-d", network.router_ip, "-p", "udp", "--dport",
-             "53", "-j", "ACCEPT"], check=True)
-        subprocess.run(
-            ["iptables", "-A", "INPUT", "-i", network.host_device, "-d", network.router_ip, "-p", "tcp", "--dport",
-             "53", "-j", "ACCEPT"], check=True)
-        print(f"[Debug] Allowed DNS traffic to router {network.router_ip}", flush=True)
-
-        # Disallow traffic to the router IP
-        subprocess.run(["iptables", "-A", "INPUT", "-d", network.router_ip, "-j", "DROP"], check=True)
-        print(f"[Debug] Blocked direct traffic to router {network.router_ip}", flush=True)
+        # Replace the owned host-input policy before any legacy router drops.
+        install_network_input_filter(network.host_device, network.router_ip)
 
         # Set up qdisc
         subprocess.run(["tc", "qdisc", "add", "dev", network.host_device, "clsact"], check=False)
@@ -821,9 +764,8 @@ def add_running_challenge_to_user(challenge, user_id, db_conn):
     """
     print(f"[Info] Adding running challenge {challenge.id} to user {user_id}", flush=True)
 
-    with db_conn.cursor() as cursor:
-        cursor.execute("UPDATE users SET running_challenge = %s WHERE id = %s", (challenge.id, user_id))
-        print(f"[Info] Successfully added running challenge {challenge.id} to user {user_id}", flush=True)
+    assign_instance(db_conn, challenge.id, user_id)
+    print(f"[Info] Exclusively assigned running challenge {challenge.id} to user {user_id}", flush=True)
 
 
 def reset_expiration_timer(challenge_id, db_conn, expiration_duration_minutes=60):
@@ -862,9 +804,7 @@ def start_dnsmasq_instances(challenge, user_vpn_ip):
             if connection.machine.id not in machines_with_user_routes and network.accessible:
                 machines_with_user_routes[connection.machine.id] = connection
                 print(f"[Debug] Adding DHCP option for machine {connection.machine.id} to route user VPN IP {user_vpn_ip} through {network.router_ip}", flush=True)
-                with open(config_path, "a") as f:
-                    f.write(f"dhcp-option=tag:{connection.machine.id},option:classless-static-route,{user_vpn_ip}/32,"
-                            f"{network.router_ip}\n")
+                add_user_route(config_path, connection.machine.id, user_vpn_ip, network.router_ip)
 
         print(f"[Info] Starting dnsmasq for network {network.id} on device {network.host_device}", flush=True)
         print(f"[Info] Config path: {config_path}", flush=True)
@@ -876,3 +816,4 @@ def start_dnsmasq_instances(challenge, user_vpn_ip):
         start_dnsmasq_process(network)
 
     print(f"[Info] All dnsmasq instances started for challenge {challenge.id}", flush=True)
+    return machines_with_user_routes

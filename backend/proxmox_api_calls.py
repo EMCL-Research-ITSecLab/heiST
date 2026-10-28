@@ -6,6 +6,7 @@ import fcntl
 
 from backend.cloud_init_ip_pool import ip_pool
 from backend.vm_settings import challenge_cpu_type
+from backend.proxmox_tasks import wait_for_task
 
 load_dotenv()
 node = os.getenv("PROXMOX_HOSTNAME", "pve")
@@ -26,7 +27,7 @@ def make_api_call(method, endpoint, data=None):
         headers["Authorization"] = f"PVEAPIToken={proxmox_api_token}"
 
     url = f"{proxmox_url}/{endpoint}"
-    response = requests.request(method, url, headers=headers, json=data, verify="/etc/pve/pve-root-ca.pem")
+    response = requests.request(method, url, headers=headers, json=data, verify="/etc/pve/pve-root-ca.pem", timeout=(10, 60))
 
     if response.status_code == 200:
         return response.json()
@@ -43,7 +44,9 @@ def clone_vm_api_call(machine_template, machine):
         "newid": machine.id,
         "full": False
     }
-    return make_api_call("POST", endpoint, data)
+    response = make_api_call("POST", endpoint, data)
+    wait_for_task(make_api_call, node, response)
+    return response
 
 
 def create_network_api_call(network):
@@ -135,11 +138,9 @@ def stop_vm_api_call(machine):
 
 
 def shutdown_vm_api_call(machine):
-    """
-    Shutdown a virtual machine in Proxmox.
-    """
-
-    subprocess.run(["qm", "stop", str(machine.id), "--skiplock"], check=True, capture_output=True)
+    """Cleanly shut down an imported template; never force-freeze dirty filesystems."""
+    subprocess.run(["qm", "shutdown", str(machine.id), "--timeout", "180", "--forceStop", "0"],
+                   check=True, capture_output=True, timeout=210)
 
 
 def vm_is_stopped_api_call(machine):

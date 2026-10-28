@@ -3,6 +3,9 @@
 # It's meant to be run by a systemd service after cloud-init
 
 GLOBAL_BASHRC="/etc/bash.bashrc"
+if [ ! -f "$GLOBAL_BASHRC" ] && [ -f /etc/bashrc ]; then
+  GLOBAL_BASHRC=/etc/bashrc
+fi
 PROFILE_D_SCRIPT="/etc/profile.d/bash_logging.sh"
 CONTAINER_NAME="${ENV_CONTAINER_NAME:-$(hostname)}"
 PATH_BASH_CONF="/etc/rsyslog.d/bash.conf"

@@ -11,7 +11,9 @@ import re
 import argparse
 import subprocess
 import shlex
+from pathlib import Path
 from dotenv import load_dotenv
+from monitoring.monitor_host_firewall import install_host_input_filter
 
 
 sys.stdout.reconfigure(line_buffering=True)
@@ -188,6 +190,7 @@ def setup_firewall():
     Blocks all VM-to-VM traffic
     """
     log_section("Configuring IPv6 Firewall Rules (Hub-and-Spoke)")
+    install_host_input_filter(BRIDGE_NAME)
 
     # Flush existing forward rules for clean start
     run_cmd('ip6tables -F FORWARD', check=False, shell=True)
@@ -252,6 +255,7 @@ iface {BRIDGE_NAME} inet6 static
     bridge-ports none
     bridge-stp off
     bridge-fd 0
+    post-up {shlex.quote(sys.executable)} {shlex.quote(str(Path(__file__).with_name('monitor_host_firewall.py').resolve()))} --bridge {shlex.quote(BRIDGE_NAME)}
     # Enable bridge netfilter BEFORE setting up firewall rules
     pre-up modprobe br_netfilter || true
     pre-up sysctl -w net.bridge.bridge-nf-call-ip6tables=1 || true

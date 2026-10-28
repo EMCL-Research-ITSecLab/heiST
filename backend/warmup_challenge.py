@@ -5,6 +5,8 @@ from tenacity import retry, stop_after_attempt, wait_exponential_jitter
 import time
 from dotenv import load_dotenv, find_dotenv
 import os
+from backend.network_input import install_network_input_filter, remove_network_input_filter
+from backend.challenge_dns import connection_dns_servers, fallback_servers, hostname_records
 import subprocess
 import signal
 
@@ -37,6 +39,7 @@ from backend.teardown_challenge import remove_database_entries, stop_dnsmasq_ins
 from backend.launch_timing_logger import launch_timing_logger
 from backend.get_db_connection import db_connection_context
 from backend.qemu_ga_wrapper import GuestAgent, GuestAgentError
+from backend.linux_monitoring import prepare_monitoring_network, persist_monitoring_network
 
 load_dotenv(find_dotenv())
 
@@ -99,6 +102,8 @@ def warmup_challenge(pre_assigned_user_id, challenge_template_id, vpn_monitoring
             create_network_devices(challenge)
             print(f"[Info] Waiting for networks to be up", flush=True)
             wait_for_networks_to_be_up(challenge)
+            for network in challenge.networks.values():
+                install_network_input_filter(network.host_device, network.router_ip)
 
             print(f"[Info] Attaching networks to VMs", flush=True)
             attach_networks_to_vms(challenge)
@@ -393,30 +398,27 @@ def configure_ipv6_and_wazuh_linux(machine, manager_ip="fd12:3456:789a:1::101"):
 
     full_start_time = time.time()
 
-    aggregated_cmd = (
-        f'iface=$(ip -o link | awk "/0a:01/ {{print \\$2; exit}}" | tr -d :) && '
-        f'ip -6 addr add {ipv6}/64 dev $iface && '
-        f'ip -6 route add default via {vrtmon_gw} && '
-        f'systemctl stop wazuh-agent 2>/dev/null || true && '
-        f'/var/monitoring/wazuh-agent/setup_wazuh.sh '
-        f'    --register '
-        f'    --manager={manager_ip} '
-        f'    --name={agent_name} '
-        f'    --password={WAZUH_ENROLLMENT_PASSWORD} '
-        f'    --yes && '
-        f'systemctl daemon-reload && '
-        f'systemctl enable wazuh-agent && '
-        f'systemctl start wazuh-agent'
-    )
-
     try:
         with GuestAgent(vmid=machine.id) as ga:
-            result = ga.exec(aggregated_cmd, timeout=120)
-    except GuestAgentError as e:
-        raise RuntimeError(f"Guest agent error configuring Wazuh for VM {machine.id}: {e}") from e
-
-    if not result:
-        raise RuntimeError(f"Wazuh config failed on VM {machine.id}: {result.stderr}")
+            interface = prepare_monitoring_network(ga, ipv6, vrtmon_gw)
+            persist_monitoring_network(ga, ipv6, vrtmon_gw, interface)
+            result = ga.exec(["systemctl", "stop", "wazuh-agent"], timeout=30)
+            if not result:
+                raise RuntimeError(f"Could not stop the previous agent on VM {machine.id}")
+            result = ga.exec([
+                "/var/monitoring/wazuh-agent/setup_wazuh.sh", "--register",
+                f"--manager={manager_ip}", f"--name={agent_name}",
+                f"--password={WAZUH_ENROLLMENT_PASSWORD}", "--yes",
+            ], timeout=300)
+            if not result:
+                raise RuntimeError(f"Agent enrollment failed on VM {machine.id}")
+            result = ga.exec(["systemctl", "is-active", "wazuh-agent"], timeout=30)
+            if not result or result.stdout.strip() != "active":
+                raise RuntimeError(f"Agent did not become active on VM {machine.id}")
+    except GuestAgentError as error:
+        # Transport timeouts may contain the enrollment argv. Keep credentials
+        # out of the error propagated to application logs.
+        raise RuntimeError(f"Guest agent error configuring monitoring on VM {machine.id}: {type(error).__name__}") from error
 
     launch_timing_logger(
         full_start_time,
@@ -700,15 +702,9 @@ def configure_dnsmasq_instances(challenge):
     machines_with_user_routes = {}
     machines_with_internet_access = {}
 
-    # Collect upstream DNS servers per machine
-    dns_servers_by_machine = {machine_id: [] for machine_id in challenge.machines.keys()}
-    for machine in challenge.machines.values():
-        is_dc = getattr(machine.template, "ad_role", "none") == "dc"
-        for connection in machine.connections.values():
-            if is_dc:
-                dns_servers_by_machine[machine.id].append(connection.client_ip)
-            else:
-                dns_servers_by_machine[machine.id].append(connection.network.router_ip)
+    # Preserve the historical public fallback unless an isolated deployment
+    # explicitly disables it. Never advertise another NIC's router on this link.
+    fallback = fallback_servers(os.getenv('CHALLENGE_DNS_FALLBACK', '1.1.1.1,1.0.0.1'))
 
     configs_created = 0
 
@@ -751,10 +747,10 @@ def configure_dnsmasq_instances(challenge):
 
                 # DHCP host mapping and per-machine DNS
                 f.write(f"dhcp-host={connection.client_mac},{connection.client_ip},set:{tag}\n")
-                upstream = ",".join(dns_servers_by_machine[connection.machine.id])
+                upstream = connection_dns_servers(connection, fallback)
 
                 # Fallback to public DNS only if desired
-                f.write(f"dhcp-option=tag:{tag},option:dns-server,{upstream},1.1.1.1,1.0.0.1\n")
+                f.write(f"dhcp-option=tag:{tag},option:dns-server,{upstream}\n")
 
                 if network.is_dmz:
                     if connection.machine.id not in machines_with_internet_access:
@@ -766,7 +762,7 @@ def configure_dnsmasq_instances(challenge):
                 for domain in connection.machine.domains:
                     if domain in dc_domain_ips_on_network:
                         continue
-                    f.write(f"address=/{domain}/{connection.client_ip}\n")
+                    f.write(hostname_records(domain, connection.client_ip))
 
                 connections_configured += 1
                 print(f"[Debug] Configured DHCP/DNS for machine {connection.machine.id} with IP {connection.client_ip}", flush=True)
@@ -1075,6 +1071,7 @@ def delete_network_devices(challenge):
         try:
             print(f"[Debug] Deleting network device {network.host_device}", flush=True)
             delete_network_api_call(network)
+            remove_network_input_filter(network.host_device)
             print(f"[Info] Network device {network.host_device} deleted successfully", flush=True)
         except Exception as e:
             print(f"[Warning] Failed to delete network device {network.host_device}: {e}", flush=True)

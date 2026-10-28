@@ -5,6 +5,7 @@ import subprocess
 import fcntl
 
 from backend.cloud_init_ip_pool import ip_pool
+from backend.vm_settings import challenge_cpu_type
 
 load_dotenv()
 node = os.getenv("PROXMOX_HOSTNAME", "pve")
@@ -206,7 +207,7 @@ def initial_configuration_api_call(machine_template):
         "memory": machine_template.ram,
         "cores": machine_template.cores,
         "sockets": 1,
-        "cpu": "kvm64",
+        "cpu": challenge_cpu_type(),
         "scsihw": "virtio-scsi-pci",
         "agent": 1
     }

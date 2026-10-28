@@ -15,6 +15,7 @@ import psycopg2
 
 from backend.subnet_calculations import nth_challenge_subnet, nth_vpn_static_ip
 from setup.vm_resources import vm_resources, enable_ova_storage
+from backend.vm_settings import challenge_cpu_type
 
 load_dotenv()
 
@@ -33,6 +34,7 @@ PROXMOX_EXTERNAL_IP = os.getenv("PROXMOX_EXTERNAL_IP", "10.0.3.4")
 PROXMOX_HOSTNAME = os.getenv("PROXMOX_HOSTNAME", "pve")
 PROXMOX_LVM_STORAGE = os.getenv("PROXMOX_LVM_STORAGE", "local-lvm")
 VM_RESOURCES = vm_resources()
+CHALLENGE_VM_CPU_TYPE = challenge_cpu_type()
 
 UBUNTU_BASE_SERVER_URL = os.getenv("UBUNTU_BASE_SERVER_URL")
 
@@ -220,6 +222,7 @@ def install_dependencies():
 
     packages = [
         ("OpenVPN", ["openvpn"]),
+        ("cron (monitoring PCAP rotation)", ["cron"]),
         ("Easy-RSA", ["easy-rsa"]),
         ("dnsmasq", ["dnsmasq"]),
         ("iptables", ["iptables"]),
@@ -389,6 +392,7 @@ def generate_and_distribute_env_files(backend_api_token, web_server_api_token):
         backend_env_file.write(f"PROXMOX_API_TOKEN='{backend_api_token_string}'\n")
         backend_env_file.write(f"PROXMOX_HOSTNAME='{PROXMOX_HOSTNAME}'\n")
         backend_env_file.write(f"PROXMOX_LVM_STORAGE='{PROXMOX_LVM_STORAGE}'\n")
+        backend_env_file.write(f"CHALLENGE_VM_CPU_TYPE='{CHALLENGE_VM_CPU_TYPE}'\n")
 
         backend_env_file.write(f"VPN_SERVER_IP='{PROXMOX_EXTERNAL_IP}'\n")
 

@@ -614,6 +614,7 @@ DEFAULTS = {
     "WEBSERVER_VM_CORES": "4",
     "DATABASE_VM_MEMORY": "32768",
     "DATABASE_VM_CORES": "4",
+    "CHALLENGE_VM_CPU_TYPE": "kvm64",
     "PROXMOX_SSH_KEYFILE": "/root/.ssh/id_rsa",
     "PROXMOX_EXPORTER_TOKEN_NAME": "pve_exporter_token",
     "WAZUH_NETWORK_DEVICE_IPV6": "fd12:3456:789a:1::1",
@@ -755,6 +756,7 @@ ADVANCED_SECTIONS = [
             field("WEBSERVER_VM_CORES", "Webserver VM cores", "integer", description="Number of webserver VM CPU cores."),
             field("DATABASE_VM_MEMORY", "Database VM memory (MiB)", "integer", description="Database VM memory; a small staging deployment may use 4096."),
             field("DATABASE_VM_CORES", "Database VM cores", "integer", description="Number of database VM CPU cores."),
+            field("CHALLENGE_VM_CPU_TYPE", "Challenge VM CPU model", description="CPU model for new challenge templates. The legacy default is kvm64; RHEL/Rocky 9 need x86-64-v2 or a compatible host model.", example="x86-64-v2-AES"),
         ]
     ),
 

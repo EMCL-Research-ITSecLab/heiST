@@ -610,6 +610,10 @@ DEFAULTS = {
     "MONITORING_VM_USER": "ubuntu",
     "MONITORING_VM_PASSWORD": "",
     "PROXMOX_LVM_STORAGE": "local-lvm",
+    "WEBSERVER_VM_MEMORY": "16384",
+    "WEBSERVER_VM_CORES": "4",
+    "DATABASE_VM_MEMORY": "32768",
+    "DATABASE_VM_CORES": "4",
     "PROXMOX_SSH_KEYFILE": "/root/.ssh/id_rsa",
     "PROXMOX_EXPORTER_TOKEN_NAME": "pve_exporter_token",
     "WAZUH_NETWORK_DEVICE_IPV6": "fd12:3456:789a:1::1",
@@ -736,7 +740,7 @@ ADVANCED_SECTIONS = [
             field("PROXMOX_PASSWORD", "Proxmox password", "secret", secret=True, description="Password for the Proxmox user above. The installer uses it to create API tokens and configure the host."),
             field("PROXMOX_PORT", "Proxmox API port", "port", description="The HTTPS API port for Proxmox. In most installations this is `8006`.", example="8006"),
             field("PROXMOX_HOSTNAME", "Proxmox node name", "hostname", description="The node name shown in the Proxmox UI and used by the API. Usually this is the Proxmox host's short hostname, for example `pve`.", example="pve"),
-            field("PROXMOX_LVM_STORAGE", "Proxmox LVM storage", description="Storage pool used when importing OVA disks.", example="local-lvm"),
+            field("PROXMOX_LVM_STORAGE", "Proxmox image storage", description="Existing image storage; directory storage is supported too.", example="local-lvm"),
             field("PROXMOX_SSH_KEYFILE", "Proxmox SSH key file", "path", description="Path to the SSH private key used by auxiliary monitoring scripts.", example="/root/.ssh/id_rsa"),
 
         ],
@@ -747,6 +751,10 @@ ADVANCED_SECTIONS = [
         subtitle="Define source artifacts and bootstrap inputs used to provision backend virtual machines consistently.",
         fields=[
             field("UBUNTU_BASE_SERVER_URL", "Ubuntu base server URL", "path", description="URL used to download the Ubuntu cloud image/base server artifact during setup."),
+            field("WEBSERVER_VM_MEMORY", "Webserver VM memory (MiB)", "integer", description="Webserver VM memory; a small staging deployment may use 4096."),
+            field("WEBSERVER_VM_CORES", "Webserver VM cores", "integer", description="Number of webserver VM CPU cores."),
+            field("DATABASE_VM_MEMORY", "Database VM memory (MiB)", "integer", description="Database VM memory; a small staging deployment may use 4096."),
+            field("DATABASE_VM_CORES", "Database VM cores", "integer", description="Number of database VM CPU cores."),
         ]
     ),
 

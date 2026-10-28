@@ -14,6 +14,7 @@ import time
 import psycopg2
 
 from backend.subnet_calculations import nth_challenge_subnet, nth_vpn_static_ip
+from setup.vm_resources import vm_resources, enable_ova_storage
 
 load_dotenv()
 
@@ -30,6 +31,8 @@ BACKEND_PORT = os.getenv("BACKEND_PORT", "8000")
 PROXMOX_INTERNAL_IP = os.getenv("PROXMOX_INTERNAL_IP", "10.0.3.4")
 PROXMOX_EXTERNAL_IP = os.getenv("PROXMOX_EXTERNAL_IP", "10.0.3.4")
 PROXMOX_HOSTNAME = os.getenv("PROXMOX_HOSTNAME", "pve")
+PROXMOX_LVM_STORAGE = os.getenv("PROXMOX_LVM_STORAGE", "local-lvm")
+VM_RESOURCES = vm_resources()
 
 UBUNTU_BASE_SERVER_URL = os.getenv("UBUNTU_BASE_SERVER_URL")
 
@@ -255,21 +258,7 @@ def allow_ova_upload_to_proxmox():
     Allow OVA upload to Proxmox.
     """
 
-    config_dir = "/etc/pve/storage.cfg"
-
-    if not os.path.exists(config_dir):
-        raise FileNotFoundError(f"Proxmox config directory not found: {config_dir}")
-
-    with open(config_dir, "w") as config_file:
-        config_file.write(f"""dir: local
-        path /var/lib/vz
-        content iso,vztmpl,backup,import
-
-lvmthin: local-lvm
-        thinpool data
-        vgname pve
-        content rootdir,images
-""")
+    enable_ova_storage(PROXMOX_LVM_STORAGE)
 
 
 def setup_api_token():
@@ -399,6 +388,7 @@ def generate_and_distribute_env_files(backend_api_token, web_server_api_token):
         backend_env_file.write(f"PROXMOX_URL='https://{PROXMOX_HOSTNAME}:{PROXMOX_PORT}'\n")
         backend_env_file.write(f"PROXMOX_API_TOKEN='{backend_api_token_string}'\n")
         backend_env_file.write(f"PROXMOX_HOSTNAME='{PROXMOX_HOSTNAME}'\n")
+        backend_env_file.write(f"PROXMOX_LVM_STORAGE='{PROXMOX_LVM_STORAGE}'\n")
 
         backend_env_file.write(f"VPN_SERVER_IP='{PROXMOX_EXTERNAL_IP}'\n")
 
@@ -637,12 +627,12 @@ def setup_web_and_database_server(api_token):
         raise FileNotFoundError("OVF file not found in the extracted OVA directory.")
 
     print("\tImporting OVA file as webserver")
-    importovf_command = f"qm importovf {webserver_id} \"{base_server_dir}/{ovf_file}\" local-lvm"
-    subprocess.run(importovf_command, shell=True, check=True, capture_output=True)
+    subprocess.run(["qm", "importovf", str(webserver_id), f"{base_server_dir}/{ovf_file}",
+                    PROXMOX_LVM_STORAGE], check=True, capture_output=True)
 
     print("\tImporting OVA file as database server")
-    importovf_command = f"qm importovf {database_id} \"{base_server_dir}/{ovf_file}\" local-lvm"
-    subprocess.run(importovf_command, shell=True, check=True, capture_output=True)
+    subprocess.run(["qm", "importovf", str(database_id), f"{base_server_dir}/{ovf_file}",
+                    PROXMOX_LVM_STORAGE], check=True, capture_output=True)
 
     proxmox = ProxmoxAPI("localhost", **api_token, verify_ssl=False)
 
@@ -651,8 +641,7 @@ def setup_web_and_database_server(api_token):
     proxmox.nodes(PROXMOX_HOSTNAME).qemu(webserver_id).config.put(
         name='WebServer',
         cpu='kvm64',
-        cores=4,
-        memory=1024 * 16,
+        **VM_RESOURCES['webserver'],
         net0=f'virtio,bridge={BACKEND_NETWORK_DEVICE},macaddr={WEBSERVER_MAC_ADDRESS}',
         ipconfig0=f'ip={WEBSERVER_HOST}/24,gw={BACKEND_NETWORK_ROUTER}',
     )
@@ -662,8 +651,7 @@ def setup_web_and_database_server(api_token):
     proxmox.nodes(PROXMOX_HOSTNAME).qemu(database_id).config.put(
         name='DatabaseServer',
         cpu='kvm64',
-        cores=4,
-        memory=1024 * 32,
+        **VM_RESOURCES['database'],
         net0=f'virtio,bridge={BACKEND_NETWORK_DEVICE},macaddr={DATABASE_MAC_ADDRESS}',
         ipconfig0=f'ip={DATABASE_HOST}/24,gw={BACKEND_NETWORK_ROUTER}',
     )

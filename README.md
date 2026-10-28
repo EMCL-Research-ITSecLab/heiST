@@ -88,6 +88,19 @@ bin/install
 
 
 ### Installation Verification
+
+Small isolated staging installations can set `WEBSERVER_VM_MEMORY` and
+`DATABASE_VM_MEMORY` (MiB), and `WEBSERVER_VM_CORES` and `DATABASE_VM_CORES`
+in the advanced installer or `setup/.env`. Defaults remain 16384/32768 MiB
+and four cores each. For example, a functional pilot may use 4096 MiB and
+two cores per VM; measure production capacity separately.
+
+`PROXMOX_LVM_STORAGE` selects existing image storage for infrastructure and
+challenge imports. It defaults to `local-lvm`; directory-backed staging can
+use `local`. Setup adds `import` to the existing `local` content types and,
+when `local` is the image target, also adds `images`. It preserves the storage
+path, existing content and other storage definitions. Provision the selected
+storage before running setup.
 After the installation process has finished, you can verify that the application is running correctly by accessing the web application at `https://<proxmox_host_ip>`, and logging in with the `admin` user and the password you set during the installation process.
 To verify that the monitoring system is working correctly, you can navigate to the *Grafana* dashboard at `https://<proxmox_host_ip>:3000/login`
 

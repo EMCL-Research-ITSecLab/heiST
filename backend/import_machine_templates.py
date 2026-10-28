@@ -19,6 +19,7 @@ from backend.proxmox_api_calls import (
 )
 
 PROXMOX_STORAGE_BASE_DIR = "/var/lib/vz/import"
+PROXMOX_IMAGE_STORAGE = os.getenv("PROXMOX_LVM_STORAGE", "local-lvm")
 _LINUX_AGENT_CONFIG_DIR  = "/root/heiST/monitoring/wazuh/agent/linux"
 _WINDOWS_AGENT_CONFIG_DIR = "/root/heiST/monitoring/wazuh/agent/windows"
 
@@ -227,11 +228,8 @@ def convert_ova_to_machine_template(disk_file_path, machine_template_id):
     # Convert the OVF file to a Proxmox template
     try:
         print(f"[Info] Importing OVF to Proxmox as machine template {machine_template_id}", flush=True)
-        importovf_command = f"qm importovf {machine_template_id} '{ovf_file}' local-lvm"
-        if "|" in importovf_command or ";" in importovf_command or "&" in importovf_command:
-            print(f"[Error] Invalid characters in import command", flush=True)
-            raise ValueError("Invalid characters in import command.")
-        subprocess.run(importovf_command, shell=True, check=True, capture_output=True)
+        subprocess.run(["qm", "importovf", str(machine_template_id), ovf_file,
+                        PROXMOX_IMAGE_STORAGE], check=True, capture_output=True)
         print(f"[Info] OVF import completed successfully for machine template {machine_template_id}", flush=True)
     except Exception as e1:
         print(f"[Error] Failed to import OVF file: {e1}", flush=True)
@@ -269,8 +267,8 @@ def convert_iso_to_machine_template(disk_file_path, machine_template_id):
             raise ValueError("Invalid characters in disk file path.")
 
         print(f"[Info] Importing ISO to Proxmox as machine template {machine_template_id}", flush=True)
-        importdisk_command = f"qm importdisk {machine_template_id} \"{disk_file_path}\" local-lvm"
-        subprocess.run(importdisk_command, shell=True, check=True, capture_output=True)
+        subprocess.run(["qm", "importdisk", str(machine_template_id), disk_file_path,
+                        PROXMOX_IMAGE_STORAGE], check=True, capture_output=True)
         print(f"[Info] ISO import completed successfully for machine template {machine_template_id}", flush=True)
     except Exception as e1:
         print(f"[Error] Failed to import ISO file: {e1}", flush=True)

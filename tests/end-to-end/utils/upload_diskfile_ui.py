@@ -3,7 +3,9 @@ from login_user_ui import login_user_ui
 from automatic_challenge_import.yaml_parser import retrieve_ova_data
 
 
-def upload_diskfile_ui(page, file_path=None, username=None, password=None, login=False, prints=False):
+def upload_diskfile_ui(page, file_path=None, username=None, password=None, login=False, prints=False, guest_os='linux'):
+    if guest_os not in ('linux', 'windows'):
+        raise ValueError('guest_os must be linux or windows')
     if login:
         if prints:
             print(f"\tLogging in user {username} via UI")
@@ -27,6 +29,11 @@ def upload_diskfile_ui(page, file_path=None, username=None, password=None, login
     if prints:
         print(f"\tSubmitting upload form")
     page.click('button:has-text("Upload")')
+
+    # Upload waits for an OS choice before sending any data. Without this step
+    # the helper remains blocked behind the modal until its success timeout.
+    page.locator(f'.os-option[data-os="{guest_os}"]').click()
+    page.locator('#os-next-btn').click()
 
     if prints:
         print(f"\tWaiting for upload to complete")

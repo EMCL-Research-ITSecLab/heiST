@@ -2,6 +2,16 @@
 
 set -e  # Exit on any error
 
+# Fresh cloud images may still be applying automatic security updates. Wait
+# for the real dpkg lock instead of exhausting three short deployment retries.
+APT_LOCK_TIMEOUT="${APT_LOCK_TIMEOUT:-300}"
+case "$APT_LOCK_TIMEOUT" in
+    ''|*[!0-9]*) echo 'APT_LOCK_TIMEOUT must be a non-negative integer'; exit 1 ;;
+esac
+apt_get() {
+    command apt-get -o "DPkg::Lock::Timeout=$APT_LOCK_TIMEOUT" "$@"
+}
+
 DIV="------------------------------------------------------"
 
 if [ $(id -u) -ne 0 ]
@@ -44,8 +54,8 @@ else
 fi
 
 section_header "Add docker requirements and certificates"
-apt-get update || { echo "ERROR: apt-get update failed"; exit 1; }
-apt-get -y install ca-certificates curl sudo || { echo "ERROR: Failed to install prerequisites"; exit 1; }
+apt_get update || { echo "ERROR: apt-get update failed"; exit 1; }
+apt_get -y install ca-certificates curl sudo || { echo "ERROR: Failed to install prerequisites"; exit 1; }
 install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc || { echo "ERROR: Failed to download Docker GPG key"; exit 1; }
 chmod a+r /etc/apt/keyrings/docker.asc
@@ -56,11 +66,11 @@ echo \
   "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
   $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
   tee /etc/apt/sources.list.d/docker.list > /dev/null
-apt-get update || { echo "ERROR: apt-get update failed after adding Docker repository"; exit 1; }
+apt_get update || { echo "ERROR: apt-get update failed after adding Docker repository"; exit 1; }
 section_footer
 
 section_header "Install docker packages"
-apt-get -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin || { echo "ERROR: Failed to install Docker packages"; exit 1; }
+apt_get -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin || { echo "ERROR: Failed to install Docker packages"; exit 1; }
 section_footer
 
 section_header "Add docker service and start it"

@@ -19,23 +19,23 @@ class ChallengeWorkerTest extends TestCase
 
     public function setUp(): void
     {
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
-        $this->curlHelper = $this->createMock(ICurlHelper::class);
-        $this->authHelper = $this->createMock(IAuthHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
+        $this->curlHelper = $this->createStub(ICurlHelper::class);
+        $this->authHelper = $this->createStub(IAuthHelper::class);
 
         $this->mockDB = null;
-        $this->pdo = $this->createMock(PDO::class);
+        $this->pdo = $this->createStub(PDO::class);
         $this->databaseHelper->method('getPDO')->willReturn($this->pdo);
 
         $this->env = new Env(__DIR__ . '/../../../../setup');
         $this->logger = new MockLogger();
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
     }
 
     private function requireMockDB(): void {
         $this->mockDB = new MockPostgresDB();
         $this->pdo = $this->mockDB->getPDO();
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($this->pdo);
     }
 
@@ -54,6 +54,7 @@ class ChallengeWorkerTest extends TestCase
 
     // Tests requiring a mock DB
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testNoExpiredChallenges(): void
     {
         $this->requireMockDB();
@@ -66,6 +67,7 @@ class ChallengeWorkerTest extends TestCase
         $this->assertStringContainsString("No expired challenges found.", $output);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testExpiredChallengeGetsProcessed(): void
     {
         $this->requireMockDB();
@@ -81,7 +83,7 @@ class ChallengeWorkerTest extends TestCase
         $this->pdo->exec("INSERT INTO completed_challenges (id, user_id, challenge_template_id, completed_at) VALUES (1, 1, 1, NULL);");
         $this->pdo->exec("UPDATE users SET running_challenge = 1 WHERE id = 1;");
 
-        $curlHelper = $this->createMock(ICurlHelper::class);
+        $curlHelper = $this->createStub(ICurlHelper::class);
         $curlHelper->method('makeBackendRequest')->willReturn(['success' => true, 'http_code' => 200]);
 
         ob_start();
@@ -105,6 +107,7 @@ class ChallengeWorkerTest extends TestCase
         $this->assertNotNull($completedChallenge['completed_at']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testExpiredChallengeProcessingErrorThrowsException(): void
     {
         $this->requireMockDB();
@@ -120,7 +123,7 @@ class ChallengeWorkerTest extends TestCase
         $this->pdo->exec("INSERT INTO completed_challenges (id, user_id, challenge_template_id, completed_at) VALUES (1, 1, 1, NULL);");
         $this->pdo->exec("UPDATE users SET running_challenge = 1 WHERE id = 1;");
 
-        $curlHelper = $this->createMock(ICurlHelper::class);
+        $curlHelper = $this->createStub(ICurlHelper::class);
         $curlHelper->method('makeBackendRequest')->willReturn(['success' => false, 'http_code' => 500]);
 
         ob_start();
@@ -139,6 +142,7 @@ class ChallengeWorkerTest extends TestCase
         $this->assertStringContainsString("Error processing challenges", $output);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testChallengeDeletionAfterExpiration(): void {
         $this->requireMockDB();
 
@@ -161,7 +165,7 @@ class ChallengeWorkerTest extends TestCase
         $this->pdo->exec("INSERT INTO completed_challenges (id, user_id, challenge_template_id, completed_at) VALUES (1, 1, 1, NULL);");
         $this->pdo->exec("UPDATE users SET running_challenge = 1 WHERE id = 1;");
 
-        $curlHelper = $this->createMock(ICurlHelper::class);
+        $curlHelper = $this->createStub(ICurlHelper::class);
 
         $mockStopChallengeMethod = function($url, $method, $headers, $data) {
             $this->pdo->exec("DELETE FROM challenges WHERE id = 1");
@@ -217,6 +221,7 @@ class ChallengeWorkerTest extends TestCase
         }
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testChallengeDeletionBackendRequestErrorThrowsException(): void
     {
         $this->requireMockDB();
@@ -240,7 +245,7 @@ class ChallengeWorkerTest extends TestCase
         $this->pdo->exec("INSERT INTO completed_challenges (id, user_id, challenge_template_id, completed_at) VALUES (1, 1, 1, NULL);");
         $this->pdo->exec("UPDATE users SET running_challenge = 1 WHERE id = 1;");
 
-        $curlHelper = $this->createMock(ICurlHelper::class);
+        $curlHelper = $this->createStub(ICurlHelper::class);
 
         $mockStopChallengeMethod = function($url, $method, $headers, $data) {
             $this->pdo->exec("DELETE FROM challenges WHERE id = 1");

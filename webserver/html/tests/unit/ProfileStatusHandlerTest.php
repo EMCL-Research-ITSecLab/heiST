@@ -18,27 +18,27 @@ class ProfileStatusHandlerTest extends TestCase
     private $mockDB;
 
     public function setUp(): void {
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->logger = new MockLogger();
 
         $this->session = new MockSession();
         $this->server = new MockServer();
 
         $this->mockDB = null;
-        $this->pdo = $this->createMock(PDO::class);
+        $this->pdo = $this->createStub(PDO::class);
         $this->databaseHelper->method('getPDO')->willReturn($this->pdo);
     }
 
     private function requireMockDB(): void {
         $this->mockDB = new MockPostgresDB();
         $this->pdo = $this->mockDB->getPDO();
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($this->pdo);
     }
 
     public function testFailedInitSecureSessionThrowsException(): void {
-        $securityHelper = $this->createMock(ISecurityHelper::class);
+        $securityHelper = $this->createStub(ISecurityHelper::class);
         $securityHelper->method('initSecureSession')->will($this->throwException(new Exception('Session init failed')));
 
         $this->expectException(Exception::class);
@@ -71,9 +71,9 @@ class ProfileStatusHandlerTest extends TestCase
     }
 
     public function testErrorDuringRequestHandlingDueToNonExistentUserThrowsExceptions(): void {
-        $pdo = $this->createMock(PDO::class);
-        $stmt = $this->createMock(PDOStatement::class);
-        $databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $pdo = $this->createStub(PDO::class);
+        $stmt = $this->createStub(PDOStatement::class);
+        $databaseHelper = $this->createStub(IDatabaseHelper::class);
         $stmt->method('execute')->willReturn(true);
         $stmt->method('fetch')->willReturn(null);
         $pdo->method('prepare')->willReturn($stmt);
@@ -82,7 +82,7 @@ class ProfileStatusHandlerTest extends TestCase
         $server = new MockServer();
         $server['REQUEST_METHOD'] = 'GET';
 
-        $securityHelper = $this->createMock(ISecurityHelper::class);
+        $securityHelper = $this->createStub(ISecurityHelper::class);
         $securityHelper->method('validateSession')->willReturn(true);
 
         $session = new MockSession();
@@ -108,9 +108,9 @@ class ProfileStatusHandlerTest extends TestCase
     }
 
     public function testDatabaseErrorThrowsException(): void {
-        $pdo = $this->createMock(PDO::class);
-        $stmt = $this->createMock(PDOStatement::class);
-        $databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $pdo = $this->createStub(PDO::class);
+        $stmt = $this->createStub(PDOStatement::class);
+        $databaseHelper = $this->createStub(IDatabaseHelper::class);
         $stmt->method('execute')->will($this->throwException(new PDOException('Database error')));
         $pdo->method('prepare')->willReturn($stmt);
         $databaseHelper->method('getPDO')->willReturn($pdo);
@@ -118,7 +118,7 @@ class ProfileStatusHandlerTest extends TestCase
         $server = new MockServer();
         $server['REQUEST_METHOD'] = 'GET';
 
-        $securityHelper = $this->createMock(ISecurityHelper::class);
+        $securityHelper = $this->createStub(ISecurityHelper::class);
         $securityHelper->method('validateSession')->willReturn(true);
 
         $session = new MockSession();
@@ -145,19 +145,20 @@ class ProfileStatusHandlerTest extends TestCase
 
     // Tests requiring a mock DB
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testSuccessfulRequestHandlingForLoggedInUser(): void {
         $this->requireMockDB();
 
         $server = new MockServer();
         $server['REQUEST_METHOD'] = 'GET';
 
-        $securityHelper = $this->createMock(ISecurityHelper::class);
+        $securityHelper = $this->createStub(ISecurityHelper::class);
         $securityHelper->method('validateSession')->willReturn(true);
 
         $session = new MockSession();
         $session['user_id'] = 1;
 
-        $databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $databaseHelper = $this->createStub(IDatabaseHelper::class);
         $databaseHelper->method('getPDO')->willReturn($this->pdo);
 
         $handler = new ProfileStatusHandler(

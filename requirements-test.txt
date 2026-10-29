@@ -1,0 +1,9 @@
+# Existing platform dependencies only; no additional test framework.
+Flask>=3.1,<4
+psycopg2-binary>=2.9,<3
+python-dotenv>=1,<2
+requests>=2.32,<3
+proxmoxer>=2,<3
+tenacity>=9,<10
+PyYAML>=6,<7
+scapy>=2.6,<3

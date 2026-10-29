@@ -11,9 +11,10 @@ class LogoutHandlerTest extends TestCase
 
     private ISession $session;
     private IServer $server;
+    private array $cookie = [];
 
     public function setUp(): void {
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->logger = new MockLogger();
 
         $this->session = new MockSession();
@@ -21,7 +22,7 @@ class LogoutHandlerTest extends TestCase
     }
 
     public function testFailedInitSecureSessionThrowsException(): void {
-        $securityHelper = $this->createMock(ISecurityHelper::class);
+        $securityHelper = $this->createStub(ISecurityHelper::class);
         $securityHelper->method('initSecureSession')->will($this->throwException(new Exception('Session init failed')));
 
         $this->expectException(Exception::class);

@@ -118,7 +118,7 @@ class LogoutHandler
                 'domain' => $params['domain'],
                 'secure' => $params['secure'],
                 'httponly' => $params['httponly'],
-                'samesite' => $params['samesite']
+                'samesite' => $params['samesite'] ?? 'Strict'
             ]
         );
 

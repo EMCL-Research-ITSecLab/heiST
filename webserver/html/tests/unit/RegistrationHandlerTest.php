@@ -26,11 +26,11 @@ class RegistrationHandlerTest extends TestCase
     private $mockDB;
 
     public function setUp(): void {
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->logger = new MockLogger();
-        $this->authHelper = $this->createMock(IAuthHelper::class);
-        $this->curlHelper = $this->createMock(ICurlHelper::class);
+        $this->authHelper = $this->createStub(IAuthHelper::class);
+        $this->curlHelper = $this->createStub(ICurlHelper::class);
 
         $this->session = new MockSession();
         $this->server = new MockServer();
@@ -48,7 +48,7 @@ class RegistrationHandlerTest extends TestCase
     private function requireMockDB(): void {
         $this->mockDB = new MockPostgresDB();
         $this->pdo = $this->mockDB->getPDO();
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($this->pdo);
     }
 
@@ -82,7 +82,7 @@ class RegistrationHandlerTest extends TestCase
         $this->post['password'] = 'Password1!';
         $this->post['confirm-password'] = 'Password1!';
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateCSRFToken')->willReturn(false);
 
         ob_start();
@@ -116,7 +116,7 @@ class RegistrationHandlerTest extends TestCase
         $this->post['password'] = 'Password1!';
         $this->post['confirm-password'] = 'Password1!';
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateCSRFToken')->willReturn(true);
 
         ob_start();
@@ -150,7 +150,7 @@ class RegistrationHandlerTest extends TestCase
         $this->post['password'] = 'Password1!';
         $this->post['confirm-password'] = 'Password1!';
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateCSRFToken')->willReturn(true);
 
         ob_start();
@@ -184,7 +184,7 @@ class RegistrationHandlerTest extends TestCase
         $this->post['email'] = 'test2@test.test';
         $this->post['confirm-password'] = 'Password1!';
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateCSRFToken')->willReturn(true);
 
         ob_start();
@@ -218,7 +218,7 @@ class RegistrationHandlerTest extends TestCase
         $this->post['email'] = 'test2@test.test';
         $this->post['password'] = 'Password1!';
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateCSRFToken')->willReturn(true);
 
         ob_start();
@@ -252,7 +252,7 @@ class RegistrationHandlerTest extends TestCase
         $this->post['password'] = 'Password1!';
         $this->post['confirm-password'] = 'Password1!';
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateCSRFToken')->willReturn(true);
 
         ob_start();
@@ -286,7 +286,7 @@ class RegistrationHandlerTest extends TestCase
         $this->post['password'] = 'Password1!';
         $this->post['confirm-password'] = 'Password1!';
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateCSRFToken')->willReturn(true);
 
         ob_start();
@@ -320,7 +320,7 @@ class RegistrationHandlerTest extends TestCase
         $this->post['password'] = 'Password1!';
         $this->post['confirm-password'] = 'Password1!';
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateCSRFToken')->willReturn(true);
 
         $invalid_chars = ['!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '+', '=', '{', '}', '[', ']', '|', '\\', ':', ';', '"', '\'', '<', '>', ',', '.', '?', '/', ' '];
@@ -362,7 +362,7 @@ class RegistrationHandlerTest extends TestCase
         $this->post['password'] = 'Password1!';
         $this->post['confirm-password'] = 'Password1!';
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateCSRFToken')->willReturn(true);
 
         ob_start();
@@ -395,7 +395,7 @@ class RegistrationHandlerTest extends TestCase
         $this->post['password'] = 'Password1!';
         $this->post['confirm-password'] = 'Password1!';
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateCSRFToken')->willReturn(true);
 
         $invalidEmails = [
@@ -442,7 +442,7 @@ class RegistrationHandlerTest extends TestCase
         $this->post['password'] = str_repeat('a', $this->generalConfig['user']['MIN_PASSWORD_LENGTH'] - 1);
         $this->post['confirm-password'] = str_repeat('a', $this->generalConfig['user']['MIN_PASSWORD_LENGTH'] - 1);
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateCSRFToken')->willReturn(true);
 
         ob_start();
@@ -477,7 +477,7 @@ class RegistrationHandlerTest extends TestCase
         $this->post['password'] = str_repeat('a', $this->generalConfig['user']['MAX_PASSWORD_LENGTH'] + 1);
         $this->post['confirm-password'] = str_repeat('a', $this->generalConfig['user']['MAX_PASSWORD_LENGTH'] + 1);
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateCSRFToken')->willReturn(true);
 
         ob_start();
@@ -512,7 +512,7 @@ class RegistrationHandlerTest extends TestCase
         $this->post['password'] = str_repeat('a', $this->generalConfig['user']['MIN_PASSWORD_LENGTH']);
         $this->post['confirm-password'] = str_repeat('b', $this->generalConfig['user']['MIN_PASSWORD_LENGTH']);
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateCSRFToken')->willReturn(true);
 
         ob_start();
@@ -547,17 +547,17 @@ class RegistrationHandlerTest extends TestCase
         $this->post['password'] = 'Password1!';
         $this->post['confirm-password'] = 'Password1!';
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateCSRFToken')->willReturn(true);
 
-        $stmtMock = $this->createMock(PDOStatement::class);
+        $stmtMock = $this->createStub(PDOStatement::class);
         $stmtMock->method('execute')->willReturn(true);
         $stmtMock->method('fetchColumn')->willReturn(null);
 
-        $pdo = $this->createMock(PDO::class);
+        $pdo = $this->createStub(PDO::class);
         $pdo->method('beginTransaction')->willReturn(true);
         $pdo->method('prepare')->willReturn($stmtMock);
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($pdo);
 
         ob_start();
@@ -593,10 +593,10 @@ class RegistrationHandlerTest extends TestCase
         $this->post['password'] = 'Password1!';
         $this->post['confirm-password'] = 'Password1!';
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateCSRFToken')->willReturn(true);
 
-        $stmtMock = $this->createMock(PDOStatement::class);
+        $stmtMock = $this->createStub(PDOStatement::class);
         $stmtMock->method('execute')->willReturn(true);
         $stmtMock->method('fetch')->willReturnOnConsecutiveCalls(
             false, // username duplicate check
@@ -606,13 +606,13 @@ class RegistrationHandlerTest extends TestCase
                 'vpn_static_ip' => null
         ]);
 
-        $pdo = $this->createMock(PDO::class);
+        $pdo = $this->createStub(PDO::class);
         $pdo->method('beginTransaction')->willReturn(true);
         $pdo->method('rollBack')->willReturn(true);
         $pdo->method('prepare')->willReturn($stmtMock);
         $pdo->method('commit')->willThrowException(new PDOException());
 
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($pdo);
 
         ob_start();
@@ -638,383 +638,16 @@ class RegistrationHandlerTest extends TestCase
         $this->assertEquals(500, $json['error_code']);
     }
 
-    public function testErrorDuringVpnSavingThrowsExceptionAndRollsBack(): void
-    {
-        $this->server['REQUEST_METHOD'] = 'POST';
-        $this->post['csrf_token'] = 'valid-token';
-        $this->post['username'] = 'newuser';
-        $this->post['email'] = 'test2@test.test';
-        $this->post['password'] = 'Password1!';
-        $this->post['confirm-password'] = 'Password1!';
-
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
-        $this->securityHelper->method('validateCSRFToken')->willReturn(true);
-
-        $stmtMock = $this->createMock(PDOStatement::class);
-        $stmtMock->method('execute')->willReturn(true);
-        $stmtMock->method('fetch')->willReturnOnConsecutiveCalls(false, false, ['user_id' => 2, 'vpn_static_ip' => '1.2.3.4']); // First call returns user ID, second call returns null for VPN
-        $stmtMock->method('rowCount')->willReturn(1);
-
-        $pdo = $this->createMock(PDO::class);
-        $pdo->method('beginTransaction')->willReturn(true);
-        $pdo->method('rollBack')->willReturn(true);
-        $pdo->method('prepare')->willReturn($stmtMock);
-
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
-        $this->databaseHelper->method('getPDO')->willReturn($pdo);
-
-        $systemMock = $this->createMock(ISystem::class);
-        $systemMock->method('file_exists')->willReturn(true);
-        $systemMock->method('mkdir')->willReturn(true);
-        $systemMock->method('file_put_contents')->willReturn(false);
-
-        $curlHelperMock = $this->createMock(ICurlHelper::class);
-        $curlHelperMock->method('makeBackendRequest')->willReturn([
-            'success' => true,
-            'headers' => ['content-type' => 'application/octet-stream'],
-            'response' => 'dummy-vpn-config'
-        ]);
-
-        ob_start();
-        $handler = new RegistrationHandler(
-            $this->generalConfig,
-            $this->databaseHelper,
-            $this->securityHelper,
-            $this->logger,
-            $this->authHelper,
-            $curlHelperMock,
-            $this->session,
-            $this->server,
-            $this->post,
-            $systemMock,
-            $this->env
-        );
-        $handler->handleRequest();
-        $output = ob_get_clean();
-        $json = json_decode($output, true);
-
-        $this->assertFalse($json['success']);
-        $this->assertStringContainsString('VPN setup incomplete', $json['message']);
-        $this->assertEquals(500, $json['error_code']);
-    }
-
-    public function testErrorDuringVpnConfigDirCreationThrowsExceptionAndRollsBack(): void
-    {
-        $this->server['REQUEST_METHOD'] = 'POST';
-        $this->post['csrf_token'] = 'valid-token';
-        $this->post['username'] = 'newuser';
-        $this->post['email'] = 'test2@test.test';
-        $this->post['password'] = 'Password1!';
-        $this->post['confirm-password'] = 'Password1!';
-
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
-        $this->securityHelper->method('validateCSRFToken')->willReturn(true);
-
-        $stmtMock = $this->createMock(PDOStatement::class);
-        $stmtMock->method('execute')->willReturn(true);
-        $stmtMock->method('fetch')->willReturnOnConsecutiveCalls(false, false, ['user_id' => 1, 'vpn_static_ip' => '1.2.3.4']); // First call returns user ID, second call returns null for VPN
-        $stmtMock->method('rowCount')->willReturn(1);
-
-        $pdo = $this->createMock(PDO::class);
-        $pdo->method('beginTransaction')->willReturn(true);
-        $pdo->method('rollBack')->willReturn(true);
-        $pdo->method('prepare')->willReturn($stmtMock);
-
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
-        $this->databaseHelper->method('getPDO')->willReturn($pdo);
-
-        $systemMock = $this->createMock(ISystem::class);
-        $systemMock->method('file_exists')->willReturn(false);
-        $systemMock->method('mkdir')->willReturn(false);
-
-        $curlHelperMock = $this->createMock(ICurlHelper::class);
-        $curlHelperMock->method('makeBackendRequest')->willReturn([
-            'success' => true,
-            'headers' => ['content-type' => 'application/octet-stream'],
-            'response' => 'dummy-vpn-config'
-        ]);
-
-        ob_start();
-        $handler = new RegistrationHandler(
-            $this->generalConfig,
-            $this->databaseHelper,
-            $this->securityHelper,
-            $this->logger,
-            $this->authHelper,
-            $curlHelperMock,
-            $this->session,
-            $this->server,
-            $this->post,
-            $systemMock,
-            $this->env
-        );
-        $handler->handleRequest();
-        $output = ob_get_clean();
-        $json = json_decode($output, true);
-
-        $this->assertFalse($json['success']);
-        $this->assertStringContainsString('VPN setup incomplete', $json['message']);
-        $this->assertEquals(500, $json['error_code']);
-    }
 
 
-    public function testErrorDuringVpnGenerationThrowsExceptionAndRollsBack(): void
-    {
-        $this->server['REQUEST_METHOD'] = 'POST';
-        $this->post['csrf_token'] = 'valid-token';
-        $this->post['username'] = 'newuser';
-        $this->post['email'] = 'test2@test.test';
-        $this->post['password'] = 'Password1!';
-        $this->post['confirm-password'] = 'Password1!';
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
-        $this->securityHelper->method('validateCSRFToken')->willReturn(true);
 
-        $stmtMock = $this->createMock(PDOStatement::class);
-        $stmtMock->method('execute')->willReturn(true);
-        $stmtMock->method('fetch')->willReturnOnConsecutiveCalls(false, false, ['user_id' => 1, 'vpn_static_ip' => '1.2.3.4']); // First call returns user ID, second call returns null for VPN
 
-        $pdo = $this->createMock(PDO::class);
-        $pdo->method('beginTransaction')->willReturn(true);
-        $pdo->method('rollBack')->willReturn(true);
-        $pdo->method('prepare')->willReturn($stmtMock);
 
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
-        $this->databaseHelper->method('getPDO')->willReturn($pdo);
-
-        $systemMock = $this->createMock(ISystem::class);
-        $systemMock->method('file_exists')->willReturn(true);
-        $systemMock->method('mkdir')->willReturn(true);
-        $systemMock->method('file_put_contents')->willReturn(false);
-
-        $curlHelperMock = $this->createMock(ICurlHelper::class);
-        $curlHelperMock->method('makeBackendRequest')->willReturn([
-            'success' => true,
-            'headers' => ['content-type' => 'application/something-else'],
-            'response' => json_encode([
-                'error' => 'VPN generation error'
-            ])
-        ]);
-
-        ob_start();
-        $handler = new RegistrationHandler(
-            $this->generalConfig,
-            $this->databaseHelper,
-            $this->securityHelper,
-            $this->logger,
-            $this->authHelper,
-            $curlHelperMock,
-            $this->session,
-            $this->server,
-            $this->post,
-            $systemMock,
-            $this->env
-        );
-        $handler->handleRequest();
-        $output = ob_get_clean();
-        $json = json_decode($output, true);
-
-        $this->assertFalse($json['success']);
-        $this->assertStringContainsString('VPN setup incomplete', $json['message']);
-        $this->assertEquals(500, $json['error_code']);
-    }
-
-    public function testSomethingUnexpectedHappenedDuringVpnGenerationThrowsExceptionAndRollsBack(): void
-    {
-        $this->server['REQUEST_METHOD'] = 'POST';
-        $this->post['csrf_token'] = 'valid-token';
-        $this->post['username'] = 'newuser';
-        $this->post['email'] = 'test2@test.test';
-        $this->post['password'] = 'Password1!';
-        $this->post['confirm-password'] = 'Password1!';
-
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
-        $this->securityHelper->method('validateCSRFToken')->willReturn(true);
-
-        $stmtMock = $this->createMock(PDOStatement::class);
-        $stmtMock->method('execute')->willReturn(true);
-        $stmtMock->method('fetch')->willReturnOnConsecutiveCalls(
-            false, // username duplicate check
-            false, // email duplicate check
-            [
-                'user_id' => 1,
-                'vpn_static_ip' => '1.2.3.4'
-        ]);
-        $pdo = $this->createMock(PDO::class);
-        $pdo->method('beginTransaction')->willReturn(true);
-        $pdo->method('rollBack')->willReturn(true);
-        $pdo->method('prepare')->willReturn($stmtMock);
-
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
-        $this->databaseHelper->method('getPDO')->willReturn($pdo);
-
-        $systemMock = $this->createMock(ISystem::class);
-        $systemMock->method('file_exists')->willReturn(true);
-        $systemMock->method('mkdir')->willReturn(true);
-        $systemMock->method('file_put_contents')->willReturn(false);
-
-        $curlHelperMock = $this->createMock(ICurlHelper::class);
-        $curlHelperMock->method('makeBackendRequest')->willReturn([
-            'success' => true,
-            'headers' => ['content-type' => 'application/something-else'],
-            'response' => json_encode([
-                'definitely-not-an-error' => 'some value'
-            ])
-        ]);
-
-        ob_start();
-        $handler = new RegistrationHandler(
-            $this->generalConfig,
-            $this->databaseHelper,
-            $this->securityHelper,
-            $this->logger,
-            $this->authHelper,
-            $curlHelperMock,
-            $this->session,
-            $this->server,
-            $this->post,
-            $systemMock,
-            $this->env
-        );
-        $handler->handleRequest();
-        $output = ob_get_clean();
-        $json = json_decode($output, true);
-
-        $this->assertFalse($json['success']);
-        $this->assertStringContainsString('VPN setup incomplete', $json['message']);
-        $this->assertEquals(500, $json['error_code']);
-    }
-
-    public function testUnexpectedResponseFromVpnGenerationThrowsExceptionAndRollsBack(): void
-    {
-        $this->server['REQUEST_METHOD'] = 'POST';
-        $this->post['csrf_token'] = 'valid-token';
-        $this->post['username'] = 'newuser';
-        $this->post['email'] = 'test2@test.test';
-        $this->post['password'] = 'Password1!';
-        $this->post['confirm-password'] = 'Password1!';
-
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
-        $this->securityHelper->method('validateCSRFToken')->willReturn(true);
-
-        $stmtMock = $this->createMock(PDOStatement::class);
-        $stmtMock->method('execute')->willReturn(true);
-        $stmtMock->method('fetch')->willReturnOnConsecutiveCalls(
-            false, // username duplicate check
-            false, // email duplicate check
-            [
-                'user_id' => 1,
-                'vpn_static_ip' => '1.2.3.4'
-        ]);
-        $stmtMock->method('rowCount')->willReturn(1);
-
-        $pdo = $this->createMock(PDO::class);
-        $pdo->method('beginTransaction')->willReturn(true);
-        $pdo->method('rollBack')->willReturn(true);
-        $pdo->method('prepare')->willReturn($stmtMock);
-
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
-        $this->databaseHelper->method('getPDO')->willReturn($pdo);
-
-        $systemMock = $this->createMock(ISystem::class);
-        $systemMock->method('file_exists')->willReturn(true);
-        $systemMock->method('mkdir')->willReturn(true);
-        $systemMock->method('file_put_contents')->willReturn(false);
-
-        $curlHelperMock = $this->createMock(ICurlHelper::class);
-        $curlHelperMock->method('makeBackendRequest')->willReturn([
-            'success' => true,
-            'headers' => ['content-type' => 'application/something-else'],
-            'response' => 'dummy-non-json-response'
-        ]);
-
-        ob_start();
-        $handler = new RegistrationHandler(
-            $this->generalConfig,
-            $this->databaseHelper,
-            $this->securityHelper,
-            $this->logger,
-            $this->authHelper,
-            $curlHelperMock,
-            $this->session,
-            $this->server,
-            $this->post,
-            $systemMock,
-            $this->env
-        );
-        $handler->handleRequest();
-        $output = ob_get_clean();
-        $json = json_decode($output, true);
-
-        $this->assertFalse($json['success']);
-        $this->assertStringContainsString('VPN setup incomplete', $json['message']);
-        $this->assertEquals(500, $json['error_code']);
-    }
-
-    public function testExceptionDuringVpnGenerationThrowsExceptionAndRollsBack(): void
-    {
-        $this->server['REQUEST_METHOD'] = 'POST';
-        $this->post['csrf_token'] = 'valid-token';
-        $this->post['username'] = 'newuser';
-        $this->post['email'] = 'test2@test.test';
-        $this->post['password'] = 'Password1!';
-        $this->post['confirm-password'] = 'Password1!';
-
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
-        $this->securityHelper->method('validateCSRFToken')->willReturn(true);
-
-        $stmtMock = $this->createMock(PDOStatement::class);
-        $stmtMock->method('execute')->willReturn(true);
-        $stmtMock->method('fetch')->willReturnOnConsecutiveCalls(
-            false, // username duplicate check
-            false, // email duplicate check
-            [
-                'user_id' => 1,
-                'vpn_static_ip' => '1.2.3.4'
-        ]);
-        $stmtMock->method('rowCount')->willReturn(1);
-
-        $pdo = $this->createMock(PDO::class);
-        $pdo->method('beginTransaction')->willReturn(true);
-        $pdo->method('rollBack')->willReturn(true);
-        $pdo->method('prepare')->willReturn($stmtMock);
-
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
-        $this->databaseHelper->method('getPDO')->willReturn($pdo);
-
-        $systemMock = $this->createMock(ISystem::class);
-        $systemMock->method('file_exists')->willReturn(true);
-        $systemMock->method('mkdir')->willReturn(true);
-        $systemMock->method('file_put_contents')->willReturn(false);
-
-        $curlHelperMock = $this->createMock(ICurlHelper::class);
-        $curlHelperMock->method('makeBackendRequest')->willThrowException(new Exception());
-
-        ob_start();
-        $handler = new RegistrationHandler(
-            $this->generalConfig,
-            $this->databaseHelper,
-            $this->securityHelper,
-            $this->logger,
-            $this->authHelper,
-            $curlHelperMock,
-            $this->session,
-            $this->server,
-            $this->post,
-            $systemMock,
-            $this->env
-        );
-        $handler->handleRequest();
-        $output = ob_get_clean();
-        $json = json_decode($output, true);
-
-        $this->assertFalse($json['success']);
-        $this->assertStringContainsString('VPN setup incomplete', $json['message']);
-        $this->assertEquals(500, $json['error_code']);
-    }
 
     // Tests that require a mock DB
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testDoubleUsernameThrowsException(): void
     {
         $this->requireMockDB();
@@ -1031,7 +664,7 @@ class RegistrationHandlerTest extends TestCase
         $this->post['password'] = 'Password1!';
         $this->post['confirm-password'] = 'Password1!';
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateCSRFToken')->willReturn(true);
 
         ob_start();
@@ -1057,6 +690,7 @@ class RegistrationHandlerTest extends TestCase
         $this->assertEquals(400, $json['error_code']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testDoubleEmailThrowsException(): void
     {
         $this->requireMockDB();
@@ -1073,7 +707,7 @@ class RegistrationHandlerTest extends TestCase
         $this->post['password'] = 'Password1!';
         $this->post['confirm-password'] = 'Password1!';
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateCSRFToken')->willReturn(true);
 
         ob_start();
@@ -1099,6 +733,7 @@ class RegistrationHandlerTest extends TestCase
         $this->assertEquals(400, $json['error_code']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testSuccessfulRegistrationFlow(): void
     {
         $this->requireMockDB();
@@ -1110,18 +745,18 @@ class RegistrationHandlerTest extends TestCase
         $this->post['password'] = 'Password1!';
         $this->post['confirm-password'] = 'Password1!';
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateCsrfToken')->willReturn(true);
 
         // mock VPN config API response
-        $this->curlHelper = $this->createMock(ICurlHelper::class);
+        $this->curlHelper = $this->createStub(ICurlHelper::class);
         $this->curlHelper->method('makeBackendRequest')->willReturn([
             'success' => true,
             'headers' => ['content-type' => 'application/octet-stream'],
             'response' => 'dummy-vpn-config'
         ]);
 
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('file_exists')->willReturn(false);
         $this->system->method('mkdir')->willReturn(true);
         $this->system->method('file_put_contents')->willReturn(20);
@@ -1161,46 +796,64 @@ class RegistrationHandlerTest extends TestCase
         $this->assertNotEmpty($user['created_at']);
     }
 
-    public function testVpnConfigGenerationFails(): void
-    {
-        $this->requireMockDB();
 
+    private function exerciseAccountCommit(bool $commitFails): array
+    {
         $this->server['REQUEST_METHOD'] = 'POST';
+        $this->server['REMOTE_ADDR'] = '198.51.100.23';
         $this->post['csrf_token'] = 'valid-token';
-        $this->post['username'] = 'vpnfailuser';
-        $this->post['email'] = 'vpnfail@test.test';
+        $this->post['username'] = 'newuser';
+        $this->post['email'] = 'new@example.test';
         $this->post['password'] = 'Password1!';
         $this->post['confirm-password'] = 'Password1!';
-
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
         $this->securityHelper->method('validateCsrfToken')->willReturn(true);
-
+        $seenIp = null;
+        $statement = $this->createStub(PDOStatement::class);
+        $statement->method('fetch')->willReturnOnConsecutiveCalls(false, false,
+            ['user_id' => 2, 'vpn_static_ip' => '10.8.0.2']);
+        $statement->method('execute')->willReturnCallback(function ($parameters) use (&$seenIp) {
+            if (isset($parameters['ip_addr'])) { $seenIp = $parameters['ip_addr']; }
+            return true;
+        });
+        $pdo = $this->createMock(PDO::class);
+        $pdo->method('prepare')->willReturn($statement);
+        $pdo->method('inTransaction')->willReturn(true);
+        $pdo->expects($this->once())->method('beginTransaction')->willReturn(true);
+        $commit = $pdo->expects($this->once())->method('commit');
+        if ($commitFails) { $commit->willThrowException(new PDOException('commit failed')); }
+        else { $commit->willReturn(true); }
+        $pdo->expects($commitFails ? $this->once() : $this->never())->method('rollBack')->willReturn(true);
+        $this->databaseHelper->method('getPDO')->willReturn($pdo);
         $this->curlHelper = $this->createMock(ICurlHelper::class);
-        $this->curlHelper->method('makeBackendRequest')->willReturn([
-            'success' => false,
-            'http_code' => 500
-        ]);
-
+        $this->curlHelper->expects($this->never())->method('makeBackendRequest');
+        $system = $this->createMock(ISystem::class);
+        $system->expects($this->never())->method('mkdir');
+        $system->expects($this->never())->method('file_put_contents');
         ob_start();
-        $handler = new RegistrationHandler(
-            $this->generalConfig,
-            $this->databaseHelper,
-            $this->securityHelper,
-            $this->logger,
-            $this->authHelper,
-            $this->curlHelper,
-            $this->session,
-            $this->server,
-            $this->post,
-            $this->system,
-            $this->env
-        );
-        $handler->handleRequest();
-        $output = ob_get_clean();
-        $json = json_decode($output, true);
+        try {
+            $handler = new RegistrationHandler($this->generalConfig, $this->databaseHelper,
+                $this->securityHelper, $this->logger, $this->authHelper, $this->curlHelper,
+                $this->session, $this->server, $this->post, $system, $this->env);
+            $handler->handleRequest();
+            $response = json_decode(ob_get_contents(), true);
+        } finally { ob_end_clean(); }
+        return [$response, $seenIp];
+    }
 
-        $this->assertFalse($json['success']);
-        $this->assertStringContainsString('VPN setup incomplete', $json['message']);
-        $this->assertEquals(500, $json['error_code']);
+    public function testSignupCommitsBeforeAuthenticatingWithoutGeneratingVpnFiles(): void
+    {
+        [$response, $ip] = $this->exerciseAccountCommit(false);
+        $this->assertTrue($response['success']);
+        $this->assertSame('10.8.0.2', $response['vpn_ip']);
+        $this->assertSame('198.51.100.23', $ip);
+        $this->assertTrue($this->session['authenticated']);
+    }
+
+    public function testCommitFailureRollsBackWithoutAuthenticatingSession(): void
+    {
+        [$response] = $this->exerciseAccountCommit(true);
+        $this->assertFalse($response['success']);
+        $this->assertSame(500, $response['error_code']);
+        $this->assertEmpty($this->session['authenticated']);
     }
 }

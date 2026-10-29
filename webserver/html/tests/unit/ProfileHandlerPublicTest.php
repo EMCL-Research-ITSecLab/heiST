@@ -26,8 +26,8 @@ class ProfileHandlerPublicTest extends TestCase
 
     public function setUp(): void
     {
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->logger = new MockLogger();
 
         $this->session = new MockSession();
@@ -45,7 +45,7 @@ class ProfileHandlerPublicTest extends TestCase
     {
         $this->mockDB = new MockPostgresDB();
         $this->pdo = $this->mockDB->getPDO();
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($this->pdo);
     }
 
@@ -159,7 +159,7 @@ class ProfileHandlerPublicTest extends TestCase
 
     public function testInvalidSessionThrowsException(): void
     {
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(false);
 
         $this->expectException(Exception::class);
@@ -180,7 +180,7 @@ class ProfileHandlerPublicTest extends TestCase
 
     public function testEmptyRequestedUsernameThrowsException(): void
     {
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
 
         $this->get = new MockGet();
@@ -204,7 +204,7 @@ class ProfileHandlerPublicTest extends TestCase
 
     public function testTooLongRequestedUsernameThrowsException(): void
     {
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
 
         $this->get = new MockGet();
@@ -228,7 +228,7 @@ class ProfileHandlerPublicTest extends TestCase
 
     public function testTooShortRequestedUsernameThrowsException(): void
     {
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
 
         $this->get = new MockGet();
@@ -252,7 +252,7 @@ class ProfileHandlerPublicTest extends TestCase
 
     #[DataProvider('invalidUsernameProvider')] public function testInvalidCharactersInRequestedUsernameThrowsException(string $username): void
     {
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
 
         $this->get = new MockGet();
@@ -286,7 +286,7 @@ class ProfileHandlerPublicTest extends TestCase
 
     #[DataProvider('nonGetMethodsProvider')] public function testNonGetRequestsWithInvalidCsrfTokenThrowsException(string $method): void
     {
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
         $this->securityHelper->method('validateCsrfToken')->willReturn(false);
 
@@ -324,19 +324,19 @@ class ProfileHandlerPublicTest extends TestCase
 
     public function testDatabaseErrorDuringUserFetchThrowsException(): void
     {
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
 
         $this->get = new MockGet();
         $this->get['username'] = 'validusername';
 
-        $stmt = $this->createMock(PDOStatement::class);
+        $stmt = $this->createStub(PDOStatement::class);
         $stmt->method('execute')->willThrowException(new PDOException('Database error'));
 
-        $pdo = $this->createMock(PDO::class);
+        $pdo = $this->createStub(PDO::class);
         $pdo->method('prepare')->willReturn($stmt);
 
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($pdo);
 
         $this->expectException(Exception::class);
@@ -357,27 +357,27 @@ class ProfileHandlerPublicTest extends TestCase
 
     public function testDatabaseErrorDuringBasicProfileDataFetchThrowsException(): void
     {
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
 
         $this->get = new MockGet();
         $this->get['username'] = 'validusername';
 
-        $stmtUserIdFetch = $this->createMock(PDOStatement::class);
+        $stmtUserIdFetch = $this->createStub(PDOStatement::class);
         $stmtUserIdFetch->method('execute')->willReturn(true);
         $stmtUserIdFetch->method('fetchColumn')->willReturn(1);
 
-        $stmtBasicProfileFetch = $this->createMock(PDOStatement::class);
+        $stmtBasicProfileFetch = $this->createStub(PDOStatement::class);
         $stmtBasicProfileFetch->method('execute')->willReturn(true);
         $stmtBasicProfileFetch->method('fetch')->willThrowException(new PDOException('Database error'));
 
-        $pdo = $this->createMock(PDO::class);
+        $pdo = $this->createStub(PDO::class);
         $pdo->method('prepare')->willReturnOnConsecutiveCalls(
             $stmtUserIdFetch,
             $stmtBasicProfileFetch
         );
 
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($pdo);
 
         ob_start();
@@ -401,27 +401,27 @@ class ProfileHandlerPublicTest extends TestCase
 
     public function testDatabaseNoDataDuringBasicProfileDataFetchThrowsException(): void
     {
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
 
         $this->get = new MockGet();
         $this->get['username'] = 'validusername';
 
-        $stmtUserIdFetch = $this->createMock(PDOStatement::class);
+        $stmtUserIdFetch = $this->createStub(PDOStatement::class);
         $stmtUserIdFetch->method('execute')->willReturn(true);
         $stmtUserIdFetch->method('fetchColumn')->willReturn(1);
 
-        $stmtBasicProfileFetch = $this->createMock(PDOStatement::class);
+        $stmtBasicProfileFetch = $this->createStub(PDOStatement::class);
         $stmtBasicProfileFetch->method('execute')->willReturn(true);
         $stmtBasicProfileFetch->method('fetch')->willReturn(false);
 
-        $pdo = $this->createMock(PDO::class);
+        $pdo = $this->createStub(PDO::class);
         $pdo->method('prepare')->willReturnOnConsecutiveCalls(
             $stmtUserIdFetch,
             $stmtBasicProfileFetch
         );
 
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($pdo);
 
         ob_start();
@@ -445,20 +445,23 @@ class ProfileHandlerPublicTest extends TestCase
 
     public function testDatabaseErrorDuringProfileStatsFetchThrowsException(): void
     {
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
 
         $this->get = new MockGet();
         $this->get['username'] = 'validusername';
 
-        $stmtUserIdFetch = $this->createMock(PDOStatement::class);
+        $stmtUserIdFetch = $this->createStub(PDOStatement::class);
         $stmtUserIdFetch->method('execute')->willReturn(true);
         $stmtUserIdFetch->method('fetchColumn')->willReturn(1);
 
-        $stmtBasicProfileFetch = $this->createMock(PDOStatement::class);
+        $stmtBasicProfileFetch = $this->createStub(PDOStatement::class);
         $stmtBasicProfileFetch->method('execute')->willReturn(true);
         $stmtBasicProfileFetch->method('fetch')->willReturn([
             'username' => 'validusername',
+            'created_at' => '2026-01-01 00:00:00',
+            'total_points' => 500,
+            'solved_count' => 5,
             'full_name' => 'Test User',
             'bio' => 'This is a test user.',
             'github_url' => 'https://github.com/torvalds',
@@ -468,14 +471,14 @@ class ProfileHandlerPublicTest extends TestCase
             'timezone' => 'America/New_York'
         ]);
 
-        $stmtRankFetch = $this->createMock(PDOStatement::class);
+        $stmtRankFetch = $this->createStub(PDOStatement::class);
         $stmtRankFetch->method('execute')->willReturn(true);
         $stmtRankFetch->method('fetch')->willReturn(['user_rank' => 1]);
 
-        $stmtStatsFetch = $this->createMock(PDOStatement::class);
+        $stmtStatsFetch = $this->createStub(PDOStatement::class);
         $stmtStatsFetch->method('execute')->willThrowException(new PDOException('Database error'));
 
-        $pdo = $this->createMock(PDO::class);
+        $pdo = $this->createStub(PDO::class);
         $pdo->method('prepare')->willReturnOnConsecutiveCalls(
             $stmtUserIdFetch,
             $stmtBasicProfileFetch,
@@ -483,7 +486,7 @@ class ProfileHandlerPublicTest extends TestCase
             $stmtStatsFetch
         );
 
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($pdo);
 
         ob_start();
@@ -507,20 +510,23 @@ class ProfileHandlerPublicTest extends TestCase
 
     public function testNoDataDuringProfileStatsFetchThrowsException(): void
     {
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
 
         $this->get = new MockGet();
         $this->get['username'] = 'validusername';
 
-        $stmtUserIdFetch = $this->createMock(PDOStatement::class);
+        $stmtUserIdFetch = $this->createStub(PDOStatement::class);
         $stmtUserIdFetch->method('execute')->willReturn(true);
         $stmtUserIdFetch->method('fetchColumn')->willReturn(1);
 
-        $stmtBasicProfileFetch = $this->createMock(PDOStatement::class);
+        $stmtBasicProfileFetch = $this->createStub(PDOStatement::class);
         $stmtBasicProfileFetch->method('execute')->willReturn(true);
         $stmtBasicProfileFetch->method('fetch')->willReturn([
             'username' => 'validusername',
+            'created_at' => '2026-01-01 00:00:00',
+            'total_points' => 500,
+            'solved_count' => 5,
             'full_name' => 'Test User',
             'bio' => 'This is a test user.',
             'github_url' => 'https://github.com/torvalds',
@@ -530,15 +536,15 @@ class ProfileHandlerPublicTest extends TestCase
             'timezone' => 'America/New_York'
         ]);
 
-        $stmtRankFetch = $this->createMock(PDOStatement::class);
+        $stmtRankFetch = $this->createStub(PDOStatement::class);
         $stmtRankFetch->method('execute')->willReturn(true);
         $stmtRankFetch->method('fetch')->willReturn(['user_rank' => 1]);
 
-        $stmtStatsFetch = $this->createMock(PDOStatement::class);
+        $stmtStatsFetch = $this->createStub(PDOStatement::class);
         $stmtStatsFetch->method('execute')->willReturn(true);
         $stmtStatsFetch->method('fetch')->willReturn(false);
 
-        $pdo = $this->createMock(PDO::class);
+        $pdo = $this->createStub(PDO::class);
         $pdo->method('prepare')->willReturnOnConsecutiveCalls(
             $stmtUserIdFetch,
             $stmtBasicProfileFetch,
@@ -546,7 +552,7 @@ class ProfileHandlerPublicTest extends TestCase
             $stmtStatsFetch
         );
 
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($pdo);
 
         ob_start();
@@ -570,20 +576,23 @@ class ProfileHandlerPublicTest extends TestCase
 
     public function testDatabaseErrorDuringCategoryDataFetchThrowsException(): void
     {
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
 
         $this->get = new MockGet();
         $this->get['username'] = 'validusername';
 
-        $stmtUserIdFetch = $this->createMock(PDOStatement::class);
+        $stmtUserIdFetch = $this->createStub(PDOStatement::class);
         $stmtUserIdFetch->method('execute')->willReturn(true);
         $stmtUserIdFetch->method('fetchColumn')->willReturn(1);
 
-        $stmtBasicProfileFetch = $this->createMock(PDOStatement::class);
+        $stmtBasicProfileFetch = $this->createStub(PDOStatement::class);
         $stmtBasicProfileFetch->method('execute')->willReturn(true);
         $stmtBasicProfileFetch->method('fetch')->willReturn([
             'username' => 'validusername',
+            'created_at' => '2026-01-01 00:00:00',
+            'total_points' => 500,
+            'solved_count' => 5,
             'full_name' => 'Test User',
             'bio' => 'This is a test user.',
             'github_url' => 'https://github.com/torvalds',
@@ -593,15 +602,15 @@ class ProfileHandlerPublicTest extends TestCase
             'timezone' => 'America/New_York'
         ]);
 
-        $stmtRankFetch = $this->createMock(PDOStatement::class);
+        $stmtRankFetch = $this->createStub(PDOStatement::class);
         $stmtRankFetch->method('execute')->willReturn(true);
         $stmtRankFetch->method('fetch')->willReturn(['user_rank' => 1]);
 
-        $stmtStatsFetch = $this->createMock(PDOStatement::class);
+        $stmtStatsFetch = $this->createStub(PDOStatement::class);
         $stmtStatsFetch->method('execute')->willReturn(true);
         $stmtStatsFetch->method('fetch')->willReturn([
-            'total_solved' => 5,
-            'total_attempts' => 10,
+            'solved' => 5,
+            'attempts' => 10,
             'total_points' => 500,
             'success_rate' => 50,
             'solved_web' => 2,
@@ -612,7 +621,7 @@ class ProfileHandlerPublicTest extends TestCase
             'solved_misc' => 0
         ]);
 
-        $stmtCategoryFetch = $this->createMock(PDOStatement::class);
+        $stmtCategoryFetch = $this->createStub(PDOStatement::class);
         $stmtCategoryFetch->method('fetchAll')->willReturn([
             'web',
             'crypto',
@@ -622,7 +631,7 @@ class ProfileHandlerPublicTest extends TestCase
             'misc'
         ]);
 
-        $stmtChallengeCategoryCount = $this->createMock(PDOStatement::class);
+        $stmtChallengeCategoryCount = $this->createStub(PDOStatement::class);
         $stmtChallengeCategoryCount->method('fetch')->willReturnOnConsecutiveCalls(
             ['category' => 'web', 'total' => 10],
             ['category' => 'crypto', 'total' => 8],
@@ -633,10 +642,10 @@ class ProfileHandlerPublicTest extends TestCase
             false
         );
 
-        $stmtSolvedChallengesFetch = $this->createMock(PDOStatement::class);
+        $stmtSolvedChallengesFetch = $this->createStub(PDOStatement::class);
         $stmtSolvedChallengesFetch->method('fetchAll')->willThrowException(new PDOException());
 
-        $pdo = $this->createMock(PDO::class);
+        $pdo = $this->createStub(PDO::class);
         $pdo->method('prepare')->willReturnOnConsecutiveCalls(
             $stmtUserIdFetch,
             $stmtBasicProfileFetch,
@@ -649,7 +658,7 @@ class ProfileHandlerPublicTest extends TestCase
             $stmtChallengeCategoryCount
         );
 
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($pdo);
 
         ob_start();
@@ -673,20 +682,23 @@ class ProfileHandlerPublicTest extends TestCase
 
     public function testDatabaseErrorDuringBadgesFetchThrowsException(): void
     {
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
 
         $this->get = new MockGet();
         $this->get['username'] = 'validusername';
 
-        $stmtUserIdFetch = $this->createMock(PDOStatement::class);
+        $stmtUserIdFetch = $this->createStub(PDOStatement::class);
         $stmtUserIdFetch->method('execute')->willReturn(true);
         $stmtUserIdFetch->method('fetchColumn')->willReturn(1);
 
-        $stmtBasicProfileFetch = $this->createMock(PDOStatement::class);
+        $stmtBasicProfileFetch = $this->createStub(PDOStatement::class);
         $stmtBasicProfileFetch->method('execute')->willReturn(true);
         $stmtBasicProfileFetch->method('fetch')->willReturn([
             'username' => 'validusername',
+            'created_at' => '2026-01-01 00:00:00',
+            'total_points' => 500,
+            'solved_count' => 5,
             'full_name' => 'Test User',
             'bio' => 'This is a test user.',
             'github_url' => 'https://github.com/torvalds',
@@ -696,15 +708,15 @@ class ProfileHandlerPublicTest extends TestCase
             'timezone' => 'America/New_York'
         ]);
 
-        $stmtRankFetch = $this->createMock(PDOStatement::class);
+        $stmtRankFetch = $this->createStub(PDOStatement::class);
         $stmtRankFetch->method('execute')->willReturn(true);
         $stmtRankFetch->method('fetch')->willReturn(['user_rank' => 1]);
 
-        $stmtStatsFetch = $this->createMock(PDOStatement::class);
+        $stmtStatsFetch = $this->createStub(PDOStatement::class);
         $stmtStatsFetch->method('execute')->willReturn(true);
         $stmtStatsFetch->method('fetch')->willReturn([
-            'total_solved' => 5,
-            'total_attempts' => 10,
+            'solved' => 5,
+            'attempts' => 10,
             'total_points' => 500,
             'success_rate' => 50,
             'solved_web' => 2,
@@ -715,7 +727,7 @@ class ProfileHandlerPublicTest extends TestCase
             'solved_misc' => 0
         ]);
 
-        $stmtCategoryFetch = $this->createMock(PDOStatement::class);
+        $stmtCategoryFetch = $this->createStub(PDOStatement::class);
         $stmtCategoryFetch->method('fetchAll')->willReturn([
             'web',
             'crypto',
@@ -725,7 +737,7 @@ class ProfileHandlerPublicTest extends TestCase
             'misc'
         ]);
 
-        $stmtChallengeCategoryCount = $this->createMock(PDOStatement::class);
+        $stmtChallengeCategoryCount = $this->createStub(PDOStatement::class);
         $stmtChallengeCategoryCount->method('fetch')->willReturnOnConsecutiveCalls(
             ['category' => 'web', 'total' => 10],
             ['category' => 'crypto', 'total' => 8],
@@ -736,19 +748,19 @@ class ProfileHandlerPublicTest extends TestCase
             false
         );
 
-        $stmtSolvedChallengesFetch = $this->createMock(PDOStatement::class);
+        $stmtSolvedChallengesFetch = $this->createStub(PDOStatement::class);
         $stmtSolvedChallengesFetch->method('fetchAll')->willReturn([
             ['challenge_template_id' => 1],
             ['challenge_template_id' => 2],
             ['challenge_template_id' => 3]
         ]);
 
-        $stmtBadgesFetch = $this->createMock(PDOStatement::class);
+        $stmtBadgesFetch = $this->createStub(PDOStatement::class);
         $stmtBadgesFetch->method('execute')->willReturn(true);
         $stmtBadgesFetch->method('fetchAll')->willThrowException(new PDOException('Database error'));
 
 
-        $pdo = $this->createMock(PDO::class);
+        $pdo = $this->createStub(PDO::class);
         $pdo->method('prepare')->willReturnOnConsecutiveCalls(
             $stmtUserIdFetch,
             $stmtBasicProfileFetch,
@@ -762,7 +774,7 @@ class ProfileHandlerPublicTest extends TestCase
             $stmtChallengeCategoryCount
         );
 
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($pdo);
 
         ob_start();
@@ -786,6 +798,7 @@ class ProfileHandlerPublicTest extends TestCase
 
 
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testNoChallengeCategoriesThrowsException(): void
     {
         $this->requireMockDB();
@@ -795,7 +808,7 @@ class ProfileHandlerPublicTest extends TestCase
             CREATE TYPE challenge_category AS ENUM ();
         ");
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
 
         $this->get = new MockGet();
@@ -821,11 +834,12 @@ class ProfileHandlerPublicTest extends TestCase
         $this->assertEquals('An internal server error occurred', $response['message']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testNonExistentUserThrowsException(): void
     {
         $this->requireMockDB();
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
 
         $this->get = new MockGet();
@@ -848,6 +862,7 @@ class ProfileHandlerPublicTest extends TestCase
         );
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testSuccessfulRequestHandling(): void
     {
         $insertedData = $this->setUpTestData();
@@ -855,7 +870,7 @@ class ProfileHandlerPublicTest extends TestCase
         $badgesData = $insertedData['badges'];
         $challengesData = $insertedData['challenges'];
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
 
         $this->get = new MockGet();

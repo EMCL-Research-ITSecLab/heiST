@@ -34,14 +34,14 @@ class ChallengeHandlerTest extends TestCase
         $this->get = new MockGet();
         $this->env = new MockEnv();
 
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
-        $this->curlHelper = $this->createMock(ICurlHelper::class);
-        $this->authHelper = $this->createMock(IAuthHelper::class);
-        $this->challengeHelper = $this->createMock(IChallengeHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
+        $this->curlHelper = $this->createStub(ICurlHelper::class);
+        $this->authHelper = $this->createStub(IAuthHelper::class);
+        $this->challengeHelper = $this->createStub(IChallengeHelper::class);
         $this->logger = new MockLogger();
 
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
     }
 
     public function testInvalidSessionThrowsException(): void

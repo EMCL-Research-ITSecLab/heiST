@@ -22,15 +22,15 @@ class LoginHandlerTest extends TestCase
     protected function setUp(): void
     {
         // Mock dependencies
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->logger = new MockLogger();
 
         $this->session = new MockSession();
         $this->server = new MockServer();
         $this->post = new MockPost();
 
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
     }
 
     public function testAlreadyAuthenticatedWithoutCsrfTokenRedirectsCorrectly(): void
@@ -102,7 +102,7 @@ class LoginHandlerTest extends TestCase
     public function testInvalidCsrfTokenFormatOnPostRequestReturnsError(): void
     {
         $this->session = new MockSession();
-        $this->securityHelper = $this->createMock(SecurityHelper::class);
+        $this->securityHelper = $this->createStub(SecurityHelper::class);
         $this->securityHelper->method('validateCsrfToken')
             ->willReturn(false);
 
@@ -131,7 +131,7 @@ class LoginHandlerTest extends TestCase
     public function testEmptyUsernameOnPostRequestReturnsError(): void
     {
         $this->session = new MockSession();
-        $this->securityHelper = $this->createMock(SecurityHelper::class);
+        $this->securityHelper = $this->createStub(SecurityHelper::class);
         $this->securityHelper->method('validateCsrfToken')
             ->willReturn(true);
 
@@ -162,7 +162,7 @@ class LoginHandlerTest extends TestCase
     public function testEmptyPasswordOnPostRequestReturnsError(): void
     {
         $this->session = new MockSession();
-        $this->securityHelper = $this->createMock(SecurityHelper::class);
+        $this->securityHelper = $this->createStub(SecurityHelper::class);
         $this->securityHelper->method('validateCsrfToken')
             ->willReturn(true);
 
@@ -193,7 +193,7 @@ class LoginHandlerTest extends TestCase
     public function testDatabaseErrorOnLoginReturnsError(): void
     {
         $this->session = new MockSession();
-        $this->securityHelper = $this->createMock(SecurityHelper::class);
+        $this->securityHelper = $this->createStub(SecurityHelper::class);
         $this->securityHelper->method('validateCsrfToken')
             ->willReturn(true);
 
@@ -203,9 +203,9 @@ class LoginHandlerTest extends TestCase
         $this->post['username'] = 'username';
         $this->post['password'] = 'password';
 
-        $pdo = $this->createMock(PDO::class);
+        $pdo = $this->createStub(PDO::class);
         $pdo->method('prepare')->will($this->throwException(new PDOException("Database error")));
-        $this->databaseHelper = $this->createMock(DatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(DatabaseHelper::class);
         $this->databaseHelper->method('getPDO')
             ->willReturn($pdo);
 
@@ -234,10 +234,11 @@ class LoginHandlerTest extends TestCase
 
     // Tests requiring a mock database
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testValidLoginSetsSessionAndReturnsSuccess(): void
     {
         $this->session = new MockSession();
-        $this->securityHelper = $this->createMock(SecurityHelper::class);
+        $this->securityHelper = $this->createStub(SecurityHelper::class);
         $this->securityHelper->method('validateCsrfToken')
             ->willReturn(true);
 
@@ -249,7 +250,7 @@ class LoginHandlerTest extends TestCase
 
         $db = new MockPostgresDB();
         $this->pdo = $db->getPDO();
-        $this->databaseHelper = $this->createMock(DatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(DatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($this->pdo);
 
         $this->assertNull($this->session['user_id']);
@@ -277,10 +278,11 @@ class LoginHandlerTest extends TestCase
         $this->assertEquals('/dashboard', $jsonOutput['redirect']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testNonExistentUserLoginReturnsError(): void
     {
         $this->session = new MockSession();
-        $this->securityHelper = $this->createMock(SecurityHelper::class);
+        $this->securityHelper = $this->createStub(SecurityHelper::class);
         $this->securityHelper->method('validateCsrfToken')
             ->willReturn(true);
 
@@ -292,7 +294,7 @@ class LoginHandlerTest extends TestCase
 
         $db = new MockPostgresDB();
         $this->pdo = $db->getPDO();
-        $this->databaseHelper = $this->createMock(DatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(DatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($this->pdo);
 
         $this->assertNull($this->session['user_id']);
@@ -318,10 +320,11 @@ class LoginHandlerTest extends TestCase
         $this->assertNull($this->session['authenticated']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testWrongPasswordLoginReturnsError(): void
     {
         $this->session = new MockSession();
-        $this->securityHelper = $this->createMock(SecurityHelper::class);
+        $this->securityHelper = $this->createStub(SecurityHelper::class);
         $this->securityHelper->method('validateCsrfToken')
             ->willReturn(true);
 
@@ -333,7 +336,7 @@ class LoginHandlerTest extends TestCase
 
         $db = new MockPostgresDB();
         $this->pdo = $db->getPDO();
-        $this->databaseHelper = $this->createMock(DatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(DatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($this->pdo);
 
         $this->assertNull($this->session['user_id']);

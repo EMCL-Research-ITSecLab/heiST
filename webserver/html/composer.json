@@ -10,7 +10,17 @@
     "ext-simplexml": "*",
     "ext-libxml": "*"
   },
-    "autoload": {
-        "classmap": ["includes/", "backend/", "tests/", "interfaces/", "mocks/"]
-    }
+  "autoload": {
+    "classmap": [
+      "includes/",
+      "backend/",
+      "interfaces/"
+    ]
+  },
+  "autoload-dev": {
+    "classmap": [
+      "tests/",
+      "mocks/"
+    ]
+  }
 }

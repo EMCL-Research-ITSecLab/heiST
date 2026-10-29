@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "installation": "/root/heiST",
+  "state_directory": "/var/lib/heist",
+  "backup_directory": "/mnt/heist-backups",
+  "backend_env": "/root/heiST/backend/.env",
+  "api_url": "https://BACKEND_HOST:8000",
+  "api_certificate": "/root/heiST/backend/certificates/backend.crt",
+  "web_root": "/var/www/html",
+  "web_certificate": "/etc/ssl/certs/apache-selfsigned.crt",
+  "vms": [
+    {"role": "web", "vmid": 1000, "name": "WebServer", "host": "WEB_SSH_HOST", "user": "root"},
+    {"role": "database", "vmid": 2000, "name": "DatabaseServer", "host": "DATABASE_SSH_HOST", "user": "root"},
+    {"role": "monitoring", "vmid": 9000, "name": "monitoring-vm", "host": "MONITORING_SSH_HOST", "user": "ubuntu"}
+  ],
+  "monitoring_checks": [["systemctl", "is-active", "grafana-server", "clickhouse-server"]],
+  "timeout": 600
+}

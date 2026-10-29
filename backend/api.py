@@ -10,7 +10,7 @@ from flask import Flask, redirect, request, send_file
 def create_app(config=None, services=None):
     application = Flask(__name__)
     application.config.update(BACKEND_AUTHENTICATION_TOKEN=os.getenv('BACKEND_AUTHENTICATION_TOKEN'),
-                              MAX_CONTENT_LENGTH=65536, MAINTENANCE_FILE='/run/heist-maintenance')
+                              MAX_CONTENT_LENGTH=65536, MAINTENANCE_FILE=os.getenv('HEIST_MAINTENANCE_FILE', '/run/heist-maintenance'))
     application.config.update(config or {})
     services = services or {}
 
@@ -20,9 +20,8 @@ def create_app(config=None, services=None):
     def connection():
         if 'get_db_connection' in services:
             return services['get_db_connection']()
-        import psycopg2
-        return psycopg2.connect(host=os.getenv('DB_HOST', 'localhost'), database=os.getenv('DB_NAME', 'exampledb'),
-                               user=os.getenv('DB_USER', 'postgres'), password=os.getenv('DB_PASSWORD'), port=os.getenv('DB_PORT', '5432'), connect_timeout=3)
+        from heist.config import DatabaseSettings
+        return DatabaseSettings.from_mapping(timeout=3).connect()
 
     @application.before_request
     def authenticate():

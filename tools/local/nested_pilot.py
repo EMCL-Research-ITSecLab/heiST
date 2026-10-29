@@ -124,6 +124,15 @@ def start(work, online=False):
         storage = ['-device', 'ich9-ahci,id=pilotahci',
                    '-drive', f'file={work}/disk.qcow2,format=qcow2,if=none,id=pilotdisk,cache=none,discard=unmap,detect-zeroes=unmap',
                    '-device', 'ide-hd,drive=pilotdisk,bus=pilotahci.0,bootindex=1']
+    if config.get('attach_backup_disk', False):
+        backup = work / 'backup.qcow2'
+        if backup.is_symlink() or not backup.is_file():
+            raise ValueError('Supply a private standalone backup.qcow2 for the optional backup disk')
+        info = json.loads(subprocess.check_output(['qemu-img', 'info', '--output=json', str(backup)]))
+        if info.get('backing-filename') or info['format'] != 'qcow2':
+            raise ValueError('The backup disk must be standalone QCOW2')
+        storage += ['-drive', f'file={backup},format=qcow2,if=none,id=heistbackup,cache=none,discard=unmap',
+                    '-device', 'virtio-blk-pci,drive=heistbackup,serial=HEIST-ROLLOUT-BACKUP']
     if config.get('attach_seed', True):
         storage += ['-drive', f'file={work}/seed.iso,format=raw,media=cdrom,readonly=on']
     run('qemu-system-x86_64', '-name', 'heist-nested-pilot', '-enable-kvm', '-cpu', 'host',

@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
-# Auto-generated shim - runs the module as a package so package-relative imports work
-exec /usr/bin/env python3 -m setup.install "$@"
+set -euo pipefail
+exec "$(dirname -- "$0")/heist" install "$@"

@@ -1,40 +1,21 @@
-from dotenv import load_dotenv
-import psycopg2
-import os
+"""Compatibility API for explicitly scoped database connections.
+
+The calling service loads its environment at startup. This module does not
+mutate configuration, log credentials or cache environment variables at import.
+"""
 from contextlib import contextmanager
+from heist.config import DatabaseSettings
 
-load_dotenv()
-
-# Database connection parameters
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_NAME = os.getenv("DB_NAME", "exampledb")
-DB_USER = os.getenv("DB_USER", "postgres")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "changeme")
 
 def get_db_connection():
-    """
-    Establish a connection to the PostgreSQL database.
-    """
-    print("[DB] Opening new database connection")
-
-
-    db_conn = psycopg2.connect(
-        host=DB_HOST,
-        database=DB_NAME,
-        user=DB_USER,
-        password=DB_PASSWORD
-    )
-    db_conn.autocommit = True
-    return db_conn
+    return DatabaseSettings.from_mapping().connect(autocommit=True)
 
 
 @contextmanager
 def db_connection_context():
-    """
-    Provide a managed PostgreSQL connection and always close it.
-    """
-    db_conn = get_db_connection()
+    """Close the connection on every exit; preserve the existing autocommit API."""
+    connection = get_db_connection()
     try:
-        yield db_conn
+        yield connection
     finally:
-        db_conn.close()
+        connection.close()

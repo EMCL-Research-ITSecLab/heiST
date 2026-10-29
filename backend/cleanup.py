@@ -1,136 +1,64 @@
+"""Startup cleanup with bounded retries, propagated failures and explicit resources."""
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import closing
 import os
-import fcntl
-from dotenv import load_dotenv
-import threading
+from pathlib import Path
+import time
 
-from backend.stop_challenge import stop_challenge
-from backend.teardown_challenge import teardown_challenge
+from heist.config import DatabaseSettings
+from heist.runtime import cleanup_guard
 
-load_dotenv()
-
-DATABASE_HOST = os.getenv("DB_HOST", "10.0.0.102")
-DATABASE_PORT = os.getenv("DB_PORT", "5432")
-DATABASE_USER = os.getenv("DB_USER", "postgres")
-DATABASE_PASSWORD = os.getenv("DB_PASSWORD")
-DATABASE_NAME = os.getenv("DB_NAME", "heist")
-
-CLEANUP_COMPLETE_FILE_PATH = "/var/lock/cleanup_complete.lock"
-if not os.path.exists(CLEANUP_COMPLETE_FILE_PATH):
-    with open(CLEANUP_COMPLETE_FILE_PATH, 'w') as f:
-        pass
-
-def cleanup_remaining_challenges():
-    """
-    Remove all challenges from the database.
-    """
-    signal_cleanup_not_complete()
-
-    db_conn = wait_for_db_connection()
-
-    user_ids = fetch_user_ids(db_conn)
-    stop_running_challenges(user_ids)
-
-    remaining_challenge_ids = fetch_remaining_challenge_ids(db_conn)
-    teardown_remaining_challenges(remaining_challenge_ids)
-
-    signal_cleanup_complete()
+CLEANUP_COMPLETE_FILE_PATH = '/var/lock/cleanup_complete.lock'
 
 
-def signal_cleanup_not_complete():
-    """
-    Signal that the cleanup process is not complete by acquiring a lock on a file.
-    """
-
-    with open(CLEANUP_COMPLETE_FILE_PATH, 'w') as f:
-        fcntl.flock(f, fcntl.LOCK_EX)
-
-
-
-def wait_for_db_connection():
-    """
-    Wait for the database connection to be available.
-    """
-    import psycopg2
-
-    db_conn = None
-    while not db_conn:
+def wait_for_db_connection(timeout=120, *, connect=None, sleep=time.sleep, clock=time.monotonic):
+    connect = connect or (lambda: DatabaseSettings.from_mapping().connect(autocommit=True))
+    deadline = clock() + timeout
+    while True:
         try:
-            db_conn = psycopg2.connect(
-                host=DATABASE_HOST,
-                port=DATABASE_PORT,
-                user=DATABASE_USER,
-                password=DATABASE_PASSWORD,
-                dbname=DATABASE_NAME
-            )
-
-        except Exception:
-            pass
-
-    return db_conn
+            return connect()
+        except Exception as error:
+            if clock() >= deadline:
+                raise TimeoutError('Database unavailable during startup cleanup') from error
+            sleep(min(2, max(0, deadline - clock())))
 
 
-def fetch_user_ids(db_conn):
-    """
-    Fetch all running challenges from the database.
-    """
-    with db_conn.cursor() as cursor:
-        cursor.execute("SELECT id FROM users WHERE running_challenge IS NOT NULL")
-        user_ids = [row[0] for row in cursor.fetchall()]
-
-    return user_ids
+def fetch_user_ids(connection):
+    with connection.cursor() as cursor:
+        cursor.execute('SELECT id FROM users WHERE running_challenge IS NOT NULL')
+        return [row[0] for row in cursor.fetchall()]
 
 
-def stop_running_challenges( user_ids):
-    """
-    Stop all running challenges for the specified user IDs.
-    """
-
-    threads = []
-
-    for user_id in user_ids:
-        thread = threading.Thread(target=stop_challenge, args=(user_id,))
-        thread.start()
-        threads.append(thread)
-
-    for thread in threads:
-        thread.join()
-
-
-def fetch_remaining_challenge_ids(db_conn):
-    """
-    Fetch all remaining challenge IDs from the database.
-    """
-    challenge_ids = []
-    with db_conn.cursor() as cursor:
+def fetch_remaining_challenge_ids(connection):
+    with connection.cursor() as cursor:
         cursor.execute("SELECT id FROM challenges WHERE lifecycle_state != 'EXPIRED'")
-        challenge_ids = [row[0] for row in cursor.fetchall()]
-
-    return challenge_ids
+        return [row[0] for row in cursor.fetchall()]
 
 
-def teardown_remaining_challenges(challenge_ids):
-    """
-    Teardown all remaining challenges.
-    """
-
-    threads = []
-
-    for challenge_id in challenge_ids:
-        thread = threading.Thread(target=teardown_challenge, args=(challenge_id,))
-        thread.start()
-        threads.append(thread)
-
-    for thread in threads:
-        thread.join()
+def _parallel(function, identifiers):
+    with ThreadPoolExecutor(max_workers=4) as workers:
+        # Iterating consumes results so exceptions cannot be silently lost.
+        list(workers.map(function, identifiers))
 
 
-def signal_cleanup_complete():
-    """
-    Signal that the cleanup process is complete by releasing the lock on the file.
-    """
-    with open(CLEANUP_COMPLETE_FILE_PATH, 'w') as f:
-        fcntl.flock(f, fcntl.LOCK_UN)
+def cleanup_remaining_challenges(*, connect=None, stop=None, teardown=None, lock_path=None):
+    if stop is None:
+        from backend.stop_challenge import stop_challenge
+        stop = stop_challenge
+    if teardown is None:
+        from backend.teardown_challenge import teardown_challenge
+        teardown = teardown_challenge
+    with cleanup_guard(lock_path or CLEANUP_COMPLETE_FILE_PATH):
+        with closing(wait_for_db_connection(connect=connect)) as connection:
+            _parallel(stop, fetch_user_ids(connection))
+            _parallel(teardown, fetch_remaining_challenge_ids(connection))
 
 
-if __name__ == "__main__":
+def main():
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).with_name('.env'))
     cleanup_remaining_challenges()
+
+
+if __name__ == '__main__':
+    main()

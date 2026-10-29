@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd -- "$(dirname -- "$0")/.."
+if [[ -n "${HEIST_PYTHON:-}" ]]; then
+    heist_python="$HEIST_PYTHON"
+elif [[ -x .venv/bin/python ]]; then
+    heist_python=.venv/bin/python
+else
+    heist_python=python3
+fi
+exec "$heist_python" -m heist "$@"

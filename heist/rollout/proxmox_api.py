@@ -40,7 +40,9 @@ class LocalAPI:
         connection = http.client.HTTPSConnection('127.0.0.1', 8006, context=context, timeout=60)
         try:
             connection.connect()
-            expected = hashlib.sha256(ssl.PEM_cert_to_DER_cert(self.certificate.read_text())).digest()
+            pem = self.certificate.read_text()
+            leaf = pem.split('-----END CERTIFICATE-----', 1)[0] + '-----END CERTIFICATE-----'
+            expected = hashlib.sha256(ssl.PEM_cert_to_DER_cert(leaf)).digest()
             actual = hashlib.sha256(connection.sock.getpeercert(binary_form=True)).digest()
             if not hmac.compare_digest(actual, expected):
                 raise ssl.SSLError('Local Proxmox certificate differs from installed certificate')

@@ -116,10 +116,10 @@ UPID belongs to that exact request. The updater will not guess or repost it:
 
 ```sh
 python -m heist upgrade adopt-task --config /root/heist-deployment.json \
-  --task restore-web --upid VERIFIED_UPID --confirm-request JOURNALLED_SHA256
+  --task restore-CHECKPOINT_ID-web --upid VERIFIED_UPID --confirm-request JOURNALLED_SHA256
 # Only for a recorded stopped, failed restore after resolving its cause:
 python -m heist upgrade retry-task --config /root/heist-deployment.json \
-  --task restore-web --confirm-request JOURNALLED_SHA256
+  --task restore-CHECKPOINT_ID-web --confirm-request JOURNALLED_SHA256
 # Then use resume.
 ```
 

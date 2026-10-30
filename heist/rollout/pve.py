@@ -171,6 +171,8 @@ class PVE:
         if self.marker.exists():raise RuntimeError('An existing maintenance transaction must be resumed first')
         self.config.vm('web').ssh.run(['sh', '-c',
             'command -v iptables ip6tables iptables-restore ip6tables-restore composer apache2ctl python3 >/dev/null'])
+        # Prove the asynchronous API transport before entering maintenance.
+        self.request('GET', '/nodes/' + self.node + '/qemu', None)
         self.assert_idle(allow_ready=True)
         self._health(legacy=True,local_web=False)
 
@@ -364,7 +366,7 @@ exec "{self.installation}/.venv/bin/python" -m {module} "$@"
             if self.is_running(vm):self.command(['qm','shutdown',vm.vmid,'--timeout','180'],timeout=210)
             if self.is_running(vm):raise RuntimeError('Refusing to overwrite a live VM')
         for vm in self.config.vms:
-            self.tasks.run(transaction,'restore-'+vm.role,'/nodes/'+self.node+'/qemu',
+            self.tasks.run(transaction,'restore-'+checkpoint.path.name+'-'+vm.role,'/nodes/'+self.node+'/qemu',
                 {'archive':snapshots[vm.role]['path'],'vmid':vm.vmid,'force':1})
         self._checkout(transaction,checkpoint.plan.source)
         for name,hexadecimal in checkpoint.data.get('replaced_shims',{}).items():

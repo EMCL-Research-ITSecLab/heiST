@@ -78,8 +78,10 @@ def main(argv=None):
     else:
         if not args.transaction or not args.confirm_version:parser.error('rollback requires --transaction and --confirm-version')
         transaction=controller.rollback(args.transaction,confirm_version=args.confirm_version)
-    print(json.dumps({'transaction':transaction.path.name,'phase':transaction.data['phase'],
-        'commit':transaction.plan.target,'version':transaction.plan.version}))
+    recovered = transaction.data['phase'] == 'ROLLED_BACK'
+    print(json.dumps({'transaction': transaction.path.name, 'phase': transaction.data['phase'],
+        'commit': transaction.plan.source if recovered else transaction.plan.target,
+        'version': transaction.plan.source_version if recovered else transaction.plan.version}))
     return 0
 
 

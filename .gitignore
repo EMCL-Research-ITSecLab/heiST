@@ -25,3 +25,7 @@ setup/credentials.md
 /build/
 /dist/
 *.egg-info/
+
+# React build outputs and dependency cache
+/frontend/node_modules/
+/frontend/dist/

@@ -211,5 +211,3 @@ def bootstrap_requirements(arguments=()) -> None:
         _bootstrap_into_project_venv(arguments)
     except subprocess.CalledProcessError as exc:
         raise SystemExit(f"Failed to install installer requirements (exit code {exc.returncode}).") from exc
-
-

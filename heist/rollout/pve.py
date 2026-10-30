@@ -37,15 +37,15 @@ class PVE:
         self.environment = dotenv_values(config.backend_env)
         self.database = DatabaseSettings.from_mapping(self.environment)
         self.node = socket.gethostname().split('.')[0]
+        from .proxmox_api import LocalAPI
+        self.api = LocalAPI()
         self.tasks = Tasks(self.node,self.request)
 
     def command(self, arguments, *, timeout=600):
         return subprocess.run(list(map(str,arguments)),check=True,capture_output=True,timeout=timeout).stdout
 
-    def request(self,method,path,arguments):
-        command=['pvesh','get' if method=='GET' else 'create',path,'--output-format','json']
-        for name,value in (arguments or {}).items():command.extend(['--'+name,str(value)])
-        return json.loads(self.command(command,timeout=60))
+    def request(self, method, path, arguments):
+        return self.api.request(method, path, arguments)
 
     def logged(self, transaction, name, arguments, *, timeout=7200):
         directory=Path(transaction.data['backup_directory'])

@@ -1,5 +1,7 @@
 # Add local appliance testing and a guarded backend update workflow
 
+Historical parent-branch record. See [current rollout validation](ROLLOUT-VALIDATION.md) and [update workflow](UPDATES.md) for the maintenance branch.
+
 Depends on `feat/configurable-pilot-resources`; target that branch for a stacked
 PR, or merge its deployment fixes first.
 

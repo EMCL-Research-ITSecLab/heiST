@@ -1,5 +1,7 @@
 # Local validation — 2026-10-29
 
+Historical parent-branch record. See [current rollout validation](ROLLOUT-VALIDATION.md) and [update workflow](UPDATES.md) for the maintenance branch.
+
 This branch was exercised on silverstone and the disposable nested Proxmox
 appliance. The installed platform and the sealed revision-2 OVA were not replaced
 by the review source; Python tests ran in a separate guest checkout and PHP tests

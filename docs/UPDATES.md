@@ -8,7 +8,7 @@ isolated restored production clone before its first production rollout.
 
 ## Scope and prerequisites
 
-Release protocol 1 updates backend source, web source and transactional PostgreSQL
+Release protocol 2 adds source-bound static UI bundles to backend/web source and transactional PostgreSQL
 migrations together on Proxmox VE 9 / Python 3.12+. It checkpoints the complete
 web, database and monitoring VMs. Python/system/Composer dependency upgrades,
 external disks, passthrough devices and distributed deployments need a reviewed
@@ -56,7 +56,8 @@ whose Git checkout it replaces. It never fetches code itself.
 cd /root/heist-release-runner
 /root/heiST/.venv/bin/python -m heist upgrade plan \
   --config /root/heist-deployment.json --target REVIEWED_COMMIT \
-  --manifest releases/0.2.0.json --output /root/heist-update-plan.json
+  --manifest releases/0.3.0.json --ui-bundle /root/frontend.tar.gz \
+  --output /root/heist-update-plan.json
 
 # Review the immutable commits, paths, migration digests and protected tables.
 /root/heiST/.venv/bin/python -m heist upgrade apply \
@@ -73,7 +74,7 @@ reports in the transaction directory retain the original exception and captured
 stderr, while public phase messages contain only the failure class and report path.
 
 For an interactive administrator session, `upgrade wizard --config CONFIG --target
-REVIEWED_COMMIT` displays the same immutable plan and requires the full target
+REVIEWED_COMMIT --ui-bundle /root/frontend.tar.gz` displays the same immutable plan and requires the full target
 commit before applying. It refuses non-interactive input; use plan/apply for CI.
 
 ## Transaction and recovery behavior
@@ -146,7 +147,7 @@ installed completed transaction can be rolled back.
 
 ```sh
 python -m heist upgrade rollback --config /root/heist-deployment.json \
-  --transaction COMPLETED_TRANSACTION_ID --confirm-version 0.2.0
+  --transaction COMPLETED_TRANSACTION_ID --confirm-version 0.3.0
 ```
 
 No checkpoints are automatically deleted. Retention is an administrator decision:
@@ -166,3 +167,7 @@ The fresh installer has no transactional host rollback or resume journal yet.
 The former destructive uninstall script is retired. Use disposable appliance
 checkpoints to rehearse installation; do not interpret the rollout mechanism as
 permission to rerun installation over production.
+
+Build the UI artifact on a workstation from the exact reviewed commit. See
+[frontend release artifacts](FRONTEND.md). Use the older manifest explicitly when
+rehearsing a historical 0.2.0 release without a React bundle.

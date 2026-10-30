@@ -1,21 +1,21 @@
-import { Badge,Card,Empty,PageTitle,ResourceState,Stat } from '../../components/ui.tsx';
-import { number,payload,row,rows,text,truth } from '../../lib/data.ts';
+import { Badge, Card, Empty, PageTitle, ResourceState, Stat } from '../../components/ui.tsx';
+import { number, payload, row, rows, text, truth } from '../../lib/data.ts';
 import { Link } from '../../lib/router.tsx';
 import { useResource } from '../../lib/state.tsx';
 export function Operations() {
-    const resource = useResource('/backend/manage-ctf.php?action=get_challenges', 15000), data = payload(resource.data), stats = row(data.stats), challenges = rows(data.challenges);
-    return <>
-    <PageTitle 
-      eyebrow="ADMINISTRATION / LAB OVERVIEW" 
-      title="Keep the whole picture in view." 
-      description="Availability and deployment activity for the exercises you manage." 
-      action={<button className="secondary" onClick={resource.reload}>Refresh ↻</button>}/>
+  const resource = useResource('/backend/manage-ctf.php?action=get_challenges', 15000), data = payload(resource.data), stats = row(data.stats), challenges = rows(data.challenges);
+  return <>
+    <PageTitle
+      eyebrow="ADMINISTRATION / LAB OVERVIEW"
+      title="Keep the whole picture in view."
+      description="Availability and deployment activity for the exercises you manage."
+      action={<button className="secondary" onClick={resource.reload}>Refresh ↻</button>} />
     <ResourceState {...resource}>
       <div className="stats-grid">
-        <Stat label="Managed challenges" value={stats.total_challenges ?? challenges.length}/>
-        <Stat label="Active deployments" value={stats.active_deployments}/>
-        <Stat label="Total deployments" value={stats.total_deployments}/>
-        <Stat label="Average completion" value={number(stats.avg_completion_time ?? stats.avg_minutes) ? number(stats.avg_completion_time ?? stats.avg_minutes).toFixed(1) + ' min' : '—'}/>
+        <Stat label="Managed challenges" value={stats.total_challenges ?? challenges.length} />
+        <Stat label="Active deployments" value={stats.active_deployments} />
+        <Stat label="Total deployments" value={stats.total_deployments} />
+        <Stat label="Average completion" value={number(stats.avg_completion_minutes) ? number(stats.avg_completion_minutes).toFixed(1) + ' min' : '—'} />
       </div>
       <Card title="Exercise availability" action={<Link href="/manage-ctf">Manage challenges →</Link>}>
         {challenges.length ? <div className="table-wrap">
@@ -53,7 +53,7 @@ export function Operations() {
               </tr>)}
             </tbody>
           </table>
-        </div> : <Empty title="No exercises to monitor yet"/>}
+        </div> : <Empty title="No exercises to monitor yet" />}
       </Card>
     </ResourceState>
   </>;

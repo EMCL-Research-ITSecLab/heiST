@@ -1,0 +1,24 @@
+{
+  "schema": 2,
+  "version": "0.3.0",
+  "supported_from": [
+    "1bf6c026a9c6ce9ff6e00de9453496779c0e8043",
+    "0e8b088bada22e0dcbf82f43544f2532db3db1ae",
+    "e2e732efcceca090b33a216a2d859f25a757ed65",
+    "cd7103c5ed0dcabff6455cec211d12fb8742755c",
+    "70131b37da9b22da82bcc1c714152f5c40141858"
+  ],
+  "migrations": [
+    {
+      "id": "0001_exclusive_instances",
+      "path": "releases/migrations/0001_exclusive_instances.sql",
+      "sha256": "fe6ac0a2d4c42d53a3b6d46ccae272f96eb5735340376016f25bf011caff8b0d"
+    }
+  ],
+  "protected_tables": [
+    "users",
+    "completed_challenges",
+    "challenge_flags"
+  ],
+  "frontend": true
+}

@@ -52,6 +52,8 @@ Use `bin/heist --help` for the explicit administrator and service commands.
 - [Code layout and release maintenance](docs/MAINTAINING.md)
 - [Local full-appliance testing](docs/LOCAL-APPLIANCE.md)
 - [Backend, API and web tests](docs/TESTING.md)
+- [React UI development and static releases](docs/FRONTEND.md)
+- [Operator helpers](docs/operator-tools/README.md)
 - [Update wizard, migration and recovery](docs/UPDATES.md)
 
 ## Getting Started
@@ -100,7 +102,7 @@ bin/install
 
 Small isolated staging installations can set `WEBSERVER_VM_MEMORY` and
 `DATABASE_VM_MEMORY` (MiB), and `WEBSERVER_VM_CORES` and `DATABASE_VM_CORES`
-in the advanced installer or `setup/.env`. Defaults remain 16384/32768 MiB
+in the advanced installer or `config/installer.env`. Defaults remain 16384/32768 MiB
 and four cores each. For example, a functional pilot may use 4096 MiB and
 two cores per VM; measure production capacity separately.
 
@@ -148,7 +150,7 @@ To verify that the monitoring system is working correctly, you can navigate to t
 
 ### Challenge Creation - Automatic Creation
 1. Follow steps 1-4 from the manual creation process.
-2. Create a YAML file according to the [template](automatic_challenge_import/template.yaml) for the automatic challenge creation, defining the same parameters as in the manual creation process.
+2. Create a YAML file according to the [template](tools/challenges/template.yaml) for the automatic challenge creation, defining the same parameters as in the manual creation process.
 3. On the *Create CTF* page, select the *YAML* mode using the toggle at the top right, and upload your YAML file.
 4. Click on *Create CTF Challenge*, and wait for the platform to process the uploaded files and create templates for the virtual machines, which might take a few minutes.
 5. After the CTF has been created, it can be deployed for the users.
@@ -218,10 +220,10 @@ To verify that the monitoring system is working correctly, you can navigate to t
 
 The platform consists of four main components, the web application, the API, the database, and the monitoring system.
 - The web application is built using an Apache server, which serves the frontend and backend of the application. Both of which are built from scratch using HTML, CSS, and JavaScript for the frontend, and PHP for the backend. The web application is responsible for handling user interactions, and interfacing with the API to perform actions such as creating and deploying challenges, and managing users. The base files used to set up the web server can be found in [`webserver/`](webserver/). It is set up on a dedicated virtual machine to ensure isolation and security of the web application, and to allow for better resource management and scalability.
-- The API is built using Python and the Flask framework, and is responsible for handling the core logic of the application, such as creating and managing virtual machines, and processing the uploaded files for challenge creation. The API interfaces with the Proxmox VE host using the Proxmox API, and with the database to store and retrieve information about the challenges, users, and other relevant data. The full implementation of the API can be found in the [`backend/`](backend/) directory.
+- The API is built using Python and the Flask framework, and is responsible for handling the core logic of the application, such as creating and managing virtual machines, and processing the uploaded files for challenge creation. The API interfaces with the Proxmox VE host using the Proxmox API, and with the database to store and retrieve information about the challenges, users, and other relevant data. The full implementation of the API can be found in the [`heist/backend/`](heist/backend/) directory.
 - The database is built using PostgreSQL, and is responsible for storing all the relevant data for the application, such as user information, challenge information, and other necessary data for the application to function properly. The database, including the schema and the necessary queries, is set up during the installation process, and can be found in the [`database/`](database/) directory. For the same reasons as the web application, the database is also set up on a dedicated virtual machine to ensure isolation and security, and to allow for better resource management and scalability.
 - The monitoring system is built using onto Grafana, bundling information gathered from various sources to monitor the health of the platform, and to provide insights into the usage of the platform. This includes monitoring the other components of the platform, such as the web application, the database, and the Proxmox VE host, as well as monitoring the deployed challenges, such as the status of the virtual machines and the commands executed by the users.
-  In addition, the monitoring system also captures network traffic to allow for network forensics and analysis. The files needed to set up the monitoring system, including the configuration files for the various components, can be found in the [`monitoring/`](monitoring/) directory. While the monitoring system is distributed across the Proxmox VE host, the other components of the platform, and the deployed challenges, there is a dedicated virtual machine that hosts the Grafana dashboard, and the wazuh manager, which collects the data from the other components and provides a central point for monitoring and analysis.
+  In addition, the monitoring system also captures network traffic to allow for network forensics and analysis. The files needed to set up the monitoring system, including the configuration files for the various components, can be found in the [`heist/monitoring/`](heist/monitoring/) directory. While the monitoring system is distributed across the Proxmox VE host, the other components of the platform, and the deployed challenges, there is a dedicated virtual machine that hosts the Grafana dashboard, and the wazuh manager, which collects the data from the other components and provides a central point for monitoring and analysis.
 
 ## Monitoring System Architecture
 

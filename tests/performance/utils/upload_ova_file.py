@@ -3,9 +3,9 @@ import math
 from dotenv import load_dotenv, find_dotenv
 import time
 
-from automatic_challenge_import.yaml_parser import retrieve_ova_data
+from tools.challenges.yaml_parser import retrieve_ova_data
 
-YAML_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../automatic_challenge_import"))
+YAML_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../tools/challenges"))
 
 env_file = find_dotenv()
 load_dotenv(env_file)

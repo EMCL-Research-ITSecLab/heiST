@@ -3,7 +3,7 @@ from pathlib import Path
 import tempfile
 from unittest import TestCase
 from unittest.mock import MagicMock, Mock
-from backend.api import create_app
+from heist.backend.api import create_app
 
 
 class APITests(TestCase):

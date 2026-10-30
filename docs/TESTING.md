@@ -52,7 +52,7 @@ The command fails if the PHP runtime or PHPUnit is missing; it never installs
 packages silently. Frontend runtime tests are separate from Python API tests.
 
 `tests/end-to-end/` contains the existing Playwright UI tests. They and
-`backend/tests/` perform live actions (including user/challenge deletion and
+`tests/integration/platform/` perform live actions (including user/challenge deletion and
 Proxmox calls); they are **integration tests**, despite older unit-test labels.
 Run them only against the disposable [local appliance](LOCAL-APPLIANCE.md), with
 its test credentials/configuration. They are intentionally excluded from the

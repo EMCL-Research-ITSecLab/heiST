@@ -6,12 +6,12 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock
 
-from backend.DatabaseClasses import Challenge, ChallengeTemplate
+from heist.backend.models import Challenge, ChallengeTemplate
 
 
 class ColdLaunchFlagTests(unittest.TestCase):
     def launch(self, ready):
-        tree = ast.parse((Path(__file__).resolve().parents[1] / 'backend/launch_challenge.py').read_text())
+        tree = ast.parse((Path(__file__).resolve().parents[1] / 'heist/backend/launch_challenge.py').read_text())
         function = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == 'launch_challenge')
         instance = Challenge(challenge_id=10, template=ChallengeTemplate(5), subnet='10.128.0.0/28')
         self.assertEqual(instance.template.flags, [])

@@ -30,6 +30,7 @@ class Plan:
     protected_tables: tuple[str, ...] = ('users', 'completed_challenges', 'challenge_flags')
     source_version: str = 'unknown'
     rollback: bool = False
+    ui_bundle: dict | None = None
 
     def to_dict(self):
         return json.loads(json.dumps(asdict(self)))
@@ -85,7 +86,7 @@ def web_files(repository, commit, *, production):
     return tuple(sorted(result))
 
 
-def build_plan(repository, target, manifest_path, config_sha256):
+def build_plan(repository, target, manifest_path, config_sha256, ui_bundle=None):
     repository = Path(repository).resolve()
     source = revision(repository, 'HEAD')
     target = revision(repository, target)
@@ -93,8 +94,20 @@ def build_plan(repository, target, manifest_path, config_sha256):
     body = blob(repository, target, manifest_path)
     release = json.loads(body)
     required = {'schema', 'version', 'supported_from', 'migrations', 'protected_tables'}
-    if set(release) != required or release['schema'] != 1:
+    frontend = release.get('schema') == 2 and release.get('frontend') is True
+    if set(release) != required | ({'frontend'} if frontend else set()) or release['schema'] not in (1, 2) or (release['schema'] == 2 and not frontend):
         raise ValueError('Unsupported or incomplete release manifest')
+    bundle = None
+    if frontend:
+        from heist.ui_assets import inspect_bundle, digest
+        if not ui_bundle:
+            raise ValueError('This release requires a source-bound --ui-bundle built on a workstation')
+        path = Path(ui_bundle).resolve(strict=True)
+        data = path.read_bytes()
+        inspect_bundle(data, target)
+        bundle = {'path': str(path), 'sha256': digest(data)}
+    elif ui_bundle:
+        raise ValueError('This release does not declare a frontend bundle')
     if not re.fullmatch(r'\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?', release['version']):
         raise ValueError('Release version must be a semantic version')
     if source not in release['supported_from']:
@@ -102,11 +115,13 @@ def build_plan(repository, target, manifest_path, config_sha256):
     if source == target:
         raise ValueError('Target is already installed')
     # Protocol v1 installs source, not new system/Python/Composer dependencies.
-    for name in ('setup/requirements.txt', 'webserver/html/composer.lock'):
-        old = git(repository, 'ls-tree', source, '--', name)
-        new = git(repository, 'ls-tree', target, '--', name)
-        if old != new:
-            raise ValueError('Release needs a dependency migration not supported by protocol v1: ' + name)
+    for candidates in (('heist/installer/requirements.txt', 'setup/requirements.txt'), ('webserver/html/composer.lock',)):
+        values = []
+        for commit in (source, target):
+            name = next((name for name in candidates if git(repository, 'ls-tree', commit, '--', name)), None)
+            values.append(blob(repository, commit, name) if name else None)
+        if values[0] != values[1]:
+            raise ValueError('Release needs a dependency migration not supported by protocol v1: ' + candidates[0])
     old_composer = json.loads(blob(repository, source, 'webserver/html/composer.json'))
     new_composer = json.loads(blob(repository, target, 'webserver/html/composer.json'))
     for key in ('require', 'require-dev', 'repositories', 'scripts', 'config'):
@@ -135,6 +150,6 @@ def build_plan(repository, target, manifest_path, config_sha256):
     source_version=tomllib.loads(blob(repository,source,'pyproject.toml').decode())['project']['version']
     if tomllib.loads(blob(repository,target,'pyproject.toml').decode())['project']['version']!=release['version']:
         raise ValueError('Release manifest and package versions differ')
-    return Plan(1, str(repository), source, target, release['version'], manifest_path,
+    return Plan(release['schema'], str(repository), source, target, release['version'], manifest_path,
         hashlib.sha256(body).hexdigest(), config_sha256, tuple(migrations),
-        web_files(repository, source, production=False), web_files(repository, target, production=True), tuple(release['protected_tables']),source_version)
+        web_files(repository, source, production=False), web_files(repository, target, production=True), tuple(release['protected_tables']),source_version, ui_bundle=bundle)

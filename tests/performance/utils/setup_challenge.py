@@ -3,9 +3,9 @@ from dotenv import load_dotenv, find_dotenv
 import time
 import datetime
 from tests.performance.utils.upload_ova_file import upload_all_ova_files
-from automatic_challenge_import.yaml_parser import yaml_to_create_challenge_form_data
+from tools.challenges.yaml_parser import yaml_to_create_challenge_form_data
 
-YAML_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../automatic_challenge_import"))
+YAML_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../tools/challenges"))
 
 
 env_file = find_dotenv()

@@ -11,8 +11,12 @@ clean-host installer.
 | `heist/config.py`, `files.py`, `remote.py` | Database settings, durable private files/locking, trusted SSH |
 | `heist/rollout/` | Release plans, transaction/recovery policy, PVE and web adapters |
 | `heist/maintenance/` | Verified SQL backups and explicit database restores |
-| `setup/` | Installer bootstrap, configuration interface and provisioning |
-| `backend/` | API and challenge lifecycle services; compatibility entry points |
+| `heist/installer/` | Installer bootstrap, configuration interface and provisioning |
+| `heist/backend/` | API and challenge lifecycle services; compatibility entry points |
+| `heist/monitoring/` | Monitoring provisioning and packaged resources |
+| `frontend/` | React UI source, themes and browser API client |
+| `webserver/` | PHP web API, Apache configuration and UI entry shell |
+| `tools/challenges/`, `tools/images/`, `tools/maintenance/` | Explicit operator helpers, separate from runtime packages |
 | `releases/` | Versioned manifests and immutable SQL migrations |
 | `tools/local/` | Workstation appliance lifecycle and explicit disposable rehearsals |
 | `tests/` | Portable regressions and explicitly enabled infrastructure checks |
@@ -57,3 +61,12 @@ The fresh installer changes the host and is not an update command. For a local
 installation rehearsal, take a stopped standalone appliance checkpoint first;
 restore by cloning that checkpoint into a new work directory. Physical host
 OS/network recovery needs its own tested backup/console procedure.
+
+See [frontend development and release artifacts](FRONTEND.md) and the
+[operator tools](operator-tools/README.md). All current development is consolidated
+on `dev`; the earlier feature branches are already ancestors of that branch.
+
+Private settings belong in `config/installer.env` and `config/backend.env`.
+Existing installations may retain their original private paths: the environment
+loader reads them in place and translates packaged resource paths without
+copying credentials or moving private keys.

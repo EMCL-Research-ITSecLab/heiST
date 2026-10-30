@@ -10,7 +10,7 @@ import threading
 import unittest
 import uuid
 
-from backend.instance_ownership import assign_instance, take_ready_instance
+from heist.backend.instance_ownership import assign_instance, take_ready_instance
 
 
 @unittest.skipUnless(os.getenv('TEST_DATABASE_URL'), 'TEST_DATABASE_URL is required')

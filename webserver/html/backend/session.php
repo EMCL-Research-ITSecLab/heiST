@@ -40,7 +40,7 @@ final class UiSessionHandler
             $user = [
                 'username' => (string)($this->session['username'] ?? ''),
                 'avatar_url' => (string)($record['avatar_url'] ?? '/assets/avatars/default-avatar.png'),
-                'is_admin' => filter_var($record['is_admin'], FILTER_VALIDATE_BOOLEAN),
+                'is_admin' => in_array($record['is_admin'], [true, 1, '1', 't', 'true'], true),
             ];
             $passwordChange = $this->security->requiresPasswordChange();
         }

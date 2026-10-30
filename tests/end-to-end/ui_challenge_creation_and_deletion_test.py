@@ -26,7 +26,7 @@ if __name__ == "__main__":
     username = os.getenv("ADMIN_USER", "admin")
     password = os.getenv("ADMIN_PASSWORD")
 
-    YAML_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../automatic_challenge_import"))
+    YAML_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../tools/challenges"))
     CONFIG_PATH = os.path.join(YAML_DIR, "ctf-config.yaml")
 
     ui_challenge_creation_and_deletion(username, password, CONFIG_PATH, upload_ova_files=False, prints=True)

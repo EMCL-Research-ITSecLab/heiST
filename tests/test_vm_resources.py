@@ -2,7 +2,7 @@ import json
 import unittest
 from unittest.mock import patch
 
-from setup.vm_resources import vm_resources, enable_ova_storage
+from heist.installer.vm_resources import vm_resources, enable_ova_storage
 
 
 class VMResourcesTests(unittest.TestCase):
@@ -16,23 +16,23 @@ class VMResourcesTests(unittest.TestCase):
             with self.subTest(value=value), self.assertRaisesRegex(ValueError, 'positive integer'):
                 vm_resources({'WEBSERVER_VM_MEMORY': value})
 
-    @patch('setup.vm_resources.subprocess.run')
-    @patch('setup.vm_resources.subprocess.check_output')
+    @patch('heist.installer.vm_resources.subprocess.run')
+    @patch('heist.installer.vm_resources.subprocess.check_output')
     def test_default_storage_preserves_existing_content_and_options(self, read, run):
         read.side_effect = [json.dumps({'content': 'images,rootdir'}).encode(),
                             json.dumps({'content': 'iso,backup,snippets', 'path': '/custom', 'shared': 1}).encode()]
         enable_ova_storage('local-lvm')
         run.assert_called_once_with(['pvesm', 'set', 'local', '--content', 'backup,import,iso,snippets'], check=True)
 
-    @patch('setup.vm_resources.subprocess.run')
-    @patch('setup.vm_resources.subprocess.check_output')
+    @patch('heist.installer.vm_resources.subprocess.run')
+    @patch('heist.installer.vm_resources.subprocess.check_output')
     def test_directory_storage_pilot(self, read, run):
         read.return_value = json.dumps({'content': 'iso,backup'}).encode()
         enable_ova_storage('local')
         run.assert_called_once_with(['pvesm', 'set', 'local', '--content', 'backup,images,import,iso'], check=True)
 
-    @patch('setup.vm_resources.subprocess.run')
-    @patch('setup.vm_resources.subprocess.check_output')
+    @patch('heist.installer.vm_resources.subprocess.run')
+    @patch('heist.installer.vm_resources.subprocess.check_output')
     def test_unsuitable_or_missing_storage_has_no_mutations(self, read, run):
         read.return_value = json.dumps({'content': 'backup'}).encode()
         with self.assertRaises(ValueError):

@@ -7,7 +7,7 @@ import unittest
 
 class CaptureClusterTests(unittest.TestCase):
     def test_parallel_sensors_use_distinct_clusters_in_both_modes(self):
-        source = Path(__file__).resolve().parents[1] / 'monitoring/setup_network_monitoring.py'
+        source = Path(__file__).resolve().parents[1] / 'heist/monitoring/setup_network_monitoring.py'
         tree = ast.parse(source.read_text())
         sensors = {}
         for node in tree.body:
@@ -40,7 +40,7 @@ class CaptureClusterTests(unittest.TestCase):
     def test_sensor_pid_files_are_in_systemd_managed_runtime_directories(self):
         import configparser
         import shlex
-        source = Path(__file__).resolve().parents[1] / 'monitoring/setup_services.py'
+        source = Path(__file__).resolve().parents[1] / 'heist/monitoring/setup_services.py'
         directories = set()
         services = 0
         for node in ast.parse(source.read_text()).body:

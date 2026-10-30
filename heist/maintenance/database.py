@@ -11,6 +11,7 @@ import tempfile
 import uuid
 
 from heist.config import DatabaseSettings
+from heist.environment import environment_file
 from heist.files import fsync_directory, maintenance_lock, private_directory, sha256, write_json
 from heist.remote import SSH
 
@@ -110,7 +111,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('action', choices=('backup', 'restore'))
     parser.add_argument('archive', nargs='?', type=Path)
-    parser.add_argument('--config', type=Path, default=Path(__file__).resolve().parents[2] / 'setup/.env')
+    parser.add_argument('--config', type=Path, default=environment_file('installer'))
     parser.add_argument('--directory', type=Path, default=Path('/var/backups/heist/database'))
     parser.add_argument('--state-dir', type=Path, default=Path('/var/lib/heist'))
     parser.add_argument('--ssh-user', default='root')

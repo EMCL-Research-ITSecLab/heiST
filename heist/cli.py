@@ -5,16 +5,15 @@ import runpy
 import sys
 
 MODULE_COMMANDS = {
-    'install': ('setup.install', 'Configure a clean Proxmox host'),
+    'install': ('heist.installer.cli', 'Configure a clean Proxmox host'),
     'update': ('heist.rollout.cli', 'Alias for the full-platform release controller'),
-    'check': ('tools.check', 'Run local source tests'),
     'db': ('heist.maintenance.database', 'Back up or restore PostgreSQL'),
     'upgrade': ('heist.rollout.cli', 'Plan, deploy or recover a full platform release'),
 }
 SERVICE_COMMANDS = {
-    'api': ('backend.api', 'Start the internal API service'),
-    'pool-manager': ('backend.pool_manager', 'Start the challenge pool service'),
-    'cleanup': ('backend.cleanup', 'Run challenge cleanup'),
+    'api': ('heist.backend.api', 'Start the internal API service'),
+    'pool-manager': ('heist.backend.pool_manager', 'Start the challenge pool service'),
+    'cleanup': ('heist.backend.cleanup', 'Run challenge cleanup'),
 }
 
 

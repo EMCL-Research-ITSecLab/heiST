@@ -186,6 +186,12 @@ def health(config):
         response = connection.getresponse()
         if response.status != 200 or b'login' not in response.read(2 * 1024**2).lower():
             raise RuntimeError('Web login health failed')
+        if config.get('frontend'):
+            connection.request('GET', '/backend/session.php')
+            response = connection.getresponse()
+            result = json.loads(response.read(1024 * 1024))
+            if response.status != 200 or result.get('success') is not True or result.get('data', {}).get('is_logged_in') is not False:
+                raise RuntimeError('Web session API health failed')
     finally:
         connection.close()
 

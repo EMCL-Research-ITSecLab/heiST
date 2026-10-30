@@ -1,6 +1,7 @@
 import { Card } from '../../components/ui.tsx';
 import { Link } from '../../lib/router.tsx';
-export function Landing() { return <>
+export function Landing() {
+  return <>
     <section className="hero">
       <div>
         <p className="eyebrow">HEIDELBERG SECURITY TRAINING</p>
@@ -12,7 +13,7 @@ export function Landing() { return <>
           <Link className="button secondary" href="/signup">Join heiST</Link>
         </div>
         <div className="hero-caption">
-          <span className="status-dot"/>Purpose-built environments. Practical learning.</div>
+          <span className="status-dot" />Purpose-built environments. Practical learning.</div>
       </div>
       <div className="hero-workbench" aria-hidden>
         <div className="terminal-toolbar">
@@ -47,4 +48,5 @@ export function Landing() { return <>
         </p>
       </Card>)}
     </div>
-  </>; }
+  </>;
+}

@@ -17,7 +17,7 @@ class AgentLoggingTests(unittest.TestCase):
                     helper = root / command
                     helper.write_text('#!/bin/sh\nprintf "%s\\n" "$0 $*" >> "$TRACE"\nexit ' + str(status) + '\n')
                     helper.chmod(0o755)
-                script = Path(__file__).resolve().parents[1] / 'monitoring/wazuh/agent/linux/config/install_logging_files.sh'
+                script = Path(__file__).resolve().parents[1] / 'heist/monitoring/wazuh/agent/linux/config/install_logging_files.sh'
                 result = subprocess.run(['bash', str(script), '/staged-config'], capture_output=True,
                                         env={**os.environ, 'PATH': str(root) + os.pathsep + os.environ['PATH'], 'TRACE': str(root / 'trace')})
                 self.assertEqual(result.returncode, code)
@@ -28,7 +28,7 @@ class AgentLoggingTests(unittest.TestCase):
                 self.assertIn('/etc/systemd/system/bash_loggin_timer.timer', trace[-1])
 
     def test_template_freeze_never_falls_back_to_forced_stop(self):
-        source = Path(__file__).resolve().parents[1] / 'backend/proxmox_api_calls.py'
+        source = Path(__file__).resolve().parents[1] / 'heist/backend/proxmox_api_calls.py'
         tree = ast.parse(source.read_text())
         function = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == 'shutdown_vm_api_call')
         namespace = {'subprocess': Mock()}

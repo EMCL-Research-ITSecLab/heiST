@@ -4,7 +4,7 @@ import unittest
 import uuid
 from unittest.mock import Mock
 
-from backend.network_input import chain_name, install_network_input_filter, remove_network_input_filter
+from heist.backend.network_input import chain_name, install_network_input_filter, remove_network_input_filter
 
 
 class NetworkInputTests(unittest.TestCase):

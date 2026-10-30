@@ -1,5 +1,5 @@
 vpn/workdir/
-setup/ubuntu-base-server/
+heist/installer/ubuntu-base-server/
 __pycache__
 .idea
 **/.env
@@ -8,16 +8,16 @@ database/backups
 **/*.phar
 webserver/html/vendor
 **/.phpunit.result.cache
-automatic_challenge_import/ctf-config.yaml
-automatic_challenge_import/ubuntu-cloudimg.yaml
-automatic_challenge_import/dc1.yaml
+tools/challenges/ctf-config.yaml
+tools/challenges/ubuntu-cloudimg.yaml
+tools/challenges/dc1.yaml
 tests/performance/utils/**.pem
 tests/security
 database/migrate_functions.sql
-setup/certs/
-setup/suricata-8.0.0.tar.gz
-setup/suricata-8.0.0/
-setup/credentials.md
+heist/installer/certs/
+heist/installer/suricata-8.0.0.tar.gz
+heist/installer/suricata-8.0.0/
+heist/installer/credentials.md
 
 # Generated Python environments and distribution metadata
 /.venv/
@@ -29,3 +29,12 @@ setup/credentials.md
 # React build outputs and dependency cache
 /frontend/node_modules/
 /frontend/dist/
+
+/config/*.env
+/config/credentials.md
+/config/certificates/
+/tools/images/vm-build/
+
+# Generated static UI release assets
+/webserver/html/assets/ui/
+/webserver/html/ui-manifest.json

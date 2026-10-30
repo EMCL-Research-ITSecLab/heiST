@@ -85,3 +85,34 @@ class ManifestTests(unittest.TestCase):
         for name in ('', '../data', '/root/data', 'a/../b', './a', 'a//b'):
             with self.subTest(name=name), self.assertRaises(ValueError):
                 safe_relative(name)
+
+    def frontend_target(self):
+        self.manifest.update(schema=2, frontend=True)
+        self.write('releases/release.json', json.dumps(self.manifest))
+        self.commit()
+        target = self.git('rev-parse', 'HEAD').strip()
+        self.git('checkout', '-q', '--detach', self.source)
+        return target
+
+    def test_frontend_manifest_requires_bundle_before_planning(self):
+        target = self.frontend_target()
+        with self.assertRaisesRegex(ValueError, '--ui-bundle'):
+            build_plan(self.root, target, 'releases/release.json', 'config')
+
+    def test_frontend_bundle_is_bound_to_target_and_artifact_checksum(self):
+        from tests.test_ui_assets import bundle
+        from heist.ui_assets import digest
+        target = self.frontend_target()
+        artifact = self.root/'frontend.tar.gz'
+        artifact.write_bytes(bundle(target))
+        plan = build_plan(self.root, target, 'releases/release.json', 'config', artifact)
+        self.assertEqual(plan.schema, 2)
+        self.assertEqual(plan.ui_bundle, {'path': str(artifact), 'sha256': digest(artifact.read_bytes())})
+        artifact.write_bytes(bundle(self.source))
+        with self.assertRaisesRegex(ValueError, 'another source'):
+            build_plan(self.root, target, 'releases/release.json', 'config', artifact)
+
+    def test_moving_unchanged_python_requirements_is_supported(self):
+        (self.root/'heist/installer').mkdir(parents=True)
+        (self.root/'setup/requirements.txt').rename(self.root/'heist/installer/requirements.txt')
+        self.assertEqual(self.plan().version, '0.2.0')

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "heiST"
-version = "0.2.0"
+version = "0.3.0"
 description = "heiST automation and backend tooling"
 requires-python = ">=3.12"
 
@@ -16,17 +16,14 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = [
-    "automatic_challenge_import*",
-    "backend*",
-    "monitoring*",
-    "setup*",
-    "heist*",
-    "tools*",
-    "automatic_ova_setup*",
-]
+include = ["heist*"]
+
 exclude = [
     "tests*",
+    "heist.backend.tests*",
     "**.__pycache__*",
 ]
 
+[tool.setuptools.package-data]
+"heist.installer" = ["requirements.txt"]
+"heist.monitoring" = ["**/*.sql", "**/*.json", "**/*.toml", "**/*.xml", "**/*.yml", "**/*.sh", "**/*.ps1", "**/*.service", "**/*.timer", "**/localfile_*"]

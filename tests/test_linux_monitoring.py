@@ -5,8 +5,8 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock
 
-from backend.linux_monitoring import prepare_monitoring_network
-from backend.qemu_ga_wrapper import ExecResult, GuestAgentError
+from heist.backend.linux_monitoring import prepare_monitoring_network
+from heist.backend.qemu_ga_wrapper import ExecResult, GuestAgentError
 
 ADDRESS = 'fd12:3456:789a:1::1234'
 GATEWAY = 'fd12:3456:789a:1::1'
@@ -58,7 +58,7 @@ class LinuxMonitoringTests(unittest.TestCase):
         self.assertFalse(any(call.args[0][:3] == ['ip', '-6', 'route'] for call in ga.exec.call_args_list))
 
     def test_enrollment_secret_remains_a_literal_argument(self):
-        source = Path(__file__).resolve().parents[1] / 'backend/warmup_challenge.py'
+        source = Path(__file__).resolve().parents[1] / 'heist/backend/warmup_challenge.py'
         function = next(node for node in ast.parse(source.read_text()).body
                         if isinstance(node, ast.FunctionDef) and node.name == 'configure_ipv6_and_wazuh_linux')
         ga = Mock()

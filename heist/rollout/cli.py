@@ -41,7 +41,8 @@ def _main(argv=None):
                                            'rollback', 'adopt-task', 'retry-task'))
     parser.add_argument('--config', type=Path, required=True, help='Reviewed deployment JSON; no credentials')
     parser.add_argument('--target', help='Already fetched immutable commit, tag or branch')
-    parser.add_argument('--manifest', default='releases/0.2.0.json')
+    parser.add_argument('--manifest', default='releases/0.3.0.json')
+    parser.add_argument('--ui-bundle', type=Path, help='Prebuilt UI artifact from the exact target commit')
     parser.add_argument('--plan', type=Path, help='Reviewed plan file to apply')
     parser.add_argument('--output', type=Path, help='Save a plan for review/application')
     parser.add_argument('--transaction', help='Completed transaction to roll back')
@@ -57,7 +58,7 @@ def _main(argv=None):
     if args.action in ('plan', 'wizard'):
         if not args.target:
             parser.error(args.action + ' requires --target')
-        plan = build_plan(configuration.installation, args.target, args.manifest, fingerprint)
+        plan = build_plan(configuration.installation, args.target, args.manifest, fingerprint, args.ui_bundle)
         if args.output:
             if args.output.exists():
                 parser.error('Use a new plan output path')

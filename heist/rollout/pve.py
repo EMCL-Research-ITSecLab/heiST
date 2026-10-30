@@ -16,15 +16,20 @@ import time
 import uuid
 
 from heist.config import DatabaseSettings
+from heist import ui_assets
+
 from heist.files import fsync_directory, private_directory, sha256, write_file, write_json
 from heist.maintenance.database import Backups, PostgreSQL
 from .health import probe
 from .manifest import blob, build_plan, git, revision
 from .migrations import migrate
 from .legacy import module_for
+from .host import prediction_cron
 from . import web
 from .tasks import Tasks
 
+
+UI_AGENT = Path(ui_assets.__file__).read_text().split("if __name__ == '__main__':")[0]
 
 class PVE:
     units = ('pool_manager','cleanup','backend')
@@ -130,7 +135,7 @@ class PVE:
         if str(self.installation.resolve())!=plan.installation or revision(self.installation,'HEAD')!=plan.source:
             raise RuntimeError('Installed source changed after planning')
         if not plan.rollback:
-            if build_plan(self.installation,plan.target,plan.manifest_path,self.config_sha256)!=plan:
+            if build_plan(self.installation,plan.target,plan.manifest_path,self.config_sha256, plan.ui_bundle['path'] if plan.ui_bundle else None)!=plan:
                 raise RuntimeError('Release/configuration changed after planning')
         if self.database.host!=self.config.vm('database').host:
             raise RuntimeError('The configured database is not the checkpointed database VM')
@@ -201,7 +206,7 @@ class PVE:
                     'cleanup': 'backend.cleanup', 'pool_manager': 'backend.pool_manager'}
         return expected.get(path.name) is not None and module_for(path, self.installation) == expected[path.name]
 
-    def _health(self, *, legacy, local_web):
+    def _health(self, *, legacy, local_web, frontend=False):
         endpoint=self.config.api_url.rstrip('/')+'/health/ready'
         status=probe(endpoint,self.config.api_certificate,
             headers={'Authentication-Token':self.environment['BACKEND_AUTHENTICATION_TOKEN']},
@@ -209,7 +214,7 @@ class PVE:
         if status==404 and not legacy:raise RuntimeError('New backend has no readiness endpoint')
         with closing(self.database.connect()) as connection:
             with connection.cursor() as cursor:cursor.execute('SELECT 1');assert cursor.fetchone()==(1,)
-        self.remote(self.config.vm('web'),web.LOCAL_HEALTH,{'certificate':self.config.web_certificate})
+        self.remote(self.config.vm('web'),web.LOCAL_HEALTH,{'certificate':self.config.web_certificate, 'frontend': frontend})
         for command in self.config.monitoring_checks:
             self.config.vm('monitoring').ssh.run(command,timeout=30)
 
@@ -223,15 +228,7 @@ class PVE:
         write_file(directory/'heist-maintenance.conf', '[Service]\nEnvironment='+json.dumps('HEIST_MAINTENANCE_FILE='+str(self.marker))+'\n', mode=0o644)
         cron=Path('/etc/cron.d/pool_size_prediction')
         if cron.exists():
-            lines=cron.read_text().splitlines()
-            guarded=[]
-            for line in lines:
-                if line.strip() and not line.lstrip().startswith('#') and str(self.installation/'backend/pool_size_prediction.py') in line and 'HEIST_MAINTENANCE_GUARD' not in line:
-                    fields=line.split(None,6)
-                    if len(fields)!=7:raise RuntimeError('Unknown prediction cron format')
-                    line=' '.join(fields[:6])+' test ! -e '+shlex.quote(str(self.marker))+' && '+fields[6]+' # HEIST_MAINTENANCE_GUARD'
-                guarded.append(line)
-            write_file(cron, '\n'.join(guarded)+'\n', mode=0o644)
+            write_file(cron, prediction_cron(cron.read_text(), self.installation, self.marker), mode=0o644)
         self.command(['systemctl','daemon-reload'])
 
     def quiesce(self, transaction):
@@ -258,7 +255,8 @@ class PVE:
                 cursor.execute("SELECT id FROM challenges WHERE lifecycle_state='READY'")
                 ready=[row[0] for row in cursor.fetchall()]
         if ready:
-            script='from backend.teardown_challenge import teardown_challenge\nimport json,sys\nfor identifier in json.load(sys.stdin):teardown_challenge(identifier)\n'
+            prefix = 'heist.backend' if (self.installation/'heist/backend/teardown_challenge.py').exists() else 'backend'
+            script=f'from {prefix}.teardown_challenge import teardown_challenge\nimport json,sys\nfor identifier in json.load(sys.stdin):teardown_challenge(identifier)\n'
             subprocess.run([str(self.installation/'.venv/bin/python'),'-c',script],cwd=self.installation,
                 input=json.dumps(ready).encode(),check=True,timeout=self.config.timeout)
         self.assert_idle(allow_ready=False)
@@ -268,7 +266,9 @@ class PVE:
         for process in Path('/proc').glob('[0-9]*'):
             try:
                 arguments=(process/'cmdline').read_bytes().split(bytes([0]))
-                if str(self.installation/'backend/pool_size_prediction.py').encode() in arguments:
+                scripts = {str(self.installation/name).encode() for name in ('backend/pool_size_prediction.py', 'heist/backend/pool_size_prediction.py')}
+                module = b'heist.backend.pool_size_prediction' in arguments and b'-m' in arguments
+                if scripts.intersection(arguments) or module:
                     yield process.name
             except OSError:
                 continue
@@ -276,6 +276,15 @@ class PVE:
     def checkpoint(self, transaction):
         directory=private_directory(Path(self.config.backup_directory)/transaction.path.name)
         transaction.save(backup_directory=str(directory))
+        if transaction.plan.ui_bundle:
+            from heist.ui_assets import inspect_bundle, digest
+            bundle = transaction.plan.ui_bundle
+            data = Path(bundle['path']).read_bytes()
+            if digest(data) != bundle['sha256']:
+                raise RuntimeError('Frontend bundle changed after planning')
+            inspect_bundle(data, transaction.plan.target)
+            write_file(directory/'frontend.tar.gz', data)
+            transaction.save(ui_bundle_checkpoint=str(directory/'frontend.tar.gz'))
         manager=Backups(PostgreSQL(self.database,self.config.vm('database').ssh),directory/'database')
         dump=manager.create('release')
         transaction.save(database_backup=str(dump))
@@ -296,7 +305,7 @@ class PVE:
             transaction.save(snapshots=snapshots)
         git(self.installation,'update-ref','refs/heist/releases/'+transaction.plan.target,transaction.plan.target)
         git(self.installation,'bundle','create',str(directory/'source.bundle'),'--all')
-        files=[Path(self.config.backend_env),self.installation/'setup/.env',Path(self.config.api_certificate)]
+        files=[Path(self.config.backend_env),self.installation/'setup/.env',self.installation/'config/installer.env',Path(self.config.api_certificate)]
         key=self.environment.get('BACKEND_CERTIFICATE_KEY_FILE')
         if key:files.append(Path(key))
         hashes={str(path):sha256(path) for path in files if path.is_file()}
@@ -347,6 +356,7 @@ class PVE:
 
     def deploy(self,transaction):
         self._checkout(transaction,transaction.plan.target)
+        self._host_guard()
         self.start_vms()
         plan=transaction.plan
         before={name:hashlib.sha256(blob(self.installation,plan.source,'webserver/html/'+name)).hexdigest() for name in plan.web_before}
@@ -361,6 +371,14 @@ class PVE:
                 member=tarfile.TarInfo('files/'+name);member.size=len(data);member.mode=0o644;archive.addfile(member,io.BytesIO(data))
         with archive_path.open('rb') as stream:
             self.config.vm('web').ssh.run(['python3','-c',web.DEPLOY],stdin=stream,timeout=600)
+        if plan.ui_bundle:
+            payload = Path(transaction.data['ui_bundle_checkpoint']).read_bytes()
+            if ui_assets.digest(payload) != plan.ui_bundle['sha256']:
+                raise RuntimeError('Checkpointed frontend bundle checksum differs')
+            ui_assets.inspect_bundle(payload, plan.target)
+            program = UI_AGENT
+            program += '\nmain(' + repr(['install', '--bundle', '-', '--commit', plan.target, '--web-root', self.config.web_root]) + ')\n'
+            self.config.vm('web').ssh.run(['python3', '-c', program], input=payload, timeout=600)
         self.command(['systemctl','start','backend'])
 
     def migrate(self,transaction):
@@ -385,10 +403,13 @@ class PVE:
     def verify(self,transaction,*,target):
         self.verify_source(transaction, target=target)
         self.verify_web_runtime(transaction)
+        if target and transaction.plan.ui_bundle and transaction.data['kind'] != 'rollback':
+            program = UI_AGENT + '\nverify_installation(' + repr(self.config.web_root) + ', ' + repr(transaction.plan.target) + ')\n'
+            self.config.vm('web').ssh.run(['python3', '-c', program], timeout=60)
         for name,digest in transaction.data.get('preserved_files',{}).items():
             if sha256(name)!=digest:raise RuntimeError('Preserved deployment configuration changed')
         legacy=not target or transaction.data['kind']=='rollback'
-        self.wait(lambda:self._health(legacy=legacy,local_web=True),'platform health')
+        self.wait(lambda:self._health(legacy=legacy,local_web=True, frontend=bool(target and transaction.plan.ui_bundle and transaction.data['kind'] != 'rollback')),'platform health')
         expected=transaction.data.get('expected_target_hashes',transaction.data.get('protected_hashes'))
         if expected is not None and self.protected_hashes(transaction.plan.protected_tables)!=expected:
             raise RuntimeError('Protected student/grade data changed')
@@ -411,6 +432,7 @@ class PVE:
             self.tasks.run(transaction,'restore-'+checkpoint.path.name+'-'+vm.role,'/nodes/'+self.node+'/qemu',
                 {'archive':snapshots[vm.role]['path'],'vmid':vm.vmid,'force':1})
         self._checkout(transaction,checkpoint.plan.source)
+        self._host_guard()
         for name,hexadecimal in {**checkpoint.data.get('replaced_shims', {}), **checkpoint.data.get('legacy_shims', {})}.items():
             path=self.installation/name;path.write_bytes(bytes.fromhex(hexadecimal));path.chmod(0o755)
         for name,hexadecimal in checkpoint.data.get('generated',{}).items():

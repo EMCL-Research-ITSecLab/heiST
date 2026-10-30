@@ -12,7 +12,7 @@ from heist.config import DatabaseSettings
 from heist.maintenance.database import Backups, PostgreSQL
 from heist.remote import SSH
 from heist.runtime import cleanup_guard, cleanup_is_complete
-from backend.cleanup import cleanup_remaining_challenges, wait_for_db_connection
+from heist.backend.cleanup import cleanup_remaining_challenges, wait_for_db_connection
 
 
 class ConfigurationTests(unittest.TestCase):
@@ -118,7 +118,7 @@ class EntryPointTests(unittest.TestCase):
     def test_installer_help_and_import_never_bootstrap_or_generate_scripts(self):
         root=Path(__file__).resolve().parents[1]
         result=subprocess.run([sys.executable,'-c',
-            'import setup.install; import setup.bootstrap; print("imports safe")'],cwd=root,capture_output=True,text=True,timeout=10)
+            'import heist.installer.cli; import heist.installer.bootstrap; print("imports safe")'],cwd=root,capture_output=True,text=True,timeout=10)
         self.assertEqual(result.returncode,0,result.stderr)
         self.assertEqual(result.stdout.strip(),'imports safe')
         result=subprocess.run([sys.executable,'-m','heist','install','--help'],cwd=root,capture_output=True,text=True,timeout=10)

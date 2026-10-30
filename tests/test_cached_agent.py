@@ -45,7 +45,7 @@ class CachedAgentTests(unittest.TestCase):
             installer = root / command
             installer.write_text('#!/bin/sh\nprintf "%s\\n" "$@" > "$INSTALL_TRACE"\n')
             installer.chmod(0o755)
-        helper = Path(__file__).resolve().parents[1] / 'monitoring/wazuh/agent/linux/config/install_cached_agent.sh'
+        helper = Path(__file__).resolve().parents[1] / 'heist/monitoring/wazuh/agent/linux/config/install_cached_agent.sh'
         return subprocess.run(['bash', str(helper), kind, str(root)], capture_output=True, text=True,
                               env={**os.environ, 'PATH': str(root) + os.pathsep + os.environ['PATH'],
                                    'INSTALL_TRACE': str(root / 'trace')})

@@ -2,7 +2,7 @@ import subprocess
 import unittest
 from unittest.mock import Mock
 
-from monitoring.monitor_host_firewall import CHAIN, install_host_input_filter
+from heist.monitoring.monitor_host_firewall import CHAIN, install_host_input_filter
 
 
 class FirewallModel:

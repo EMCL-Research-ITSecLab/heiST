@@ -1,3 +1,5 @@
+> Historical branch description. The current combined PR is [dev](PR-dev.md).
+
 # Add scheduled platform upgrades with verified checkpoints and recovery
 
 Target `feat/local-testing-and-updates` for this stacked PR, or merge its base

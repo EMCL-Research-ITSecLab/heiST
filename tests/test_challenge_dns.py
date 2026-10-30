@@ -9,7 +9,7 @@ import time
 from types import SimpleNamespace
 import unittest
 
-from backend.challenge_dns import connection_dns_servers, fallback_servers, hostname_records
+from heist.backend.challenge_dns import connection_dns_servers, fallback_servers, hostname_records
 
 
 class ChallengeDNSTests(unittest.TestCase):

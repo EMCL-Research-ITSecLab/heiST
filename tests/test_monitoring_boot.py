@@ -3,7 +3,7 @@ import subprocess
 import unittest
 from unittest.mock import Mock
 
-from backend.monitoring_boot import restore
+from heist.backend.monitoring_boot import restore
 
 
 class MonitoringBootTests(unittest.TestCase):

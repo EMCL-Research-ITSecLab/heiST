@@ -1,5 +1,5 @@
 """A deployment description contains paths and host identities, never credentials."""
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 import json
 from pathlib import Path
 

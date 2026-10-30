@@ -46,10 +46,10 @@ class Tasks:
             kind = 'qmrestore' if key.startswith('restore-') else 'vzdump'
             if status.get('type') != kind:
                 raise ValueError('Task type does not match the submitted operation')
-            if int(status.get('starttime', 0)) < job['submitted_at'] - 10:
-                raise ValueError('Task predates this submission')
-            if kind == 'qmrestore' and str(status.get('id')) != str(job['arguments']['vmid']):
-                raise ValueError('Restore task belongs to another VM')
+            if abs(int(status.get('starttime', 0)) - job['submitted_at']) > 10:
+                raise ValueError('Task time does not match this submission')
+            if str(status.get('id')) != str(job['arguments']['vmid']):
+                raise ValueError('Task belongs to another VM')
             job['upid'] = upid
         job.setdefault('reconciliations', []).append({'at': time.time(), 'uid': os.geteuid(),
                                                       'retry': retry, 'upid': upid})

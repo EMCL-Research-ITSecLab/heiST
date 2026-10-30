@@ -116,3 +116,16 @@ class RolloutTests(unittest.TestCase):
         self.assertEqual(result.data['phase'], 'ROLLED_BACK')
         self.operations.restore.assert_not_called()
         self.operations.verify.assert_not_called()
+
+    def test_failure_stderr_is_retained_only_in_private_diagnostics(self):
+        import subprocess
+        self.operations.deploy.side_effect = subprocess.CalledProcessError(1, ['fixture'], stderr=b'private-fixture-detail')
+        with self.assertRaises(subprocess.CalledProcessError):
+            self.controller.apply(self.plan)
+        transaction = self.transaction()
+        failure = transaction.data['failures'][0]
+        self.assertEqual(failure['phase'], 'DEPLOYING')
+        report = transaction.path/failure['report']
+        self.assertEqual(report.stat().st_mode & 0o777, 0o600)
+        self.assertIn('private-fixture-detail', report.read_text())
+        self.assertNotIn('private-fixture-detail', json.dumps(transaction.data))

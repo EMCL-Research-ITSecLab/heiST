@@ -4,9 +4,10 @@ import json
 import logging
 from pathlib import Path
 from typing import Protocol
+import traceback
 import uuid
 
-from heist.files import maintenance_lock, private_directory, write_json
+from heist.files import maintenance_lock, private_directory, write_file, write_json
 from .manifest import Plan
 
 
@@ -38,6 +39,19 @@ class Transaction:
             self.data.setdefault('events', []).append({'phase': phase,
                 'at': datetime.now(timezone.utc).isoformat()})
         write_json(self.path / 'transaction.json', self.data)
+
+    def failure(self, error):
+        reports = list(self.data.get('failures', []))
+        name = 'failure-' + str(len(reports) + 1) + '.log'
+        details = traceback.format_exc()
+        stderr = getattr(error, 'stderr', None)
+        if stderr:
+            details += '\nCaptured stderr:\n' + (stderr.decode(errors='replace') if isinstance(stderr, bytes) else str(stderr))
+        write_file(self.path/name, details)
+        reports.append({'phase': self.data.get('phase'), 'type': type(error).__name__, 'report': name})
+        self.save(failures=reports)
+        logging.getLogger(__name__).error('%s: %s failed (%s); private diagnostics: %s',
+            self.path.name, self.data.get('phase'), type(error).__name__, self.path/name)
 
     @classmethod
     def load(cls, path):
@@ -80,7 +94,8 @@ class Controller:
             write_json(self.directory / 'installed.json', {'commit': transaction.plan.source,
                 'version': transaction.plan.source_version, 'transaction': transaction.path.name})
             (self.directory / 'active.json').unlink(missing_ok=True)
-        except Exception:
+        except Exception as error:
+            transaction.failure(error)
             transaction.save('RECOVERY_REQUIRED')
             raise
 
@@ -104,7 +119,8 @@ class Controller:
             transaction.save('COMMITTED', committed=True)
             self.operations.finish(transaction)
             self._complete(transaction)
-        except Exception:
+        except Exception as error:
+            transaction.failure(error)
             if transaction.data.get('committed'):
                 transaction.save('COMMIT_NEEDS_ATTENTION')
             else:

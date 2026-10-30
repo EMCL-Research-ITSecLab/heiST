@@ -165,6 +165,9 @@ def checkpoint(work, output):
         raise ValueError('Use a new absolute checkpoint directory outside source')
     if (work / 'qmp.sock').exists():
         raise ValueError('Wait for clean shutdown and QEMU exit before checkpointing')
+    configuration = work / 'pilot.json'
+    if configuration.is_file() and json.loads(configuration.read_text()).get('attach_backup_disk'):
+        raise ValueError('Single-disk checkpoints cannot include the attached backup disk')
     info = json.loads(subprocess.check_output(['qemu-img', 'info', '--output=json', str(work / 'disk.qcow2')]))
     if info.get('backing-filename') or info['format'] != 'qcow2':
         raise ValueError('Checkpoint requires a standalone QCOW2')

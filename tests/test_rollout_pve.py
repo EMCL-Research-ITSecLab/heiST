@@ -63,3 +63,29 @@ class RestoreIdentityTests(unittest.TestCase):
             adapter._host_guard.assert_not_called()
             adapter.command.assert_not_called()
             adapter.tasks.run.assert_not_called()
+
+    def test_source_drift_is_rejected_before_reopening_service(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as directory:
+            adapter = PVE.__new__(PVE);adapter.installation = Path(directory)
+            transaction = Transaction(Path(directory)/'state', {'plan': Plan(
+                1, directory, 'old', 'new', '0.2.0', 'manifest', 'sha', 'config', (), (), ()).to_dict()})
+            with patch('heist.rollout.pve.revision', return_value='wrong'):
+                with self.assertRaisesRegex(RuntimeError, 'commit differs'):
+                    adapter.verify_source(transaction, target=True)
+            with patch('heist.rollout.pve.revision', return_value='new'), \
+                 patch('heist.rollout.pve.git', return_value=b'backend/api.py\n'):
+                with self.assertRaisesRegex(RuntimeError, 'source differs'):
+                    adapter.verify_source(transaction, target=True)
+
+    def test_checkout_does_not_treat_new_tracked_service_wrapper_as_old_generated_script(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory);(root/'bin').mkdir()
+            wrapper = root/'bin/api';wrapper.write_text('new maintained wrapper')
+            adapter = PVE.__new__(PVE);adapter.installation = root;adapter.command = Mock()
+            transaction = Transaction(root/'state', {'legacy_shims': {'bin/api': b'old generated'.hex()}})
+            with patch('heist.rollout.pve.git', return_value=b'bin/api\0'):
+                adapter._checkout(transaction, 'baseline')
+            self.assertEqual(wrapper.read_text(), 'new maintained wrapper')
+            adapter.command.assert_called_once()

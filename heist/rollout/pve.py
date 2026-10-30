@@ -16,11 +16,12 @@ import time
 import uuid
 
 from heist.config import DatabaseSettings
-from heist.files import private_directory, sha256, write_json
+from heist.files import fsync_directory, private_directory, sha256, write_file, write_json
 from heist.maintenance.database import Backups, PostgreSQL
 from .health import probe
 from .manifest import blob, build_plan, git, revision
 from .migrations import migrate
+from .legacy import module_for
 from . import web
 from .tasks import Tasks
 
@@ -145,7 +146,22 @@ class PVE:
                 generated[name]=path.read_bytes().hex()
                 continue
             raise RuntimeError('Tracked installation source is locally modified: '+name)
-        self.generated=generated
+        self.generated = generated
+        tracked = set(git(self.installation, 'ls-files', '-z').decode().split('\0'))
+        source_files = set(git(self.installation, 'ls-tree', '-r', '--name-only', plan.source).decode().splitlines())
+        target_files = set(git(self.installation, 'ls-tree', '-r', '--name-only', plan.target).decode().splitlines())
+        self.legacy_shims = {}
+        for path in (self.installation/'bin').iterdir():
+            name = str(path.relative_to(self.installation))
+            if name in tracked:
+                continue
+            module = module_for(path, self.installation)
+            if module and module.replace('.', '/') + '.py' in source_files | target_files:
+                self.legacy_shims[name] = path.read_bytes().hex()
+        for name in target_files:
+            path = self.installation/name
+            if name not in tracked and (path.exists() or path.is_symlink()) and name not in self.legacy_shims:
+                raise RuntimeError('Target source collides with an untracked local file: ' + name)
         capacity=0
         for vm in self.config.vms:
             config=self.configuration(vm)
@@ -171,28 +187,19 @@ class PVE:
         if self.marker.exists():raise RuntimeError('An existing maintenance transaction must be resumed first')
         self.config.vm('web').ssh.run(['sh', '-c',
             'command -v iptables ip6tables iptables-restore ip6tables-restore composer apache2ctl python3 >/dev/null'])
+        before = {name: hashlib.sha256(blob(self.installation, plan.source, 'webserver/html/' + name)).hexdigest()
+                  for name in plan.web_before if name != 'composer.lock'}
+        self.remote(self.config.vm('web'), web.VALIDATE,
+                    {'root': self.config.web_root, 'before': before, 'after': {name: None for name in plan.web_after if name != 'composer.lock'}})
         # Prove the asynchronous API transport before entering maintenance.
         self.request('GET', '/nodes/' + self.node + '/qemu', None)
         self.assert_idle(allow_ready=True)
         self._health(legacy=True,local_web=False)
 
-    def _old_shim(self,path):
-        if not path.is_file():return False
-        text=path.read_text()
-        module={'install':'setup.install','api':'backend.api','cleanup':'backend.cleanup','pool_manager':'backend.pool_manager'}.get(path.name)
-        if module is None:return False
-        # Match the exact old installer-generated body, never a local custom script.
-        expected=f'''#!/usr/bin/env bash
-set -e
-
-cd "{self.installation}" || {{
-  echo "Failed to cd to {self.installation}" >&2
-  exit 1
-}}
-
-exec "{self.installation}/.venv/bin/python" -m {module} "$@"
-'''
-        return text==expected
+    def _old_shim(self, path):
+        expected = {'install': 'setup.install', 'api': 'backend.api',
+                    'cleanup': 'backend.cleanup', 'pool_manager': 'backend.pool_manager'}
+        return expected.get(path.name) is not None and module_for(path, self.installation) == expected[path.name]
 
     def _health(self, *, legacy, local_web):
         endpoint=self.config.api_url.rstrip('/')+'/health/ready'
@@ -208,12 +215,12 @@ exec "{self.installation}/.venv/bin/python" -m {module} "$@"
 
     def _host_guard(self):
         private_directory(self.state)
-        self.marker.touch(mode=0o600,exist_ok=True)
+        write_file(self.marker, 'maintenance\n')
         for unit in ('pool_manager','cleanup'):
             directory=Path('/etc/systemd/system')/(unit+'.service.d');directory.mkdir(exist_ok=True)
-            (directory/'heist-maintenance.conf').write_text('[Unit]\nConditionPathExists=!'+str(self.marker)+'\n')
+            write_file(directory/'heist-maintenance.conf', '[Unit]\nConditionPathExists=!'+str(self.marker)+'\n', mode=0o644)
         directory=Path('/etc/systemd/system/backend.service.d');directory.mkdir(exist_ok=True)
-        (directory/'heist-maintenance.conf').write_text('[Service]\nEnvironment='+json.dumps('HEIST_MAINTENANCE_FILE='+str(self.marker))+'\n')
+        write_file(directory/'heist-maintenance.conf', '[Service]\nEnvironment='+json.dumps('HEIST_MAINTENANCE_FILE='+str(self.marker))+'\n', mode=0o644)
         cron=Path('/etc/cron.d/pool_size_prediction')
         if cron.exists():
             lines=cron.read_text().splitlines()
@@ -224,7 +231,7 @@ exec "{self.installation}/.venv/bin/python" -m {module} "$@"
                     if len(fields)!=7:raise RuntimeError('Unknown prediction cron format')
                     line=' '.join(fields[:6])+' test ! -e '+shlex.quote(str(self.marker))+' && '+fields[6]+' # HEIST_MAINTENANCE_GUARD'
                 guarded.append(line)
-            cron.write_text('\n'.join(guarded)+'\n')
+            write_file(cron, '\n'.join(guarded)+'\n', mode=0o644)
         self.command(['systemctl','daemon-reload'])
 
     def quiesce(self, transaction):
@@ -234,7 +241,9 @@ exec "{self.installation}/.venv/bin/python" -m {module} "$@"
                 services[unit]={name:subprocess.run(['systemctl',verb,'--quiet',unit],capture_output=True).returncode==0
                     for name,verb in [('active','is-active'),('enabled','is-enabled')]}
             web_services=json.loads(self.remote(self.config.vm('web'),web.CAPTURE_SERVICES))
-            transaction.save(host_services=services,web_services=web_services,generated=getattr(self,'generated',{}))
+            web_runtime=json.loads(self.remote(self.config.vm('web'),web.CAPTURE_RUNTIME, {'root': self.config.web_root}))
+            transaction.save(host_services=services, web_services=web_services, web_runtime=web_runtime,
+                generated=getattr(self, 'generated', {}), legacy_shims=getattr(self, 'legacy_shims', {}))
         self._host_guard()
         self.remote(self.config.vm('web'),web.INSTALL_GUARD,{'program':web.FIREWALL})
         self.remote(self.config.vm('web'),web.QUIESCE)
@@ -281,6 +290,8 @@ exec "{self.installation}/.venv/bin/python" -m {module} "$@"
             files=list(directory.glob('vzdump-qemu-'+str(vm.vmid)+'-*.vma.zst'))
             if len(files)!=1:raise RuntimeError('No unique completed VM archive: '+vm.role)
             self._verify_archive(transaction,files[0])
+            with files[0].open('rb') as stream:
+                os.fsync(stream.fileno())
             snapshots[vm.role]={'path':str(files[0]),'sha256':sha256(files[0]),'bytes':files[0].stat().st_size}
             transaction.save(snapshots=snapshots)
         git(self.installation,'update-ref','refs/heist/releases/'+transaction.plan.target,transaction.plan.target)
@@ -292,6 +303,10 @@ exec "{self.installation}/.venv/bin/python" -m {module} "$@"
         with tarfile.open(directory/'host-configuration.tar.gz','w:gz') as archive:
             for path in files:
                 if path.is_file():archive.add(path,arcname=str(path).lstrip('/'),recursive=False)
+        for name in ('source.bundle', 'host-configuration.tar.gz'):
+            with (directory/name).open('rb') as stream:
+                os.fsync(stream.fileno())
+        fsync_directory(directory)
         transaction.save(preserved_files=hashes)
         write_json(directory/'checkpoint.json',transaction.data)
 
@@ -308,16 +323,26 @@ exec "{self.installation}/.venv/bin/python" -m {module} "$@"
     def _checkout(self,transaction,commit):
         for name in transaction.data.get('generated',{}):
             if git(self.installation,'ls-tree','HEAD','--',name):git(self.installation,'restore','--source=HEAD','--',name)
-        # Previously generated service shims were untracked. Preserve exact known
-        # shims before installing their explicitly versioned replacements.
-        replaced={}
-        tracked=set(git(self.installation,'ls-files','-z').decode().split('\0'))
-        for name in ('bin/api','bin/pool_manager','bin/cleanup'):
-            path=self.installation/name
-            if path.exists() and name not in tracked and git(self.installation,'ls-tree',commit,'--',name):
-                if not self._old_shim(path):raise RuntimeError('Unknown untracked service shim: '+name)
-                replaced[name]=path.read_bytes().hex();path.unlink()
-        if replaced:transaction.save(replaced_shims=replaced)
+        tracked = set(git(self.installation, 'ls-files', '-z').decode().split('\0'))
+        # Exact legacy wrappers are private checkpoint data, not maintained commands.
+        for name, hexadecimal in transaction.data.get('legacy_shims', {}).items():
+            path = self.installation/name
+            if name not in tracked and path.exists():
+                if not module_for(path, self.installation) or path.read_bytes().hex() != hexadecimal:
+                    raise RuntimeError('Legacy wrapper changed after checkpoint: ' + name)
+                path.unlink()
+        # Compatibility with transactions begun by the first release runner.
+        replaced = dict(transaction.data.get('replaced_shims', {}))
+        tracked = set(git(self.installation, 'ls-files', '-z').decode().split('\0'))
+        for name in ('bin/api', 'bin/pool_manager', 'bin/cleanup'):
+            path = self.installation/name
+            if path.exists() and name not in tracked and git(self.installation, 'ls-tree', commit, '--', name):
+                if not self._old_shim(path):
+                    raise RuntimeError('Unknown untracked service shim: ' + name)
+                replaced[name] = path.read_bytes().hex()
+                path.unlink()
+        if replaced:
+            transaction.save(replaced_shims=replaced)
         self.command(['git','-C',self.installation,'checkout','--detach',commit])
 
     def deploy(self,transaction):
@@ -342,7 +367,24 @@ exec "{self.installation}/.venv/bin/python" -m {module} "$@"
         # Never retry a migration after an ambiguous failure. Recovery owns that decision.
         migrate(self.database,transaction.plan)
 
+    def verify_web_runtime(self, transaction):
+        hashes = transaction.data.get('resume_web_runtime', transaction.data.get('web_runtime'))
+        if hashes:
+            self.remote(self.config.vm('web'), web.VERIFY_RUNTIME, {'hashes': hashes})
+
+    def verify_source(self, transaction, *, target):
+        expected = transaction.plan.target if target else transaction.plan.source
+        if revision(self.installation, 'HEAD') != expected:
+            raise RuntimeError('Installed commit differs from the transaction')
+        allowed = transaction.data.get('expected_target_generated', {}) if target else transaction.data.get('generated', {})
+        for name in git(self.installation, 'diff', '--name-only', 'HEAD').decode().splitlines():
+            path = self.installation/name
+            if name not in allowed or not path.is_file() or path.read_bytes().hex() != allowed[name]:
+                raise RuntimeError('Installed tracked source differs: ' + name)
+
     def verify(self,transaction,*,target):
+        self.verify_source(transaction, target=target)
+        self.verify_web_runtime(transaction)
         for name,digest in transaction.data.get('preserved_files',{}).items():
             if sha256(name)!=digest:raise RuntimeError('Preserved deployment configuration changed')
         legacy=not target or transaction.data['kind']=='rollback'
@@ -369,11 +411,13 @@ exec "{self.installation}/.venv/bin/python" -m {module} "$@"
             self.tasks.run(transaction,'restore-'+checkpoint.path.name+'-'+vm.role,'/nodes/'+self.node+'/qemu',
                 {'archive':snapshots[vm.role]['path'],'vmid':vm.vmid,'force':1})
         self._checkout(transaction,checkpoint.plan.source)
-        for name,hexadecimal in checkpoint.data.get('replaced_shims',{}).items():
+        for name,hexadecimal in {**checkpoint.data.get('replaced_shims', {}), **checkpoint.data.get('legacy_shims', {})}.items():
             path=self.installation/name;path.write_bytes(bytes.fromhex(hexadecimal));path.chmod(0o755)
         for name,hexadecimal in checkpoint.data.get('generated',{}).items():
             path=self.installation/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(bytes.fromhex(hexadecimal))
         transaction.save(expected_target_hashes=checkpoint.data['protected_hashes'],
+            expected_target_generated=checkpoint.data.get('generated', {}),
+            resume_web_runtime=checkpoint.data.get('web_runtime'),
             resume_host_services=checkpoint.data['host_services'],resume_web_services=checkpoint.data['web_services'])
         self.start_vms()
         # Restored web checkpoints intentionally retain their maintenance gate.
@@ -390,10 +434,13 @@ exec "{self.installation}/.venv/bin/python" -m {module} "$@"
 
     def finish(self,transaction):
         if 'host_services' not in transaction.data:return
+        self.verify_source(transaction, target=bool(transaction.data.get('committed')))
         services=transaction.data.get('resume_host_services',transaction.data['host_services'])
         web_services=transaction.data.get('resume_web_services',transaction.data['web_services'])
         self.start_vms()
+        self.verify_web_runtime(transaction)
         self.marker.unlink(missing_ok=True)
+        fsync_directory(self.state)
         if not transaction.data.get('writers_may_have_resumed'):
             self.assert_idle(allow_ready=False)
             self.command(['systemctl','start','backend','cleanup'],timeout=180)

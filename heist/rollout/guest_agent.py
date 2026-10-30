@@ -23,6 +23,28 @@ CRON_GUARD = Path('/etc/systemd/system/cron.service.d/heist-maintenance.conf')
 APACHE_GUARD = Path('/etc/systemd/system/apache2.service.d/heist-maintenance.conf')
 
 
+def atomic_write(path, text, mode=0o644):
+    descriptor, temporary = tempfile.mkstemp(prefix='.' + path.name, dir=path.parent)
+    try:
+        with os.fdopen(descriptor, 'w') as stream:
+            os.fchmod(stream.fileno(), mode)
+            stream.write(text)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+        fsync_directory(path.parent)
+    finally:
+        Path(temporary).unlink(missing_ok=True)
+
+
+def fsync_directory(path):
+    descriptor = os.open(path, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
 def capture_services():
     states = {}
     for unit in ('apache2', 'cron'):
@@ -36,23 +58,22 @@ def capture_services():
 
 def install_guard(config):
     STATE.mkdir(mode=0o700, exist_ok=True)
-    (STATE / 'maintenance').touch(mode=0o600)
+    atomic_write(STATE / 'maintenance', 'maintenance\n', mode=0o600)
     PROGRAM.parent.mkdir(parents=True, exist_ok=True)
     if PROGRAM.exists() and PROGRAM.read_text() != config['program']:
         raise RuntimeError('An unknown maintenance guard already exists')
-    PROGRAM.write_text(config['program'])
-    PROGRAM.chmod(0o755)
-    UNIT.write_text(
+    atomic_write(PROGRAM, config['program'], mode=0o755)
+    atomic_write(UNIT,
         '[Unit]\nDescription=heiST public web maintenance gate\n'
         'Before=apache2.service cron.service\n\n'
         '[Service]\nType=oneshot\nExecStart=/usr/bin/python3 ' + str(PROGRAM) + '\n'
         'RemainAfterExit=yes\n\n[Install]\nWantedBy=multi-user.target\n'
     )
     APACHE_GUARD.parent.mkdir(parents=True, exist_ok=True)
-    APACHE_GUARD.write_text('[Unit]\nRequires=heist-web-maintenance.service\n'
+    atomic_write(APACHE_GUARD, '[Unit]\nRequires=heist-web-maintenance.service\n'
                             'After=heist-web-maintenance.service\n')
     CRON_GUARD.parent.mkdir(parents=True, exist_ok=True)
-    CRON_GUARD.write_text('[Unit]\nConditionPathExists=!/var/lib/heist/maintenance\n')
+    atomic_write(CRON_GUARD, '[Unit]\nConditionPathExists=!/var/lib/heist/maintenance\n')
     subprocess.run(['systemctl', 'daemon-reload'], check=True)
     subprocess.run(['systemctl', 'enable', 'heist-web-maintenance'], check=True)
     subprocess.run(['python3', str(PROGRAM)], check=True)
@@ -77,6 +98,38 @@ def quiesce():
         time.sleep(1)
 
 
+def validate_sources(metadata):
+    root = Path(metadata['root'])
+    if not root.is_absolute() or '..' in root.parts:
+        raise RuntimeError('Web root must be an absolute normalized path')
+    for name in set(metadata['before']) | set(metadata['after']):
+        relative = PurePosixPath(name)
+        if not name or relative.is_absolute() or '..' in relative.parts or str(relative) != name:
+            raise RuntimeError('Unsafe managed web path')
+        destination = root / name
+        if destination.is_symlink() or any(p.is_symlink() for p in destination.parents):
+            raise RuntimeError('Symlink in managed web path')
+        if name in metadata['before']:
+            if (not destination.is_file() or
+                hashlib.sha256(destination.read_bytes()).hexdigest() != metadata['before'][name]):
+                raise RuntimeError('Installed web source changed: ' + name)
+        elif destination.exists():
+            raise RuntimeError('New web path collides with local data: ' + name)
+
+
+def runtime_hashes(config):
+    root = Path(config['root'])
+    paths = (root/'composer.lock', root/'vendor/composer/installed.json', root.parent/'.env')
+    return {str(path): hashlib.sha256(path.read_bytes()).hexdigest() for path in paths if path.is_file()}
+
+
+def verify_runtime(config):
+    for name, expected in config['hashes'].items():
+        path = Path(name)
+        if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != expected:
+            raise RuntimeError('Preserved web dependency/configuration file changed: ' + name)
+
+
 def deploy():
     with tempfile.TemporaryDirectory(prefix='heist-web-') as directory:
         stage = Path(directory)
@@ -92,20 +145,11 @@ def deploy():
                 target.chmod(member.mode & 0o777)
         metadata = json.loads((stage / 'deployment.json').read_text())
         root = Path(metadata['root'])
-        for name in set(metadata['before']) | set(metadata['after']):
-            destination = root / name
-            if destination.is_symlink() or any(p.is_symlink() for p in destination.parents):
-                raise RuntimeError('Symlink in managed web path')
-            if name in metadata['before']:
-                if (not destination.is_file() or
-                    hashlib.sha256(destination.read_bytes()).hexdigest() != metadata['before'][name]):
-                    raise RuntimeError('Installed web source changed: ' + name)
-            elif destination.exists():
-                raise RuntimeError('New web path collides with local data: ' + name)
-            if name in metadata['after']:
-                source = stage / 'files' / name
-                if hashlib.sha256(source.read_bytes()).hexdigest() != metadata['after'][name]:
-                    raise RuntimeError('Web package digest differs')
+        validate_sources(metadata)
+        for name in metadata['after']:
+            source = stage / 'files' / name
+            if hashlib.sha256(source.read_bytes()).hexdigest() != metadata['after'][name]:
+                raise RuntimeError('Web package digest differs')
         for name in metadata['before']:
             if name not in metadata['after']:
                 (root / name).unlink()
@@ -153,6 +197,7 @@ def finish(config):
             subprocess.run(['systemctl', 'start', name], check=True)
     if config['open']:
         (STATE / 'maintenance').unlink(missing_ok=True)
+        fsync_directory(STATE)
         if config['services']['cron']['active']:
             subprocess.run(['systemctl', 'start', 'cron'], check=True)
         subprocess.run(['python3', str(PROGRAM)], check=True)
@@ -163,8 +208,10 @@ def main(action):
         print(json.dumps(capture_services()))
     elif action == 'quiesce':
         quiesce()
+    elif action == 'runtime':
+        print(json.dumps(runtime_hashes(json.load(sys.stdin))))
     elif action == 'deploy':
         deploy()
     else:
         config = json.load(sys.stdin)
-        {'guard': install_guard, 'health': health, 'finish': finish}[action](config)
+        {'guard': install_guard, 'health': health, 'finish': finish, 'validate': validate_sources, 'verify-runtime': verify_runtime}[action](config)

@@ -42,7 +42,8 @@ class TaskTests(unittest.TestCase):
     def test_wrong_vm_or_older_task_cannot_be_adopted(self):
         job = self.uncertain()
         for status in ({'type': 'qmrestore', 'id': '2000', 'starttime': job['submitted_at']},
-                       {'type': 'qmrestore', 'id': '1000', 'starttime': job['submitted_at'] - 30}):
+                       {'type': 'qmrestore', 'id': '1000', 'starttime': job['submitted_at'] - 30},
+                       {'type': 'qmrestore', 'id': '1000', 'starttime': job['submitted_at'] + 30}):
             self.request.return_value = status
             with self.assertRaises(ValueError):
                 self.tasks.reconcile(self.transaction, 'restore-web', job['request_sha256'], upid=self.upid)

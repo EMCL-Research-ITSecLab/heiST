@@ -27,19 +27,24 @@ def fsync_directory(path):
         os.close(descriptor)
 
 
-def write_json(path, data):
+def write_file(path, data, *, mode=0o600):
+    """Replace one file atomically and flush both contents and directory entry."""
     path = Path(path)
     descriptor, temporary = tempfile.mkstemp(prefix='.' + path.name, dir=path.parent)
     try:
-        with os.fdopen(descriptor, 'w') as stream:
-            json.dump(data, stream, indent=2)
-            stream.write('\n')
+        with os.fdopen(descriptor, 'wb') as stream:
+            os.fchmod(stream.fileno(), mode)
+            stream.write(data.encode() if isinstance(data, str) else data)
             stream.flush()
             os.fsync(stream.fileno())
         os.replace(temporary, path)
         fsync_directory(path.parent)
     finally:
         Path(temporary).unlink(missing_ok=True)
+
+
+def write_json(path, data):
+    write_file(path, json.dumps(data, indent=2) + '\n')
 
 
 def sha256(path):

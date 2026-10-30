@@ -9,7 +9,7 @@ not a restored copy of the current production database or host configuration.
 
 ## Recorded checks
 
-- Portable Python suite: 116 tests, eight environment-dependent skips. This includes
+- Portable Python suite: 131 tests, eleven environment-dependent skips. This includes
   durable recovery/write-boundary behavior, migration/plan validation, database
   backup failure handling, CLI imports, service guards and TLS pin/auth ordering.
 - Original fixture backup interruption: maintenance remained closed; an uncertain
@@ -22,10 +22,20 @@ not a restored copy of the current production database or host configuration.
 - Network verifier: actual outer QEMU `restrict=on` profile and sampled outbound
   TCP denials passed for the running fixture.
 
+## Whole-VM failure recovery passed
+
+The first full checkpoint verified all three compressed VMA archives. Deployment
+then refused a web baseline mismatch; the restored comparison identified only
+`composer.lock`, which the former installer changed through `composer update`.
+The controller restored all three infrastructure VMs and original source, verified
+old health and the protected account/grade hashes, and cleared maintenance. The
+transaction reached `ROLLED_BACK` without committing the failed release. The adapter
+now preserves/fingerprints the installed resolved lock and vendor metadata.
+
 ## Rehearsal in progress
 
-Baseline recovery, a successful complete update, deliberate migration failure,
-whole-VM restoration, postcommit resume and deliberate rollback still require
+A successful complete update, deliberate migration failure, postcommit resume
+and deliberate rollback still require
 completed evidence. Do not treat the preceding checks as those acceptance tests.
 The fixture's state/journal and backup disk remain private under the local build
 root; the sealed upload OVA and original appliance disk are unchanged.

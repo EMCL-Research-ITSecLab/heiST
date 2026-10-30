@@ -16,3 +16,7 @@ QUIESCE = _action('quiesce')
 DEPLOY = _action('deploy')
 LOCAL_HEALTH = _action('health')
 FINISH = _action('finish')
+
+VALIDATE = _action('validate')
+CAPTURE_RUNTIME = _action('runtime')
+VERIFY_RUNTIME = _action('verify-runtime')

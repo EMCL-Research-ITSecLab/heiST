@@ -68,7 +68,13 @@ cd /root/heist-release-runner
 
 Plans are bound to the deployment file's checksum. Keep the runner, plan, journal
 and backup files private. The CLI logs phase transitions; detailed VM archive
-verification output is stored beside each checkpoint.
+verification output is stored beside each checkpoint. Private `failure-*.log`
+reports in the transaction directory retain the original exception and captured
+stderr, while public phase messages contain only the failure class and report path.
+
+For an interactive administrator session, `upgrade wizard --config CONFIG --target
+REVIEWED_COMMIT` displays the same immutable plan and requires the full target
+commit before applying. It refuses non-interactive input; use plan/apply for CI.
 
 ## Transaction and recovery behavior
 
@@ -84,7 +90,11 @@ verification output is stored beside each checkpoint.
 4. Deployment switches backend Git HEAD and installs managed web files. Locally
    changed web source is refused. Uploads, credentials, certificates and vendor
    dependencies are preserved; tests/mocks are removed from the public document
-   root. Existing Composer autoload metadata is regenerated without plugins/scripts.
+   root. Existing Composer autoload metadata is regenerated without plugins/scripts. The legacy
+   installer ran `composer update`, so its resolved `composer.lock` and vendor package
+   metadata are preserved and fingerprinted as runtime dependency state. Protocol 1
+   refuses dependency declarations/lock changes between source revisions; it does
+   not silently reconcile an installed dependency set with a different Git lock.
 5. Migrations run in one database transaction under an advisory lock. A ledger
    records each migration ID, checksum and release commit; altered migration
    history is refused. Database work is not blindly retried after transport failure.

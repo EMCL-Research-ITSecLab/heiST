@@ -75,6 +75,10 @@ def web_files(repository, commit, *, production):
             raise ValueError('Web release contains a link or unsupported member: ' + name)
         if name.split('/')[0] in ('vendor', 'uploads') or '.env' in PurePosixPath(name).parts:
             raise ValueError('Runtime data must not be tracked as web release source: ' + name)
+        # The former installer ran composer update, so its resolved lock is
+        # runtime dependency state. Protocol v1 preserves it with vendor/.
+        if name == 'composer.lock':
+            continue
         if production and (name.split('/')[0] in ('tests', 'mocks') or name == 'phpunit.xml'):
             continue
         result.append(name)

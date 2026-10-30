@@ -39,3 +39,29 @@ class WebMaintenanceTests(unittest.TestCase):
                 self.assertIn('Requires=heist-web-maintenance.service', (root/'apache.d/guard.conf').read_text())
                 self.assertIn('ConditionPathExists=!/var/lib/heist/maintenance', (root/'cron.d/guard.conf').read_text())
                 self.assertTrue((root/'state/maintenance').exists())
+
+    def test_web_drift_collision_and_escape_are_rejected_before_deployment(self):
+        import hashlib
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root/'index.php').write_bytes(b'original')
+            metadata = {'root': str(root), 'before': {'index.php': hashlib.sha256(b'original').hexdigest()}, 'after': {'index.php': None}}
+            guest_agent.validate_sources(metadata)
+            (root/'index.php').write_bytes(b'changed')
+            with self.assertRaisesRegex(RuntimeError, 'source changed'):
+                guest_agent.validate_sources(metadata)
+            for path in ('../outside', '/absolute', './index.php'):
+                with self.assertRaisesRegex(RuntimeError, 'Unsafe'):
+                    guest_agent.validate_sources({'root': str(root), 'before': {}, 'after': {path: None}})
+            with self.assertRaisesRegex(RuntimeError, 'collides'):
+                guest_agent.validate_sources({'root': str(root), 'before': {}, 'after': {'index.php': None}})
+
+    def test_runtime_dependency_and_environment_fingerprints_detect_changes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)/'html';root.mkdir()
+            (root/'composer.lock').write_text('installed lock fixture')
+            hashes = guest_agent.runtime_hashes({'root':str(root)})
+            guest_agent.verify_runtime({'hashes':hashes})
+            (root/'composer.lock').write_text('changed lock fixture')
+            with self.assertRaisesRegex(RuntimeError,'Preserved web'):
+                guest_agent.verify_runtime({'hashes':hashes})

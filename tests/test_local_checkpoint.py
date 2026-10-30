@@ -44,3 +44,12 @@ class CheckpointTests(TestCase):
             subprocess.run(['qemu-io','-f','qcow2','-c','read -P 0x5a 0 4096',str(restored/'disk.qcow2')],check=True,stdout=subprocess.DEVNULL)
             self.assertEqual((restored/'pilot.json').read_bytes(),(work/'pilot.json').read_bytes())
             self.assertEqual((restored/'disk.qcow2').stat().st_mode & 0o777,0o600)
+
+    def test_attached_backup_volume_cannot_be_silently_omitted(self):
+        with tempfile.TemporaryDirectory() as folder:
+            work=Path(folder)/'work';work.mkdir()
+            (work/'pilot.json').write_text('{"attach_backup_disk":true}')
+            output=work.parent/'checkpoint'
+            with self.assertRaisesRegex(ValueError,'attached backup disk'):
+                checkpoint(work,output)
+            self.assertFalse(output.exists())

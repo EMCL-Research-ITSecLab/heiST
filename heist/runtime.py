@@ -2,7 +2,6 @@
 from contextlib import contextmanager
 import fcntl
 import os
-from pathlib import Path
 import stat
 
 

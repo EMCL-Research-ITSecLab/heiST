@@ -4,7 +4,7 @@ from heist.environment import load_backend_env as load_dotenv
 import fcntl
 import time
 
-from heist.backend.delete_user_config import delete_user_config
+from heist.platform.users.delete_vpn import delete_user_config
 
 load_dotenv()
 

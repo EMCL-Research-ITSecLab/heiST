@@ -12,7 +12,9 @@ clean-host installer.
 | `heist/rollout/` | Release plans, transaction/recovery policy, PVE and web adapters |
 | `heist/maintenance/` | Verified SQL backups and explicit database restores |
 | `heist/installer/` | Installer bootstrap, configuration interface and provisioning |
-| `heist/backend/` | API and challenge lifecycle services; compatibility entry points |
+| `heist/api/` | Public and authenticated internal HTTP boundaries |
+| `heist/platform/` | Challenge, image, pool, user/VPN and operations services |
+| `heist/infrastructure/` | Database, Proxmox, networking and guest adapters |
 | `heist/monitoring/` | Monitoring provisioning and packaged resources |
 | `frontend/` | React UI source, themes and browser API client |
 | `webserver/` | PHP web API, Apache configuration and UI entry shell |

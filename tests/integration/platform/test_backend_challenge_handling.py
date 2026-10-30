@@ -4,14 +4,14 @@ import time
 
 from tests.integration.platform.utils.mock_db import MockDatabase
 from tests.integration.platform.utils.test_challenge_template_setup import test_plain_ubuntu_setup
-from heist.backend.get_user_config import get_user_config
-from heist.backend.delete_user_config import delete_user_config
-from heist.backend.import_machine_templates import import_machine_templates
-from heist.backend.delete_machine_templates import delete_machine_templates
-from heist.backend.launch_challenge import launch_challenge
-from heist.backend.stop_challenge import stop_challenge
-from heist.backend.proxmox_api_calls import vm_exists_api_call, vm_is_stopped_api_call, network_device_exists_api_call
-from heist.backend.models import Challenge, Machine, Network, Connection, Domain
+from heist.platform.users.vpn_config import get_user_config
+from heist.platform.users.delete_vpn import delete_user_config
+from heist.platform.images.import_templates import import_machine_templates
+from heist.platform.images.delete_templates import delete_machine_templates
+from heist.platform.challenges.launch import launch_challenge
+from heist.platform.challenges.stop import stop_challenge
+from heist.infrastructure.proxmox.client import vm_exists_api_call, vm_is_stopped_api_call, network_device_exists_api_call
+from heist.platform.models import Challenge, Machine, Network, Connection, Domain
 from tests.integration.platform.utils.check import check
 from scapy.all import sr1, IP, ICMP
 

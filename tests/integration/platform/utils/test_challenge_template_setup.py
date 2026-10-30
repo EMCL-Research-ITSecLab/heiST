@@ -1,10 +1,10 @@
 import os
 import subprocess
 
-from heist.backend.import_machine_templates import import_machine_templates
-from heist.backend.delete_machine_templates import delete_machine_templates
+from heist.platform.images.import_templates import import_machine_templates
+from heist.platform.images.delete_templates import delete_machine_templates
 from tests.integration.platform.utils.test_user_setup import test_user_setup
-from heist.backend.models import ChallengeTemplate, MachineTemplate, NetworkTemplate, DomainTemplate, ConnectionTemplate
+from heist.platform.models import ChallengeTemplate, MachineTemplate, NetworkTemplate, DomainTemplate, ConnectionTemplate
 
 OVA_FILES_DIR = "ova_files"
 if not os.path.exists(OVA_FILES_DIR):

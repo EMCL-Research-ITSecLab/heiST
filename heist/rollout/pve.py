@@ -255,8 +255,9 @@ class PVE:
                 cursor.execute("SELECT id FROM challenges WHERE lifecycle_state='READY'")
                 ready=[row[0] for row in cursor.fetchall()]
         if ready:
-            prefix = 'heist.backend' if (self.installation/'heist/backend/teardown_challenge.py').exists() else 'backend'
-            script=f'from {prefix}.teardown_challenge import teardown_challenge\nimport json,sys\nfor identifier in json.load(sys.stdin):teardown_challenge(identifier)\n'
+            prefix = 'heist.platform.challenges' if (self.installation/'heist/platform/challenges/teardown.py').exists() else ('heist.backend' if (self.installation/'heist/backend/teardown_challenge.py').exists() else 'backend')
+            module = prefix + ('.teardown' if prefix == 'heist.platform.challenges' else '.teardown_challenge')
+            script=f'from {module} import teardown_challenge\nimport json,sys\nfor identifier in json.load(sys.stdin):teardown_challenge(identifier)\n'
             subprocess.run([str(self.installation/'.venv/bin/python'),'-c',script],cwd=self.installation,
                 input=json.dumps(ready).encode(),check=True,timeout=self.config.timeout)
         self.assert_idle(allow_ready=False)
@@ -266,8 +267,8 @@ class PVE:
         for process in Path('/proc').glob('[0-9]*'):
             try:
                 arguments=(process/'cmdline').read_bytes().split(bytes([0]))
-                scripts = {str(self.installation/name).encode() for name in ('backend/pool_size_prediction.py', 'heist/backend/pool_size_prediction.py')}
-                module = b'heist.backend.pool_size_prediction' in arguments and b'-m' in arguments
+                scripts = {str(self.installation/name).encode() for name in ('backend/pool_size_prediction.py', 'heist/backend/pool_size_prediction.py', 'heist/platform/pools/prediction.py')}
+                module = any(name in arguments for name in (b'heist.platform.pools.prediction', b'heist.backend.pool_size_prediction', b'backend.pool_size_prediction')) and b'-m' in arguments
                 if scripts.intersection(arguments) or module:
                     yield process.name
             except OSError:

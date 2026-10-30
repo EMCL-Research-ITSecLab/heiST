@@ -30,7 +30,7 @@ def _load(component, dotenv_path=None, **options):
         value = os.environ.get(key)
         if not value:
             continue
-        for old, new in (('backend', 'heist/backend'), ('setup', 'heist/installer'), ('monitoring', 'heist/monitoring')):
+        for old, new in (('backend', 'heist/platform'), ('setup', 'heist/installer'), ('monitoring', 'heist/monitoring')):
             source = ROOT/old
             try:
                 relative = Path(value).relative_to(source)

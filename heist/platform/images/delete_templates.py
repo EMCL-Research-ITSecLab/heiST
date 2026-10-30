@@ -1,8 +1,8 @@
 import subprocess
 
-from heist.backend.cleanup import teardown_remaining_challenges
-from heist.backend.proxmox_api_calls import delete_vm_api_call
-from heist.backend.models import ChallengeTemplate, MachineTemplate, Challenge
+from heist.platform.cleanup import teardown_remaining_challenges
+from heist.infrastructure.proxmox.client import delete_vm_api_call
+from heist.platform.models import ChallengeTemplate, MachineTemplate, Challenge
 
 
 def delete_machine_templates(challenge_template_id, db_conn):

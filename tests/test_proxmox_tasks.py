@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import Mock
 
-from heist.backend.proxmox_tasks import wait_for_task
+from heist.infrastructure.proxmox.tasks import wait_for_task
 
 
 class ProxmoxTaskTests(unittest.TestCase):

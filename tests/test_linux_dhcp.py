@@ -5,8 +5,8 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock
 
-from heist.backend.linux_dhcp import add_user_route, renew_entrypoint
-from heist.backend.qemu_ga_wrapper import ExecResult
+from heist.infrastructure.guests.linux_dhcp import add_user_route, renew_entrypoint
+from heist.infrastructure.proxmox.guest_agent import ExecResult
 
 
 class LinuxDHCPTests(unittest.TestCase):

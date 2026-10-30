@@ -407,7 +407,7 @@ def setup_backend_environment() -> bool:
         log_error("No Backend environment variables found to export")
         return False
 
-    backend_files_dir = os.getenv("BACKEND_FILES_DIR", "/root/heiST/heist/backend")
+    backend_files_dir = os.getenv("BACKEND_FILES_DIR", "/root/heiST/heist/platform")
     return append_to_env_file(backend_env_vars, backend_files_dir)
 
 

@@ -43,10 +43,10 @@ def _parallel(function, identifiers):
 
 def cleanup_remaining_challenges(*, connect=None, stop=None, teardown=None, lock_path=None):
     if stop is None:
-        from heist.backend.stop_challenge import stop_challenge
+        from heist.platform.challenges.stop import stop_challenge
         stop = stop_challenge
     if teardown is None:
-        from heist.backend.teardown_challenge import teardown_challenge
+        from heist.platform.challenges.teardown import teardown_challenge
         teardown = teardown_challenge
     with cleanup_guard(lock_path or CLEANUP_COMPLETE_FILE_PATH):
         with closing(wait_for_db_connection(connect=connect)) as connection:
@@ -55,8 +55,8 @@ def cleanup_remaining_challenges(*, connect=None, stop=None, teardown=None, lock
 
 
 def main():
-    from dotenv import load_dotenv
-    load_dotenv(Path(__file__).with_name('.env'))
+    from heist.environment import load_backend_env
+    load_backend_env()
     cleanup_remaining_challenges()
 
 

@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from unittest.mock import MagicMock, Mock
 
-from heist.backend.operations import archive_status, collect, release_status, service_states
+from heist.platform.operations import archive_status, collect, release_status, service_states
 
 
 class OperationsTests(unittest.TestCase):

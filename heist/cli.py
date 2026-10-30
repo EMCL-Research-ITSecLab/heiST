@@ -11,9 +11,9 @@ MODULE_COMMANDS = {
     'upgrade': ('heist.rollout.cli', 'Plan, deploy or recover a full platform release'),
 }
 SERVICE_COMMANDS = {
-    'api': ('heist.backend.api', 'Start the internal API service'),
-    'pool-manager': ('heist.backend.pool_manager', 'Start the challenge pool service'),
-    'cleanup': ('heist.backend.cleanup', 'Run challenge cleanup'),
+    'api': ('heist.api.internal', 'Start the internal API service'),
+    'pool-manager': ('heist.platform.pools.manager', 'Start the challenge pool service'),
+    'cleanup': ('heist.platform.cleanup', 'Run challenge cleanup'),
 }
 
 

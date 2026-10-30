@@ -262,7 +262,7 @@ DEFAULTS = {
     "WEBSERVER_HOST": "10.0.0.101",
     "WEBSERVER_HTTP_PORT": "80",
     "WEBSERVER_HTTPS_PORT": "443",
-    "BACKEND_FILES_DIR": "/root/heiST/heist/backend",
+    "BACKEND_FILES_DIR": "/root/heiST/heist/platform",
     "WEBSERVER_DATABASE_USER": "api_user",
     "WEBSERVER_DATABASE_PASSWORD": "",
     "WEBSITE_ADMIN_USER": "admin",

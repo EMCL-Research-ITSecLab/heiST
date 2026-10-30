@@ -14,9 +14,9 @@ import re
 import time
 import psycopg2
 
-from heist.backend.subnet_calculations import nth_challenge_subnet, nth_vpn_static_ip
+from heist.infrastructure.network.addressing import nth_challenge_subnet, nth_vpn_static_ip
 from heist.installer.vm_resources import vm_resources, enable_ova_storage
-from heist.backend.vm_settings import challenge_cpu_type
+from heist.infrastructure.proxmox.settings import challenge_cpu_type
 
 load_dotenv()
 
@@ -54,7 +54,7 @@ WEBSERVER_HOST = os.getenv("WEBSERVER_HOST", "10.0.0.101")
 WEBSERVER_HTTP_PORT = os.getenv("WEBSERVER_HTTP_PORT", "80")
 WEBSERVER_HTTPS_PORT = os.getenv("WEBSERVER_HTTPS_PORT", "443")
 
-BACKEND_FILES_DIR = os.getenv("BACKEND_FILES_DIR", "/root/heiST/heist/backend")
+BACKEND_FILES_DIR = os.getenv("BACKEND_FILES_DIR", "/root/heiST/heist/platform")
 
 OPENVPN_SUBNET = os.getenv("OPENVPN_SUBNET", "10.64.0.0/10")
 OPENVPN_SERVER_IP = os.getenv("OPENVPN_SERVER_IP", "10.64.0.1")
@@ -1585,7 +1585,7 @@ def setup_pool_size_prediction_cron_job():
     """
 
     print("\tSetting up pool size prediction cron job")
-    cron_job = f"30 5 * * * root cd {PROJECT_ROOT} && {PROJECT_ROOT}/.venv/bin/python -m heist.backend.pool_size_prediction >> /var/log/pool_size_prediction.log 2>&1\n"
+    cron_job = f"30 5 * * * root cd {PROJECT_ROOT} && {PROJECT_ROOT}/.venv/bin/python -m heist.platform.pools.prediction >> /var/log/pool_size_prediction.log 2>&1\n"
     with open("/etc/cron.d/pool_size_prediction", "w") as cron_file:
         cron_file.write(cron_job)
     subprocess.run(["chmod", "644", "/etc/cron.d/pool_size_prediction"], check=True, capture_output=True)

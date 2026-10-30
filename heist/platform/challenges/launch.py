@@ -1,6 +1,6 @@
-from heist.backend.network_input import install_network_input_filter
+from heist.infrastructure.network.firewall import install_network_input_filter
 import threading
-from heist.backend.linux_dhcp import add_user_route, renew_linux_entrypoints
+from heist.infrastructure.guests.linux_dhcp import add_user_route, renew_linux_entrypoints
 import shlex
 from dotenv import find_dotenv
 from heist.environment import load_backend_env as load_dotenv
@@ -11,7 +11,7 @@ import time
 import fcntl
 import subprocess
 
-from heist.backend.models import (
+from heist.platform.models import (
     ChallengeTemplate,
     Challenge,
     MachineTemplate,
@@ -20,13 +20,13 @@ from heist.backend.models import (
     Network,
     Connection
 )
-from heist.backend.proxmox_api_calls import clone_vm_api_call
-from heist.backend.stop_challenge import stop_challenge
-from heist.backend.warmup_challenge import warmup_challenge, stop_dnsmasq_process, start_dnsmasq_process
-from heist.backend.launch_timing_logger import launch_timing_logger
-from heist.backend.get_db_connection import db_connection_context
-from heist.backend.instance_ownership import take_ready_instance, assign_instance
-from heist.backend.qemu_ga_wrapper import GuestAgent, GuestAgentError
+from heist.infrastructure.proxmox.client import clone_vm_api_call
+from heist.platform.challenges.stop import stop_challenge
+from heist.platform.challenges.warmup import warmup_challenge, stop_dnsmasq_process, start_dnsmasq_process
+from heist.platform.challenges.timing import launch_timing_logger
+from heist.infrastructure.database import db_connection_context
+from heist.platform.challenges.ownership import take_ready_instance, assign_instance
+from heist.infrastructure.proxmox.guest_agent import GuestAgent, GuestAgentError
 
 load_dotenv(find_dotenv())
 

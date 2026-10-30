@@ -5,9 +5,9 @@ import subprocess
 import time
 
 
-from heist.backend.qemu_ga_wrapper import GuestAgent, GuestAgentError
-from heist.backend.models import MachineTemplate, ChallengeTemplate
-from heist.backend.proxmox_api_calls import (
+from heist.infrastructure.proxmox.guest_agent import GuestAgent, GuestAgentError
+from heist.platform.models import MachineTemplate, ChallengeTemplate
+from heist.infrastructure.proxmox.client import (
     add_network_device_api_call,
     initial_configuration_api_call,
     launch_vm_api_call,

@@ -3,9 +3,9 @@ import time
 
 from tests.integration.platform.utils.mock_db import MockDatabase
 from tests.integration.platform.utils.test_challenge_template_setup import test_plain_ubuntu_setup
-from heist.backend.import_machine_templates import import_machine_templates
-from heist.backend.delete_machine_templates import delete_machine_templates
-from heist.backend.proxmox_api_calls import vm_exists_api_call, vm_is_template_api_call, get_sockets_api_call, get_memory_api_call
+from heist.platform.images.import_templates import import_machine_templates
+from heist.platform.images.delete_templates import delete_machine_templates
+from heist.infrastructure.proxmox.client import vm_exists_api_call, vm_is_template_api_call, get_sockets_api_call, get_memory_api_call
 from tests.integration.platform.utils.check import check
 
 

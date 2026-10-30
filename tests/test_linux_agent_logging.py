@@ -28,7 +28,7 @@ class AgentLoggingTests(unittest.TestCase):
                 self.assertIn('/etc/systemd/system/bash_loggin_timer.timer', trace[-1])
 
     def test_template_freeze_never_falls_back_to_forced_stop(self):
-        source = Path(__file__).resolve().parents[1] / 'heist/backend/proxmox_api_calls.py'
+        source = Path(__file__).resolve().parents[1] / 'heist/infrastructure/proxmox/client.py'
         tree = ast.parse(source.read_text())
         function = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == 'shutdown_vm_api_call')
         namespace = {'subprocess': Mock()}

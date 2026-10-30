@@ -8,10 +8,10 @@ import time
 import traceback
 import fcntl
 
-from heist.backend.get_db_connection import get_db_connection
+from heist.infrastructure.database import get_db_connection
 from heist.runtime import cleanup_is_complete
-from heist.backend.warmup_challenge import warmup_challenge as warmup_challenge_backend
-from heist.backend.teardown_challenge import teardown_challenge as teardown_challenge_backend
+from heist.platform.challenges.warmup import warmup_challenge as warmup_challenge_backend
+from heist.platform.challenges.teardown import teardown_challenge as teardown_challenge_backend
 
 load_dotenv()
 

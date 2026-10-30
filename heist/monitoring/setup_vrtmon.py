@@ -24,7 +24,7 @@ from heist.monitoring.utils.script_helper import (
     log_info, log_debug, log_error, log_warning, log_success, log_section,
     execute_remote_command, execute_remote_command_with_key, run_cmd, Timer, time_function, DEBUG_MODE
 )
-from heist.backend.proxmox_api_calls import add_network_device_api_call
+from heist.infrastructure.proxmox.client import add_network_device_api_call
 
 # ==== CONFIGURATION CONSTANTS ====
 BRIDGE_NAME = os.getenv("WAZUH_NETWORK_DEVICE", "vrtmon")

@@ -5,7 +5,7 @@ from pathlib import Path
 import time
 import uuid
 
-from heist.backend.qemu_ga_wrapper import GuestAgent
+from heist.infrastructure.proxmox.guest_agent import GuestAgent
 
 
 def add_user_route(config_path, machine_id, user_ip, gateway):

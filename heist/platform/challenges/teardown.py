@@ -7,9 +7,9 @@ import random
 import requests
 import subprocess
 import os
-from heist.backend.network_input import remove_network_input_filter
+from heist.infrastructure.network.firewall import remove_network_input_filter
 
-from heist.backend.models import (
+from heist.platform.models import (
     ChallengeTemplate,
     ChallengeSubnet,
     Challenge,
@@ -19,13 +19,13 @@ from heist.backend.models import (
     Network,
     Connection
 )
-from heist.backend.proxmox_api_calls import (
+from heist.infrastructure.proxmox.client import (
     vm_exists_api_call,
     delete_network_api_call,
     reload_network_api_call,
     network_device_exists_api_call
 )
-from heist.backend.get_db_connection import db_connection_context
+from heist.infrastructure.database import db_connection_context
 
 load_dotenv(find_dotenv())
 

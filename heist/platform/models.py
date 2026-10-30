@@ -1,4 +1,4 @@
-from heist.backend.subnet_calculations import nth_machine_ip
+from heist.infrastructure.network.addressing import nth_machine_ip
 
 
 class ChallengeTemplate:

@@ -12,7 +12,7 @@ from heist.config import DatabaseSettings
 from heist.maintenance.database import Backups, PostgreSQL
 from heist.remote import SSH
 from heist.runtime import cleanup_guard, cleanup_is_complete
-from heist.backend.cleanup import cleanup_remaining_challenges, wait_for_db_connection
+from heist.platform.cleanup import cleanup_remaining_challenges, wait_for_db_connection
 
 
 class ConfigurationTests(unittest.TestCase):

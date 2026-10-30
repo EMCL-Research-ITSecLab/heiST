@@ -14,8 +14,10 @@ def create_app(config=None, services=None):
     application.config.update(config or {})
     services = services or {}
 
+    service_modules = {'launch_challenge': 'heist.platform.challenges.launch', 'stop_challenge': 'heist.platform.challenges.stop', 'import_machine_templates': 'heist.platform.images.import_templates', 'delete_machine_templates': 'heist.platform.images.delete_templates', 'get_user_config': 'heist.platform.users.vpn_config', 'delete_user_config': 'heist.platform.users.delete_vpn'}
+
     def service(name):
-        return services[name] if name in services else getattr(importlib.import_module('heist.backend.' + name), name)
+        return services[name] if name in services else getattr(importlib.import_module(service_modules[name]), name)
 
     def connection():
         if 'get_db_connection' in services:
@@ -66,7 +68,7 @@ def create_app(config=None, services=None):
                 values += [os.getenv('MONITORING_VPN_INTERFACE', 'ctf_monitoring'),
                            os.getenv('MONITORING_DMZ_INTERFACE', 'dmz_monitoring')]
             elif name == 'import_machine_templates':
-                from heist.backend.cloud_init_ip_pool import ip_pool
+                from heist.infrastructure.network.cloud_init_pool import ip_pool
                 values.append(ip_pool)
             result = service(name)(*values)
             if download:
@@ -105,7 +107,7 @@ def create_app(config=None, services=None):
 
     @application.get('/admin/operations')
     def operations():
-        from heist.backend.operations import collect
+        from heist.platform.operations import collect
         return {'success': True, 'data': collect(connection, os.environ, application.config['MAINTENANCE_FILE'])}, 200
 
     routes = [

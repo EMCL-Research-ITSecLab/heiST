@@ -4,9 +4,9 @@ import requests
 import subprocess
 import fcntl
 
-from heist.backend.cloud_init_ip_pool import ip_pool
-from heist.backend.vm_settings import challenge_cpu_type
-from heist.backend.proxmox_tasks import wait_for_task
+from heist.infrastructure.network.cloud_init_pool import ip_pool
+from heist.infrastructure.proxmox.settings import challenge_cpu_type
+from heist.infrastructure.proxmox.tasks import wait_for_task
 
 load_dotenv()
 node = os.getenv("PROXMOX_HOSTNAME", "pve")

@@ -6,13 +6,13 @@ import time
 from dotenv import find_dotenv
 from heist.environment import load_backend_env as load_dotenv
 import os
-from heist.backend.network_input import install_network_input_filter, remove_network_input_filter
-from heist.backend.challenge_dns import connection_dns_servers, fallback_servers, hostname_records
+from heist.infrastructure.network.firewall import install_network_input_filter, remove_network_input_filter
+from heist.infrastructure.network.dns import connection_dns_servers, fallback_servers, hostname_records
 import subprocess
 import signal
 
 
-from heist.backend.models import (
+from heist.platform.models import (
     ChallengeTemplate,
     Challenge,
     ChallengeSubnet,
@@ -26,7 +26,7 @@ from heist.backend.models import (
     Domain,
 
 )
-from heist.backend.proxmox_api_calls import (
+from heist.infrastructure.proxmox.client import (
     clone_vm_api_call,
     add_network_device_api_call,
     create_network_api_call,
@@ -35,12 +35,12 @@ from heist.backend.proxmox_api_calls import (
     launch_vm_api_call,
     delete_network_api_call
 )
-from heist.backend.subnet_calculations import nth_network_subnet, nth_machine_ip
-from heist.backend.teardown_challenge import remove_database_entries, stop_dnsmasq_instances,remove_challenge_from_wazuh
-from heist.backend.launch_timing_logger import launch_timing_logger
-from heist.backend.get_db_connection import db_connection_context
-from heist.backend.qemu_ga_wrapper import GuestAgent, GuestAgentError
-from heist.backend.linux_monitoring import prepare_monitoring_network, persist_monitoring_network
+from heist.infrastructure.network.addressing import nth_network_subnet, nth_machine_ip
+from heist.platform.challenges.teardown import remove_database_entries, stop_dnsmasq_instances,remove_challenge_from_wazuh
+from heist.platform.challenges.timing import launch_timing_logger
+from heist.infrastructure.database import db_connection_context
+from heist.infrastructure.proxmox.guest_agent import GuestAgent, GuestAgentError
+from heist.infrastructure.guests.linux_monitoring import prepare_monitoring_network, persist_monitoring_network
 
 load_dotenv(find_dotenv())
 

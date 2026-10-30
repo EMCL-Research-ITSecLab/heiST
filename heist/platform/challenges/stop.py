@@ -3,7 +3,7 @@ import os
 from dotenv import find_dotenv
 from heist.environment import load_backend_env as load_dotenv
 
-from heist.backend.get_db_connection import db_connection_context
+from heist.infrastructure.database import db_connection_context
 
 load_dotenv(find_dotenv())
 

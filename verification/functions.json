@@ -23,27 +23,27 @@
     ],
     "rationale": "Checks salted adaptive hashes, correct/incorrect legacy/current credentials and bounded malformed input; legacy hashes require upgrade."
   },
-  "heist/backend/operations.py::archive_status": {
+  "heist/platform/operations.py::archive_status": {
     "tests": [
       "tests.test_operations.OperationsTests.test_archive_receipt_is_sanitized_and_staleness_is_detected",
       "tests.test_operations.OperationsTests.test_archive_configuration_absence_or_invalid_remote_data_is_explicit"
     ],
     "rationale": "Checks receipt age, field whitelisting, bad/oversized data, missing configuration and transport timeout."
   },
-  "heist/backend/operations.py::collect": {
+  "heist/platform/operations.py::collect": {
     "tests": [
       "tests.test_operations.OperationsTests.test_database_failure_closes_connection_and_is_visible",
       "tests.test_operations.OperationsTests.test_counts_use_read_only_transactions_and_expose_no_user_records"
     ],
     "rationale": "Checks actual SQL command contract uses read-only transaction, lifecycle aggregation, maintenance state and connection closure after failure."
   },
-  "heist/backend/operations.py::release_status": {
+  "heist/platform/operations.py::release_status": {
     "tests": [
       "tests.test_operations.OperationsTests.test_release_receipt_does_not_expose_private_paths"
     ],
     "rationale": "Checks valid revision extraction and rejection of unsafe transaction identity without returning checkpoint paths."
   },
-  "heist/backend/operations.py::service_states": {
+  "heist/platform/operations.py::service_states": {
     "tests": [
       "tests.test_operations.OperationsTests.test_systemd_probe_has_fixed_units_no_shell_and_bounded_timeout"
     ],

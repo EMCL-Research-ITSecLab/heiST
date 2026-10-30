@@ -1,6 +1,6 @@
 import unittest
 
-from heist.backend.vm_settings import challenge_cpu_type
+from heist.infrastructure.proxmox.settings import challenge_cpu_type
 
 
 class VMCPUSettingTests(unittest.TestCase):

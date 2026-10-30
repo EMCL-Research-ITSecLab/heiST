@@ -3,8 +3,8 @@ import time
 
 from tests.integration.platform.utils.mock_db import MockDatabase
 from tests.integration.platform.utils.test_user_setup import test_user_setup
-from heist.backend.get_user_config import get_user_config
-from heist.backend.delete_user_config import delete_user_config
+from heist.platform.users.vpn_config import get_user_config
+from heist.platform.users.delete_vpn import delete_user_config
 from tests.integration.platform.utils.check import check
 
 

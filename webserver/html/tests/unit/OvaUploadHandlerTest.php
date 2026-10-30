@@ -39,25 +39,29 @@ class OvaUploadHandlerTest extends TestCase
         $this->config = require __DIR__ . '/../../config/backend.config.php';
         $this->generalConfig = json_decode(file_get_contents(__DIR__ . '/../../config/general.config.json'), true);
 
-        $this->pdo = $this->createMock(PDO::class);
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $this->pdo = $this->createStub(PDO::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($this->pdo);
 
         // Mock dependencies
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->logger = new MockLogger();
-        $this->curlHelper = $this->createMock(ICurlHelper::class);
-        $this->authHelper = $this->createMock(IAuthHelper::class);
-        $this->ovaValidator = $this->createMock(IOvaValidator::class);
+        $this->curlHelper = $this->createStub(ICurlHelper::class);
+        $this->authHelper = $this->createStub(IAuthHelper::class);
+        $this->ovaValidator = $this->createStub(IOvaValidator::class);
 
         $this->session = new MockSession();
         $this->server = new MockServer();
         $this->get = new MockGet();
         $this->post = new MockPost();
+        $this->post['guest_os'] = 'linux';
+        $this->post['fileSize'] = 123456;
+        $this->post['totalChunks'] = 1;
+        $this->post['chunkIndex'] = 0;
         $this->files = new MockFiles();
         $this->env = new MockEnv();
 
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('file_exists')->willReturn(true);
         $this->system->method('mkdir')->willReturn(true);
         $this->system->method('file_get_contents')->willReturn('{}');
@@ -69,7 +73,7 @@ class OvaUploadHandlerTest extends TestCase
     {
         $this->mockDB = new MockPostgresDB();
         $this->pdo = $this->mockDB->getPDO();
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($this->pdo);
     }
 
@@ -230,7 +234,7 @@ class OvaUploadHandlerTest extends TestCase
         $this->session['authenticated'] = true;
         $this->server['REQUEST_METHOD'] = 'POST';
 
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('file_exists')->willReturn(false);
         $this->system->method('mkdir')->willReturn(false);
         $this->system->method('file_get_contents')->willReturn('null');
@@ -314,7 +318,7 @@ class OvaUploadHandlerTest extends TestCase
         $this->server['REQUEST_METHOD'] = 'DELETE';
 
         $malformedJson = '{"ova_id": 123';
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('file_get_contents')->willReturn($malformedJson);
 
         $this->expectException(CustomException::class);
@@ -888,16 +892,16 @@ class OvaUploadHandlerTest extends TestCase
         $this->system->method('move_uploaded_file')->willReturn(true);
         $this->system->method('connection_aborted')->willReturn(0);
 
-        $stmt1 = $this->createMock(PDOStatement::class);
+        $stmt1 = $this->createStub(PDOStatement::class);
         $stmt1->method('execute')->willReturn(true);
         $stmt1->method('fetch')->willReturn(['count' => 0]);
 
-        $stmt2 = $this->createMock(PDOStatement::class);
+        $stmt2 = $this->createStub(PDOStatement::class);
         $stmt2->method('execute')->willThrowException(new PDOException());
 
-        $pdo = $this->createMock(PDO::class);
+        $pdo = $this->createStub(PDO::class);
         $pdo->method('prepare')->willReturnOnConsecutiveCalls($stmt1, $stmt2);
-        $this->databaseHelper = $this->createMock(DatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(DatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($pdo);
 
         $this->files['ova_file'] = [
@@ -1009,14 +1013,14 @@ class OvaUploadHandlerTest extends TestCase
         ];
 
 
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('pathinfo')->willReturnCallback(
             fn($path, $option) => pathinfo($path, $option)
         );
         $this->system->method('file_exists')->willReturn(true);
         $this->system->method('file_get_contents')->willReturnOnConsecutiveCalls(
             json_encode(null),
-            json_encode(['userId' => 1]),
+            json_encode(['userId' => 1, 'receivedChunks' => 0]),
             false
         );
 
@@ -1071,14 +1075,14 @@ class OvaUploadHandlerTest extends TestCase
             'size' => 250,
         ];
 
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('pathinfo')->willReturnCallback(
             fn($path, $option) => pathinfo($path, $option)
         );
         $this->system->method('file_exists')->willReturn(true);
         $this->system->method('file_get_contents')->willReturnOnConsecutiveCalls(
             json_encode(null),
-            json_encode(['userId' => 1]),
+            json_encode(['userId' => 1, 'receivedChunks' => 0]),
             'chunk data'
         );
         $this->system->method('fopen')->willReturn(false);
@@ -1134,14 +1138,14 @@ class OvaUploadHandlerTest extends TestCase
             'size' => 250,
         ];
 
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('pathinfo')->willReturnCallback(
             fn($path, $option) => pathinfo($path, $option)
         );
         $this->system->method('file_exists')->willReturn(true);
         $this->system->method('file_get_contents')->willReturnOnConsecutiveCalls(
             json_encode(null),
-            json_encode(['userId' => 1]),
+            json_encode(['userId' => 1, 'receivedChunks' => 0]),
             'chunk data'
         );
         $this->system->method('fopen')->willReturn(fopen('php://memory', 'r+'));
@@ -1198,14 +1202,14 @@ class OvaUploadHandlerTest extends TestCase
             'size' => 250,
         ];
 
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('pathinfo')->willReturnCallback(
             fn($path, $option) => pathinfo($path, $option)
         );
         $this->system->method('file_exists')->willReturn(true);
         $this->system->method('file_get_contents')->willReturnOnConsecutiveCalls(
             json_encode(null),
-            json_encode(['userId' => 1]),
+            json_encode(['userId' => 1, 'receivedChunks' => 0]),
             'chunk data'
         );
         $this->system->method('fopen')->willReturn(fopen('php://memory', 'r+'));
@@ -1263,22 +1267,22 @@ class OvaUploadHandlerTest extends TestCase
             'size' => 250,
         ];
 
-        $stmt = $this->createMock(PDOStatement::class);
+        $stmt = $this->createStub(PDOStatement::class);
         $stmt->method('execute')->willThrowException(new PDOException("Database error"));
 
-        $pdo = $this->createMock(PDO::class);
+        $pdo = $this->createStub(PDO::class);
         $pdo->method('prepare')->willReturn($stmt);
-        $this->databaseHelper = $this->createMock(DatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(DatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($pdo);
 
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('pathinfo')->willReturnCallback(
             fn($path, $option) => pathinfo($path, $option)
         );
         $this->system->method('file_exists')->willReturn(true);
         $this->system->method('file_get_contents')->willReturnOnConsecutiveCalls(
             json_encode(null),
-            json_encode(['userId' => 1]),
+            json_encode(['userId' => 1, 'receivedChunks' => 0]),
             'chunk data'
         );
         $this->system->method('fopen')->willReturn(fopen('php://memory', 'r+'));
@@ -1336,14 +1340,14 @@ class OvaUploadHandlerTest extends TestCase
             'size' => 250,
         ];
 
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('pathinfo')->willReturnCallback(
             fn($path, $option) => pathinfo($path, $option)
         );
         $this->system->method('file_exists')->willReturn(true);
         $this->system->method('file_get_contents')->willReturnOnConsecutiveCalls(
             json_encode(null),
-            json_encode(['userId' => 1]),
+            json_encode(['userId' => 1, 'receivedChunks' => 0]),
             'chunk data'
         );
         $this->system->method('fopen')->willReturn(fopen('php://memory', 'r+'));
@@ -1392,7 +1396,7 @@ class OvaUploadHandlerTest extends TestCase
         $this->post['phase'] = 'cancel';
         $this->post['fileName'] = 'new.ova';
 
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('pathinfo')->willReturnCallback(
             fn($path, $option) => pathinfo($path, $option)
         );
@@ -1422,9 +1426,9 @@ class OvaUploadHandlerTest extends TestCase
         $json = json_decode($output, true);
 
         $this->assertTrue($json['success']);
-        $this->assertEquals(null, $json['message']);
-        $this->assertEquals(null, $json['error_code']);
-        $this->assertEquals(null, $json['redirect']);
+        $this->assertArrayNotHasKey('message', $json);
+        $this->assertArrayNotHasKey('error_code', $json);
+        $this->assertArrayNotHasKey('redirect', $json);
     }
 
     public function testMetaFileAndPostUserIdMismatchOnChunkedCancellationThrowsException(): void
@@ -1442,7 +1446,7 @@ class OvaUploadHandlerTest extends TestCase
         $this->post['phase'] = 'cancel';
         $this->post['fileName'] = 'new.ova';
 
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('pathinfo')->willReturnCallback(
             fn($path, $option) => pathinfo($path, $option)
         );
@@ -1503,7 +1507,7 @@ class OvaUploadHandlerTest extends TestCase
         $this->post['phase'] = 'cancel';
         $this->post['fileName'] = 'new.ova';
 
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('pathinfo')->willReturnCallback(
             fn($path, $option) => pathinfo($path, $option)
         );
@@ -1552,9 +1556,9 @@ class OvaUploadHandlerTest extends TestCase
         $json = json_decode($output, true);
 
         $this->assertTrue($json['success']);
-        $this->assertEquals(null, $json['message']);
-        $this->assertEquals(null, $json['error_code']);
-        $this->assertEquals(null, $json['redirect']);
+        $this->assertArrayNotHasKey('message', $json);
+        $this->assertArrayNotHasKey('error_code', $json);
+        $this->assertArrayNotHasKey('redirect', $json);
     }
 
     public function testDeleteActionNoOvaIdThrowsException(): void
@@ -1615,7 +1619,7 @@ class OvaUploadHandlerTest extends TestCase
 
         $this->get['action'] = 'delete';
 
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('file_get_contents')->willReturn(json_encode([
             'ova_id' => "$ova_id",
             'proxmox_filename' => "$proxmox_filename",
@@ -1629,16 +1633,16 @@ class OvaUploadHandlerTest extends TestCase
             'response' => json_encode([])
         ]);
 
-        $fetchStmt = $this->createMock(PDOStatement::class);
+        $fetchStmt = $this->createStub(PDOStatement::class);
         $fetchStmt->method('execute')->willReturn(true);
         $fetchStmt->method('fetchColumn')->willReturn($proxmox_filename);
 
-        $deleteStmt = $this->createMock(PDOStatement::class);
+        $deleteStmt = $this->createStub(PDOStatement::class);
         $deleteStmt->method('execute')->willThrowException(new PDOException());
 
-        $pdo = $this->createMock(PDO::class);
+        $pdo = $this->createStub(PDO::class);
         $pdo->method('prepare')->willReturnOnConsecutiveCalls($fetchStmt, $deleteStmt);
-        $this->databaseHelper = $this->createMock(DatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(DatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($pdo);
 
         ob_start();
@@ -1682,7 +1686,7 @@ class OvaUploadHandlerTest extends TestCase
 
         $this->get['action'] = 'delete';
 
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('file_get_contents')->willReturn(json_encode([
             'ova_id' => 'some-id',
             'proxmox_filename' => 'vzdump-qemu-100-2023_10_01-12_00_00.vma.gz',
@@ -1694,12 +1698,12 @@ class OvaUploadHandlerTest extends TestCase
         $this->system->method('file_exists')->willReturn(true);
 
 
-        $stmt = $this->createMock(PDOStatement::class);
+        $stmt = $this->createStub(PDOStatement::class);
         $stmt->method('execute')->willReturn(true);
         $stmt->method('fetchColumn')->willThrowException(new PDOException());
-        $pdo = $this->createMock(PDO::class);
+        $pdo = $this->createStub(PDO::class);
         $pdo->method('prepare')->willReturn($stmt);
-        $this->databaseHelper = $this->createMock(DatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(DatabaseHelper::class);
         $this->databaseHelper->method('getPdo')->willReturn($pdo);
 
         ob_start();
@@ -1745,23 +1749,23 @@ class OvaUploadHandlerTest extends TestCase
         $this->post['phase'] = 'init';
         $this->post['fileName'] = 'new.ova';
 
-        $stmt = $this->createMock(PDOStatement::class);
+        $stmt = $this->createStub(PDOStatement::class);
         $stmt->method('execute')->willReturn(true);
         $stmt->method('fetch')->willReturn([]);
 
-        $pdo = $this->createMock(PDO::class);
+        $pdo = $this->createStub(PDO::class);
         $pdo->method('prepare')->willReturn($stmt);
-        $this->databaseHelper = $this->createMock(DatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(DatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($pdo);
 
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('pathinfo')->willReturnCallback(
             fn($path, $option) => pathinfo($path, $option)
         );
         $this->system->method('file_exists')->willReturn(true);
         $this->system->method('file_get_contents')->willReturnOnConsecutiveCalls(
             json_encode(null),
-            json_encode(['userId' => 1])
+            json_encode(['userId' => 1, 'receivedChunks' => 0])
         );
         $this->system->method('file_put_contents')->willReturn(false);
 
@@ -1816,7 +1820,7 @@ class OvaUploadHandlerTest extends TestCase
             'size' => 250,
         ];
 
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('pathinfo')->willReturnCallback(
             fn($path, $option) => pathinfo($path, $option)
         );
@@ -1874,7 +1878,7 @@ class OvaUploadHandlerTest extends TestCase
             'size' => 250,
         ];
 
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('pathinfo')->willReturnCallback(
             fn($path, $option) => pathinfo($path, $option)
         );
@@ -1922,6 +1926,7 @@ class OvaUploadHandlerTest extends TestCase
 
     // Tests requiring mock data setup
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testDuplicateFilenameDuringDirectUploadThrowsException(): void
     {
         $disk_files = $this->setupMockData();
@@ -1977,6 +1982,7 @@ class OvaUploadHandlerTest extends TestCase
         $this->assertEquals(null, $json['redirect']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testConnectionErrorOnUploadToProxmoxDuringDirectUploadThrowsException(): void
     {
         $disk_files = $this->setupMockData();
@@ -2034,6 +2040,7 @@ class OvaUploadHandlerTest extends TestCase
         $this->assertEquals(null, $json['redirect']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testUploadErrorOnUploadToProxmoxDuringDirectUploadThrowsException(): void
     {
         $disk_files = $this->setupMockData();
@@ -2094,6 +2101,7 @@ class OvaUploadHandlerTest extends TestCase
         $this->assertEquals(null, $json['redirect']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testConnectionAbortedAfterUploadToProxmoxDuringDirectUploadThrowsException(): void
     {
         $disk_files = $this->setupMockData();
@@ -2154,6 +2162,7 @@ class OvaUploadHandlerTest extends TestCase
         $this->assertEquals(null, $json['redirect']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testDirectUploadWorks(): void
     {
         $disk_files = $this->setupMockData();
@@ -2210,10 +2219,11 @@ class OvaUploadHandlerTest extends TestCase
 
         $this->assertTrue($json['success']);
         $this->assertEquals('File uploaded successfully', $json['message']);
-        $this->assertEquals(null, $json['error_code']);
-        $this->assertEquals(null, $json['redirect']);
+        $this->assertArrayNotHasKey('error_code', $json);
+        $this->assertArrayNotHasKey('redirect', $json);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testListActionWorks(): void
     {
         $disk_files = $this->setupMockData();
@@ -2267,6 +2277,7 @@ class OvaUploadHandlerTest extends TestCase
         }
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testChunkInitWorks(): void
     {
         $diskFiles = $this->setupMockData();
@@ -2324,6 +2335,7 @@ class OvaUploadHandlerTest extends TestCase
         $this->assertNotNull($json['chunkSize']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testNotAllChunksReceivedOnFinalizeThrowsException(): void
     {
         $disk_files = $this->setupMockData();
@@ -2341,7 +2353,7 @@ class OvaUploadHandlerTest extends TestCase
         $this->post['phase'] = 'finalize';
         $this->post['fileName'] = 'new.ova';
 
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('pathinfo')->willReturnCallback(
             fn($path, $option) => pathinfo($path, $option)
         );
@@ -2389,6 +2401,7 @@ class OvaUploadHandlerTest extends TestCase
         $this->assertEquals(null, $json['redirect']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testCombinedFileDoesntExistsOnFinalizeThrowsException(): void
     {
         $disk_files = $this->setupMockData();
@@ -2406,7 +2419,7 @@ class OvaUploadHandlerTest extends TestCase
         $this->post['phase'] = 'finalize';
         $this->post['fileName'] = 'new.ova';
 
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('pathinfo')->willReturnCallback(
             fn($path, $option) => pathinfo($path, $option)
         );
@@ -2454,6 +2467,7 @@ class OvaUploadHandlerTest extends TestCase
         $this->assertEquals(null, $json['redirect']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testChunkedUploadFinalizeWorks(): void
     {
         $disk_files = $this->setupMockData();
@@ -2471,7 +2485,7 @@ class OvaUploadHandlerTest extends TestCase
         $this->post['phase'] = 'finalize';
         $this->post['fileName'] = 'new.ova';
 
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('pathinfo')->willReturnCallback(
             fn($path, $option) => pathinfo($path, $option)
         );
@@ -2523,10 +2537,11 @@ class OvaUploadHandlerTest extends TestCase
 
         $this->assertTrue($json['success']);
         $this->assertEquals('File uploaded successfully', $json['message']);
-        $this->assertEquals(null, $json['error_code']);
-        $this->assertEquals(null, $json['redirect']);
+        $this->assertArrayNotHasKey('error_code', $json);
+        $this->assertArrayNotHasKey('redirect', $json);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testProxmoxBackendErrorDuringUploadOnFinalizeThrowsException(): void
     {
         $disk_files = $this->setupMockData();
@@ -2544,7 +2559,7 @@ class OvaUploadHandlerTest extends TestCase
         $this->post['phase'] = 'finalize';
         $this->post['fileName'] = 'new.ova';
 
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('pathinfo')->willReturnCallback(
             fn($path, $option) => pathinfo($path, $option)
         );
@@ -2600,6 +2615,7 @@ class OvaUploadHandlerTest extends TestCase
         $this->assertEquals(null, $json['redirect']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testDeleteActionForNonExistentFileThrowsException(): void
     {
         $disk_files = $this->setupMockData();
@@ -2615,7 +2631,7 @@ class OvaUploadHandlerTest extends TestCase
 
         $this->get['action'] = 'delete';
 
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('file_get_contents')->willReturn(json_encode([
             'ova_id' => '9999',
             'proxmox_filename' => 'vzdump-qemu-100-2023_10_01-12_00_00.vma.gz',
@@ -2654,6 +2670,7 @@ class OvaUploadHandlerTest extends TestCase
         $this->assertEquals(null, $json['redirect']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testProxmoxBackendErrorDuringDeleteActionThrowsException(): void
     {
         $disk_files = $this->setupMockData();
@@ -2673,7 +2690,7 @@ class OvaUploadHandlerTest extends TestCase
 
         $this->get['action'] = 'delete';
 
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('file_get_contents')->willReturn(json_encode([
             'ova_id' => "$ova_id",
             'proxmox_filename' => "$proxmox_filename",
@@ -2715,6 +2732,7 @@ class OvaUploadHandlerTest extends TestCase
         $this->assertEquals(null, $json['redirect']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testDeleteActionWorks(): void
     {
         $disk_files = $this->setupMockData();
@@ -2734,7 +2752,7 @@ class OvaUploadHandlerTest extends TestCase
 
         $this->get['action'] = 'delete';
 
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('file_get_contents')->willReturn(json_encode([
             'ova_id' => "$ova_id",
             'proxmox_filename' => "$proxmox_filename",
@@ -2772,8 +2790,8 @@ class OvaUploadHandlerTest extends TestCase
 
         $this->assertTrue($json['success']);
         $this->assertEquals('File deleted successfully', $json['message']);
-        $this->assertEquals(null, $json['error_code']);
-        $this->assertEquals(null, $json['redirect']);
+        $this->assertArrayNotHasKey('error_code', $json);
+        $this->assertArrayNotHasKey('redirect', $json);
 
         $stmt = $this->pdo->prepare('SELECT COUNT(*) as count FROM disk_files WHERE id = :id');
         $stmt->execute([':id' => $ova_id]);

@@ -194,7 +194,7 @@ class RegistrationHandler
         }
 
         $this->pdo->beginTransaction();
-        $ip_addr = $_SERVER['REMOTE_ADDR'];
+        $ip_addr = $this->server['REMOTE_ADDR'];
 
         try {
             $stmt = $this->pdo->prepare("SELECT id AS user_id, vpn_static_ip FROM create_user(:username, :email, :password_hash, :password_salt, :ip_addr)");
@@ -211,25 +211,30 @@ class RegistrationHandler
                 throw new CustomException('Account creation failed', 500);
             }
 
+            if (!$this->pdo->commit()) {
+                throw new CustomException('Account creation failed', 500);
+            }
             $this->logger->logInfo("User account created successfully - User ID: {$result['user_id']}, Username: $this->username");
 
             return $result;
         } catch (CustomException $e) {
-            $this->pdo->rollBack();
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
             $this->logger->logError("Database transaction failed: " . $e->getMessage());
             throw new CustomException('Account creation failed', 500);
         } catch (PDOException $e) {
-            $this->pdo->rollBack();
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
             $this->logger->logError("Database error during account creation: " . $e->getMessage());
             throw new CustomException('Account creation failed', 500);
         } catch (Exception $e) {
-            $this->pdo->rollBack();
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
             $this->logger->logError("Unexpected error during account creation: " . $e->getMessage());
             throw new Exception('Internal Server Error', 500);
-        } finally {
-            if ($this->pdo->inTransaction()) {
-                $this->pdo->commit();
-            }
         }
     }
 

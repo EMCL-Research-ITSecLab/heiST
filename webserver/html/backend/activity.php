@@ -275,7 +275,7 @@ class ActivitiesHandler
         } catch (CustomException $e) {
             $this->logger->logError("Error formatting time ago: " . $e->getMessage());
             return 'Recently';
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->logger->logError("Unexpected error: " . $e->getMessage());
             return 'Recently';
         }

@@ -24,11 +24,11 @@ class ActivitiesHandlerTest extends TestCase
     protected function setUp(): void
     {
         $this->mockDB = null;
-        $this->pdo = $this->createMock(PDO::class);
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $this->pdo = $this->createStub(PDO::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($this->pdo);
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->logger = new MockLogger();
 
         $this->session = new MockSession();
@@ -57,7 +57,7 @@ class ActivitiesHandlerTest extends TestCase
     private function requireMockDB(): void {
         $this->mockDB = new MockPostgresDB();
         $this->pdo = $this->mockDB->getPDO();
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($this->pdo);
     }
 
@@ -256,7 +256,7 @@ class ActivitiesHandlerTest extends TestCase
         $handler = $this->makeHandler();
 
         // mock DB returning empty result
-        $stmt = $this->createMock(PDOStatement::class);
+        $stmt = $this->createStub(PDOStatement::class);
         $stmt->method('fetchColumn')->willReturn(0);
         $stmt->method('fetch')->willReturn(false);
         $this->pdo->method('prepare')->willReturn($stmt);
@@ -325,6 +325,7 @@ class ActivitiesHandlerTest extends TestCase
 
     // Tests requiring full DB setup
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testHandleRequestReturnsCorrectData(): void
     {
         $this->setupInMemoryDB();

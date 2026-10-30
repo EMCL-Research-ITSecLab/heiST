@@ -45,6 +45,12 @@
 </div>
 
 
+## Maintainer workflows
+
+- [Local full-appliance testing](docs/LOCAL-APPLIANCE.md)
+- [Backend, API and web tests](docs/TESTING.md)
+- [Update wizard, migration and recovery](docs/UPDATES.md)
+
 ## Getting Started
 
 ### Prerequisites

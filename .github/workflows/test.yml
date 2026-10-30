@@ -1,0 +1,38 @@
+name: Platform regression tests
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: heist_test
+          POSTGRES_PASSWORD: disposable_ci_only
+          POSTGRES_DB: heist_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd 'pg_isready -U heist_test'
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://heist_test:disposable_ci_only@localhost:5432/heist_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements-test.txt
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends dnsmasq-base qemu-utils
+      - run: make check
+
+  frontend:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends php-cli php-xml php-pgsql php-curl php-mbstring composer
+      - name: Install the web application's existing dependencies
+        working-directory: webserver/html
+        run: composer install --no-interaction --prefer-dist
+      - run: python3 tools/check.py --frontend

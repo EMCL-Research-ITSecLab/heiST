@@ -29,8 +29,8 @@ class AdminAnnouncementsHandlerTest extends TestCase
 
     public function setUp(): void
     {
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->logger = new MockLogger();
 
         $this->session = new MockSession();
@@ -51,7 +51,7 @@ class AdminAnnouncementsHandlerTest extends TestCase
 
     public function testInvalidSessionThrowsException(): void
     {
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(false);
 
         $this->expectException(Exception::class);
@@ -75,7 +75,7 @@ class AdminAnnouncementsHandlerTest extends TestCase
     {
         $this->mockDB = new MockPostgresDB();
         $this->pdo = $this->mockDB->getPDO();
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($this->pdo);
     }
 
@@ -123,7 +123,7 @@ class AdminAnnouncementsHandlerTest extends TestCase
 
     public function testInvalidCsrfTokenThrowsException(): void
     {
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
         $this->securityHelper->method('validateCsrfToken')->willReturn(false);
 
@@ -146,7 +146,7 @@ class AdminAnnouncementsHandlerTest extends TestCase
 
     public function testDatabaseErrorDuringRequestHandlingThrowsException(): void
     {
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
         $this->securityHelper->method('validateCsrfToken')->willReturn(true);
         $this->securityHelper->method('validateAdminAccess')->willReturn(true);
@@ -156,13 +156,13 @@ class AdminAnnouncementsHandlerTest extends TestCase
 
         $this->get['action'] = 'list';
 
-        $stmtList = $this->createMock(PDOStatement::class);
+        $stmtList = $this->createStub(PDOStatement::class);
         $stmtList->method('execute')->willReturn(true);
         $stmtList->method('fetchColumn')->willThrowException(new PDOException("Simulated database error"));
 
-        $pdo = $this->createMock(PDO::class);
+        $pdo = $this->createStub(PDO::class);
         $pdo->method('prepare')->willReturnOnConsecutiveCalls( $stmtList);
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($pdo);
 
         $handler = new AdminAnnouncementsHandler(
@@ -186,7 +186,7 @@ class AdminAnnouncementsHandlerTest extends TestCase
 
     public function testNonAdminAccessThrowsException(): void
     {
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
         $this->securityHelper->method('validateCsrfToken')->willReturn(true);
         $this->securityHelper->method('validateAdminAccess')->willReturn(false);
@@ -208,11 +208,12 @@ class AdminAnnouncementsHandlerTest extends TestCase
         );
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testInvalidActionThrowsException(): void
     {
         $this->setupMockData();
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
         $this->securityHelper->method('validateCsrfToken')->willReturn(true);
         $this->securityHelper->method('validateAdminAccess')->willReturn(true);
@@ -241,11 +242,12 @@ class AdminAnnouncementsHandlerTest extends TestCase
         $handler->handleRequest();
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testCreateNoTitleThrowsException(): void
     {
         $this->setupMockData();
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
         $this->securityHelper->method('validateCsrfToken')->willReturn(true);
         $this->securityHelper->method('validateAdminAccess')->willReturn(true);
@@ -263,7 +265,7 @@ class AdminAnnouncementsHandlerTest extends TestCase
         ];
 
         $jsonInput = json_encode($postData);
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('file_get_contents')->willReturn($jsonInput);
 
         ob_start();
@@ -286,11 +288,12 @@ class AdminAnnouncementsHandlerTest extends TestCase
         $this->assertStringContainsString('Validation failed', $data['message']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testCreateTooLongTitleThrowsException(): void
     {
         $this->setupMockData();
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
         $this->securityHelper->method('validateCsrfToken')->willReturn(true);
         $this->securityHelper->method('validateAdminAccess')->willReturn(true);
@@ -308,7 +311,7 @@ class AdminAnnouncementsHandlerTest extends TestCase
         ];
 
         $jsonInput = json_encode($postData);
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('file_get_contents')->willReturn($jsonInput);
 
         ob_start();
@@ -331,11 +334,12 @@ class AdminAnnouncementsHandlerTest extends TestCase
         $this->assertStringContainsString('Validation failed', $data['message']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testCreateTooLongShortDescriptionThrowsException(): void
     {
         $this->setupMockData();
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
         $this->securityHelper->method('validateCsrfToken')->willReturn(true);
         $this->securityHelper->method('validateAdminAccess')->willReturn(true);
@@ -354,7 +358,7 @@ class AdminAnnouncementsHandlerTest extends TestCase
         ];
 
         $jsonInput = json_encode($postData);
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('file_get_contents')->willReturn($jsonInput);
 
         ob_start();
@@ -377,11 +381,12 @@ class AdminAnnouncementsHandlerTest extends TestCase
         $this->assertStringContainsString('Validation failed', $data['message']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testCreateNoContentThrowsException(): void
     {
         $this->setupMockData();
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
         $this->securityHelper->method('validateCsrfToken')->willReturn(true);
         $this->securityHelper->method('validateAdminAccess')->willReturn(true);
@@ -399,7 +404,7 @@ class AdminAnnouncementsHandlerTest extends TestCase
         ];
 
         $jsonInput = json_encode($postData);
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('file_get_contents')->willReturn($jsonInput);
 
         ob_start();
@@ -422,11 +427,12 @@ class AdminAnnouncementsHandlerTest extends TestCase
         $this->assertStringContainsString('Validation failed', $data['message']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testCreateTooLongContentThrowsException(): void
     {
         $this->setupMockData();
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
         $this->securityHelper->method('validateCsrfToken')->willReturn(true);
         $this->securityHelper->method('validateAdminAccess')->willReturn(true);
@@ -444,7 +450,7 @@ class AdminAnnouncementsHandlerTest extends TestCase
         ];
 
         $jsonInput = json_encode($postData);
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('file_get_contents')->willReturn($jsonInput);
 
         ob_start();
@@ -467,11 +473,12 @@ class AdminAnnouncementsHandlerTest extends TestCase
         $this->assertStringContainsString('Validation failed', $data['message']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testCreateInvalidCategoryThrowsException(): void
     {
         $this->setupMockData();
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
         $this->securityHelper->method('validateCsrfToken')->willReturn(true);
         $this->securityHelper->method('validateAdminAccess')->willReturn(true);
@@ -489,7 +496,7 @@ class AdminAnnouncementsHandlerTest extends TestCase
         ];
 
         $jsonInput = json_encode($postData);
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('file_get_contents')->willReturn($jsonInput);
 
         ob_start();
@@ -512,11 +519,12 @@ class AdminAnnouncementsHandlerTest extends TestCase
         $this->assertStringContainsString('Validation failed', $data['message']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testCreateInvalidImportanceThrowsException(): void
     {
         $this->setupMockData();
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
         $this->securityHelper->method('validateCsrfToken')->willReturn(true);
         $this->securityHelper->method('validateAdminAccess')->willReturn(true);
@@ -534,7 +542,7 @@ class AdminAnnouncementsHandlerTest extends TestCase
         ];
 
         $jsonInput = json_encode($postData);
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('file_get_contents')->willReturn($jsonInput);
 
         ob_start();
@@ -557,11 +565,12 @@ class AdminAnnouncementsHandlerTest extends TestCase
         $this->assertStringContainsString('Validation failed', $data['message']);
     }
     
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testCreateAnnouncementMalformedJsonThrowsException(): void
     {
         $this->requireMockDB();
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
         $this->securityHelper->method('validateCsrfToken')->willReturn(true);
         $this->securityHelper->method('validateAdminAccess')->willReturn(true);
@@ -571,7 +580,7 @@ class AdminAnnouncementsHandlerTest extends TestCase
 
         $this->get['action'] = 'create';
 
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('file_get_contents')->willReturn("
         {
             'title': 'Malformed JSON': 'Test',
@@ -597,11 +606,12 @@ class AdminAnnouncementsHandlerTest extends TestCase
         $handler->handleRequest();
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testCreateAnnouncement(): void
     {
         $this->setupMockData();
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
         $this->securityHelper->method('validateCsrfToken')->willReturn(true);
         $this->securityHelper->method('validateAdminAccess')->willReturn(true);
@@ -619,7 +629,7 @@ class AdminAnnouncementsHandlerTest extends TestCase
         ];
 
         $jsonInput = json_encode($postData);
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('file_get_contents')->willReturn($jsonInput);
 
         ob_start();
@@ -654,11 +664,12 @@ class AdminAnnouncementsHandlerTest extends TestCase
         $this->assertEquals('admin', $announcement['author']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testlistAnnouncements(): void
     {
         $idToAttributesMapping = $this->setupMockData();
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
         $this->securityHelper->method('validateCsrfToken')->willReturn(true);
         $this->securityHelper->method('validateAdminAccess')->willReturn(true);
@@ -725,12 +736,13 @@ class AdminAnnouncementsHandlerTest extends TestCase
         }
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testUpdateAnnouncement(): void
     {
         $idToAttributesMapping = $this->setupMockData();
         $announcementId = array_key_first($idToAttributesMapping);
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
         $this->securityHelper->method('validateCsrfToken')->willReturn(true);
         $this->securityHelper->method('validateAdminAccess')->willReturn(true);
@@ -749,7 +761,7 @@ class AdminAnnouncementsHandlerTest extends TestCase
         ];
 
         $jsonInput = json_encode($updatedData);
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('file_get_contents')->willReturn($jsonInput);
 
         ob_start();
@@ -782,12 +794,13 @@ class AdminAnnouncementsHandlerTest extends TestCase
         $this->assertEquals('admin', $announcement['author']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testUpdateNonExistentAnnouncementThrowsException(): void
     {
         $idToAttributesMapping = $this->setupMockData();
         $announcementId = 99999; // Non-existent ID
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
         $this->securityHelper->method('validateCsrfToken')->willReturn(true);
         $this->securityHelper->method('validateAdminAccess')->willReturn(true);
@@ -806,7 +819,7 @@ class AdminAnnouncementsHandlerTest extends TestCase
         ];
 
         $jsonInput = json_encode($updatedData);
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('file_get_contents')->willReturn($jsonInput);
 
         $handler = new AdminAnnouncementsHandler(
@@ -830,12 +843,13 @@ class AdminAnnouncementsHandlerTest extends TestCase
     }
 
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testDeleteAnnouncement(): void
     {
         $idToAttributesMapping = $this->setupMockData();
         $announcementId = array_key_first($idToAttributesMapping);
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
         $this->securityHelper->method('validateCsrfToken')->willReturn(true);
         $this->securityHelper->method('validateAdminAccess')->willReturn(true);
@@ -847,7 +861,7 @@ class AdminAnnouncementsHandlerTest extends TestCase
 
         $postData = ['id' => $announcementId];
         $jsonInput = json_encode($postData);
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('file_get_contents')->willReturn($jsonInput);
 
         $stmt = $this->pdo->prepare("SELECT * FROM announcements WHERE id = :id");
@@ -881,12 +895,13 @@ class AdminAnnouncementsHandlerTest extends TestCase
         $this->assertFalse($announcement);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testDeleteNoAnnouncementIdThrowsException(): void
     {
         $idToAttributesMapping = $this->setupMockData();
         $announcementId = array_key_first($idToAttributesMapping);
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
         $this->securityHelper->method('validateCsrfToken')->willReturn(true);
         $this->securityHelper->method('validateAdminAccess')->willReturn(true);
@@ -897,7 +912,7 @@ class AdminAnnouncementsHandlerTest extends TestCase
         $this->get['action'] = 'delete';
 
         $jsonInput = json_encode([]);
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('file_get_contents')->willReturn($jsonInput);
 
         $stmt = $this->pdo->prepare("SELECT * FROM announcements WHERE id = :id");
@@ -924,12 +939,13 @@ class AdminAnnouncementsHandlerTest extends TestCase
         $handler->handleRequest();
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testUpdateNoAnnouncementIdThrowsException(): void
     {
         $idToAttributesMapping = $this->setupMockData();
         $announcementId = array_key_first($idToAttributesMapping);
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper->method('validateSession')->willReturn(true);
         $this->securityHelper->method('validateCsrfToken')->willReturn(true);
         $this->securityHelper->method('validateAdminAccess')->willReturn(true);
@@ -947,7 +963,7 @@ class AdminAnnouncementsHandlerTest extends TestCase
         ];
 
         $jsonInput = json_encode($updatedData);
-        $this->system = $this->createMock(ISystem::class);
+        $this->system = $this->createStub(ISystem::class);
         $this->system->method('file_get_contents')->willReturn($jsonInput);
 
         $stmt = $this->pdo->prepare("SELECT * FROM announcements WHERE id = :id");

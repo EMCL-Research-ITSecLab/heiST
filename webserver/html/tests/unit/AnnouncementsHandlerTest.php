@@ -23,11 +23,11 @@ class AnnouncementsHandlerTest extends TestCase
     protected function setUp(): void
     {
         $this->mockDB = null;
-        $this->pdo = $this->createMock(PDO::class);
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $this->pdo = $this->createStub(PDO::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($this->pdo);
 
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->securityHelper
             ->method('validateSession')
             ->willReturn(true);
@@ -88,7 +88,7 @@ class AnnouncementsHandlerTest extends TestCase
     private function requireMockDB(): void {
         $this->mockDB = new MockPostgresDB();
         $this->pdo = $this->mockDB->getPDO();
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($this->pdo);
     }
 
@@ -119,7 +119,7 @@ class AnnouncementsHandlerTest extends TestCase
     }
 
     public function testInvalidSessionThrowsException(): void {
-        $securityHelper = $this->createMock(ISecurityHelper::class);
+        $securityHelper = $this->createStub(ISecurityHelper::class);
         $securityHelper
             ->method('validateSession')
             ->willReturn(false);
@@ -140,7 +140,7 @@ class AnnouncementsHandlerTest extends TestCase
     }
 
     public function testInvalidCsrfTokenThrowsException(): void {
-        $securityHelper = $this->createMock(ISecurityHelper::class);
+        $securityHelper = $this->createStub(ISecurityHelper::class);
         $securityHelper
             ->method('validateSession')
             ->willReturn(true);
@@ -184,12 +184,12 @@ class AnnouncementsHandlerTest extends TestCase
     }
 
     public function testDatabaseErrorThrowsException(): void {
-        $pdo = $this->createMock(PDO::class);
+        $pdo = $this->createStub(PDO::class);
         $pdo
             ->method('prepare')
             ->willThrowException(new PDOException("Simulated DB error"));
 
-        $databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $databaseHelper = $this->createStub(IDatabaseHelper::class);
         $databaseHelper
             ->method('getPDO')
             ->willReturn($pdo);
@@ -213,10 +213,11 @@ class AnnouncementsHandlerTest extends TestCase
 
     // tests requiring in-memory announcements
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testCorrectAnnouncementsFetched(): void
     {
         $this->setupInMemoryAnnouncements();
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
         $this->databaseHelper
             ->method('getPDO')
             ->willReturn($this->pdo);

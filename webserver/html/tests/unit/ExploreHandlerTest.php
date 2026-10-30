@@ -29,8 +29,8 @@ class ExploreHandlerTest extends TestCase
     private array $sortOptions;
 
     public function setUp(): void {
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
-        $this->securityHelper = $this->createMock(ISecurityHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
+        $this->securityHelper = $this->createStub(ISecurityHelper::class);
         $this->logger = new MockLogger();
 
         $this->session = new MockSession();
@@ -52,7 +52,7 @@ class ExploreHandlerTest extends TestCase
     private function setupMockDatabase(): array {
         $this->mockDB = new MockPostgresDB();
         $this->pdo = $this->mockDB->getPDO();
-        $this->databaseHelper = $this->createMock(DatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(DatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($this->pdo);
 
         $combinations = (count($this->categories) - 1) * (count($this->difficulties) - 1);
@@ -204,9 +204,9 @@ class ExploreHandlerTest extends TestCase
     }
 
     public function testDatabaseErrorThrowsException(): void {
-        $pdo = $this->createMock(PDO::class);
+        $pdo = $this->createStub(PDO::class);
         $pdo->method('prepare')->willThrowException(new PDOException("Database error"));
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($pdo);
 
         $handler = new ExploreHandler(
@@ -232,16 +232,18 @@ class ExploreHandlerTest extends TestCase
         $this->session['username'] = 'testuser';
 
 
-        $countStmt = $this->createMock(PDOStatement::class);
+        $countStmt = $this->createStub(PDOStatement::class);
         $countStmt->method('execute')->willReturn(true);
         $countStmt->method('fetchColumn')->willReturn(1);
 
-        $fetchStmt = $this->createMock(PDOStatement::class);
+        $fetchStmt = $this->createStub(PDOStatement::class);
         $fetchStmt->method('execute')->willReturn(true);
         $fetchStmt->method('fetchAll')->willReturn([
             [
                 'id' => 1,
                 'name' => 'challenge-1',
+                'created_at' => '2026-01-01 00:00:00',
+                'is_active' => true,
                 'description' => 'A test challenge',
                 'category' => 'web',
                 'difficulty' => 'easy',
@@ -251,18 +253,18 @@ class ExploreHandlerTest extends TestCase
             ]
         ]);
 
-        $userStmt = $this->createMock(PDOStatement::class);
+        $userStmt = $this->createStub(PDOStatement::class);
         $userStmt->method('execute')->willReturn(true);
         $userStmt->method('fetchColumn')->willThrowException(new PDOException("Database error"));
 
-        $mockPDO = $this->createMock(PDO::class);
+        $mockPDO = $this->createStub(PDO::class);
         $mockPDO->method('prepare')->willReturnOnConsecutiveCalls(
             $countStmt,
             $fetchStmt,
             $userStmt
         );
 
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($mockPDO);
 
         ob_start();
@@ -291,16 +293,18 @@ class ExploreHandlerTest extends TestCase
         $this->session['username'] = 'testuser';
 
 
-        $countStmt = $this->createMock(PDOStatement::class);
+        $countStmt = $this->createStub(PDOStatement::class);
         $countStmt->method('execute')->willReturn(true);
         $countStmt->method('fetchColumn')->willReturn(1);
 
-        $fetchStmt = $this->createMock(PDOStatement::class);
+        $fetchStmt = $this->createStub(PDOStatement::class);
         $fetchStmt->method('execute')->willReturn(true);
         $fetchStmt->method('fetchAll')->willReturn([
             [
                 'id' => 1,
                 'name' => 'challenge-1',
+                'created_at' => '2026-01-01 00:00:00',
+                'is_active' => true,
                 'description' => 'A test challenge',
                 'category' => 'web',
                 'difficulty' => 'easy',
@@ -310,18 +314,18 @@ class ExploreHandlerTest extends TestCase
             ]
         ]);
 
-        $userStmt = $this->createMock(PDOStatement::class);
+        $userStmt = $this->createStub(PDOStatement::class);
         $userStmt->method('execute')->willReturn(true);
         $userStmt->method('fetch')->willThrowException(new PDOException()); // Simulate error
 
-        $mockPDO = $this->createMock(PDO::class);
+        $mockPDO = $this->createStub(PDO::class);
         $mockPDO->method('prepare')->willReturnOnConsecutiveCalls(
             $countStmt,
             $fetchStmt,
             $userStmt
         );
 
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($mockPDO);
 
         ob_start();
@@ -347,6 +351,7 @@ class ExploreHandlerTest extends TestCase
 
     // Tests requiring the mock database to be set up
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testInvalidFilterAndSortParametersDefaultCorrectly(): void {
         $insertedChallenges = $this->setupMockDatabase();
 
@@ -392,6 +397,7 @@ class ExploreHandlerTest extends TestCase
         $this->assertEqualsCanonicalizing($expectedIDs, $receivedIDs);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testSearchAsFilter(): void
     {
         $insertedChallenges = $this->setupMockDatabase();
@@ -476,6 +482,7 @@ class ExploreHandlerTest extends TestCase
         }
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testValidFilterAndSortParametersWorkAndSolvingUserGetsSolvingInfoCorrectly(): void
     {
         $insertedChallenges = $this->setupMockDatabase();

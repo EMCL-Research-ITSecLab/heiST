@@ -13,6 +13,7 @@ class BadgesHandlerTest extends TestCase
     private ILogger $loggerMock;
     private ISession $session;
     private IServer $server;
+    private array $cookie = [];
 
     private array $config;
 
@@ -21,12 +22,12 @@ class BadgesHandlerTest extends TestCase
     protected function setUp(): void
     {
         $this->mockDB = null;
-        $this->pdo = $this->createMock(PDO::class);
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $this->pdo = $this->createStub(PDO::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($this->pdo);        
 
         // Mocks
-        $this->securityHelperMock = $this->createMock(ISecurityHelper::class);
+        $this->securityHelperMock = $this->createStub(ISecurityHelper::class);
         $this->loggerMock = new MockLogger();
 
         // Simple array-backed session/server
@@ -46,7 +47,7 @@ class BadgesHandlerTest extends TestCase
     private function requireMockDB(): void {
         $this->mockDB = new MockPostgresDB();
         $this->pdo = $this->mockDB->getPDO();
-        $this->databaseHelper = $this->createMock(IDatabaseHelper::class);
+        $this->databaseHelper = $this->createStub(IDatabaseHelper::class);
         $this->databaseHelper->method('getPDO')->willReturn($this->pdo);
         $this->pdo->exec("DELETE FROM badges");
     }
@@ -65,7 +66,7 @@ class BadgesHandlerTest extends TestCase
 
     public function testInvalidSessionThrowsException()
     {
-        $securityMock = $this->createMock(ISecurityHelper::class);
+        $securityMock = $this->createStub(ISecurityHelper::class);
         $securityMock->method('validateSession')->willReturn(false);
 
         $this->expectException(Exception::class);
@@ -84,7 +85,7 @@ class BadgesHandlerTest extends TestCase
 
     public function testInvalidCsrfTokenThrowsException()
     {
-        $securityMock = $this->createMock(ISecurityHelper::class);
+        $securityMock = $this->createStub(ISecurityHelper::class);
         $securityMock->method('validateSession')->willReturn(true);
         $securityMock->method('validateCsrfToken')->willReturn(false);
 
@@ -123,11 +124,11 @@ class BadgesHandlerTest extends TestCase
 
     public function testDatabaseErrorThrowsException()
     {
-        $pdo = $this->createMock(PDO::class);
+        $pdo = $this->createStub(PDO::class);
         $pdo->method('prepare')->willThrowException(new PDOException('DB connection failed'));
 
         // Mock DatabaseHelper to throw exception
-        $dbHelperMock = $this->createMock(IDatabaseHelper::class);
+        $dbHelperMock = $this->createStub(IDatabaseHelper::class);
         $dbHelperMock->method('getPDO')->willReturn($pdo);
 
         $handler = new BadgesHandler(
@@ -149,15 +150,15 @@ class BadgesHandlerTest extends TestCase
     public function testFetchBadgesQueryFailureThrowsException()
     {
         // Mock PDOStatement to throw exception on execute
-        $stmtMock = $this->createMock(PDOStatement::class);
+        $stmtMock = $this->createStub(PDOStatement::class);
         $stmtMock->method('execute')->willReturn(false);
 
         // Mock PDO to return our statement mock
-        $pdoMock = $this->createMock(PDO::class);
+        $pdoMock = $this->createStub(PDO::class);
         $pdoMock->method('prepare')->willReturn($stmtMock);
 
         // Mock DatabaseHelper to return our PDO mock
-        $dbHelperMock = $this->createMock(IDatabaseHelper::class);
+        $dbHelperMock = $this->createStub(IDatabaseHelper::class);
         $dbHelperMock->method('getPDO')->willReturn($pdoMock);
 
         $handler = new BadgesHandler(
@@ -178,9 +179,9 @@ class BadgesHandlerTest extends TestCase
 
     public function testNullStatsOrMissingTotalBadgesFieldThrowsException(): void {
 
-        $databaseHelperMock = $this->createMock(IDatabaseHelper::class);
-        $pdo = $this->createMock(PDO::class);
-        $stmtMock = $this->createMock(PDOStatement::class);
+        $databaseHelperMock = $this->createStub(IDatabaseHelper::class);
+        $pdo = $this->createStub(PDO::class);
+        $stmtMock = $this->createStub(PDOStatement::class);
         $stmtMock->method('execute')->willReturn(true);
         $stmtMock->method('fetch')->willReturn([/* 'total_badges' => 5 */]); // Missing total_badges field
         $pdo->method('prepare')->willReturn($stmtMock);
@@ -207,6 +208,7 @@ class BadgesHandlerTest extends TestCase
 
     // Tests requiring mock DB below
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testHandleRequestWithNoBadges()
     {
         $this->requireMockDB();
@@ -224,6 +226,7 @@ class BadgesHandlerTest extends TestCase
         $this->assertEquals(0, $json['data']['stats']['earned']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testHandleRequestWithEarnedBadge()
     {
         $this->requireMockDB();
@@ -254,6 +257,7 @@ class BadgesHandlerTest extends TestCase
         $this->assertEquals(100, $json['data']['stats']['completion_rate']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testHandleRequestWithUnachievedBadge()
     {
         $this->requireMockDB();
@@ -283,6 +287,7 @@ class BadgesHandlerTest extends TestCase
         $this->assertEquals(['current' => 10, 'max' => 100], $json['data']['badges'][0]['progress']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testSkipRowsWithInvalidBadgeFields()
     {
         $this->requireMockDB();
@@ -316,6 +321,7 @@ class BadgesHandlerTest extends TestCase
         $this->assertEmpty($json['data']['badges']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testAllTypesOfRequirements(): void {
         $this->requireMockDB();
 
@@ -370,6 +376,7 @@ class BadgesHandlerTest extends TestCase
             $this->assertEquals($expectedProgress[$badge['id']], $badge['progress']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('database')]
     public function testInvalidRequirementFormatReturnsNullProgress(): void
     {
         $this->requireMockDB();

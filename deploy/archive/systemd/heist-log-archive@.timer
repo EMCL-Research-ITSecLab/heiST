@@ -1,0 +1,11 @@
+[Unit]
+Description=Schedule heiST verified log archive from %i
+
+[Timer]
+OnCalendar=*:0/5
+RandomizedDelaySec=30s
+Persistent=yes
+AccuracySec=15s
+
+[Install]
+WantedBy=timers.target

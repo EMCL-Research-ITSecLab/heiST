@@ -71,6 +71,8 @@ class CurlHelper implements ICurlHelper
         $ch = curl_init($url);
         $defaultOptions = [
             CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CONNECTTIMEOUT => 3,
+            CURLOPT_TIMEOUT => 15,
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_SSL_VERIFYHOST => 2,
             CURLOPT_HTTPHEADER => $headers,

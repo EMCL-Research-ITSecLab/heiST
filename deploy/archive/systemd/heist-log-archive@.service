@@ -1,0 +1,34 @@
+[Unit]
+Description=heiST verified log archive from %i
+Documentation=https://www.freedesktop.org/software/systemd/man/systemd.timer.html
+Wants=network-online.target
+After=network-online.target
+RequiresMountsFor=/var/lib/heist-archive
+
+[Service]
+Type=oneshot
+User=heist-archive
+Group=heist-archive
+UMask=0077
+StateDirectory=heist-archive
+StateDirectoryMode=0700
+LoadCredential=identity:/etc/heist/archive/keys/%i.key
+LoadCredential=known_hosts:/etc/heist/archive/known_hosts
+ExecStart=/usr/bin/python3 /usr/local/lib/heist/archive_logs.py --config /etc/heist/archive/%i.json
+TimeoutStartSec=15min
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+LockPersonality=yes
+StandardOutput=journal
+StandardError=journal

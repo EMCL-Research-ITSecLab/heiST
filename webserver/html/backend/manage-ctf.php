@@ -106,7 +106,7 @@ class CTFManagementHandler
 
         $csrfToken = $this->cookie['csrf_token'] ?? '';
         if (!$this->securityHelper->validateCsrfToken($csrfToken)) {
-            $this->logger->logWarning("Invalid CSRF token in manage CTF - User ID: " . ($this->session['user_id'] ?? 'unknown') . ", Token: $csrfToken");
+            $this->logger->logWarning("Invalid CSRF token in manage CTF - User ID: " . ($this->session['user_id'] ?? 'unknown') . "");
             throw new CustomException('Invalid CSRF token', 403);
         }
 

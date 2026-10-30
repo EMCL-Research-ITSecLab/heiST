@@ -35,7 +35,11 @@ class BrowserTests(unittest.TestCase):
         cls.thread.start()
         cls.origin = 'http://127.0.0.1:' + str(cls.server.server_port)
         cls.playwright = sync_playwright().start()
-        cls.browser = cls.playwright.chromium.launch()
+        import os
+        browser_name = os.environ.get('HEIST_BROWSER', 'chromium')
+        if browser_name not in ('chromium', 'firefox', 'webkit'):
+            raise ValueError('Unsupported HEIST_BROWSER')
+        cls.browser = getattr(cls.playwright, browser_name).launch()
 
     @classmethod
     def tearDownClass(cls):
@@ -78,6 +82,8 @@ class BrowserTests(unittest.TestCase):
             return route.fulfill(json={'success': True, 'data': {'is_logged_in': self.role != 'guest', 'requires_password_change': self.password_change, 'csrf_token': 'a'*64, 'user': {'username': 'investigator', 'is_admin': self.role == 'admin'}}})
         if self.failed:
             return route.fulfill(status=503, json={'success': False, 'message': 'Temporary service failure'})
+        if endpoint == 'admin-operations.php':
+            return route.fulfill(json={'success': True, 'data': {'database': 'ready', 'maintenance': False, 'source_version': '0.3.0', 'services': [{'unit': 'backend.service', 'state': 'active', 'detail': 'running'}], 'archive': {'status': 'stale', 'last_success_at': '2026-10-30T10:00:00Z'}, 'lifecycle': {'ACTIVE': 2}, 'release': {'version': '0.3.0'}, 'checked_at': '2026-10-30T11:00:00Z'}})
         if endpoint == 'create-ctf.php':
             return route.fulfill(json={'success': True, 'ovas': [{'filename': 'fixture.ova'}]})
         if endpoint == 'challenge.php':
@@ -186,6 +192,17 @@ class BrowserTests(unittest.TestCase):
             self.assertEqual(endpoint, 'upload-diskfile.php')
             self.assertIn('name="chunkIndex"', body)
             self.assertIn('name="csrf_token"', body)
+
+
+    def test_administrator_diagnostics_show_stale_archive_and_export(self):
+        self.role = 'admin'
+        self.visit('/operations')
+        self.page.get_by_role('heading', name='Log archive', exact=True).wait_for()
+        self.assertEqual(self.page.get_by_text('stale', exact=True).count(), 1)
+        self.assertEqual(self.page.get_by_text('backend.service', exact=True).count(), 1)
+        with self.page.expect_download() as download:
+            self.page.get_by_role('button', name='Download diagnostics JSON').click()
+        self.assertEqual(download.value.suggested_filename, 'heist-operations.json')
 
 
     def test_mobile_navigation_and_theme(self):

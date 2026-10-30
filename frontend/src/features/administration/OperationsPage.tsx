@@ -1,3 +1,4 @@
+import { PlatformStatusPanel } from './PlatformStatusPanel.tsx';
 import { Badge, Card, Empty, PageTitle, ResourceState, Stat } from '../../components/ui.tsx';
 import { number, payload, row, rows, text, truth } from '../../lib/data.ts';
 import { Link } from '../../lib/router.tsx';
@@ -10,6 +11,7 @@ export function Operations() {
       title="Keep the whole picture in view."
       description="Availability and deployment activity for the exercises you manage."
       action={<button className="secondary" onClick={resource.reload}>Refresh ↻</button>} />
+    <PlatformStatusPanel />
     <ResourceState {...resource}>
       <div className="stats-grid">
         <Stat label="Managed challenges" value={stats.total_challenges ?? challenges.length} />

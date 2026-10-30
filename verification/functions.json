@@ -1,0 +1,146 @@
+{
+  "heist/security/passwords.py::hash_password": {
+    "tests": [
+      "tests.test_passwords.PasswordTests.test_new_password_hashes_are_salted_and_verify_only_the_right_password",
+      "tests.test_passwords.PasswordTests.test_existing_sha512_accounts_remain_readable_and_require_upgrade",
+      "tests.test_passwords.PasswordTests.test_invalid_inputs_fail_without_hashing_unbounded_payloads"
+    ],
+    "rationale": "Checks salted adaptive hashes, correct/incorrect legacy/current credentials and bounded malformed input; legacy hashes require upgrade."
+  },
+  "heist/security/passwords.py::verify_password": {
+    "tests": [
+      "tests.test_passwords.PasswordTests.test_new_password_hashes_are_salted_and_verify_only_the_right_password",
+      "tests.test_passwords.PasswordTests.test_existing_sha512_accounts_remain_readable_and_require_upgrade",
+      "tests.test_passwords.PasswordTests.test_invalid_inputs_fail_without_hashing_unbounded_payloads"
+    ],
+    "rationale": "Checks salted adaptive hashes, correct/incorrect legacy/current credentials and bounded malformed input; legacy hashes require upgrade."
+  },
+  "heist/security/passwords.py::needs_rehash": {
+    "tests": [
+      "tests.test_passwords.PasswordTests.test_new_password_hashes_are_salted_and_verify_only_the_right_password",
+      "tests.test_passwords.PasswordTests.test_existing_sha512_accounts_remain_readable_and_require_upgrade",
+      "tests.test_passwords.PasswordTests.test_invalid_inputs_fail_without_hashing_unbounded_payloads"
+    ],
+    "rationale": "Checks salted adaptive hashes, correct/incorrect legacy/current credentials and bounded malformed input; legacy hashes require upgrade."
+  },
+  "heist/backend/operations.py::archive_status": {
+    "tests": [
+      "tests.test_operations.OperationsTests.test_archive_receipt_is_sanitized_and_staleness_is_detected",
+      "tests.test_operations.OperationsTests.test_archive_configuration_absence_or_invalid_remote_data_is_explicit"
+    ],
+    "rationale": "Checks receipt age, field whitelisting, bad/oversized data, missing configuration and transport timeout."
+  },
+  "heist/backend/operations.py::collect": {
+    "tests": [
+      "tests.test_operations.OperationsTests.test_database_failure_closes_connection_and_is_visible",
+      "tests.test_operations.OperationsTests.test_counts_use_read_only_transactions_and_expose_no_user_records"
+    ],
+    "rationale": "Checks actual SQL command contract uses read-only transaction, lifecycle aggregation, maintenance state and connection closure after failure."
+  },
+  "heist/backend/operations.py::release_status": {
+    "tests": [
+      "tests.test_operations.OperationsTests.test_release_receipt_does_not_expose_private_paths"
+    ],
+    "rationale": "Checks valid revision extraction and rejection of unsafe transaction identity without returning checkpoint paths."
+  },
+  "heist/backend/operations.py::service_states": {
+    "tests": [
+      "tests.test_operations.OperationsTests.test_systemd_probe_has_fixed_units_no_shell_and_bounded_timeout"
+    ],
+    "rationale": "Checks fixed no-shell command/timeout and explicit missing-unit state; real systemd execution is separately required."
+  },
+  "tools/maintenance/archive_logs.py::archive": {
+    "tests": [
+      "tests.test_archive_logs.ArchiveTests.test_default_copy_preserves_remote_log",
+      "tests.test_archive_logs.ArchiveTests.test_bad_checksum_never_removes_remote_even_when_requested",
+      "tests.test_archive_logs.ArchiveTests.test_explicit_removal_occurs_after_verified_unchanged_copy",
+      "tests.test_archive_logs.ArchiveServiceTests.test_remote_file_changed_or_replaced_is_never_removed"
+    ],
+    "rationale": "Uses real local files and digests; checks explicit deletion only after integrity checks, and preservation on changed or symlinked remote content."
+  },
+  "tools/maintenance/archive_logs.py::digest": {
+    "tests": [
+      "tests.test_archive_logs.ArchiveTests.test_default_copy_preserves_remote_log",
+      "tests.test_archive_logs.ArchiveTests.test_bad_checksum_never_removes_remote_even_when_requested",
+      "tests.test_archive_logs.ArchiveTests.test_explicit_removal_occurs_after_verified_unchanged_copy",
+      "tests.test_archive_logs.ArchiveServiceTests.test_remote_file_changed_or_replaced_is_never_removed"
+    ],
+    "rationale": "Uses real local files and digests; checks explicit deletion only after integrity checks, and preservation on changed or symlinked remote content."
+  },
+  "tools/maintenance/archive_logs.py::run_configuration": {
+    "tests": [
+      "tests.test_archive_logs.ArchiveServiceTests.test_successful_service_run_records_verified_counts_and_timestamp",
+      "tests.test_archive_logs.ArchiveServiceTests.test_failed_run_preserves_last_success_and_hides_exception_details",
+      "tests.test_archive_logs.ArchiveServiceTests.test_capacity_failure_never_opens_ssh",
+      "tests.test_archive_logs.ArchiveServiceTests.test_concurrent_run_cannot_overwrite_receipt_or_connect"
+    ],
+    "rationale": "Checks private durable receipt, successful counters, retained last success, nonsecret failure detail, capacity gate and exclusive lock; VM timer/credentials remain separate integration cases."
+  },
+  "tools/maintenance/archive_logs.py::write_status": {
+    "tests": [
+      "tests.test_archive_logs.ArchiveServiceTests.test_successful_service_run_records_verified_counts_and_timestamp",
+      "tests.test_archive_logs.ArchiveServiceTests.test_failed_run_preserves_last_success_and_hides_exception_details",
+      "tests.test_archive_logs.ArchiveServiceTests.test_capacity_failure_never_opens_ssh",
+      "tests.test_archive_logs.ArchiveServiceTests.test_concurrent_run_cannot_overwrite_receipt_or_connect"
+    ],
+    "rationale": "Checks private durable receipt, successful counters, retained last success, nonsecret failure detail, capacity gate and exclusive lock; VM timer/credentials remain separate integration cases."
+  },
+  "tools/maintenance/archive_logs.py::remote_digest": {
+    "tests": [
+      "tests.test_archive_logs.ArchiveServiceTests.test_remote_digest_quotes_paths_and_rejects_command_failure"
+    ],
+    "rationale": "Checks exact digest extraction, shell quoting of hostile-looking paths, and nonzero command failure."
+  },
+  "tools/maintenance/archive_logs.py::load_configuration": {
+    "tests": [
+      "tests.test_archive_logs.ArchiveServiceTests.test_untrusted_paths_and_unknown_configuration_fields_are_rejected"
+    ],
+    "rationale": "Checks dangerous/relative paths, incorrect scalar types and unknown keys fail before connecting."
+  },
+  "tools/function_inventory.py::functions": {
+    "tests": [
+      "tests.test_function_inventory.InventoryTests.test_nested_and_async_functions_have_stable_unique_identifiers",
+      "tests.test_function_inventory.InventoryTests.test_function_execution_alone_cannot_claim_behavioral_verification"
+    ],
+    "rationale": "Checks qualified inventory identity and that function entry alone cannot claim reviewed passing assertions."
+  },
+  "tools/function_inventory.py::evaluate": {
+    "tests": [
+      "tests.test_function_inventory.InventoryTests.test_nested_and_async_functions_have_stable_unique_identifiers",
+      "tests.test_function_inventory.InventoryTests.test_function_execution_alone_cannot_claim_behavioral_verification"
+    ],
+    "rationale": "Checks qualified inventory identity and that function entry alone cannot claim reviewed passing assertions."
+  },
+  "tools/function_inventory.py::FunctionTrace.__init__": {
+    "tests": [
+      "tests.test_function_inventory.InventoryTests.test_runtime_trace_counts_actual_function_calls_and_restores_profiler"
+    ],
+    "rationale": "Executes a real compiled fixture function, checks exact count, and checks profiler restoration."
+  },
+  "tools/function_inventory.py::FunctionTrace.profile": {
+    "tests": [
+      "tests.test_function_inventory.InventoryTests.test_runtime_trace_counts_actual_function_calls_and_restores_profiler"
+    ],
+    "rationale": "Executes a real compiled fixture function, checks exact count, and checks profiler restoration."
+  },
+  "tools/function_inventory.py::FunctionTrace.__enter__": {
+    "tests": [
+      "tests.test_function_inventory.InventoryTests.test_runtime_trace_counts_actual_function_calls_and_restores_profiler"
+    ],
+    "rationale": "Executes a real compiled fixture function, checks exact count, and checks profiler restoration."
+  },
+  "tools/function_inventory.py::FunctionTrace.__exit__": {
+    "tests": [
+      "tests.test_function_inventory.InventoryTests.test_runtime_trace_counts_actual_function_calls_and_restores_profiler"
+    ],
+    "rationale": "Executes a real compiled fixture function, checks exact count, and checks profiler restoration."
+  },
+  "tools/verification.py::verify_evidence": {
+    "tests": [
+      "tests.test_verification.VerificationTests.test_correct_source_clean_strict_evidence_verifies",
+      "tests.test_verification.VerificationTests.test_other_revision_dirty_or_failing_receipts_are_rejected",
+      "tests.test_verification.VerificationTests.test_tampering_with_result_counts_or_log_is_detected"
+    ],
+    "rationale": "Checks valid source-bound evidence and rejection of changed results/logs, wrong revision, dirty source, failed command or nonstrict receipt."
+  }
+}

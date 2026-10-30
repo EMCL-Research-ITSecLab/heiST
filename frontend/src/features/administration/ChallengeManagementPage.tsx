@@ -7,7 +7,12 @@ import { useAction, useResource } from '../../lib/state.tsx';
 export function ManageChallenges() {
   const resource = useResource('/backend/manage-ctf.php?action=get_challenges', 30000), data = payload(resource.data), stats = row(data.stats), action = useAction();
   const [search, setSearch] = useState(''), [state, setState] = useState('all'), [editing, setEditing] = useState<Row | null>(null), [deleting, setDeleting] = useState<Row | null>(null), [force, setForce] = useState(false), [leader, setLeader] = useState<Row | null>(null);
-  const challenges = rows(data.challenges).filter(c => text(c.name).toLowerCase().includes(search.toLowerCase()) && (state === 'all' || (state === 'active' ? truth(c.is_active) && !truth(c.marked_for_deletion) : state === 'retired' ? truth(c.marked_for_deletion) : !truth(c.is_active))));
+  const [category, setCategory] = useState('all'), [sort, setSort] = useState('name'), [page, setPage] = useState(1);
+  const filtered = rows(data.challenges).filter(c => text(c.name).toLowerCase().includes(search.toLowerCase()) && (state === 'all' || (state === 'active' ? truth(c.is_active) && !truth(c.marked_for_deletion) : state === 'retired' ? truth(c.marked_for_deletion) : !truth(c.is_active))));
+  const matching = filtered.filter(c => category === 'all' || text(c.category) === category)
+    .sort((a, b) => (sort === 'deployments' ? number(b.active_deployments) - number(a.active_deployments) : text(a.name).localeCompare(text(b.name))) || number(a.id) - number(b.id));
+  const totalPages = Math.max(1, Math.ceil(matching.length / 20)), currentPage = Math.min(page, totalPages);
+  const challenges = matching.slice((currentPage - 1) * 20, currentPage * 20);
   async function edit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); const form = new FormData(event.currentTarget); form.set('action', 'update_challenge'); form.set('id', text(editing?.id)); form.set('isActive', form.has('isActive') ? 'true' : 'false'); await action.run(() => post('manage-ctf', form), () => { setEditing(null); resource.reload(); }); }
   return <>
     <PageTitle
@@ -29,14 +34,17 @@ export function ManageChallenges() {
             label="Find a challenge"
             placeholder="Search by name…"
             value={search}
-            onChange={e => setSearch(e.target.value)} />
+            onChange={e => { setSearch(e.target.value); setPage(1); }} />
           <Select
             label="Availability"
             value={state}
             options={['all', 'active', 'inactive', 'retired']}
-            onChange={e => setState(e.target.value)} />
+            onChange={e => { setState(e.target.value); setPage(1); }} />
+          <Select label="Category" value={category} options={['all', ...categories]} onChange={e => { setCategory(e.target.value); setPage(1); }} />
+          <Select label="Sort challenges" value={sort} options={['name', 'deployments']} onChange={e => { setSort(e.target.value); setPage(1); }} />
           <button className="secondary" onClick={resource.reload}>Refresh ↻</button>
         </div>
+        <p className="muted">{matching.length} matching exercises</p>
         {challenges.length ? <div className="table-wrap">
           <table>
             <thead>
@@ -85,6 +93,7 @@ export function ManageChallenges() {
             </tbody>
           </table>
         </div> : <Empty title="No matching challenges" />}
+        <Pager page={currentPage} totalPages={totalPages} onPage={setPage} />
       </Card>
     </ResourceState>
     {editing && <Card title={`Edit ${text(editing.name)}`} className="editor-panel">

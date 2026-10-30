@@ -1,0 +1,1106 @@
+{
+  "schema": 1,
+  "cases": [
+    {
+      "id": "AUTO-API",
+      "area": "api",
+      "mode": "automated",
+      "procedure": "Run tests/test_api.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_api.py"
+      ]
+    },
+    {
+      "id": "AUTO-ARCHIVE-LOGS",
+      "area": "archive_logs",
+      "mode": "automated",
+      "procedure": "Run tests/test_archive_logs.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_archive_logs.py"
+      ]
+    },
+    {
+      "id": "AUTO-CACHED-AGENT",
+      "area": "cached_agent",
+      "mode": "automated",
+      "procedure": "Run tests/test_cached_agent.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_cached_agent.py"
+      ]
+    },
+    {
+      "id": "AUTO-CHALLENGE-DNS",
+      "area": "challenge_dns",
+      "mode": "automated",
+      "procedure": "Run tests/test_challenge_dns.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_challenge_dns.py"
+      ]
+    },
+    {
+      "id": "AUTO-COLD-LAUNCH-FLAGS",
+      "area": "cold_launch_flags",
+      "mode": "automated",
+      "procedure": "Run tests/test_cold_launch_flags.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_cold_launch_flags.py"
+      ]
+    },
+    {
+      "id": "AUTO-ENVIRONMENT",
+      "area": "environment",
+      "mode": "automated",
+      "procedure": "Run tests/test_environment.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_environment.py"
+      ]
+    },
+    {
+      "id": "AUTO-FUNCTION-INVENTORY",
+      "area": "function_inventory",
+      "mode": "automated",
+      "procedure": "Run tests/test_function_inventory.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_function_inventory.py"
+      ]
+    },
+    {
+      "id": "AUTO-INSTANCE-OWNERSHIP",
+      "area": "instance_ownership",
+      "mode": "automated",
+      "procedure": "Run tests/test_instance_ownership.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_instance_ownership.py"
+      ]
+    },
+    {
+      "id": "AUTO-LINUX-AGENT-LOGGING",
+      "area": "linux_agent_logging",
+      "mode": "automated",
+      "procedure": "Run tests/test_linux_agent_logging.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_linux_agent_logging.py"
+      ]
+    },
+    {
+      "id": "AUTO-LINUX-DHCP",
+      "area": "linux_dhcp",
+      "mode": "automated",
+      "procedure": "Run tests/test_linux_dhcp.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_linux_dhcp.py"
+      ]
+    },
+    {
+      "id": "AUTO-LINUX-MONITORING",
+      "area": "linux_monitoring",
+      "mode": "automated",
+      "procedure": "Run tests/test_linux_monitoring.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_linux_monitoring.py"
+      ]
+    },
+    {
+      "id": "AUTO-LOCAL-APPLIANCE",
+      "area": "local_appliance",
+      "mode": "automated",
+      "procedure": "Run tests/test_local_appliance.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_local_appliance.py"
+      ]
+    },
+    {
+      "id": "AUTO-LOCAL-CHECKPOINT",
+      "area": "local_checkpoint",
+      "mode": "automated",
+      "procedure": "Run tests/test_local_checkpoint.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_local_checkpoint.py"
+      ]
+    },
+    {
+      "id": "AUTO-LOCAL-NETWORK",
+      "area": "local_network",
+      "mode": "automated",
+      "procedure": "Run tests/test_local_network.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_local_network.py"
+      ]
+    },
+    {
+      "id": "AUTO-MAINTENANCE",
+      "area": "maintenance",
+      "mode": "automated",
+      "procedure": "Run tests/test_maintenance.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_maintenance.py"
+      ]
+    },
+    {
+      "id": "AUTO-MONITOR-HOST-FIREWALL",
+      "area": "monitor_host_firewall",
+      "mode": "automated",
+      "procedure": "Run tests/test_monitor_host_firewall.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_monitor_host_firewall.py"
+      ]
+    },
+    {
+      "id": "AUTO-MONITORING-BOOT",
+      "area": "monitoring_boot",
+      "mode": "automated",
+      "procedure": "Run tests/test_monitoring_boot.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_monitoring_boot.py"
+      ]
+    },
+    {
+      "id": "AUTO-NETWORK-INPUT",
+      "area": "network_input",
+      "mode": "automated",
+      "procedure": "Run tests/test_network_input.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_network_input.py"
+      ]
+    },
+    {
+      "id": "AUTO-OPERATIONS",
+      "area": "operations",
+      "mode": "automated",
+      "procedure": "Run tests/test_operations.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_operations.py"
+      ]
+    },
+    {
+      "id": "AUTO-PASSWORDS",
+      "area": "passwords",
+      "mode": "automated",
+      "procedure": "Run tests/test_passwords.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_passwords.py"
+      ]
+    },
+    {
+      "id": "AUTO-PROXMOX-TASKS",
+      "area": "proxmox_tasks",
+      "mode": "automated",
+      "procedure": "Run tests/test_proxmox_tasks.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_proxmox_tasks.py"
+      ]
+    },
+    {
+      "id": "AUTO-ROLLOUT",
+      "area": "rollout",
+      "mode": "automated",
+      "procedure": "Run tests/test_rollout.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_rollout.py"
+      ]
+    },
+    {
+      "id": "AUTO-ROLLOUT-CLI",
+      "area": "rollout_cli",
+      "mode": "automated",
+      "procedure": "Run tests/test_rollout_cli.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_rollout_cli.py"
+      ]
+    },
+    {
+      "id": "AUTO-ROLLOUT-HEALTH",
+      "area": "rollout_health",
+      "mode": "automated",
+      "procedure": "Run tests/test_rollout_health.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_rollout_health.py"
+      ]
+    },
+    {
+      "id": "AUTO-ROLLOUT-MANIFEST",
+      "area": "rollout_manifest",
+      "mode": "automated",
+      "procedure": "Run tests/test_rollout_manifest.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_rollout_manifest.py"
+      ]
+    },
+    {
+      "id": "AUTO-ROLLOUT-MIGRATIONS",
+      "area": "rollout_migrations",
+      "mode": "automated",
+      "procedure": "Run tests/test_rollout_migrations.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_rollout_migrations.py"
+      ]
+    },
+    {
+      "id": "AUTO-ROLLOUT-PROXMOX-API",
+      "area": "rollout_proxmox_api",
+      "mode": "automated",
+      "procedure": "Run tests/test_rollout_proxmox_api.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_rollout_proxmox_api.py"
+      ]
+    },
+    {
+      "id": "AUTO-ROLLOUT-PVE",
+      "area": "rollout_pve",
+      "mode": "automated",
+      "procedure": "Run tests/test_rollout_pve.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_rollout_pve.py"
+      ]
+    },
+    {
+      "id": "AUTO-ROLLOUT-TASKS",
+      "area": "rollout_tasks",
+      "mode": "automated",
+      "procedure": "Run tests/test_rollout_tasks.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_rollout_tasks.py"
+      ]
+    },
+    {
+      "id": "AUTO-ROLLOUT-WEB",
+      "area": "rollout_web",
+      "mode": "automated",
+      "procedure": "Run tests/test_rollout_web.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_rollout_web.py"
+      ]
+    },
+    {
+      "id": "AUTO-SURICATA-CLUSTERS",
+      "area": "suricata_clusters",
+      "mode": "automated",
+      "procedure": "Run tests/test_suricata_clusters.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_suricata_clusters.py"
+      ]
+    },
+    {
+      "id": "AUTO-UI-ASSETS",
+      "area": "ui_assets",
+      "mode": "automated",
+      "procedure": "Run tests/test_ui_assets.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_ui_assets.py"
+      ]
+    },
+    {
+      "id": "AUTO-VERIFICATION",
+      "area": "verification",
+      "mode": "automated",
+      "procedure": "Run tests/test_verification.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_verification.py"
+      ]
+    },
+    {
+      "id": "AUTO-VM-CPU",
+      "area": "vm_cpu",
+      "mode": "automated",
+      "procedure": "Run tests/test_vm_cpu.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_vm_cpu.py"
+      ]
+    },
+    {
+      "id": "AUTO-VM-RESOURCES",
+      "area": "vm_resources",
+      "mode": "automated",
+      "procedure": "Run tests/test_vm_resources.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_vm_resources.py"
+      ]
+    },
+    {
+      "id": "BUILD-CLEAN",
+      "area": "build",
+      "mode": "appliance",
+      "procedure": "Build from a clean checkout, verify source-bound frontend and Python artifacts, dependency hashes and reproducible inputs.",
+      "expected": "Exact commit and artifact checksums match; no private settings, credentials, flags or solutions enter public Git/artifacts.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "OVA-COLD",
+      "area": "appliance",
+      "mode": "appliance",
+      "procedure": "Build/export, upload/download through the intended cloud folder, verify SHA256, cold-import into a fresh isolated hypervisor and boot.",
+      "expected": "Firmware/controller/NIC/disk settings work without the build VM or local caches; initial credentials rotate and networking is isolated.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "INSTALL-FRESH",
+      "area": "installer",
+      "mode": "appliance",
+      "procedure": "Install on a blank supported nested Proxmox host, reboot, rerun preflight, inspect every VM, disk, unit, route and database role.",
+      "expected": "Complete, idempotent documented installation; interrupted installation has a verified checkpoint recovery path; secrets remain private.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "INSTALL-FAILURES",
+      "area": "installer",
+      "mode": "appliance",
+      "procedure": "Interrupt image downloads, package installation, VM import, network setup and monitoring setup at each recorded phase.",
+      "expected": "Bounded errors; usable console; no false completion; restart/recovery procedure restores a known state.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "AUTH-MATRIX",
+      "area": "authentication",
+      "mode": "appliance",
+      "procedure": "For every public route and mutation test anonymous, student, creator, another creator, admin, revoked admin and forced-reset accounts.",
+      "expected": "Server enforces each permission independently of UI; no unauthorized file, account, grade, machine, token or metadata access.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "AUTH-SESSIONS",
+      "area": "authentication",
+      "mode": "appliance",
+      "procedure": "Test login/logout, session rotation, expiry, concurrent tabs, password reset, account deletion and replay of an old cookie.",
+      "expected": "Old sessions are revoked as designed; CSRF/origin checks reject cross-site requests; no account enumeration or secret leakage.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "AUTH-RATE-LIMIT",
+      "area": "authentication",
+      "mode": "appliance",
+      "procedure": "Exercise failed login/signup/reset attempts from one and multiple source IPs, including valid recovery after the window.",
+      "expected": "Configured limits are enforced without unlimited memory growth or permanent account lockout; credentials never appear in responses/logs.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "PROFILE-PARITY",
+      "area": "account",
+      "mode": "appliance",
+      "procedure": "Change each profile field and avatar; download VPN config; inspect public/private profile as another account; reset password and delete a disposable account.",
+      "expected": "Validation, privacy, durable refresh, attachment filenames and account cleanup match the documented contract.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "READ-SCREENS",
+      "area": "ui",
+      "mode": "manual",
+      "procedure": "Open every route with realistic empty/large/malformed datasets; use filters, pagination and deep links; disconnect each API and retry.",
+      "expected": "Correct data and loading/error/empty states; no fake zero metrics; no stale mutation retries; no console errors or unbounded polling.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "ACCESSIBILITY",
+      "area": "ui",
+      "mode": "manual",
+      "procedure": "Complete student and admin tasks using keyboard and screen reader; test focus after navigation, dialogs, validation, 200% zoom, contrast and reduced motion.",
+      "expected": "Labels, focus order, announcements and cancellation work; no keyboard trap or essential color-only state.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "BROWSER-MATRIX",
+      "area": "ui",
+      "mode": "manual",
+      "procedure": "Run Chromium, Firefox and WebKit on desktop and mobile sizes; test downloads, uploads, dialogs, history and expired sessions.",
+      "expected": "Supported browser matrix passes; unsupported cases are explicitly documented, not silently skipped.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "PHP-REMOVAL",
+      "area": "architecture",
+      "mode": "appliance",
+      "procedure": "Remove all PHP routes/runtime/packages, replace their browser contracts with Flask, inspect installer/updater/Apache/worker/CLI references and cold boot.",
+      "expected": "No request or scheduled job depends on PHP, Composer or the retired webserver tree; rollback to the previous supported release still works.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "UPLOAD-SMALL",
+      "area": "artifacts",
+      "mode": "appliance",
+      "procedure": "Upload valid small Linux/Windows OVA files; duplicate names; invalid extension/content; empty/oversized data; quota and unavailable storage.",
+      "expected": "Strict server-side validation, ownership, capacity and safe names; no partial registration or arbitrary file access.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "UPLOAD-CHUNKED",
+      "area": "artifacts",
+      "mode": "appliance",
+      "procedure": "Upload a large artifact; retry duplicate/out-of-order chunks; tamper total size/index/upload owner; cancel and interrupt before/after finalize.",
+      "expected": "All chunks are accounted for exactly once; cross-user access fails; temporary files expire; ambiguous finalization is reconciled safely.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "OVA-VALIDATION",
+      "area": "artifacts",
+      "mode": "appliance",
+      "procedure": "Feed tar traversal, absolute names, links, duplicate members, XML entities, huge expansion, missing disks, malformed OVF and excessive virtual sizes.",
+      "expected": "No external fetch, path escape or resource exhaustion; actual and declared disk constraints agree; validation failures remove owned temporary files.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "CHALLENGE-EDITOR",
+      "area": "challenge",
+      "mode": "appliance",
+      "procedure": "Create and edit all machine/network/flag/hint combinations, image types, inactive/active/deleted states and invalid limits; reload saved definitions.",
+      "expected": "Every field round-trips, invalid topology is rejected before provisioning, only permitted creators/admins can change it, and failed imports are cleaned.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "LIFECYCLE-COLD",
+      "area": "challenge",
+      "mode": "appliance",
+      "procedure": "Create/upload/start a new Linux exercise as a student, connect via VPN, solve all flags, extend time, stop and restart.",
+      "expected": "Entry points, flags, grades, limits, monitoring and teardown are correct at every transition.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "LIFECYCLE-POOL",
+      "area": "challenge",
+      "mode": "appliance",
+      "procedure": "Repeat lifecycle using READY pool instances, concurrent assignment, pool depletion and replenishment.",
+      "expected": "Each instance has one owner; warm and cold starts preserve per-user flags; no stranded reservations or overprovisioning.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "LIFECYCLE-CONCURRENT",
+      "area": "isolation",
+      "mode": "appliance",
+      "procedure": "Two students race for a lab and access each other's API IDs, VPN networks, files, flags and management actions.",
+      "expected": "Cross-instance/cross-tenant denial holds at UI, API, database and network boundaries; only the rightful owner receives grades.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "LIFECYCLE-EXPIRY",
+      "area": "challenge",
+      "mode": "appliance",
+      "procedure": "Expire and extend an exercise around clock boundaries; reboot workers; submit during teardown; disconnect a worker during provisioning.",
+      "expected": "A monotonic lifecycle prevents duplicate grading, orphaned VMs and missed expiry; reconciliation is bounded and observable.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "LIFECYCLE-WINDOWS",
+      "area": "challenge",
+      "mode": "appliance",
+      "procedure": "Exercise Windows standalone, domain controller/member, DHCP/DNS, reboot and agent enrollment, including delayed cloud initialization.",
+      "expected": "AD membership, machine identities, flags, routing and logs are correct after reboot; no shared student state.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "NETWORK-DENIAL",
+      "area": "network",
+      "mode": "appliance",
+      "procedure": "Probe all VM roles, student segments, management endpoints, IPv4/IPv6 and Internet egress; repeat after reboot and maintenance changes.",
+      "expected": "Only documented flows succeed; management APIs and other students remain inaccessible; monitoring captures intended traffic.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "RETIRE-DELETE",
+      "area": "challenge",
+      "mode": "appliance",
+      "procedure": "Retire/restore/delete inactive and active owned exercises; repeat requests; interrupt teardown; try deleting foreign exercises.",
+      "expected": "Documented retention holds; affected instances are reconciled; no unrelated data loss or falsely successful partial deletion.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "MONITORING-END-TO-END",
+      "area": "monitoring",
+      "mode": "appliance",
+      "procedure": "Generate known host/network/security events in each role, trace them through agents, capture, Vector, ClickHouse, Wazuh and Grafana.",
+      "expected": "Expected events arrive with correct host/student/lab attribution and timestamps; gaps or failed pipelines are visible.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "ARCHIVE-TIMER",
+      "area": "archive",
+      "mode": "appliance",
+      "procedure": "Install timer on the separate archive VM; trigger it, reboot across a missed interval, overlap manual/timer runs and inspect unit sandbox/journal.",
+      "expected": "Persistent schedule catches up; one active writer per source; verified private copies and accurate receipts; no application-host privilege required.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "ARCHIVE-FAILURES",
+      "area": "archive",
+      "mode": "appliance",
+      "procedure": "Inject unknown/changed SSH host key, broken key, unavailable source, changed log, same-size changed content, full archive disk and lost mount.",
+      "expected": "No unverified source removal; no silent fallback to the root filesystem; failures/stale receipts are visible and later recovery is safe.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "ARCHIVE-RESTORE",
+      "area": "archive",
+      "mode": "appliance",
+      "procedure": "Restore a sampled archived event to an independent review directory and compare source digest; rotate readers' SSH keys.",
+      "expected": "A readable, complete, digest-matching archive can be recovered; old keys fail; source and destination retention are deliberate.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "ADMIN-OPERATIONS",
+      "area": "admin",
+      "mode": "appliance",
+      "procedure": "View service/database/capacity/lifecycle/release/archive diagnostics with missing, failed, stale and malicious receipts; export a support JSON.",
+      "expected": "Server-side admin authorization holds; reports are bounded and contain no secrets/private paths; unknown values stay unknown.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "ADMIN-REVOKE",
+      "area": "admin",
+      "mode": "appliance",
+      "procedure": "Revoke administrator privileges while a tab is open, then retry every administrator read and mutation.",
+      "expected": "Privileges are rechecked server-side; old UI/session state cannot retain administrator access.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "UPDATE-PREFLIGHT",
+      "area": "rollout",
+      "mode": "appliance",
+      "procedure": "Try wrong source/release/config/dependency hashes, dirty source, unsupported versions, busy students, insufficient backup space and external disks.",
+      "expected": "Update stops before mutation or restores service safely; unsupported dependencies never bypass the release protocol.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "UPDATE-SUCCESS",
+      "area": "rollout",
+      "mode": "appliance",
+      "procedure": "Roll the exact final commit and matching artifacts from the declared production baseline in an isolated restored clone.",
+      "expected": "All VM/SQL backups verify, migration ledger and source/assets/services agree, protected account/grade hashes match, release commits durably.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "UPDATE-FAILURE-MATRIX",
+      "area": "rollout",
+      "mode": "appliance",
+      "procedure": "Inject failure at every state-machine transition, migration, artifact install, service start, health check and data verification.",
+      "expected": "Before commit: verified baseline restore. After commit: finish/resume without replaying destructive work or reverting newer data.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "ROLLBACK-NEWER-DATA",
+      "area": "rollout",
+      "mode": "appliance",
+      "procedure": "Write owned fixture data after upgrade, take a new safety checkpoint, deliberately roll back, interrupt restoration, then recover newer SQL/VM state.",
+      "expected": "Explicit version confirmation; old and newer checkpoints remain distinct and usable; task IDs cannot be replayed against the wrong checkpoint.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "UPDATE-REBOOT",
+      "area": "rollout",
+      "mode": "appliance",
+      "procedure": "Reboot each VM/host during maintenance and after commit; test expired/ambiguous Proxmox task requests.",
+      "expected": "Maintenance gate persists; writers and public traffic stay blocked until verified recovery; unknown tasks require explicit reconciliation.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "BACKUP-RESTORE",
+      "area": "backup",
+      "mode": "appliance",
+      "procedure": "Independently restore each verified VM archive, source bundle, private settings and SQL backup onto fresh storage.",
+      "expected": "Recovered source, secrets, accounts, grades, images and network identities match; encrypted/offline backup access is tested.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "CAPACITY-SOAK",
+      "area": "performance",
+      "mode": "appliance",
+      "procedure": "Run the planned class size and an agreed overload burst for a full lecture; measure p50/p95/p99, CPU/RAM/disk/IOPS and growth.",
+      "expected": "Documented capacity/SLO thresholds hold; admission control and failure messages remain bounded; no VM/session/log leaks.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "STORAGE-FAILURE",
+      "area": "reliability",
+      "mode": "appliance",
+      "procedure": "Exhaust inodes/bytes, remove archive/backup mounts, corrupt a disk image copy, delay storage IO and expire TLS certificates.",
+      "expected": "Fail closed for destructive operations; alert/failure details identify the component; restore from independent verified backups.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "CLOUD-DISTRIBUTION",
+      "area": "distribution",
+      "mode": "manual",
+      "procedure": "Download the intended tutor/student artifacts from the actual restricted cloud folder on another workstation and verify checksums.",
+      "expected": "Correct access boundaries and version labels; no tutor solutions or credentials in student artifacts; all referenced assets are present.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "TUTOR-EXERCISES",
+      "area": "curriculum",
+      "mode": "manual",
+      "procedure": "Follow every exercise sheet and tutor walkthrough from a clean imported VM; verify clues, flags, timings, reset and all style resources.",
+      "expected": "Documents build, steps solve the intended lab, expected flags/grades match, and reset returns students to the documented starting state.",
+      "evidence": [
+        "exact source/artifact/fixture identities",
+        "dated commands/screenshots/results",
+        "positive and negative observations",
+        "cleanup and data-integrity proof"
+      ],
+      "sources": []
+    },
+    {
+      "id": "BROWSER-UI-SMOKE",
+      "area": "browser",
+      "mode": "automated",
+      "procedure": "Run tests/browser/ui_smoke.py against its documented isolated target.",
+      "expected": "Every supported route/action passes with no runtime errors or unauthorized effects.",
+      "evidence": [
+        "browser output",
+        "API contract assertions",
+        "source and browser version"
+      ],
+      "sources": [
+        "tests/browser/ui_smoke.py"
+      ]
+    },
+    {
+      "id": "BROWSER-LIVE-SMOKE",
+      "area": "browser",
+      "mode": "appliance",
+      "procedure": "Run tests/browser/live_smoke.py against its documented isolated target.",
+      "expected": "Every supported route/action passes with no runtime errors or unauthorized effects.",
+      "evidence": [
+        "browser output",
+        "API contract assertions",
+        "source and browser version"
+      ],
+      "sources": [
+        "tests/browser/live_smoke.py"
+      ]
+    }
+  ]
+}

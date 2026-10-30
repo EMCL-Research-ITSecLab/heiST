@@ -1,5 +1,8 @@
 # Local test workflow
 
+The complete acceptance plan, case catalogue, function inventory and evidence
+workflow are in [TEST-CONCEPT.md](TEST-CONCEPT.md).
+
 Start with a disposable virtual environment and the existing platform dependency
 subset, then run from the repository root:
 
@@ -30,8 +33,8 @@ and PostgreSQL tests; privileged VM acceptance belongs on a local workstation.
 
 ## Web application
 
-The PHP application already has PHPUnit and Composer dependencies; no frontend
-framework is introduced. Install those existing dependencies as described by
+PHPUnit remains the migration reference while the browser API moves to Flask.
+The maintained browser interface uses React; see [FRONTEND.md](FRONTEND.md). Install those existing dependencies as described by
 the web application's Composer file. From a workstation with PHP and the
 `webserver/html/vendor/` directory present:
 

@@ -103,6 +103,11 @@ def create_app(config=None, services=None):
             if db is not None:
                 db.close()
 
+    @application.get('/admin/operations')
+    def operations():
+        from heist.backend.operations import collect
+        return {'success': True, 'data': collect(connection, os.environ, application.config['MAINTENANCE_FILE'])}, 200
+
     routes = [
         ('launch-challenge', 'launch_challenge', ('challenge_template_id', 'user_id'), 'Challenge launched', False, False),
         ('stop-challenge', 'stop_challenge', ('user_id',), 'Challenge stopped', False, False),

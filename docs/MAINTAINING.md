@@ -70,3 +70,6 @@ Private settings belong in `config/installer.env` and `config/backend.env`.
 Existing installations may retain their original private paths: the environment
 loader reads them in place and translates packaged resource paths without
 copying credentials or moving private keys.
+
+See [administrator operations](ADMINISTRATION.md), [archive VM setup](LOG-ARCHIVING.md)
+and the [complete verification concept](TEST-CONCEPT.md).

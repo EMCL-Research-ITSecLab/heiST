@@ -15,7 +15,7 @@ class ArchiveTests(unittest.TestCase):
         entry = SimpleNamespace(filename='closed.log.gz', st_mode=S_IFREG | 0o600, st_size=len(data), st_mtime=1)
         sftp = MagicMock()
         sftp.listdir_attr.return_value = [entry]
-        sftp.stat.return_value = entry
+        sftp.lstat.return_value = entry
         sftp.get.side_effect = lambda remote, local: Path(local).write_bytes(data)
         ssh = MagicMock()
         ssh.open_sftp.return_value.__enter__.return_value = sftp
@@ -45,3 +45,99 @@ class ArchiveTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class ArchiveServiceTests(unittest.TestCase):
+    def config(self, destination):
+        return {'schema': 1, 'source': 'web', 'host': 'web.example.invalid', 'user': 'log-reader',
+                'remote_directory': '/var/log/closed', 'destination': str(destination),
+                'remove_remote': False, 'minimum_free_bytes': 0}
+
+    def test_failed_run_preserves_last_success_and_hides_exception_details(self):
+        import json
+        from tools.maintenance.archive_logs import run_configuration
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root/'status.json').write_text(json.dumps({'source': 'web', 'last_success_at': '2026-10-30T10:00:00+00:00'}))
+            connect = MagicMock(side_effect=RuntimeError('private-key-material'))
+            with self.assertRaises(RuntimeError):
+                run_configuration(self.config(root), 'identity', 'known_hosts', connect=connect)
+            report = json.loads((root/'status.json').read_text())
+            self.assertEqual(report['status'], 'failed')
+            self.assertEqual(report['last_success_at'], '2026-10-30T10:00:00+00:00')
+            self.assertNotIn('private-key-material', json.dumps(report))
+            self.assertEqual((root/'status.json').stat().st_mode & 0o777, 0o600)
+
+    def test_capacity_failure_never_opens_ssh(self):
+        from tools.maintenance.archive_logs import run_configuration
+        with tempfile.TemporaryDirectory() as directory:
+            config = self.config(Path(directory))
+            config['minimum_free_bytes'] = 2**100
+            connect = MagicMock()
+            with self.assertRaises(OSError):
+                run_configuration(config, 'identity', 'known_hosts', connect=connect)
+            connect.assert_not_called()
+
+    def test_concurrent_run_cannot_overwrite_receipt_or_connect(self):
+        import fcntl
+        from tools.maintenance.archive_logs import run_configuration
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with (root/'.archive.lock').open('w') as held:
+                fcntl.flock(held, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                connect = MagicMock()
+                with self.assertRaises(BlockingIOError):
+                    run_configuration(self.config(root), 'identity', 'known_hosts', connect=connect)
+                connect.assert_not_called()
+                self.assertFalse((root/'status.json').exists())
+
+    def test_untrusted_paths_and_unknown_configuration_fields_are_rejected(self):
+        import json
+        from tools.maintenance.archive_logs import load_configuration
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for changes in ({'destination': '../outside'}, {'remote_directory': '/logs/../private'},
+                            {'remove_remote': 'yes'}, {'minimum_free_bytes': True}, {'unknown': 1}):
+                config = self.config(root)
+                config.update(changes)
+                path = root/'config.json'
+                path.write_text(json.dumps(config))
+                with self.assertRaises(ValueError):
+                    load_configuration(path)
+
+    def test_remote_file_changed_or_replaced_is_never_removed(self):
+        for mode in ('changed', 'link'):
+            ssh, sftp = ArchiveTests().fixture()
+            entry = sftp.lstat.return_value
+            sftp.lstat.return_value = SimpleNamespace(st_size=entry.st_size + (mode == 'changed'), st_mtime=entry.st_mtime,
+                                                     st_mode=0o120777 if mode == 'link' else entry.st_mode)
+            with tempfile.TemporaryDirectory() as directory, patch('tools.maintenance.archive_logs.remote_digest', return_value=hashlib.sha256(b'closed gzip archive').hexdigest()):
+                with self.assertRaises(RuntimeError):
+                    archive(ssh, '/logs', directory, remove_remote=True)
+            sftp.remove.assert_not_called()
+
+    def test_successful_service_run_records_verified_counts_and_timestamp(self):
+        from tools.maintenance.archive_logs import run_configuration
+        ssh, sftp = ArchiveTests().fixture()
+        ssh.__enter__.return_value = ssh
+        with tempfile.TemporaryDirectory() as directory, patch('tools.maintenance.archive_logs.remote_digest', return_value=hashlib.sha256(b'closed gzip archive').hexdigest()):
+            result = run_configuration(self.config(Path(directory)), 'identity', 'known_hosts', connect=lambda: ssh,
+                                       clock=lambda: '2026-10-30T10:00:00+00:00')
+            self.assertEqual(result['status'], 'success')
+            self.assertEqual(result['counters']['verified'], 1)
+            self.assertEqual(result['counters']['copied'], 1)
+            self.assertEqual(result['last_success_at'], result['completed_at'])
+        sftp.remove.assert_not_called()
+
+    def test_remote_digest_quotes_paths_and_rejects_command_failure(self):
+        from tools.maintenance.archive_logs import remote_digest
+        ssh = MagicMock()
+        output = MagicMock()
+        output.read.return_value = (hashlib.sha256(b'closed').hexdigest()+'  file\n').encode()
+        output.channel.recv_exit_status.return_value = 0
+        ssh.exec_command.return_value = (None, output, None)
+        self.assertEqual(remote_digest(ssh, '/logs/a; shell.gz'), hashlib.sha256(b'closed').hexdigest())
+        self.assertIn("'/logs/a; shell.gz'", ssh.exec_command.call_args.args[0])
+        output.channel.recv_exit_status.return_value = 1
+        with self.assertRaises(RuntimeError):
+            remote_digest(ssh, '/logs/file.gz')

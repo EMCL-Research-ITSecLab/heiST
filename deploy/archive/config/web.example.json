@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "source": "web",
+  "host": "WEB_SOURCE_HOST",
+  "user": "heist-log-reader",
+  "remote_directory": "/var/log/heist-closed",
+  "destination": "/var/lib/heist-archive/web",
+  "remove_remote": false,
+  "minimum_free_bytes": 1073741824
+}

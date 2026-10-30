@@ -48,3 +48,11 @@ class WizardTests(unittest.TestCase):
              patch('heist.rollout.pve.PVE'), patch('heist.rollout.cli.Controller', return_value=controller):
             self.assertEqual(main(self.arguments), 0)
         controller.apply.assert_called_once_with(self.plan)
+
+    def test_recovery_rehearsal_refuses_before_loading_config_without_explicit_fixture_optin(self):
+        from tools.local.rehearse_recovery import main as rehearse
+        with patch.dict('os.environ', {'HEIST_PRIVILEGED_TESTS': '0'}), \
+             patch('tools.local.rehearse_recovery.Deployment.load') as load:
+            with self.assertRaisesRegex(RuntimeError, 'disposable heist-pilot'):
+                rehearse(['--config', '/nonexistent/config', '--transaction', 'fixture', '--confirm-version', '0.2.0'])
+            load.assert_not_called()

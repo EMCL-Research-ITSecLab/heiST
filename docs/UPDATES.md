@@ -89,7 +89,7 @@ commit before applying. It refuses non-interactive input; use plan/apply for CI.
    records its SHA256. It retains a source Git bundle and private host configuration.
 4. Deployment switches backend Git HEAD and installs managed web files. Locally
    changed web source is refused. Uploads, credentials, certificates and vendor
-   dependencies are preserved; tests/mocks are removed from the public document
+   dependencies are preserved; managed test/mocks source files are excluded from the public document
    root. Existing Composer autoload metadata is regenerated without plugins/scripts. The legacy
    installer ran `composer update`, so its resolved `composer.lock` and vendor package
    metadata are preserved and fingerprinted as runtime dependency state. Protocol 1

@@ -47,6 +47,9 @@
 
 ## Maintainer workflows
 
+Use `bin/heist --help` for the explicit administrator and service commands.
+
+- [Code layout and release maintenance](docs/MAINTAINING.md)
 - [Local full-appliance testing](docs/LOCAL-APPLIANCE.md)
 - [Backend, API and web tests](docs/TESTING.md)
 - [Update wizard, migration and recovery](docs/UPDATES.md)

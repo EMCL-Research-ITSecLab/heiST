@@ -87,3 +87,17 @@ proof and an idle backend/pool restart. That pilot wrapper is separate from the
 normal heiST worker configuration. Never restart a backend with live challenges
 solely to satisfy a test harness. Workspace aliases are resolved before QEMU
 starts, so `runs/current-appliance` and the direct workspace use the same proof.
+
+## Rollout rehearsal backup volume
+
+A disposable pilot may attach a separately created, private standalone
+`backup.qcow2` by setting `attach_backup_disk: true` in its private `pilot.json`.
+The device is identified as `HEIST-ROLLOUT-BACKUP`; identify it explicitly before
+formatting/mounting it for administrator checkpoints. The launcher does not format
+or mount disks. Single-disk checkpoint/export commands refuse this attachment
+rather than silently omitting its data.
+
+See [rollout validation](ROLLOUT-VALIDATION.md) for the explicit recovery and web
+reboot rehearsals. Retain the verified update baseline and newer rollback safety
+checkpoint. A test overlay also depends on its backing image; keep that image
+until the overlay is removed or converted to a stopped standalone disk.

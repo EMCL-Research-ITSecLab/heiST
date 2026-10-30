@@ -22,6 +22,13 @@ Public web deployments exclude test/mocks and regenerate existing Composer
 autoload metadata without installing dependencies or running plugins/scripts.
 No application framework, dependency or library is added.
 
+Validation: 132 Python tests passed in the disposable appliance with real
+PostgreSQL and privileged isolation checks; 142 PHP tests passed with 540
+assertions. Complete update, real three-VM failure recovery, deliberate rollback,
+postcommit resume, restore of the newer SQL safety dump, and a real web-VM
+reboot under maintenance passed. This fixture
+is not a restored production clone.
+
 See `docs/UPDATES.md` for configuration, limitations and recovery commands, and
 `docs/ROLLOUT-VALIDATION.md` for exact validation evidence and remaining production
 gates. The fresh installer still needs a separate host checkpoint/resume design;

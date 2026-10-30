@@ -10,11 +10,13 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def main():
+def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--frontend', action='store_true', help='PHP syntax plus existing PHPUnit suite (requires installed vendor/)')
     parser.add_argument('--frontend-database', action='store_true', help='Include container-backed PHP tests; requires isolated Docker and cached postgres:15')
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
+    if args.frontend_database and not args.frontend:
+        parser.error('--frontend-database requires --frontend')
     sys.path[:0] = [str(ROOT), str(ROOT / 'tools/local')]
     if args.frontend:
         php = shutil.which('php')

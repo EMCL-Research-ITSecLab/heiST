@@ -70,3 +70,15 @@ class PilotApplianceTests(unittest.TestCase):
                     target.addfile(item, io.BytesIO(body))
             with self.assertRaisesRegex(ValueError, 'uncovered'):
                 appliance.inspect_appliance(altered)
+
+    def test_export_refuses_attached_backup_volume(self):
+        with tempfile.TemporaryDirectory() as folder:
+            work=Path(folder)/'work';work.mkdir()
+            (work/'pilot.json').write_text('{"attach_backup_disk":true}')
+            (work/'pilot-shutdown-proof.json').write_text(json.dumps({
+                'all_guests_stopped':True,'portable_management_nic':True,'cloud_init_disabled':True}))
+            output=work.parent/'release'
+            with patch('pilot_appliance.subprocess.check_output',return_value=b'{"format":"qcow2","virtual-size":1024}'):
+                with self.assertRaisesRegex(ValueError,'attached backup disk'):
+                    appliance.export(work,output)
+            self.assertFalse(output.exists())

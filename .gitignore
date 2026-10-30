@@ -18,3 +18,10 @@ setup/certs/
 setup/suricata-8.0.0.tar.gz
 setup/suricata-8.0.0/
 setup/credentials.md
+
+# Generated Python environments and distribution metadata
+/.venv/
+/venv/
+/build/
+/dist/
+*.egg-info/

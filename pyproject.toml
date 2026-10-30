@@ -4,9 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "heiST"
-version = "0.1.0"
+version = "0.2.0"
 description = "heiST automation and backend tooling"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
+
+[project.scripts]
+heist = "heist.cli:main"
 
 [tool.setuptools]
 include-package-data = true
@@ -18,10 +21,12 @@ include = [
     "backend*",
     "monitoring*",
     "setup*",
-    "tests*",
+    "heist*",
+    "tools*",
+    "automatic_ova_setup*",
 ]
 exclude = [
-    "tests.end-to-end*",
+    "tests*",
     "**.__pycache__*",
 ]
 

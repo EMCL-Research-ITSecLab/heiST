@@ -124,6 +124,8 @@ def export(work, output):
     if not all(proof.get(key) is True for key in ('all_guests_stopped', 'portable_management_nic', 'cloud_init_disabled')):
         raise ValueError('Run the guest export preparation and retain its shutdown proof first')
     config = json.loads((work / 'pilot.json').read_text())
+    if config.get('attach_backup_disk'):
+        raise ValueError('Single-disk OVA export cannot include the attached backup disk')
     if output.exists():
         raise FileExistsError(output)
     # VMDK plus OVA coexist during packing; reserve room for both and metadata.

@@ -9,6 +9,7 @@ import traceback
 import fcntl
 
 from backend.get_db_connection import get_db_connection
+from heist.runtime import cleanup_is_complete
 from backend.warmup_challenge import warmup_challenge as warmup_challenge_backend
 from backend.teardown_challenge import teardown_challenge as teardown_challenge_backend
 
@@ -22,11 +23,6 @@ MONITORING_VM_ID = int(os.getenv("MONITORING_VM_ID", "9000"))
 WAZUH_NETWORK_DEVICE = os.getenv("WAZUH_NETWORK_DEVICE", "vrtmon")
 
 CLEANUP_COMPLETE_FILE_PATH = "/var/lock/cleanup_complete.lock"
-if not os.path.exists(CLEANUP_COMPLETE_FILE_PATH):
-    with open(CLEANUP_COMPLETE_FILE_PATH, 'w') as f:
-        pass
-
-os.makedirs(POOL_MANAGER_LOGGING_DIR, exist_ok=True)
 
 def system_is_ready_for_warmup():
     """
@@ -69,16 +65,7 @@ def system_is_ready_for_warmup():
 
     print("[CHECK][OK] Monitoring is ready")
 
-    with open(CLEANUP_COMPLETE_FILE_PATH, "w") as f:
-        try:
-            fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except IOError:
-            print("[CHECK][WAIT] Cleanup process not complete yet")
-            return False
-
-        fcntl.flock(f, fcntl.LOCK_UN)
-
-    return True
+    return cleanup_is_complete(CLEANUP_COMPLETE_FILE_PATH)
 
 
 class PoolManager:
@@ -396,6 +383,7 @@ class PoolManager:
 
 
 if __name__ == "__main__":
+    os.makedirs(POOL_MANAGER_LOGGING_DIR, exist_ok=True)
     # Initial wait to allow cleanup process to remove old flag
     time.sleep(10)
 

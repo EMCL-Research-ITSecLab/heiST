@@ -1,7 +1,0 @@
-Metadata-Version: 2.4
-Name: heiST-ctf
-Version: 0.1.0
-Summary: heiST automation and backend tooling
-Requires-Python: >=3.10
-License-File: LICENSE.md
-Dynamic: license-file

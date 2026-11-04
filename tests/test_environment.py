@@ -9,6 +9,31 @@ from heist.rollout.host import prediction_cron
 
 
 class EnvironmentTests(unittest.TestCase):
+    def test_real_platform_entrypoint_imports_resolve_without_provisioning(self):
+        import subprocess
+        import sys
+        script = '''
+import importlib
+from unittest.mock import patch
+services = {
+ 'heist.platform.challenges.launch': 'launch_challenge',
+ 'heist.platform.challenges.stop': 'stop_challenge',
+ 'heist.platform.images.import_templates': 'import_machine_templates',
+ 'heist.platform.images.delete_templates': 'delete_machine_templates',
+ 'heist.platform.users.vpn_config': 'get_user_config',
+ 'heist.platform.users.delete_vpn': 'delete_user_config',
+}
+with patch('os.makedirs', side_effect=AssertionError('Import created a directory')), \\
+     patch('subprocess.run', side_effect=AssertionError('Import executed a command')), \\
+     patch('requests.sessions.Session.request', side_effect=AssertionError('Import contacted infrastructure')):
+    for module, name in services.items():
+        assert callable(getattr(importlib.import_module(module), name)), module
+print('All six platform entry points resolve safely')
+'''
+        result = subprocess.run([sys.executable, '-c', script], cwd=Path(__file__).resolve().parents[1], capture_output=True, text=True, timeout=15)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('All six platform entry points', result.stdout)
+
     def test_canonical_config_precedes_legacy_without_copying_private_files(self):
         with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, {}, clear=True), patch('heist.environment.ROOT', Path(folder)):
             root=Path(folder);(root/'backend').mkdir();(root/'backend/.env').write_text('DB_NAME=legacy\n')

@@ -89,6 +89,14 @@ class BackupTests(unittest.TestCase):
 
 
 class RuntimeTests(unittest.TestCase):
+    def test_batch_teardown_consumes_results_and_propagates_worker_failures(self):
+        from heist.platform.cleanup import teardown_remaining_challenges
+        teardown = Mock()
+        teardown_remaining_challenges([1, 2], teardown=teardown)
+        self.assertEqual(sorted(call.args[0] for call in teardown.call_args_list), [1, 2])
+        with self.assertRaisesRegex(RuntimeError, 'teardown failed'):
+            teardown_remaining_challenges([3], teardown=Mock(side_effect=RuntimeError('teardown failed')))
+
     def test_cleanup_readiness_is_false_during_work_and_after_failure(self):
         with tempfile.TemporaryDirectory() as directory:
             path=Path(directory)/'cleanup.lock'

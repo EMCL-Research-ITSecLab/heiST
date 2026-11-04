@@ -41,6 +41,13 @@ def _parallel(function, identifiers):
         list(workers.map(function, identifiers))
 
 
+def teardown_remaining_challenges(identifiers, *, teardown=None):
+    if teardown is None:
+        from heist.platform.challenges.teardown import teardown_challenge
+        teardown = teardown_challenge
+    _parallel(teardown, identifiers)
+
+
 def cleanup_remaining_challenges(*, connect=None, stop=None, teardown=None, lock_path=None):
     if stop is None:
         from heist.platform.challenges.stop import stop_challenge

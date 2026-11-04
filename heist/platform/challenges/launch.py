@@ -39,10 +39,8 @@ WAZUH_ENROLLMENT_PASSWORD = os.getenv("WAZUH_ENROLLMENT_PASSWORD")
 WINDOWS_FLAG_DIR = os.getenv("WINDOWS_FLAG_DIR", r"C:\Users\Administrator")
 
 DNSMASQ_INSTANCES_DIR = "/etc/dnsmasq-instances/"
-os.makedirs(DNSMASQ_INSTANCES_DIR, exist_ok=True)
 
 challenge_launch_lock_dir = "/var/lock/challenge_launch_locks/"
-os.makedirs(challenge_launch_lock_dir, exist_ok=True)
 
 
 def launch_challenge(challenge_template_id, user_id, vpn_monitoring_device, dmz_monitoring_device):
@@ -50,6 +48,7 @@ def launch_challenge(challenge_template_id, user_id, vpn_monitoring_device, dmz_
     Launch a challenge by creating a user and network device.
     """
 
+    os.makedirs(DNSMASQ_INSTANCES_DIR, exist_ok=True)
     launch_lock = None
 
     with db_connection_context() as db_conn:

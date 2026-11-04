@@ -47,7 +47,6 @@ load_dotenv(find_dotenv())
 WAZUH_ENROLLMENT_PASSWORD = os.getenv("WAZUH_ENROLLMENT_PASSWORD")
 
 DNSMASQ_INSTANCES_DIR = "/etc/dnsmasq-instances/"
-os.makedirs(DNSMASQ_INSTANCES_DIR, exist_ok=True)
 
 
 @retry(stop=stop_after_attempt(10), wait=wait_exponential_jitter(initial=1, max=5, exp_base=1.1, jitter=1),
@@ -57,6 +56,7 @@ def warmup_challenge(pre_assigned_user_id, challenge_template_id, vpn_monitoring
     Launch a challenge by creating a user and network device.
     """
 
+    os.makedirs(DNSMASQ_INSTANCES_DIR, exist_ok=True)
     with db_connection_context() as db_conn:
 
         print(f"[Info] Starting warmup challenge for user {pre_assigned_user_id} and template {challenge_template_id}", flush=True)

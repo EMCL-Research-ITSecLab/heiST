@@ -2,14 +2,19 @@
 import hmac
 import importlib
 import os
+from contextlib import nullcontext
 from pathlib import Path
 from heist.environment import load_backend_env as load_dotenv
 from flask import Flask, redirect, request, send_file
+from heist.infrastructure.locking import OperationBusy, operation_guard
+from heist.runtime import cleanup_is_complete
 
 
 def create_app(config=None, services=None):
     application = Flask(__name__)
     application.config.update(BACKEND_AUTHENTICATION_TOKEN=os.getenv('BACKEND_AUTHENTICATION_TOKEN'),
+                              TEMPLATE_LOCK_DIRECTORY=os.getenv('HEIST_TEMPLATE_LOCK_DIRECTORY', '/run/heist-template-operations'),
+                              CLEANUP_FILE=os.getenv('HEIST_CLEANUP_FILE', '/var/lock/cleanup_complete.lock'),
                               MAX_CONTENT_LENGTH=65536, MAINTENANCE_FILE=os.getenv('HEIST_MAINTENANCE_FILE', '/run/heist-maintenance'))
     application.config.update(config or {})
     services = services or {}
@@ -35,6 +40,8 @@ def create_app(config=None, services=None):
             return {'error': 'Unauthorized', 'success': False}, 401
         if request.method == 'POST' and Path(application.config['MAINTENANCE_FILE']).exists():
             return {'error': 'Maintenance in progress', 'success': False}, 503
+        if request.path == '/launch-challenge' and not cleanup_is_complete(application.config['CLEANUP_FILE']):
+            return {'error': 'Startup cleanup requires reconciliation', 'success': False}, 503
 
     @application.errorhandler(413)
     def too_large(_error):
@@ -70,13 +77,17 @@ def create_app(config=None, services=None):
             elif name == 'import_machine_templates':
                 from heist.infrastructure.network.cloud_init_pool import ip_pool
                 values.append(ip_pool)
-            result = service(name)(*values)
+            guard = operation_guard(application.config['TEMPLATE_LOCK_DIRECTORY'], values[0], shared=name == 'launch_challenge') if name in ('launch_challenge', 'import_machine_templates', 'delete_machine_templates') else nullcontext()
+            with guard:
+                result = service(name)(*values)
             if download:
                 return send_file(result, as_attachment=True)
             response = {'message': message, 'success': True}
             if name == 'launch_challenge':
                 response['entrypoints'] = result
             return response, 200
+        except OperationBusy:
+            return {'error': 'An exercise image operation is still running', 'success': False}, 409
         except Exception:
             application.logger.exception('Backend action failed: %s', name)
             return {'error': 'Backend operation failed', 'success': False}, 500
@@ -90,6 +101,8 @@ def create_app(config=None, services=None):
 
     @application.get('/health/ready')
     def ready():
+        if not cleanup_is_complete(application.config['CLEANUP_FILE']):
+            return {'success': False, 'status': 'cleanup pending'}, 503
         db = None
         try:
             db = connection()

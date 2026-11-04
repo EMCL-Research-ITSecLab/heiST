@@ -2,11 +2,11 @@ import os
 from heist.environment import load_backend_env as load_dotenv
 import requests
 import subprocess
-import fcntl
 
 from heist.infrastructure.network.cloud_init_pool import ip_pool
 from heist.infrastructure.proxmox.settings import challenge_cpu_type
 from heist.infrastructure.proxmox.tasks import wait_for_task
+from heist.infrastructure.locking import operation_guard
 
 load_dotenv()
 node = os.getenv("PROXMOX_HOSTNAME", "pve")
@@ -67,26 +67,33 @@ def reload_network_api_call():
     """
     Reload a network in Proxmox.
     """
-    RELOAD_LOCK_FILE = "/var/lock/reload_network.lock"
-    with open(RELOAD_LOCK_FILE, "w") as lock_file:
-        try:
-            fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
-
-            endpoint = f"api2/json/nodes/{node}/network"
-            data = {}
-            make_api_call("PUT", endpoint, data)
-
-            fcntl.flock(lock_file, fcntl.LOCK_UN)
-        except BlockingIOError:
-            pass
+    directory = os.getenv('HEIST_NETWORK_LOCK_DIRECTORY', '/run/heist-network-operations')
+    with operation_guard(directory, 1):
+        response = make_api_call('PUT', f'api2/json/nodes/{node}/network', {})
+        wait_for_task(make_api_call, node, response, timeout=90)
 
 
 def delete_vm_api_call(machine):
     """
     Delete a virtual machine in Proxmox.
     """
+    if not vm_exists_api_call(machine):
+        return {'data': None, 'already_absent': True}
     endpoint = f"api2/json/nodes/{node}/qemu/{machine.id}"
-    return make_api_call("DELETE", endpoint)
+    response = make_api_call("DELETE", endpoint)
+    wait_for_task(make_api_call, node, response)
+    if vm_exists_api_call(machine):
+        raise RuntimeError('VM deletion task completed but the VM is still present')
+    return response
+
+
+def stop_vm_api_call(machine):
+    if vm_is_stopped_api_call(machine):
+        return
+    response = make_api_call('POST', f'api2/json/nodes/{node}/qemu/{machine.id}/status/stop')
+    wait_for_task(make_api_call, node, response, timeout=180)
+    if not vm_is_stopped_api_call(machine):
+        raise RuntimeError('VM stop task completed but the VM is still running')
 
 
 def delete_network_api_call(network):
@@ -124,19 +131,6 @@ def launch_vm_api_call(machine):
     return make_api_call("POST", endpoint)
 
 
-def stop_vm_api_call(machine):
-    """
-    Stop a virtual machine in Proxmox.
-    """
-
-    subprocess.run(["qm", "stop", str(machine.id), "--skiplock"], check=True, capture_output=True)
-
-    """
-    endpoint = f"api2/json/nodes/{node}/qemu/{machine.id}/status/stop"
-    return make_api_call("POST", endpoint)
-    """
-
-
 def shutdown_vm_api_call(machine):
     """Cleanly shut down an imported template; never force-freeze dirty filesystems."""
     subprocess.run(["qm", "shutdown", str(machine.id), "--timeout", "180", "--forceStop", "0"],
@@ -148,15 +142,12 @@ def vm_is_stopped_api_call(machine):
     Check if a virtual machine is stopped in Proxmox.
     """
 
-    out = subprocess.run(["qm", "status", str(machine.id)], check=True, capture_output=True, text=True)
-    return "stopped" in out.stdout
-
-    """
     endpoint = f"api2/json/nodes/{node}/qemu/{machine.id}/status/current"
     response = make_api_call("GET", endpoint)
-
-    return response["data"]["status"] == "stopped"
-    """
+    state = response.get('data', {}).get('status')
+    if state not in ('running', 'stopped'):
+        raise RuntimeError('VM status was not confirmed')
+    return state == 'stopped'
 
 
 def attach_cloud_init_drive(machine_template_id, storage="local-lvm"):
@@ -277,12 +268,13 @@ def vm_exists_api_call(machine):
     """
     Check if a virtual machine exists in Proxmox.
     """
-    endpoint = f"api2/json/nodes/{node}/qemu/{machine.id}/status/current"
-    try:
-        make_api_call("GET", endpoint)
-        return True
-    except Exception:
-        return False
+    # A missing config and an unavailable API can both produce errors on the
+    # per-VM endpoint. Only a successful authoritative list proves absence.
+    response = make_api_call('GET', f'api2/json/nodes/{node}/qemu')
+    values = response.get('data')
+    if not isinstance(values, list) or any(not isinstance(value, dict) or type(value.get('vmid')) is not int for value in values):
+        raise RuntimeError('VM inventory was not confirmed')
+    return any(value['vmid'] == machine.id for value in values)
 
 
 def vm_is_template_api_call(machine_template):
@@ -292,7 +284,7 @@ def vm_is_template_api_call(machine_template):
     endpoint = f"api2/json/nodes/{node}/qemu/{machine_template.id}/config"
     response = make_api_call("GET", endpoint)
 
-    return response["data"]["template"] == 0 if "template" in response["data"] else False
+    return response['data'].get('template', 0) == 1
 
 
 def get_sockets_api_call(machine_template):
@@ -319,9 +311,8 @@ def network_device_exists_api_call(network):
     """
     Check if a network device exists in Proxmox.
     """
-    endpoint = f"api2/json/nodes/{node}/network/{network.host_device}"
-    try:
-        make_api_call("GET", endpoint)
-        return True
-    except Exception:
-        return False
+    response = make_api_call('GET', f'api2/json/nodes/{node}/network')
+    values = response.get('data')
+    if not isinstance(values, list) or any(not isinstance(value, dict) or not isinstance(value.get('iface'), str) for value in values):
+        raise RuntimeError('Network inventory was not confirmed')
+    return any(value['iface'] == network.host_device for value in values)

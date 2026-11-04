@@ -5,6 +5,8 @@ from tenacity import retry, stop_after_attempt, wait_exponential_jitter
 import time
 from dotenv import find_dotenv
 from heist.environment import load_backend_env as load_dotenv
+from heist.platform.challenges.availability import require_available_template
+from heist.platform.images.locking import template_guard
 import os
 from heist.infrastructure.network.firewall import install_network_input_filter, remove_network_input_filter
 from heist.infrastructure.network.dns import connection_dns_servers, fallback_servers, hostname_records
@@ -52,12 +54,18 @@ DNSMASQ_INSTANCES_DIR = "/etc/dnsmasq-instances/"
 @retry(stop=stop_after_attempt(10), wait=wait_exponential_jitter(initial=1, max=5, exp_base=1.1, jitter=1),
        reraise=True)
 def warmup_challenge(pre_assigned_user_id, challenge_template_id, vpn_monitoring_device, dmz_monitoring_device):
+    with template_guard(challenge_template_id, shared=True):
+        return _warmup_challenge(pre_assigned_user_id, challenge_template_id, vpn_monitoring_device, dmz_monitoring_device)
+
+
+def _warmup_challenge(pre_assigned_user_id, challenge_template_id, vpn_monitoring_device, dmz_monitoring_device):
     """
     Launch a challenge by creating a user and network device.
     """
 
     os.makedirs(DNSMASQ_INSTANCES_DIR, exist_ok=True)
     with db_connection_context() as db_conn:
+        require_available_template(db_conn, challenge_template_id, pre_assigned_user_id)
 
         print(f"[Info] Starting warmup challenge for user {pre_assigned_user_id} and template {challenge_template_id}", flush=True)
 
@@ -854,40 +862,8 @@ def _dnsmasq_file_paths(network):
 
 
 def stop_dnsmasq_process(pidfile_path, timeout=5):
-    """
-    Stop a running dnsmasq instance (if any) and wait until it has exited.
-    """
-    try:
-        with open(pidfile_path, "r") as f:
-            pid = int(f.read().strip())
-    except (FileNotFoundError, ValueError):
-        return
-
-    # Guard against PID reuse
-    try:
-        with open(f"/proc/{pid}/cmdline", "rb") as f:
-            if b"dnsmasq" not in f.read():
-                return
-    except FileNotFoundError:
-        return
-
-    try:
-        os.kill(pid, signal.SIGTERM)
-    except ProcessLookupError:
-        return
-
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        try:
-            os.kill(pid, 0)
-        except ProcessLookupError:
-            return
-        time.sleep(0.1)
-
-    try:
-        os.kill(pid, signal.SIGKILL)
-    except ProcessLookupError:
-        pass
+    from heist.infrastructure.network.dnsmasq_process import stop
+    return stop(pidfile_path, timeout)
 
 
 def start_dnsmasq_process(network, attempts=5, retry_delay=1.0):

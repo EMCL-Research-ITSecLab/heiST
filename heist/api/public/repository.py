@@ -7,9 +7,10 @@ from psycopg2.extras import RealDictCursor
 
 
 class Repository:
-    def __init__(self, connect):
+    def __init__(self, connect, *, enforce_role=True):
         self.connect = connect
         self.connection = None
+        self.enforce_role = enforce_role
 
     def db(self):
         if self.connection is None:
@@ -18,6 +19,21 @@ class Repository:
                 connection.autocommit = True
                 with connection.cursor() as cursor:
                     cursor.execute("SET statement_timeout = '5s'")
+                    if self.enforce_role:
+                        cursor.execute('''
+                            SELECT NOT EXISTS (
+                                SELECT 1 FROM pg_roles p WHERE
+                                    (p.rolsuper OR p.rolcreatedb OR p.rolcreaterole OR p.rolreplication OR p.rolbypassrls)
+                                    AND pg_has_role(current_user, p.oid, 'MEMBER')
+                            )
+                            AND NOT EXISTS(SELECT 1 FROM pg_database d WHERE d.datname=current_database() AND pg_has_role(current_user,d.datdba,'MEMBER'))
+                            AND NOT EXISTS(SELECT 1 FROM pg_auth_members m JOIN pg_roles r ON r.oid=m.member WHERE r.rolname=current_user)
+                            AND NOT has_schema_privilege(current_user,'public','CREATE')
+                            AND NOT has_schema_privilege(current_user,'api','CREATE')
+                            AND NOT has_table_privilege(current_user,'public.users','SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+                        ''')
+                        if cursor.fetchone() != (True,):
+                            raise PermissionError('The public API requires a restricted database role')
             except BaseException:
                 connection.close()
                 raise

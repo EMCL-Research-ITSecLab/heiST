@@ -60,6 +60,7 @@ class WebDatabaseTests(unittest.TestCase):
                     cursor.execute((root/'releases/migrations/0003_learning_visibility.sql').read_text())
                     cursor.execute((root/'releases/migrations/0004_grading_time.sql').read_text())
                     cursor.execute((root/'releases/migrations/0005_account_deletion.sql').read_text())
+                    cursor.execute((root/'releases/migrations/0006_authoring_state.sql').read_text())
                     cursor.execute("INSERT INTO public.vpn_static_ips(vpn_static_ip) SELECT ('10.64.0.'||n)::inet FROM generate_series(2,250) n ON CONFLICT DO NOTHING")
             cls.api_settings = {**cls.settings, 'user': cls.role, 'password': cls.password}
         except BaseException:
@@ -183,3 +184,42 @@ class WebDatabaseTests(unittest.TestCase):
         self.assertTrue(second.scalar('web_user_mutation_lock', self.user_id+1))
         self.repo.close()
         self.assertTrue(second.scalar('web_user_mutation_lock', self.user_id))
+
+    def test_temporary_tables_cannot_shadow_legacy_security_definer_relations(self):
+        with self.repo.db().cursor() as cursor:
+            cursor.execute('CREATE TEMP TABLE users(id bigint, username text, password_hash text)')
+            cursor.execute('INSERT INTO pg_temp.users VALUES (%s,%s,%s)', (self.user_id, self.username, 'forged-hash'))
+        actual = self.repo.call('get_basic_profile_data', self.user_id, one=True)
+        self.assertEqual(actual['email'], self.username+'@example.invalid')
+        self.assertNotIn('forged-hash', str(actual))
+
+    def test_public_repository_rejects_privileged_role_even_when_its_name_is_not_special(self):
+        privileged = Repository(lambda: self.psycopg2.connect(**self.settings))
+        with self.assertRaises(PermissionError):
+            privileged.db()
+        self.assertIsNone(privileged.connection)
+
+    def test_public_repository_refuses_direct_account_table_grants(self):
+        from psycopg2 import sql
+        with closing(self.psycopg2.connect(**self.settings)) as connection:
+            connection.autocommit = True
+            with connection.cursor() as cursor:
+                cursor.execute(sql.SQL('GRANT SELECT ON public.users TO {}').format(sql.Identifier(self.role)))
+                try:
+                    with self.assertRaises(PermissionError):
+                        self.repo.db()
+                    self.assertIsNone(self.repo.connection)
+                finally:
+                    cursor.execute(sql.SQL('REVOKE SELECT ON public.users FROM {}').format(sql.Identifier(self.role)))
+
+    def test_public_repository_refuses_additional_role_memberships(self):
+        from psycopg2 import sql
+        with closing(self.psycopg2.connect(**self.settings)) as connection:
+            connection.autocommit = True
+            with connection.cursor() as cursor:
+                cursor.execute(sql.SQL('GRANT {} TO {}').format(sql.Identifier(self.observer_role), sql.Identifier(self.role)))
+                try:
+                    with self.assertRaises(PermissionError):
+                        self.repo.db()
+                finally:
+                    cursor.execute(sql.SQL('REVOKE {} FROM {}').format(sql.Identifier(self.observer_role), sql.Identifier(self.role)))

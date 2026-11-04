@@ -8,7 +8,7 @@ import time
 from heist.config import DatabaseSettings
 from heist.runtime import cleanup_guard
 
-CLEANUP_COMPLETE_FILE_PATH = '/var/lock/cleanup_complete.lock'
+CLEANUP_COMPLETE_FILE_PATH = os.getenv('HEIST_CLEANUP_FILE', '/var/lock/cleanup_complete.lock')
 
 
 def wait_for_db_connection(timeout=120, *, connect=None, sleep=time.sleep, clock=time.monotonic):
@@ -31,7 +31,7 @@ def fetch_user_ids(connection):
 
 def fetch_remaining_challenge_ids(connection):
     with connection.cursor() as cursor:
-        cursor.execute("SELECT id FROM challenges WHERE lifecycle_state != 'EXPIRED'")
+        cursor.execute('SELECT id FROM challenges')
         return [row[0] for row in cursor.fetchall()]
 
 
@@ -41,11 +41,14 @@ def _parallel(function, identifiers):
         list(workers.map(function, identifiers))
 
 
-def teardown_remaining_challenges(identifiers, *, teardown=None):
+def teardown_remaining_challenges(identifiers, *, teardown=None, expected_template_id=None):
     if teardown is None:
         from heist.platform.challenges.teardown import teardown_challenge
         teardown = teardown_challenge
-    _parallel(teardown, identifiers)
+    if expected_template_id is None:
+        _parallel(teardown, identifiers)
+    else:
+        _parallel(lambda identifier: teardown(identifier, expected_template_id=expected_template_id), identifiers)
 
 
 def cleanup_remaining_challenges(*, connect=None, stop=None, teardown=None, lock_path=None):
@@ -59,6 +62,8 @@ def cleanup_remaining_challenges(*, connect=None, stop=None, teardown=None, lock
         with closing(wait_for_db_connection(connect=connect)) as connection:
             _parallel(stop, fetch_user_ids(connection))
             _parallel(teardown, fetch_remaining_challenge_ids(connection))
+            if fetch_remaining_challenge_ids(connection):
+                raise RuntimeError('Exercise instances still require reconciliation')
 
 
 def main():

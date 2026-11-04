@@ -1,10 +1,6 @@
 import time
-import urllib3
-from tenacity import retry, stop_after_attempt, wait_fixed
 from dotenv import find_dotenv
 from heist.environment import load_backend_env as load_dotenv
-import random
-import requests
 import subprocess
 import os
 from heist.infrastructure.network.firewall import remove_network_input_filter
@@ -20,12 +16,13 @@ from heist.platform.models import (
     Connection
 )
 from heist.infrastructure.proxmox.client import (
-    vm_exists_api_call,
+    vm_exists_api_call, stop_vm_api_call, delete_vm_api_call,
     delete_network_api_call,
     reload_network_api_call,
     network_device_exists_api_call
 )
 from heist.infrastructure.database import db_connection_context
+from heist.infrastructure.locking import operation_guard
 
 load_dotenv(find_dotenv())
 
@@ -37,29 +34,38 @@ CHALLENGES_ROOT_SUBNET_CIDR = f"{CHALLENGES_ROOT_SUBNET}/{CHALLENGES_ROOT_SUBNET
 MONITORING_HOST = os.getenv("MONITORING_HOST", "10.0.0.103")
 WAZUH_PORT = os.getenv("WAZUH_API_PORT", "55000")
 WAZUH_USER = os.getenv("WAZUH_API_USER", "wazuh-wui")
-WAZUH_PASSWORD = os.getenv("WAZUH_API_PASSWORD", "MyS3cr37P450r.*-")
+WAZUH_PASSWORD = os.getenv("WAZUH_API_PASSWORD")
 
 DNSMASQ_INSTANCES_DIR = "/etc/dnsmasq-instances"
 
-def teardown_challenge(challenge_id):
+def teardown_challenge(challenge_id, *, expected_template_id=None):
+    directory = os.getenv('HEIST_INSTANCE_LOCK_DIRECTORY', '/run/heist-instance-operations')
+    with operation_guard(directory, challenge_id):
+        return _teardown_challenge(challenge_id, expected_template_id=expected_template_id)
+
+
+def _teardown_challenge(challenge_id, *, expected_template_id=None):
     """
     Stop a challenge for a user.
     """
 
     with db_connection_context() as db_conn:
-        challenge = fetch_challenge(challenge_id, db_conn)
+        challenge = fetch_challenge(challenge_id, db_conn, expected_template_id=expected_template_id)
+        if challenge is None:
+            return
         fetch_machines(challenge, db_conn)
         stop_machines(challenge)
         delete_machines(challenge)
         fetch_networks(challenge, db_conn)
-        delete_network_devices(challenge)
         stop_dnsmasq_instances(challenge)
+        delete_iptables_rules(challenge)
+        delete_network_devices(challenge)
         remove_challenge_from_wazuh(challenge)
         remove_database_entries(challenge, db_conn)
 
 
 
-def fetch_challenge(challenge_id, db_conn):
+def fetch_challenge(challenge_id, db_conn, *, expected_template_id=None):
     """
     Fetch the challenge for a user.
     """
@@ -70,15 +76,22 @@ def fetch_challenge(challenge_id, db_conn):
                 SELECT id, challenge_template_id, subnet
                 FROM challenges
                 WHERE id = %s
+                  AND lifecycle_state IN ('READY','EXPIRED','TERMINATING')
+                  AND (lifecycle_state <> 'READY' OR pre_assigned_user_id IS NULL)
+                  AND NOT EXISTS(SELECT 1 FROM users WHERE running_challenge = challenges.id)
+                  AND (%s::bigint IS NULL OR challenge_template_id = %s)
                 FOR UPDATE SKIP LOCKED 
             )
             UPDATE challenges
             SET lifecycle_state = 'TERMINATING'
             WHERE id IN (SELECT id FROM challenge_info)
             RETURNING id, challenge_template_id, subnet    
-        """, (challenge_id,))
+        """, (challenge_id, expected_template_id, expected_template_id))
 
-        challenge_id, template_id, subnet = cursor.fetchone()
+        row = cursor.fetchone()
+        if row is None:
+            return None
+        challenge_id, template_id, subnet = row
 
     challenge_template = ChallengeTemplate(template_id)
     challenge_subnet = ChallengeSubnet(subnet)
@@ -104,160 +117,38 @@ def fetch_machines(challenge, db_conn):
 
 
 def fetch_networks(challenge, db_conn):
-    """
-    Fetch the networks for a challenge.
-    """
-
-    for machine in challenge.machines.values():
-        with db_conn.cursor() as cursor1:
-            cursor1.execute("""
-                SELECT n.id, n.network_template_id, n.subnet, n.host_device, c.client_ip, c.client_mac
-                FROM networks n, network_connections c
-                WHERE c.network_id = n.id
-                AND c.machine_id = %s
-            """, (machine.id,))
-
-            for network_id, template_id, subnet, host_device, client_ip, client_mac in cursor1.fetchall():
-                if network_id not in challenge.networks:
-                    with db_conn.cursor() as cursor2:
-                        cursor2.execute("SELECT accessible, is_dmz "
-                                        "FROM network_templates "
-                                        "WHERE id = %s", (template_id,))
-                        accessible, is_dmz = cursor2.fetchone()
-
-                    network_template = NetworkTemplate(template_id, accessible)
-                    network = Network(network_id, network_template, subnet, host_device, accessible)
-                    network.set_is_dmz(is_dmz)
-
-                    challenge.add_network(network)
-
-                connection = Connection(machine, challenge.networks[network_id], client_mac, client_ip)
-                challenge.networks[network_id].add_connection(connection)
+    with db_conn.cursor() as cursor:
+        cursor.execute("""
+            SELECT n.id, n.network_template_id, n.subnet, n.host_device, t.accessible, t.is_dmz
+            FROM networks n JOIN network_templates t ON t.id = n.network_template_id
+            WHERE n.challenge_id = %s
+        """, (challenge.id,))
+        for identifier, template_id, subnet, device, accessible, dmz in cursor.fetchall():
+            template = NetworkTemplate(template_id, accessible)
+            network = Network(identifier, template, subnet, device, accessible)
+            network.set_is_dmz(dmz)
+            challenge.add_network(network)
 
 
 def delete_wazuh_agent(machine_id):
-    """
-    Delete a Wazuh agent by machine ID using Wazuh Manager API.
-
-    Args:
-        machine_id: The VM ID used to identify the agent
-
-    Returns:
-        bool: True if deletion was successful, False otherwise
-    """
-
-    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-    agent_name = f"agent_{machine_id}"
-    base_url = f"https://{MONITORING_HOST}:{WAZUH_PORT}"
-
+    from heist.infrastructure.monitoring.wazuh import Wazuh
+    client = Wazuh(MONITORING_HOST, WAZUH_PORT, WAZUH_USER, WAZUH_PASSWORD,
+                   certificate=os.getenv('WAZUH_CA_CERTIFICATE_FILE') or True)
     try:
-        auth_response = requests.post(
-            f"{base_url}/security/user/authenticate?raw=true",
-            auth=(WAZUH_USER, WAZUH_PASSWORD),
-            verify=False,
-            timeout=10
-        )
-
-        if auth_response.status_code != 200:
-            return False
-
-        token = auth_response.text.strip()
-        headers = {"Authorization": f"Bearer {token}"}
-
-        search_response = requests.get(
-            f"{base_url}/agents",
-            headers=headers,
-            params={"name": agent_name},
-            verify=False,
-            timeout=10
-        )
-
-        if search_response.status_code != 200:
-            return False
-
-        data = search_response.json()
-        agents = data.get("data", {}).get("affected_items", [])
-
-        if not agents:
-            return False
-
-        agent_id = agents[0]["id"]
-
-        delete_response = requests.delete(
-            f"{base_url}/agents",
-            headers=headers,
-            params={
-                "agents_list": agent_id,
-                "status": "all",
-                "older_than": "0s"
-            },
-            verify=False,
-            timeout=10
-        )
-
-        if delete_response.status_code == 200:
-            return True
-        else:
-            return False
-
-    except Exception as e:
-        return False
+        return client.remove_agent(machine_id)
+    finally:
+        client.close()
 
 
-@retry(stop=stop_after_attempt(5), wait=wait_fixed(1))
 def stop_machines(challenge):
-    """
-    Stop the machines for a challenge.
-    """
-    existing_machines = {}
-
-    # Remove nonexistent machines
     for machine in challenge.machines.values():
         if vm_exists_api_call(machine):
-            existing_machines[machine.id] = machine
-
-    for machine in existing_machines.values():
-        try:
-            out = subprocess.run(["qm", "stop", str(machine.id), "--skiplock"], check=True, capture_output=True)
-        except Exception as e:
-            print(f"[Warning] Failed to stop VM {machine.id}: {e}", flush=True)
-            try:
-                print(out.stdout.decode(), flush=True)
-                print(out.stderr.decode(), flush=True)
-            except Exception:
-                pass
+            stop_vm_api_call(machine)
 
 
-@retry(stop=stop_after_attempt(5), wait=wait_fixed(1))
 def delete_machines(challenge):
-    """
-    Delete the machines for a challenge.
-    """
-
-    existing_machines = {}
-
-    # Remove nonexistent machines
     for machine in challenge.machines.values():
-        if vm_exists_api_call(machine):
-            existing_machines[machine.id] = machine
-
-    for machine in existing_machines.values():
-        max_retries = 5
-        retries = 0
-        while retries < max_retries:
-            try:
-                out = subprocess.run(["qm", "destroy", str(machine.id), "--skiplock"], check=True, capture_output=True)
-            except Exception as e:
-                print(f"[Warning] Failed to destroy VM {machine.id}: {e}", flush=True)
-                try:
-                    print(out.stdout.decode(), flush=True)
-                    print(out.stderr.decode(), flush=True)
-                except Exception:
-                    pass
-
-            time.sleep(random.randint(1, 10) // 10.)
-            retries += 1
+        delete_vm_api_call(machine)
 
 
 def delete_network_devices(challenge):
@@ -266,14 +157,11 @@ def delete_network_devices(challenge):
     """
 
     for network in challenge.networks.values():
-        try:
+        if network_device_exists_api_call(network):
             delete_network_api_call(network)
-        except Exception:
-            pass
-
         remove_network_input_filter(network.host_device)
-
     reload_network_api_call()
+    wait_for_network_devices_deletion(challenge)
 
 
 def wait_for_network_devices_deletion(challenge, try_timeout=3, max_tries=10):
@@ -281,124 +169,70 @@ def wait_for_network_devices_deletion(challenge, try_timeout=3, max_tries=10):
     Wait for the networks for a challenge to be deleted.
     """
 
-    all_networks_deleted = False
-    tries = 0
-    while not all_networks_deleted and tries < max_tries:
-        tries += 1
-        try_start = time.time()
+    deadline = time.monotonic()+try_timeout*max_tries
+    while any(os.path.exists('/sys/class/net/'+network.host_device) for network in challenge.networks.values()):
+        if time.monotonic() >= deadline:
+            raise TimeoutError('Challenge bridge deletion was not confirmed')
+        time.sleep(.1)
 
-        while not time.time() - try_start < try_timeout and not all_networks_deleted:
-            all_networks_deleted = True
-            for network in challenge.networks.values():
-                if os.path.exists(f"/sys/class/net/{network.host_device}"):
-                    all_networks_deleted = False
 
-        if not all_networks_deleted:
-            reload_network_api_call()
-
-    if not all_networks_deleted:
-        raise Exception(f"Not all network devices could be deleted. Existing devices: {', '.join(str(n.host_device) for n in challenge.networks.values() if network_device_exists_api_call(n))}.")
+def remove_iptables_rule(table, chain, arguments):
+    base = ['iptables', '-w', '10', '-t', table]
+    result = subprocess.run([*base, '-C', chain, *arguments], capture_output=True, timeout=15)
+    if result.returncode == 1:
+        return
+    if result.returncode != 0:
+        raise RuntimeError('Challenge firewall rule presence was not confirmed')
+    subprocess.run([*base, '-D', chain, *arguments], check=True, capture_output=True, timeout=15)
 
 
 def delete_iptables_rules(challenge):
-    """
-    Remove iptables rules previously added for the given user VPN IP.
-    """
-
+    from heist.infrastructure.network.firewall import chain_name
     for network in challenge.networks.values():
-        # Allow intra-network traffic
-        subprocess.run(
-            ["iptables", "-D", "FORWARD", "-i", network.host_device, "-o", network.host_device, "-j", "ACCEPT"],
-            check=False, capture_output=True)
-
-        # Allow DNS traffic to the router IP
-        subprocess.run(
-            ["iptables", "-D", "INPUT", "-i", network.host_device, "-d", network.router_ip, "-p", "udp", "--dport",
-             "53", "-j", "ACCEPT"], check=False, capture_output=True)
-        subprocess.run(
-            ["iptables", "-D", "INPUT", "-i", network.host_device, "-d", network.router_ip, "-p", "tcp", "--dport",
-             "53", "-j", "ACCEPT"], check=False, capture_output=True)
-
-        # Disallow traffic to the router IP
-        subprocess.run(["iptables", "-D", "INPUT", "-d", network.router_ip, "-j", "DROP"], check=False,
-                       capture_output=True)
-
+        chain_name(network.host_device)
+        remove_iptables_rule('filter', 'FORWARD', ['-i', network.host_device, '-o', network.host_device, '-j', 'ACCEPT'])
+        for protocol in ('udp', 'tcp'):
+            remove_iptables_rule('filter', 'INPUT', ['-i', network.host_device, '-d', network.router_ip, '-p', protocol, '--dport', '53', '-j', 'ACCEPT'])
+        remove_iptables_rule('filter', 'INPUT', ['-d', network.router_ip, '-j', 'DROP'])
         if network.is_dmz:
-            # Allow traffic from the DMZ to the outside
-            subprocess.run(
-                ["iptables", "-t", "nat", "-D", "POSTROUTING", "-o", "vmbr0", "-s", network.subnet, "!", "-d",
-                 CHALLENGES_ROOT_SUBNET_CIDR, "-j", "MASQUERADE"], check=False, capture_output=True)
-            subprocess.run(
-                ["iptables", "-D", "FORWARD", "-i", network.host_device, "-o", "vmbr0", "-s", network.subnet, "!",
-                 "-d", CHALLENGES_ROOT_SUBNET_CIDR, "-m", "conntrack", "--ctstate", "NEW,ESTABLISHED,RELATED", "-j",
-                 "ACCEPT"], check=False, capture_output=True)
-            subprocess.run(
-                ["iptables", "-D", "FORWARD", "-i", "vmbr0", "-o", network.host_device, "-d", network.subnet, "!",
-                 "-s", CHALLENGES_ROOT_SUBNET_CIDR, "-m", "conntrack", "--ctstate", "ESTABLISHED,RELATED", "-j",
-                 "ACCEPT"], check=False, capture_output=True)
+            remove_iptables_rule('nat', 'POSTROUTING', ['-o', 'vmbr0', '-s', network.subnet, '!', '-d', CHALLENGES_ROOT_SUBNET_CIDR, '-j', 'MASQUERADE'])
+            remove_iptables_rule('filter', 'FORWARD', ['-i', network.host_device, '-o', 'vmbr0', '-s', network.subnet, '!', '-d', CHALLENGES_ROOT_SUBNET_CIDR, '-m', 'conntrack', '--ctstate', 'NEW,ESTABLISHED,RELATED', '-j', 'ACCEPT'])
+            remove_iptables_rule('filter', 'FORWARD', ['-i', 'vmbr0', '-o', network.host_device, '-d', network.subnet, '!', '-s', CHALLENGES_ROOT_SUBNET_CIDR, '-m', 'conntrack', '--ctstate', 'ESTABLISHED,RELATED', '-j', 'ACCEPT'])
 
 
 def stop_dnsmasq_instances(challenge):
-    """
-    Delete the dnsmasq configs for a challenge.
-    """
-
+    from pathlib import Path
+    from heist.infrastructure.network.dnsmasq_process import stop
+    from heist.infrastructure.network.firewall import chain_name
     for network in challenge.networks.values():
-        config_path = os.path.join(DNSMASQ_INSTANCES_DIR, f"dnsmasq_{network.host_device}.conf")
-        pid_path = os.path.join(DNSMASQ_INSTANCES_DIR, f"dnsmasq_{network.host_device}.pid")
-        leases_path = os.path.join(DNSMASQ_INSTANCES_DIR, f"dnsmasq_{network.host_device}.leases")
-        log_path = os.path.join(DNSMASQ_INSTANCES_DIR, f"dnsmasq_{network.host_device}.log")
-
-        if os.path.exists(config_path):
-            os.remove(config_path)
-
-        if os.path.exists(pid_path):
-            with open(pid_path, "r") as f:
-                try:
-                    pid = int(f.read().strip())
-                except ValueError:
-                    continue
-            try:
-                os.kill(pid, 9)
-
-            except ProcessLookupError:
-                pass
-
-            os.remove(pid_path)
-
-        if os.path.exists(leases_path):
-            os.remove(leases_path)
-
-        if os.path.exists(log_path):
-            os.remove(log_path)
+        chain_name(network.host_device)  # Only generated owned bridge names.
+        prefix = Path(DNSMASQ_INSTANCES_DIR)/('dnsmasq_'+network.host_device)
+        stop(str(prefix)+'.pid')
+        for extension in ('.pid', '.conf', '.leases', '.log'):
+            Path(str(prefix)+extension).unlink(missing_ok=True)
 
 
 def remove_challenge_from_wazuh(challenge):
-    """
-    Remove challenge from wazuh manager.
-    """
-
     for machine in challenge.machines.values():
-        try:
-            delete_wazuh_agent(machine.id)
-            pass
-        except requests.RequestException:
-            pass
+        if delete_wazuh_agent(machine.id) is not True:
+            raise RuntimeError('Monitoring agent cleanup was not confirmed')
+
 
 def remove_database_entries(challenge, db_conn):
     """
     Remove the database entries for a challenge.
     """
 
-    with db_conn.cursor() as cursor:
-        for machine in challenge.machines.values():
-            cursor.execute("DELETE FROM domains WHERE machine_id = %s", (machine.id,))
-            cursor.execute("DELETE FROM network_connections WHERE machine_id = %s", (machine.id,))
-            cursor.execute("DELETE FROM machines WHERE id = %s", (machine.id,))
+    with db_conn:
+        with db_conn.cursor() as cursor:
+            for machine in challenge.machines.values():
+                cursor.execute("DELETE FROM domains WHERE machine_id = %s", (machine.id,))
+                cursor.execute("DELETE FROM network_connections WHERE machine_id = %s", (machine.id,))
+                cursor.execute("DELETE FROM machines WHERE id = %s", (machine.id,))
 
-        for network in challenge.networks.values():
-            cursor.execute("DELETE FROM networks WHERE id = %s", (network.id,))
+            for network in challenge.networks.values():
+                cursor.execute("DELETE FROM networks WHERE id = %s", (network.id,))
 
-        cursor.execute("DELETE FROM challenges WHERE id = %s", (challenge.id,))
+            cursor.execute("DELETE FROM challenges WHERE id = %s", (challenge.id,))
 
-        cursor.execute("UPDATE challenge_subnets SET available = TRUE WHERE subnet = %s", (challenge.subnet,))
+            cursor.execute("UPDATE challenge_subnets SET available = TRUE WHERE subnet = %s", (challenge.subnet,))

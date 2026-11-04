@@ -11,11 +11,13 @@ class APITests(TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.marker = Path(self.temp.name) / 'maintenance'
+        self.cleanup = Path(self.temp.name)/'cleanup'
+        self.cleanup.write_text('complete\n')
         self.launch, self.delete = Mock(return_value=['10.128.0.1']), Mock()
         self.db = MagicMock()
         self.db.cursor.return_value.__enter__.return_value.fetchone.return_value = (1,)
         self.connect = Mock(return_value=self.db)
-        self.app = create_app({'TESTING': True, 'BACKEND_AUTHENTICATION_TOKEN': 'test-only', 'MAINTENANCE_FILE': str(self.marker)}, {
+        self.app = create_app({'TESTING': True, 'BACKEND_AUTHENTICATION_TOKEN': 'test-only', 'MAINTENANCE_FILE': str(self.marker), 'CLEANUP_FILE': str(self.cleanup), 'TEMPLATE_LOCK_DIRECTORY': str(Path(self.temp.name)/'template-locks')}, {
             'launch_challenge': self.launch, 'delete_user_config': self.delete,
             'delete_machine_templates': Mock(side_effect=RuntimeError('private failure')), 'get_db_connection': self.connect})
         self.client = self.app.test_client()
@@ -88,4 +90,19 @@ class APITests(TestCase):
         self.marker.touch()
         self.assertEqual(self.request(json={'user_id': 1, 'challenge_template_id': 2}).status_code, 503)
         self.launch.assert_not_called()
+        self.assertEqual(self.request('/health/live', method='GET').status_code, 200)
+
+    def test_running_template_operation_blocks_overlapping_deletion_before_service_call(self):
+        from heist.infrastructure.locking import operation_guard
+        with operation_guard(self.app.config['TEMPLATE_LOCK_DIRECTORY'], 2):
+            result = self.request('/delete-machine-templates', json={'challenge_id': 2})
+        self.assertEqual(result.status_code, 409)
+        self.db.close.assert_called_once()
+
+    def test_unconfirmed_startup_cleanup_blocks_admission_and_readiness_but_not_liveness(self):
+        self.cleanup.write_text('failed\n')
+        self.assertEqual(self.request(json={'user_id': 1, 'challenge_template_id': 2}).status_code, 503)
+        self.launch.assert_not_called()
+        self.assertEqual(self.request('/health/ready', method='GET').status_code, 503)
+        self.connect.assert_not_called()
         self.assertEqual(self.request('/health/live', method='GET').status_code, 200)

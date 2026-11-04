@@ -1593,6 +1593,7 @@ WantedBy=multi-user.target
     print("\tEnabling and starting cleanup service")
     subprocess.run(["systemctl", "daemon-reload"], check=True, capture_output=True)
     subprocess.run(["systemctl", "enable", "cleanup"], check=True, capture_output=True)
+    subprocess.run(["systemctl", "start", "cleanup"], check=True, capture_output=True)
 
 
 def setup_pool_size_prediction_cron_job():

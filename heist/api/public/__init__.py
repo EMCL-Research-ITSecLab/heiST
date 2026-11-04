@@ -37,13 +37,14 @@ def create_app(config=None, *, repository_factory=None, internal_client_factory=
     app.extensions['clock'] = clock or (lambda: datetime.now(timezone.utc))
     app.extensions['dummy_password_hash'] = hash_password('non-account-timing-placeholder')
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
-    from . import administration, auth, challenges, context, learning, media, profiles
+    from . import administration, auth, authoring, challenges, context, learning, media, profiles
     app.register_blueprint(auth.blueprint, url_prefix='/api')
     app.register_blueprint(learning.blueprint, url_prefix='/api')
     app.register_blueprint(media.blueprint, url_prefix='/api')
     app.register_blueprint(profiles.blueprint, url_prefix='/api')
     app.register_blueprint(challenges.blueprint, url_prefix='/api')
     app.register_blueprint(administration.blueprint, url_prefix='/api')
+    app.register_blueprint(authoring.blueprint, url_prefix='/api')
     app.before_request(context.initialize_request)
     app.after_request(context.finish_request)
     app.teardown_appcontext(context.close_request)

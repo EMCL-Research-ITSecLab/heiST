@@ -1,23 +1,20 @@
-"""Execute the actual launch orchestration without privileged module imports."""
-import ast
+"""Execute the actual launch module with injected infrastructure boundaries."""
 from contextlib import nullcontext
-from pathlib import Path
 from types import SimpleNamespace
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from heist.platform.models import Challenge, ChallengeTemplate
 
 
 class ColdLaunchFlagTests(unittest.TestCase):
     def launch(self, ready):
-        tree = ast.parse((Path(__file__).resolve().parents[1] / 'heist/platform/challenges/launch.py').read_text())
-        function = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == 'launch_challenge')
+        from heist.platform.challenges import launch as launch_module
         instance = Challenge(challenge_id=10, template=ChallengeTemplate(5), subnet='10.128.0.0/28')
         self.assertEqual(instance.template.flags, [])
         noop = Mock()
         namespace = {name: noop for name in (
-            'launch_timing_logger', 'acquire_exclusive_launch_lock', 'release_exclusive_launch_lock',
+            'launch_timing_logger', 'require_available_template', 'acquire_exclusive_launch_lock', 'release_exclusive_launch_lock',
             'fetch_machines', 'fetch_networks_and_connections', 'start_dnsmasq_instances',
             'force_dhcp_renew_on_windows_machines', 'add_iptables_rules', 'reset_expiration_timer')}
         namespace['renew_linux_entrypoints'] = Mock()
@@ -35,6 +32,8 @@ class ColdLaunchFlagTests(unittest.TestCase):
 
         processed = Mock()
         namespace.update(
+            template_guard=lambda *args, **kwargs: nullcontext(),
+            os=SimpleNamespace(makedirs=Mock()),
             db_connection_context=lambda: nullcontext(object()),
             time=SimpleNamespace(time=lambda: 0, sleep=lambda seconds: None),
             print=lambda *args, **kwargs: None,
@@ -49,8 +48,8 @@ class ColdLaunchFlagTests(unittest.TestCase):
             add_running_challenge_to_user=Mock(),
             process_all_user_specific_flags=processed,
             stop_challenge=Mock())
-        exec(compile(ast.Module(body=[function], type_ignores=[]), '<actual-launch>', 'exec'), namespace)
-        namespace['launch_challenge'](5, 2, 'vpn-sensor', 'dmz-sensor')
+        with patch.dict(launch_module.__dict__, namespace):
+            launch_module.launch_challenge(5, 2, 'vpn-sensor', 'dmz-sensor')
         processed.assert_called_once_with(instance, 'pilot@example.test', 'test-student')
         self.assertEqual(processed.call_args.args[0].template.flags, flags)
         namespace['stop_challenge'].assert_not_called()

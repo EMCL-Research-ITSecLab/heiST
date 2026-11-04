@@ -1,7 +1,5 @@
-import subprocess
-
 from heist.platform.cleanup import teardown_remaining_challenges
-from heist.infrastructure.proxmox.client import delete_vm_api_call
+from heist.infrastructure.proxmox.client import delete_vm_api_call, vm_exists_api_call, vm_is_stopped_api_call, shutdown_vm_api_call
 from heist.platform.models import ChallengeTemplate, MachineTemplate, Challenge
 
 
@@ -19,7 +17,7 @@ def delete_machine_templates(challenge_template_id, db_conn):
     except Exception as e:
         raise ValueError(f"Error fetching challenge and machine templates: {str(e)}")
 
-    teardown_remaining_challenges([challenge.id for challenge in challenges])
+    teardown_remaining_challenges([challenge.id for challenge in challenges], expected_template_id=challenge_template_id)
 
     delete_machine_template_vms(challenge_template)
 
@@ -84,9 +82,10 @@ def delete_machine_template_vms(challenge_template):
     """
 
     for machine_template in challenge_template.machine_templates.values():
-        try:
-            delete_vm_api_call(machine_template)
-        except Exception:
-            subprocess.run(["qm", "stop", str(machine_template.id)], check=False, capture_output=True)
-            subprocess.run(["qm", "unlock", str(machine_template.id)], check=True, capture_output=True)
-            subprocess.run(["qm", "destroy", str(machine_template.id)], check=True, capture_output=True)
+        if not vm_exists_api_call(machine_template):
+            continue
+        if not vm_is_stopped_api_call(machine_template):
+            shutdown_vm_api_call(machine_template)
+        if not vm_is_stopped_api_call(machine_template):
+            raise RuntimeError('Imported template did not shut down cleanly')
+        delete_vm_api_call(machine_template)

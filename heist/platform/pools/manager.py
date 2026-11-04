@@ -10,6 +10,7 @@ import fcntl
 
 from heist.infrastructure.database import get_db_connection
 from heist.runtime import cleanup_is_complete
+from heist.platform.images.locking import template_guard
 from heist.platform.challenges.warmup import warmup_challenge as warmup_challenge_backend
 from heist.platform.challenges.teardown import teardown_challenge as teardown_challenge_backend
 
@@ -22,7 +23,13 @@ MONITORING_DMZ_INTERFACE = os.getenv("MONITORING_DMZ_INTERFACE", "dmz_monitoring
 MONITORING_VM_ID = int(os.getenv("MONITORING_VM_ID", "9000"))
 WAZUH_NETWORK_DEVICE = os.getenv("WAZUH_NETWORK_DEVICE", "vrtmon")
 
-CLEANUP_COMPLETE_FILE_PATH = "/var/lock/cleanup_complete.lock"
+CLEANUP_COMPLETE_FILE_PATH = os.getenv('HEIST_CLEANUP_FILE', '/var/lock/cleanup_complete.lock')
+
+
+def pool_template_ids(connection):
+    with connection.cursor() as cursor:
+        cursor.execute('SELECT id FROM challenge_templates WHERE ready_to_launch = TRUE AND is_active = TRUE AND marked_for_deletion = FALSE')
+        return [row[0] for row in cursor.fetchall()]
 
 def system_is_ready_for_warmup():
     """
@@ -145,9 +152,7 @@ class PoolManager:
         """
         print("[POOL] Checking and maintaining pool")
 
-        with self.pool_maintenance_db_conn.cursor() as cursor:
-            cursor.execute("SELECT id FROM challenge_templates WHERE ready_to_launch = TRUE")
-            challenge_template_ids = [row[0] for row in cursor.fetchall()]
+        challenge_template_ids = pool_template_ids(self.pool_maintenance_db_conn)
 
         print(f"[POOL] Found {len(challenge_template_ids)} active challenge templates")
 
@@ -220,7 +225,8 @@ class PoolManager:
         self.running_teardowns[thread_id] = challenge_template_id
 
         try:
-            teardown_challenge_backend(challenge_instance_id)
+            with template_guard(challenge_template_id, shared=True):
+                teardown_challenge_backend(challenge_instance_id, expected_template_id=challenge_template_id)
             print(f"[TEARDOWN][DONE] instance={challenge_instance_id}")
         except Exception:
             print(f"[TEARDOWN][ERROR] instance={challenge_instance_id}")
@@ -237,12 +243,13 @@ class PoolManager:
         self.running_warmups[thread_id] = challenge_template_id
 
         try:
-            warmup_challenge_backend(
-                None,
-                challenge_template_id,
-                MONITORING_VPN_INTERFACE,
-                MONITORING_DMZ_INTERFACE
-            )
+            with template_guard(challenge_template_id, shared=True):
+                warmup_challenge_backend(
+                    None,
+                    challenge_template_id,
+                    MONITORING_VPN_INTERFACE,
+                    MONITORING_DMZ_INTERFACE
+                )
             print(f"[WARMUP][DONE] template={challenge_template_id}")
         except Exception:
             print(f"[WARMUP][ERROR] template={challenge_template_id}")

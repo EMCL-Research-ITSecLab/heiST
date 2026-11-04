@@ -119,9 +119,10 @@
   },
   "tools/function_inventory.py::FunctionTrace.profile": {
     "tests": [
-      "tests.test_function_inventory.InventoryTests.test_runtime_trace_counts_actual_function_calls_and_restores_profiler"
+      "tests.test_function_inventory.InventoryTests.test_runtime_trace_counts_actual_function_calls_and_restores_profiler",
+      "tests.test_function_inventory.InventoryTests.test_profile_callback_counts_only_call_events_inside_supported_source_trees"
     ],
-    "rationale": "Executes a real compiled fixture function, checks exact count, and checks profiler restoration."
+    "rationale": "Executes a real compiled fixture function, checks exact count, and checks profiler restoration. Explicit callback inputs verify that return/module/outside-tree events cannot create false execution evidence."
   },
   "tools/function_inventory.py::FunctionTrace.__enter__": {
     "tests": [
@@ -198,9 +199,11 @@
   "heist/api/public/repository.py::Repository.db": {
     "tests": [
       "tests.test_web_repository.RepositoryTests.test_connection_reuse_scalar_and_cleanup",
-      "tests.test_web_repository.RepositoryTests.test_connection_initialization_failure_closes_the_unusable_connection"
+      "tests.test_web_repository.RepositoryTests.test_connection_initialization_failure_closes_the_unusable_connection",
+      "tests.test_web_database.WebDatabaseTests.test_public_repository_rejects_privileged_role_even_when_its_name_is_not_special",
+      "tests.test_web_database.WebDatabaseTests.test_public_repository_refuses_direct_account_table_grants"
     ],
-    "rationale": "Checks lazy connection reuse, scalar result extraction, idempotent closure and closure after failed initialization."
+    "rationale": "Checks lazy connection reuse, scalar result extraction, idempotent closure and closure after failed initialization. Real PostgreSQL checks also reject privileged identities and explicit account-table privileges before accepting the connection."
   },
   "heist/api/public/repository.py::Repository.close": {
     "tests": [
@@ -519,5 +522,271 @@
       "tests.test_web_server.GunicornProcessTests.test_real_workers_require_tls_return_json_errors_and_stop_cleanly"
     ],
     "rationale": "Checks loopback-only and unprivileged port selection plus actual worker HTTP/TLS/error/shutdown behavior."
+  },
+  "heist/platform/challenges/definition.py::definition": {
+    "tests": [
+      "tests.test_challenge_definition.DefinitionTests.test_valid_definition_normalizes_form_json_and_owned_artifact_identity",
+      "tests.test_challenge_definition.DefinitionTests.test_unknown_foreign_images_bounds_duplicates_and_nonboolean_values_are_rejected",
+      "tests.test_challenge_definition.DefinitionTests.test_reachability_allows_multihomed_pivot_but_rejects_disconnected_machine",
+      "tests.test_challenge_definition.DefinitionTests.test_ad_members_require_windows_and_one_shared_domain_controller"
+    ],
+    "rationale": "Checks owned image resolution, normalized form JSON, resource/type/name constraints, unique flags, connected/pivot topology and same-domain Windows AD membership before provisioning."
+  },
+  "heist/platform/challenges/definition.py::metadata": {
+    "tests": [
+      "tests.test_challenge_definition.DefinitionTests.test_valid_definition_normalizes_form_json_and_owned_artifact_identity",
+      "tests.test_challenge_definition.DefinitionTests.test_unknown_foreign_images_bounds_duplicates_and_nonboolean_values_are_rejected",
+      "tests.test_challenge_definition.DefinitionTests.test_reachability_allows_multihomed_pivot_but_rejects_disconnected_machine",
+      "tests.test_challenge_definition.DefinitionTests.test_ad_members_require_windows_and_one_shared_domain_controller"
+    ],
+    "rationale": "Checks owned image resolution, normalized form JSON, resource/type/name constraints, unique flags, connected/pivot topology and same-domain Windows AD membership before provisioning."
+  },
+  "heist/platform/challenges/definition.py::topology": {
+    "tests": [
+      "tests.test_challenge_definition.DefinitionTests.test_valid_definition_normalizes_form_json_and_owned_artifact_identity",
+      "tests.test_challenge_definition.DefinitionTests.test_unknown_foreign_images_bounds_duplicates_and_nonboolean_values_are_rejected",
+      "tests.test_challenge_definition.DefinitionTests.test_reachability_allows_multihomed_pivot_but_rejects_disconnected_machine",
+      "tests.test_challenge_definition.DefinitionTests.test_ad_members_require_windows_and_one_shared_domain_controller"
+    ],
+    "rationale": "Checks owned image resolution, normalized form JSON, resource/type/name constraints, unique flags, connected/pivot topology and same-domain Windows AD membership before provisioning."
+  },
+  "heist/api/public/authoring.py::create_definition": {
+    "tests": [
+      "tests.test_web_authoring.AuthoringTests.test_options_create_and_management_roundtrip_with_real_topology",
+      "tests.test_web_authoring.AuthoringTests.test_invalid_or_foreign_image_definition_creates_no_rows_or_platform_operations",
+      "tests.test_web_authoring.AuthoringTests.test_ambiguous_import_keeps_inactive_definition_and_prevents_blind_duplicate_retry",
+      "tests.test_web_authoring.AuthoringTests.test_multipart_cover_upload_uses_private_generated_image_and_rejects_invalid_images"
+    ],
+    "rationale": "Checks real restricted-role atomic creation and topology, validation before side effects, inactive preservation on ambiguous import, duplicate retry prevention and private cover upload. Infrastructure transport is injected; actual import remains a separate gate."
+  },
+  "heist/api/public/authoring.py::create_challenge": {
+    "tests": [
+      "tests.test_web_authoring.AuthoringTests.test_options_create_and_management_roundtrip_with_real_topology",
+      "tests.test_web_authoring.AuthoringTests.test_invalid_or_foreign_image_definition_creates_no_rows_or_platform_operations",
+      "tests.test_web_authoring.AuthoringTests.test_ambiguous_import_keeps_inactive_definition_and_prevents_blind_duplicate_retry",
+      "tests.test_web_authoring.AuthoringTests.test_multipart_cover_upload_uses_private_generated_image_and_rejects_invalid_images"
+    ],
+    "rationale": "Checks real restricted-role atomic creation and topology, validation before side effects, inactive preservation on ambiguous import, duplicate retry prevention and private cover upload. Infrastructure transport is injected; actual import remains a separate gate."
+  },
+  "heist/api/public/authoring.py::owned_template": {
+    "tests": [
+      "tests.test_web_authoring.AuthoringTests.test_edit_retire_restore_and_delete_are_owner_scoped_and_methods_are_explicit",
+      "tests.test_web_authoring.AuthoringTests.test_failed_permanent_delete_keeps_definition_retired_and_grades_available"
+    ],
+    "rationale": "Checks actual persistent metadata/retirement/restore, foreign owner denial, explicit deletion/leaderboard methods and retention of an unavailable definition/flags after infrastructure failure."
+  },
+  "heist/api/public/authoring.py::update_challenge": {
+    "tests": [
+      "tests.test_web_authoring.AuthoringTests.test_edit_retire_restore_and_delete_are_owner_scoped_and_methods_are_explicit",
+      "tests.test_web_authoring.AuthoringTests.test_failed_permanent_delete_keeps_definition_retired_and_grades_available"
+    ],
+    "rationale": "Checks actual persistent metadata/retirement/restore, foreign owner denial, explicit deletion/leaderboard methods and retention of an unavailable definition/flags after infrastructure failure."
+  },
+  "heist/api/public/authoring.py::restore": {
+    "tests": [
+      "tests.test_web_authoring.AuthoringTests.test_edit_retire_restore_and_delete_are_owner_scoped_and_methods_are_explicit",
+      "tests.test_web_authoring.AuthoringTests.test_failed_permanent_delete_keeps_definition_retired_and_grades_available"
+    ],
+    "rationale": "Checks actual persistent metadata/retirement/restore, foreign owner denial, explicit deletion/leaderboard methods and retention of an unavailable definition/flags after infrastructure failure."
+  },
+  "heist/api/public/authoring.py::leaderboard": {
+    "tests": [
+      "tests.test_web_authoring.AuthoringTests.test_edit_retire_restore_and_delete_are_owner_scoped_and_methods_are_explicit",
+      "tests.test_web_authoring.AuthoringTests.test_failed_permanent_delete_keeps_definition_retired_and_grades_available"
+    ],
+    "rationale": "Checks actual persistent metadata/retirement/restore, foreign owner denial, explicit deletion/leaderboard methods and retention of an unavailable definition/flags after infrastructure failure."
+  },
+  "heist/api/public/authoring.py::delete_challenge": {
+    "tests": [
+      "tests.test_web_authoring.AuthoringTests.test_edit_retire_restore_and_delete_are_owner_scoped_and_methods_are_explicit",
+      "tests.test_web_authoring.AuthoringTests.test_failed_permanent_delete_keeps_definition_retired_and_grades_available"
+    ],
+    "rationale": "Checks actual persistent metadata/retirement/restore, foreign owner denial, explicit deletion/leaderboard methods and retention of an unavailable definition/flags after infrastructure failure."
+  },
+  "heist/platform/pools/manager.py::pool_template_ids": {
+    "tests": [
+      "tests.test_web_authoring.AuthoringTests.test_pool_selection_excludes_inactive_retired_and_unready_exercises"
+    ],
+    "rationale": "Checks real PostgreSQL selection includes a ready available definition and excludes inactive, retired and unready definitions."
+  },
+  "heist/platform/challenges/availability.py::require_available_template": {
+    "tests": [
+      "tests.test_web_authoring.AuthoringTests.test_pool_selection_excludes_inactive_retired_and_unready_exercises"
+    ],
+    "rationale": "Checks privileged pre-provisioning validation refuses unavailable definitions even if a prior scheduler query could have selected them."
+  },
+  "heist/infrastructure/locking.py::operation_guard": {
+    "tests": [
+      "tests.test_template_locking.TemplateLockTests.test_same_exercise_conflicts_other_exercise_can_run_and_exception_releases_lock",
+      "tests.test_template_locking.TemplateLockTests.test_concurrent_launch_readers_can_coexist_but_exclude_import_or_delete",
+      "tests.test_template_locking.TemplateLockTests.test_invalid_ids_and_symbolic_lock_files_are_rejected"
+    ],
+    "rationale": "Checks real shared/exclusive file locks, isolation by exercise ID, release on failure, private modes and rejection of invalid/symlink lock targets. Does not claim recovery of asynchronous hypervisor tasks after process death."
+  },
+  "heist/infrastructure/proxmox/client.py::vm_exists_api_call": {
+    "tests": [
+      "tests.test_proxmox_resource_removal.ResourceRemovalTests.test_inventory_failure_or_malformed_response_never_means_vm_absence",
+      "tests.test_proxmox_resource_removal.ResourceRemovalTests.test_delete_waits_for_success_and_confirms_absence_before_returning",
+      "tests.test_proxmox_resource_removal.ResourceRemovalTests.test_failed_or_unknown_delete_does_not_force_unlock_or_retry"
+    ],
+    "rationale": "Checks authoritative inventory, malformed/unavailable rejection, UPID wait and post-delete confirmation; unknown outcomes propagate without unlock/retry. Separate native rehearsal verifies actual Proxmox integration."
+  },
+  "heist/infrastructure/proxmox/client.py::delete_vm_api_call": {
+    "tests": [
+      "tests.test_proxmox_resource_removal.ResourceRemovalTests.test_inventory_failure_or_malformed_response_never_means_vm_absence",
+      "tests.test_proxmox_resource_removal.ResourceRemovalTests.test_delete_waits_for_success_and_confirms_absence_before_returning",
+      "tests.test_proxmox_resource_removal.ResourceRemovalTests.test_failed_or_unknown_delete_does_not_force_unlock_or_retry"
+    ],
+    "rationale": "Checks authoritative inventory, malformed/unavailable rejection, UPID wait and post-delete confirmation; unknown outcomes propagate without unlock/retry. Separate native rehearsal verifies actual Proxmox integration."
+  },
+  "heist/infrastructure/proxmox/client.py::stop_vm_api_call": {
+    "tests": [
+      "tests.test_proxmox_resource_removal.ResourceRemovalTests.test_stop_waits_for_task_and_confirmed_state_and_template_flag_has_correct_polarity"
+    ],
+    "rationale": "Checks stop-task timeout/wait/state verification, invalid status rejection and correct template flag polarity; real stopped/running/template transitions also have a separate native test."
+  },
+  "heist/infrastructure/proxmox/client.py::vm_is_template_api_call": {
+    "tests": [
+      "tests.test_proxmox_resource_removal.ResourceRemovalTests.test_stop_waits_for_task_and_confirmed_state_and_template_flag_has_correct_polarity"
+    ],
+    "rationale": "Checks stop-task timeout/wait/state verification, invalid status rejection and correct template flag polarity; real stopped/running/template transitions also have a separate native test."
+  },
+  "heist/infrastructure/proxmox/client.py::vm_is_stopped_api_call": {
+    "tests": [
+      "tests.test_proxmox_resource_removal.ResourceRemovalTests.test_stop_waits_for_task_and_confirmed_state_and_template_flag_has_correct_polarity"
+    ],
+    "rationale": "Checks stop-task timeout/wait/state verification, invalid status rejection and correct template flag polarity; real stopped/running/template transitions also have a separate native test."
+  },
+  "heist/infrastructure/proxmox/client.py::network_device_exists_api_call": {
+    "tests": [
+      "tests.test_proxmox_resource_removal.ResourceRemovalTests.test_network_absence_and_reload_failures_are_not_silently_ignored"
+    ],
+    "rationale": "Checks exact interface matching, transport failure propagation and waiting for reload completion; actual bridge reload remains a native lifecycle gate."
+  },
+  "heist/infrastructure/proxmox/client.py::reload_network_api_call": {
+    "tests": [
+      "tests.test_proxmox_resource_removal.ResourceRemovalTests.test_network_absence_and_reload_failures_are_not_silently_ignored"
+    ],
+    "rationale": "Checks exact interface matching, transport failure propagation and waiting for reload completion; actual bridge reload remains a native lifecycle gate."
+  },
+  "heist/platform/images/delete_templates.py::delete_machine_template_vms": {
+    "tests": [
+      "tests.test_proxmox_resource_removal.ResourceRemovalTests.test_running_template_must_finish_clean_shutdown_before_deletion",
+      "tests.test_proxmox_resource_removal.ResourceRemovalTests.test_failed_or_unknown_delete_does_not_force_unlock_or_retry"
+    ],
+    "rationale": "Checks clean-shutdown ordering, refusal to delete a running/unconfirmed template and propagation without forced unlock."
+  },
+  "heist/infrastructure/network/dnsmasq_process.py::stop": {
+    "tests": [
+      "tests.test_dnsmasq_process.DNSProcessTests.test_recycled_pid_of_unrelated_process_is_never_signaled",
+      "tests.test_dnsmasq_process.DNSProcessTests.test_missing_invalid_init_pid_and_symlink_files_cannot_trigger_signals",
+      "tests.test_dnsmasq_process.DNSProcessTests.test_owned_native_daemon_stops_through_stable_pid_handle"
+    ],
+    "rationale": "Checks a real owned dnsmasq exits through its stable PID handle, a Python process containing dnsmasq text stays alive, and invalid/PID1/symlink files cause no signal."
+  },
+  "heist/infrastructure/monitoring/wazuh.py::Wazuh.__init__": {
+    "tests": [
+      "tests.test_wazuh_client.WazuhTests.test_absent_agent_is_success_only_after_authenticated_valid_inventory",
+      "tests.test_wazuh_client.WazuhTests.test_exact_agent_is_removed_and_partial_failure_cannot_free_its_identity",
+      "tests.test_wazuh_client.WazuhTests.test_wrong_identity_manager_id_invalid_inventory_and_authentication_are_rejected",
+      "tests.test_wazuh_client.WazuhTests.test_transport_error_redirect_and_malformed_json_are_closed_without_private_error",
+      "tests.test_wazuh_client.WazuhTests.test_disabled_tls_missing_credentials_and_invalid_hosts_never_create_a_session"
+    ],
+    "rationale": "Checks verified/bounded HTTPS contract including IPv6, exact agent identity, missing-agent idempotency, partial/error rejection, TLS/credential policy and safe errors; actual monitoring certificate integration remains a separate gate."
+  },
+  "heist/infrastructure/monitoring/wazuh.py::Wazuh.call": {
+    "tests": [
+      "tests.test_wazuh_client.WazuhTests.test_absent_agent_is_success_only_after_authenticated_valid_inventory",
+      "tests.test_wazuh_client.WazuhTests.test_exact_agent_is_removed_and_partial_failure_cannot_free_its_identity",
+      "tests.test_wazuh_client.WazuhTests.test_wrong_identity_manager_id_invalid_inventory_and_authentication_are_rejected",
+      "tests.test_wazuh_client.WazuhTests.test_transport_error_redirect_and_malformed_json_are_closed_without_private_error",
+      "tests.test_wazuh_client.WazuhTests.test_disabled_tls_missing_credentials_and_invalid_hosts_never_create_a_session"
+    ],
+    "rationale": "Checks verified/bounded HTTPS contract including IPv6, exact agent identity, missing-agent idempotency, partial/error rejection, TLS/credential policy and safe errors; actual monitoring certificate integration remains a separate gate."
+  },
+  "heist/infrastructure/monitoring/wazuh.py::Wazuh.remove_agent": {
+    "tests": [
+      "tests.test_wazuh_client.WazuhTests.test_absent_agent_is_success_only_after_authenticated_valid_inventory",
+      "tests.test_wazuh_client.WazuhTests.test_exact_agent_is_removed_and_partial_failure_cannot_free_its_identity",
+      "tests.test_wazuh_client.WazuhTests.test_wrong_identity_manager_id_invalid_inventory_and_authentication_are_rejected",
+      "tests.test_wazuh_client.WazuhTests.test_transport_error_redirect_and_malformed_json_are_closed_without_private_error",
+      "tests.test_wazuh_client.WazuhTests.test_disabled_tls_missing_credentials_and_invalid_hosts_never_create_a_session"
+    ],
+    "rationale": "Checks verified/bounded HTTPS contract including IPv6, exact agent identity, missing-agent idempotency, partial/error rejection, TLS/credential policy and safe errors; actual monitoring certificate integration remains a separate gate."
+  },
+  "heist/infrastructure/monitoring/wazuh.py::Wazuh.close": {
+    "tests": [
+      "tests.test_wazuh_client.WazuhTests.test_absent_agent_is_success_only_after_authenticated_valid_inventory",
+      "tests.test_wazuh_client.WazuhTests.test_exact_agent_is_removed_and_partial_failure_cannot_free_its_identity",
+      "tests.test_wazuh_client.WazuhTests.test_wrong_identity_manager_id_invalid_inventory_and_authentication_are_rejected",
+      "tests.test_wazuh_client.WazuhTests.test_transport_error_redirect_and_malformed_json_are_closed_without_private_error",
+      "tests.test_wazuh_client.WazuhTests.test_disabled_tls_missing_credentials_and_invalid_hosts_never_create_a_session"
+    ],
+    "rationale": "Checks verified/bounded HTTPS contract including IPv6, exact agent identity, missing-agent idempotency, partial/error rejection, TLS/credential policy and safe errors; actual monitoring certificate integration remains a separate gate."
+  },
+  "heist/platform/challenges/teardown.py::_teardown_challenge": {
+    "tests": [
+      "tests.test_teardown_safety.TeardownSafetyTests.test_any_failed_stage_prevents_database_reclamation",
+      "tests.test_teardown_safety.TeardownSafetyTests.test_stop_and_delete_failures_propagate_without_forced_unlock"
+    ],
+    "rationale": "Checks every preceding cleanup failure blocks database-ID reclamation and physical/monitoring failure is propagated."
+  },
+  "heist/platform/challenges/teardown.py::stop_machines": {
+    "tests": [
+      "tests.test_teardown_safety.TeardownSafetyTests.test_any_failed_stage_prevents_database_reclamation",
+      "tests.test_teardown_safety.TeardownSafetyTests.test_stop_and_delete_failures_propagate_without_forced_unlock"
+    ],
+    "rationale": "Checks every preceding cleanup failure blocks database-ID reclamation and physical/monitoring failure is propagated."
+  },
+  "heist/platform/challenges/teardown.py::delete_machines": {
+    "tests": [
+      "tests.test_teardown_safety.TeardownSafetyTests.test_any_failed_stage_prevents_database_reclamation",
+      "tests.test_teardown_safety.TeardownSafetyTests.test_stop_and_delete_failures_propagate_without_forced_unlock"
+    ],
+    "rationale": "Checks every preceding cleanup failure blocks database-ID reclamation and physical/monitoring failure is propagated."
+  },
+  "heist/platform/challenges/teardown.py::remove_challenge_from_wazuh": {
+    "tests": [
+      "tests.test_teardown_safety.TeardownSafetyTests.test_any_failed_stage_prevents_database_reclamation",
+      "tests.test_teardown_safety.TeardownSafetyTests.test_stop_and_delete_failures_propagate_without_forced_unlock"
+    ],
+    "rationale": "Checks every preceding cleanup failure blocks database-ID reclamation and physical/monitoring failure is propagated."
+  },
+  "heist/platform/challenges/teardown.py::fetch_challenge": {
+    "tests": [
+      "tests.test_teardown_database.TeardownDatabaseTests.test_active_assigned_or_wrong_template_instance_cannot_be_claimed_for_teardown",
+      "tests.test_teardown_database.TeardownDatabaseTests.test_reserved_ready_instance_is_not_an_unassigned_pool_surplus"
+    ],
+    "rationale": "Checks actual SQL claims exclude assigned/active/wrong-template/reserved READY instances and atomically mark eligible instances TERMINATING."
+  },
+  "heist/platform/challenges/teardown.py::fetch_networks": {
+    "tests": [
+      "tests.test_teardown_database.TeardownDatabaseTests.test_orphan_network_metadata_is_loaded_even_without_machine_rows"
+    ],
+    "rationale": "Checks orphan bridge metadata is recovered from the challenge relationship even if machine rows no longer exist."
+  },
+  "heist/platform/challenges/teardown.py::remove_database_entries": {
+    "tests": [
+      "tests.test_teardown_database.TeardownDatabaseTests.test_metadata_reclamation_rolls_back_all_deletes_and_subnet_release_on_failure"
+    ],
+    "rationale": "Checks an injected later SQL failure restores earlier network deletion/ID reclaim and retains the subnet; successful retry removes resources and frees the subnet atomically."
+  },
+  "heist/platform/challenges/teardown.py::remove_iptables_rule": {
+    "tests": [
+      "tests.test_teardown_safety.TeardownSafetyTests.test_firewall_inspection_error_is_distinct_from_absence"
+    ],
+    "rationale": "Checks absent exact rules are idempotent, inspection errors fail, and a present rule is removed with a checked bounded command."
+  },
+  "heist/platform/challenges/teardown.py::wait_for_network_devices_deletion": {
+    "tests": [
+      "tests.test_teardown_safety.TeardownSafetyTests.test_bridge_timeout_and_inventory_failure_propagate"
+    ],
+    "rationale": "Checks kernel bridge timeout and unconfirmed hypervisor inventory cannot be silently treated as successful cleanup."
+  },
+  "heist/platform/challenges/teardown.py::delete_network_devices": {
+    "tests": [
+      "tests.test_teardown_safety.TeardownSafetyTests.test_bridge_timeout_and_inventory_failure_propagate"
+    ],
+    "rationale": "Checks kernel bridge timeout and unconfirmed hypervisor inventory cannot be silently treated as successful cleanup."
   }
 }

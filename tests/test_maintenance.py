@@ -89,6 +89,16 @@ class BackupTests(unittest.TestCase):
 
 
 class RuntimeTests(unittest.TestCase):
+    def test_incomplete_resource_cleanup_never_marks_startup_ready(self):
+        from unittest.mock import MagicMock
+        with tempfile.TemporaryDirectory() as directory:
+            connection = MagicMock()
+            connection.cursor.return_value.__enter__.return_value.fetchall.side_effect = [[], [(123,)], [(123,)]]
+            path = Path(directory)/'cleanup.lock'
+            with self.assertRaisesRegex(RuntimeError, 'reconciliation'):
+                cleanup_remaining_challenges(connect=lambda: connection, stop=Mock(), teardown=Mock(), lock_path=path)
+            self.assertFalse(cleanup_is_complete(path))
+            connection.close.assert_called_once()
     def test_batch_teardown_consumes_results_and_propagates_worker_failures(self):
         from heist.platform.cleanup import teardown_remaining_challenges
         teardown = Mock()

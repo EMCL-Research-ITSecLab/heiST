@@ -20,7 +20,7 @@ class LearningViewsTests(unittest.TestCase):
         with closing(self.psycopg2.connect(**self.settings)) as connection:
             connection.autocommit = True
             with connection.cursor() as cursor:
-                cursor.execute("INSERT INTO challenge_templates(name,description,category,difficulty,creator_id,is_active,marked_for_deletion) VALUES (%s,'<script>test only</script>','web','easy',%s,%s,%s) RETURNING id", (self.username, self.user_id, active, deleted))
+                cursor.execute("INSERT INTO challenge_templates(name,description,category,difficulty,creator_id,is_active,marked_for_deletion,ready_to_launch) VALUES (%s,'<script>test only</script>','web','easy',%s,%s,%s,TRUE) RETURNING id", (self.username, self.user_id, active, deleted))
                 identifier = cursor.fetchone()[0]
                 cursor.execute("INSERT INTO challenge_flags(challenge_template_id,flag,description,points) VALUES (%s,'not-a-public-flag','First discovery',100),(%s,'another-secret-flag','Second discovery',50) RETURNING id", (identifier, identifier))
                 return identifier, [value[0] for value in cursor.fetchall()]

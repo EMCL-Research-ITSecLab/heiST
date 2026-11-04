@@ -26,6 +26,8 @@ from heist.platform.challenges.warmup import warmup_challenge, stop_dnsmasq_proc
 from heist.platform.challenges.timing import launch_timing_logger
 from heist.infrastructure.database import db_connection_context
 from heist.platform.challenges.ownership import take_ready_instance, assign_instance
+from heist.platform.challenges.availability import require_available_template
+from heist.platform.images.locking import template_guard
 from heist.infrastructure.proxmox.guest_agent import GuestAgent, GuestAgentError
 
 load_dotenv(find_dotenv())
@@ -44,6 +46,11 @@ challenge_launch_lock_dir = "/var/lock/challenge_launch_locks/"
 
 
 def launch_challenge(challenge_template_id, user_id, vpn_monitoring_device, dmz_monitoring_device):
+    with template_guard(challenge_template_id, shared=True):
+        return _launch_challenge(challenge_template_id, user_id, vpn_monitoring_device, dmz_monitoring_device)
+
+
+def _launch_challenge(challenge_template_id, user_id, vpn_monitoring_device, dmz_monitoring_device):
     """
     Launch a challenge by creating a user and network device.
     """
@@ -53,6 +60,7 @@ def launch_challenge(challenge_template_id, user_id, vpn_monitoring_device, dmz_
 
     with db_connection_context() as db_conn:
         try:
+            require_available_template(db_conn, challenge_template_id, user_id)
             launch_lock = acquire_exclusive_launch_lock(user_id)
             start_time = time.time()
 

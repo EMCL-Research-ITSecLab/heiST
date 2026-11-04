@@ -109,6 +109,9 @@ def deploy(user, template):
     if template['marked_for_deletion'] or (not template['is_active'] and not user['is_admin'] and template['creator_id'] != user['id']):
         raise ApiError('This challenge is currently unavailable', 409)
     repo = repository()
+    state = repo.call('web_template_state', template['id'], one=True)
+    if not state or not state['ready']:
+        raise ApiError('Machine templates are not ready for this exercise', 409)
     if repo.scalar('get_user_running_challenge', user['id']) is not None:
         raise ApiError('Stop your running challenge before starting another one', 409)
     response = internal().request('start', {'user_id': user['id'], 'challenge_template_id': template['id']})

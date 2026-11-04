@@ -261,6 +261,10 @@ BEGIN
             MAX(uf.flag_found_at) AS last_flag_time
         FROM user_flags uf
         GROUP BY uf.challenge_template_id, uf.user_id
+        HAVING COUNT(DISTINCT uf.flag_id) = (
+            SELECT COUNT(*) FROM challenge_flags cf
+            WHERE cf.challenge_template_id = uf.challenge_template_id
+        )
     ),
     valid_attempts AS (
         SELECT
@@ -296,11 +300,12 @@ BEGIN
     ),
     solved_stats AS (
         SELECT
-            challenge_template_id,
+            fs.challenge_template_id,
             COUNT(*) AS solve_count,
-            ROUND(AVG(total_duration)) AS avg_completion_minutes
-        FROM aggregated_times
-        GROUP BY challenge_template_id
+            ROUND(AVG(COALESCE(at.total_duration, 0))) AS avg_completion_minutes
+        FROM fully_solved fs
+        LEFT JOIN aggregated_times at ON at.challenge_template_id = fs.challenge_template_id AND at.user_id = fs.user_id
+        GROUP BY fs.challenge_template_id
     ),
     active_deployments_table AS (
         SELECT

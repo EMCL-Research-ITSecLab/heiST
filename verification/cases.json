@@ -47,6 +47,21 @@
       ]
     },
     {
+      "id": "AUTO-CHALLENGE-DEFINITION",
+      "area": "challenge_definition",
+      "mode": "automated",
+      "procedure": "Run tests/test_challenge_definition.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_challenge_definition.py"
+      ]
+    },
+    {
       "id": "AUTO-CHALLENGE-DNS",
       "area": "challenge_dns",
       "mode": "automated",
@@ -89,6 +104,21 @@
       ],
       "sources": [
         "tests/test_cold_launch_flags.py"
+      ]
+    },
+    {
+      "id": "AUTO-DNSMASQ-PROCESS",
+      "area": "dnsmasq_process",
+      "mode": "automated",
+      "procedure": "Run tests/test_dnsmasq_process.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_dnsmasq_process.py"
       ]
     },
     {
@@ -317,6 +347,21 @@
       ]
     },
     {
+      "id": "AUTO-PROXMOX-RESOURCE-REMOVAL",
+      "area": "proxmox_resource_removal",
+      "mode": "automated",
+      "procedure": "Run tests/test_proxmox_resource_removal.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_proxmox_resource_removal.py"
+      ]
+    },
+    {
       "id": "AUTO-PROXMOX-TASKS",
       "area": "proxmox_tasks",
       "mode": "automated",
@@ -482,6 +527,51 @@
       ]
     },
     {
+      "id": "AUTO-TEARDOWN-DATABASE",
+      "area": "teardown_database",
+      "mode": "automated",
+      "procedure": "Run tests/test_teardown_database.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_teardown_database.py"
+      ]
+    },
+    {
+      "id": "AUTO-TEARDOWN-SAFETY",
+      "area": "teardown_safety",
+      "mode": "automated",
+      "procedure": "Run tests/test_teardown_safety.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_teardown_safety.py"
+      ]
+    },
+    {
+      "id": "AUTO-TEMPLATE-LOCKING",
+      "area": "template_locking",
+      "mode": "automated",
+      "procedure": "Run tests/test_template_locking.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_template_locking.py"
+      ]
+    },
+    {
       "id": "AUTO-UI-ASSETS",
       "area": "ui_assets",
       "mode": "automated",
@@ -557,6 +647,21 @@
       ]
     },
     {
+      "id": "AUTO-WAZUH-CLIENT",
+      "area": "wazuh_client",
+      "mode": "automated",
+      "procedure": "Run tests/test_wazuh_client.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_wazuh_client.py"
+      ]
+    },
+    {
       "id": "AUTO-WEB-ADMINISTRATION",
       "area": "web_administration",
       "mode": "automated",
@@ -584,6 +689,21 @@
       ],
       "sources": [
         "tests/test_web_auth.py"
+      ]
+    },
+    {
+      "id": "AUTO-WEB-AUTHORING",
+      "area": "web_authoring",
+      "mode": "automated",
+      "procedure": "Run tests/test_web_authoring.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_web_authoring.py"
       ]
     },
     {
@@ -1325,6 +1445,22 @@
       ],
       "sources": [
         "tests/integration/vpn/lifecycle.py",
+        "docs/WEB-API.md"
+      ]
+    },
+    {
+      "id": "PROXMOX-RESOURCE-NATIVE",
+      "area": "hypervisor",
+      "mode": "appliance",
+      "procedure": "On the isolated disposable test host run tools/verification.py run --suite proxmox --strict with HEIST_ISOLATED_PROXMOX_TESTS=1, an unused HEIST_TEST_VMID below100000000 and HEIST_TEST_BACKEND_ENV pointing to private PVE credentials.",
+      "expected": "A uniquely named diskless/NIC-less VM starts, stops, becomes a template and is deleted only after successful UPIDs and inventory confirmation. Occupied/foreign IDs are refused and test resources are cleaned.",
+      "evidence": [
+        "source-bound native Proxmox receipt",
+        "test output",
+        "final inventory showing test VM absent"
+      ],
+      "sources": [
+        "tests/integration/proxmox/resources.py",
         "docs/WEB-API.md"
       ]
     }

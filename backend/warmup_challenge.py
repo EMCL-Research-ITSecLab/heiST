@@ -395,9 +395,10 @@ def configure_ipv6_and_wazuh_linux(machine, manager_ip="fd12:3456:789a:1::101"):
 
     aggregated_cmd = (
         f'iface=$(ip -o link | awk "/0a:01/ {{print \\$2; exit}}" | tr -d :) && '
-        f'ip -6 addr add {ipv6}/64 dev $iface && '
-        f'ip -6 route add default via {vrtmon_gw} && '
-        f'systemctl stop wazuh-agent 2>/dev/null || true && '
+        f'ip link set $iface up && '
+        f'ip -6 addr replace {ipv6}/64 dev $iface nodad && '
+        f'ip -6 route replace default via {vrtmon_gw} && '
+        f'{{ systemctl stop wazuh-agent 2>/dev/null || true; }} && '
         f'/var/monitoring/wazuh-agent/setup_wazuh.sh '
         f'    --register '
         f'    --manager={manager_ip} '

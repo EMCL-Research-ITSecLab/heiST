@@ -1,8 +1,10 @@
 # Frontend development and releases
 
 The student workspace and administration console use React, TypeScript and Vite.
-PHP remains the session-protected web API; Flask remains the internal platform
-API. The browser never receives the internal authentication token.
+The browser uses the unprivileged Flask REST API under `/api/`; authenticated
+platform operations pass to a separate privileged API. The browser never receives
+the internal authentication token. PHP is retained only as a migration reference
+until the checked replacement deployment and appliance acceptance pass.
 
 ## Source layout
 
@@ -12,13 +14,15 @@ API. The browser never receives the internal authentication token.
 - `frontend/src/lib/state.tsx`: session lifecycle, request cancellation and actions.
 - `frontend/src/lib/router.tsx`: navigation using the browser history API.
 - `frontend/src/styles.css` and `tokens.css`: responsive layout and theme tokens.
-- `webserver/html/backend/`: existing PHP endpoints and session bootstrap.
-- `webserver/html/includes/uiShell.php`: PHP entry shell for the built assets.
+- `heist/api/public/`: browser endpoints, sessions and restricted database access.
+- `deploy/web/apache/heist.conf`: static serving and loopback API proxy boundary.
+- `deploy/web/systemd/`: unprivileged API and image-transfer worker services.
 
-Keep server authorization in the PHP/API layer. UI route guards provide navigation
+Keep server authorization in the Flask API layer. UI route guards provide navigation
 feedback; they do not grant permission. All mutations use the existing CSRF/session
 checks. Never put credentials or sessions in local storage. Only theme preference
-is persisted there. Render user content as text, and validate downloadable URLs.
+is persisted there. Resumable upload identifiers use session storage; credentials
+and cookies never do. Render user content as text, and validate downloadable URLs.
 
 ## Local checks
 
@@ -35,14 +39,14 @@ python3 tests/browser/ui_smoke.py
 
 Playwright is already a dependency of the repository's end-to-end tooling. The
 browser suite runs the production build with isolated API fixtures, never a live
-challenge deployment. PHP/API tests and a real appliance rehearsal remain
+challenge deployment. Real database/API tests and an appliance rehearsal remain
 necessary; fixture tests do not establish infrastructure readiness.
 
-For a preview against a local PHP web root:
+Build development static assets into a separate preview directory:
 
 ```sh
 python3 -m tools.frontend --development --output /tmp/heist-preview.tar.gz \
-  --install-web-root webserver/html
+  --install-web-root /tmp/heist-preview-static
 ```
 
 Development artifacts are deliberately rejected by production rollout plans.
@@ -55,26 +59,30 @@ Commit reviewed source first, then build from that clean checkout:
 python3 -m tools.frontend --output /mnt/data/heist-builds/releases/frontend.tar.gz
 ```
 
-The archive contains content-hashed static assets, their checksums, and the full
-source commit. Keep it with the cloud release artifacts, outside Git. Production
-requires Python and the existing PHP stack; it does not require Node.js or npm.
+The standalone schema-2 archive contains the React index, hashed JS/CSS,
+static presets, complete asset checksums and the full source commit. Keep it
+outside Git with the matching [offline Python runtime](OFFLINE-RUNTIME.md).
+The deployment host does not need Node.js or npm.
 
-Use a new release plan with `--manifest releases/0.3.0.json --ui-bundle PATH`.
-The controller validates the target revision and SHA256 before maintenance,
-checkpoints the artifact with the VM/SQL backups, and installs the entry manifest
-last. A changed local asset stops deployment. Runtime uploads are preserved.
-Rollback restores the complete web VM checkpoint, including its prior frontend.
-Older release runners reject the new manifest schema before entering maintenance.
+The legacy `releases/0.3.0.json` rollout adapter intentionally rejects standalone
+bundles before maintenance. Do not use the former PHP-shell installation recipe
+for this artifact. The new runtime adapter, restricted-role provisioning, private
+media migration and fresh installer are still release gates.
 
-For a fresh installation, install the same source-bound bundle into the checkout's
-`webserver/html` first. The installer checks its revision and asset checksums
-before bootstrapping or changing the host:
+The Apache template replaces incoming forwarding headers, serves static assets,
+proxies only to the loopback API and denies PHP/script files. The renderer rejects
+configuration injection. Its native regression runs a separate Apache process
+with its own certificate, ports and document root on the disposable web VM:
 
 ```sh
-python3 -m heist.ui_assets install --bundle /path/frontend.tar.gz \
-  --commit "$(git rev-parse HEAD)" --web-root webserver/html
-bin/install
+HEIST_ISOLATED_WEB_TESTS=1 python3 -m tests.integration.web.proxy
 ```
+
+Run that command as root on the isolated web VM with the existing Apache modules
+and OpenSSL installed. It leaves installed Apache settings/services/certificates
+untouched. It verifies TLS, SPA routes, static assets, API status preservation,
+forwarding-header replacement, PHP denial and process cleanup. This verifies the
+proxy boundary; it does not install or approve the full production migration.
 
 ## Real appliance smoke checks
 

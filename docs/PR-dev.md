@@ -69,7 +69,10 @@ retain their receipts and require reconciliation. Retirement checks references
 and retains a recovery copy of the source image.
 
 The new runtime has passed offline installation and unprivileged Gunicorn checks
-on the isolated web VM. Its checked deployment adapter, Apache replacement,
+on the isolated web VM. The privileged Gunicorn runtime also passes managed TLS,
+explicit peer-identity, authentication, maintenance and bounded shutdown checks.
+The static React/loopback Flask Apache template has passed a separate native
+TLS/proxy test, including spoofed forwarding headers and PHP denial. Its checked deployment adapter, Apache installation/replacement,
 restricted-role provisioning, private media migration and fresh installer remain
 release gates. The legacy rollout protocol rejects standalone UI bundles before
 maintenance. Keep PHP as a migration reference until the replacement installer

@@ -17,14 +17,15 @@ input validation, health checks, release rollback, OVA packaging and existing
 backend regressions. Imports do not create log directories or connect to
 Proxmox. Injected API services exercise real Flask requests without live VMs.
 Both `/health/live` and `/health/ready` require HTTPS and the existing
-`Authentication-Token` header. Readiness checks PostgreSQL connectivity, not
-whole-platform readiness. API errors do not return exception strings.
+`Authentication-Token` header. Readiness requires a successful startup-cleanup receipt and PostgreSQL
+connectivity; it does not certify the whole platform. API errors do not return exception strings.
 Malformed identifiers return HTTP 400, oversized bodies 413, failed operations
 500 and database unavailability 503. Successful existing route payloads remain
 compatible. HTTP redirects use 307 to preserve POST bodies and query strings.
 
-Set `TEST_DATABASE_URL` to a **disposable PostgreSQL database** to enable seven
-ownership/concurrency tests. They create random schemas and remove them afterwards.
+Set `TEST_DATABASE_URL` to a **disposable PostgreSQL administrator connection**
+to enable the database contracts. They create separate databases and restricted
+roles, then remove them afterwards; never use production credentials.
 The Linux DHCP/host-input tests also need `dnsmasq`. The privileged network test
 has an explicit opt-in: see `HEIST_PRIVILEGED_TESTS` in its test source.
 It creates a private network namespace; never enable it on production. Missing

@@ -1150,5 +1150,12 @@
       "tests.test_rollout_web.WebMaintenanceTests.test_runtime_marker_is_visible_without_access_to_private_state"
     ],
     "rationale": "Checks runtime marker content/mode, removal, and symlink refusal preserving its target. Actual boot firewall behavior is a separate native gate."
+  },
+  "heist/rollout/web_proxy.py::render": {
+    "tests": [
+      "tests.test_web_proxy.ProxyConfigurationTests.test_render_binds_only_the_loopback_api_and_replaces_forwarding_headers",
+      "tests.test_web_proxy.ProxyConfigurationTests.test_paths_host_port_listener_and_unknown_placeholders_cannot_inject_directives"
+    ],
+    "rationale": "Checks fixed loopback upstream and forwarding policy, normalized paths/listener bounds and configuration-injection refusal. The separate native Apache case verifies actual directives and HTTP behavior."
   }
 }

@@ -1703,6 +1703,36 @@
       "sources": [
         "tests/integration/images/import_vm.py"
       ]
+    },
+    {
+      "id": "AUTO-WEB-PROXY",
+      "area": "web-proxy",
+      "mode": "automated",
+      "procedure": "Run the portable proxy-rendering contracts through tools/check.py.",
+      "expected": "The loopback destination and forwarding policy render correctly; unsafe paths, hostnames, ports, listeners and unknown placeholders are rejected before mutation.",
+      "evidence": [
+        "exact source revision",
+        "test output",
+        "isolated host and cleanup proof"
+      ],
+      "sources": [
+        "tests/test_web_proxy.py"
+      ]
+    },
+    {
+      "id": "WEB-APACHE-BOUNDARY",
+      "area": "web-proxy",
+      "mode": "appliance",
+      "procedure": "Run as root on the isolated web VM with HEIST_ISOLATED_WEB_TESTS=1; retain native output and cleanup evidence.",
+      "expected": "Private Apache TLS, SPA/static paths, exact API status, forwarding-header replacement and PHP denial pass; installed Apache and certificates remain untouched.",
+      "evidence": [
+        "exact source revision",
+        "test output",
+        "isolated host and cleanup proof"
+      ],
+      "sources": [
+        "tests/integration/web/proxy.py"
+      ]
     }
   ]
 }

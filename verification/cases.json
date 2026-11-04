@@ -62,6 +62,21 @@
       ]
     },
     {
+      "id": "AUTO-CHALLENGE-STOP",
+      "area": "challenge_stop",
+      "mode": "automated",
+      "procedure": "Run tests/test_challenge_stop.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_challenge_stop.py"
+      ]
+    },
+    {
       "id": "AUTO-COLD-LAUNCH-FLAGS",
       "area": "cold_launch_flags",
       "mode": "automated",
@@ -524,6 +539,201 @@
       ],
       "sources": [
         "tests/test_vm_resources.py"
+      ]
+    },
+    {
+      "id": "AUTO-VPN-ACCOUNTS",
+      "area": "vpn_accounts",
+      "mode": "automated",
+      "procedure": "Run tests/test_vpn_accounts.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_vpn_accounts.py"
+      ]
+    },
+    {
+      "id": "AUTO-WEB-ADMINISTRATION",
+      "area": "web_administration",
+      "mode": "automated",
+      "procedure": "Run tests/test_web_administration.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_web_administration.py"
+      ]
+    },
+    {
+      "id": "AUTO-WEB-AUTH",
+      "area": "web_auth",
+      "mode": "automated",
+      "procedure": "Run tests/test_web_auth.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_web_auth.py"
+      ]
+    },
+    {
+      "id": "AUTO-WEB-BOUNDARY",
+      "area": "web_boundary",
+      "mode": "automated",
+      "procedure": "Run tests/test_web_boundary.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_web_boundary.py"
+      ]
+    },
+    {
+      "id": "AUTO-WEB-CHALLENGES",
+      "area": "web_challenges",
+      "mode": "automated",
+      "procedure": "Run tests/test_web_challenges.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_web_challenges.py"
+      ]
+    },
+    {
+      "id": "AUTO-WEB-DATABASE",
+      "area": "web_database",
+      "mode": "automated",
+      "procedure": "Run tests/test_web_database.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_web_database.py"
+      ]
+    },
+    {
+      "id": "AUTO-WEB-LEARNING",
+      "area": "web_learning",
+      "mode": "automated",
+      "procedure": "Run tests/test_web_learning.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_web_learning.py"
+      ]
+    },
+    {
+      "id": "AUTO-WEB-MEDIA",
+      "area": "web_media",
+      "mode": "automated",
+      "procedure": "Run tests/test_web_media.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_web_media.py"
+      ]
+    },
+    {
+      "id": "AUTO-WEB-PROFILES",
+      "area": "web_profiles",
+      "mode": "automated",
+      "procedure": "Run tests/test_web_profiles.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_web_profiles.py"
+      ]
+    },
+    {
+      "id": "AUTO-WEB-REPOSITORY",
+      "area": "web_repository",
+      "mode": "automated",
+      "procedure": "Run tests/test_web_repository.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_web_repository.py"
+      ]
+    },
+    {
+      "id": "AUTO-WEB-SERVER",
+      "area": "web_server",
+      "mode": "automated",
+      "procedure": "Run tests/test_web_server.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_web_server.py"
+      ]
+    },
+    {
+      "id": "AUTO-WEB-SESSIONS",
+      "area": "web_sessions",
+      "mode": "automated",
+      "procedure": "Run tests/test_web_sessions.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_web_sessions.py"
+      ]
+    },
+    {
+      "id": "AUTO-WEB-TRANSPORT",
+      "area": "web_transport",
+      "mode": "automated",
+      "procedure": "Run tests/test_web_transport.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_web_transport.py"
       ]
     },
     {
@@ -1100,6 +1310,22 @@
       ],
       "sources": [
         "tests/browser/live_smoke.py"
+      ]
+    },
+    {
+      "id": "VPN-LIVE-REVOCATION",
+      "area": "vpn",
+      "mode": "appliance",
+      "procedure": "On a disposable root host with existing OpenVPN/Easy-RSA/TUN run HEIST_ISOLATED_NETWORK_TESTS=1 python tools/verification.py run --suite vpn --strict --output /private/new-vpn-evidence. The runner creates a fresh network namespace and CA.",
+      "expected": "Both clients authenticate; revoking one publishes a signed CRL, disconnects only that client, denies reconnect, permits an idempotent retry and leaves the second connected. Test processes and temporary CA are removed.",
+      "evidence": [
+        "source-bound VPN suite receipt",
+        "test output",
+        "process cleanup result"
+      ],
+      "sources": [
+        "tests/integration/vpn/lifecycle.py",
+        "docs/WEB-API.md"
       ]
     }
   ]

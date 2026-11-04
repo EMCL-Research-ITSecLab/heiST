@@ -26,3 +26,7 @@ class PasswordTests(unittest.TestCase):
             self.assertFalse(verify_password(stored, 'a password'))
         self.assertFalse(verify_password('garbage', 'x'*100000))
         self.assertTrue(needs_rehash(None))
+        self.assertFalse(verify_password('scrypt:999999999:8:1$salt$hash', 'a password'))
+        self.assertTrue(needs_rehash('scrypt:32768:8:1$salt$broken'))
+        upgraded = hash_password('old', enforce_policy=False)
+        self.assertTrue(verify_password(upgraded, 'old'))

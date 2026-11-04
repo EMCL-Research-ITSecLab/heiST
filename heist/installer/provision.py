@@ -716,6 +716,9 @@ cert /etc/openvpn/easy-rsa/pki/issued/server.crt
 key /etc/openvpn/easy-rsa/pki/private/server.key
 dh /etc/openvpn/easy-rsa/pki/dh.pem
 tls-auth /etc/openvpn/easy-rsa/ta.key 0
+crl-verify /etc/openvpn/crl.pem
+management /run/openvpn/heist-management.sock unix
+management-client-user root
 
 push "route {CHALLENGES_ROOT_SUBNET} {CHALLENGES_ROOT_SUBNET_MASK}"
 
@@ -767,11 +770,19 @@ verb 7
                    cwd=easyrsa_dir, check=True, capture_output=True, env=env)
     subprocess.run([easyrsa_binary, "gen-dh"],
                    cwd=easyrsa_dir, check=True, capture_output=True, env=env)
+    subprocess.run([easyrsa_binary, "gen-crl"],
+                   cwd=easyrsa_dir, check=True, capture_output=True, env=env, timeout=120)
     subprocess.run(["openvpn", "--genkey", "secret", os.path.join(easyrsa_dir, "ta.key")],
                    check=True, capture_output=True, env=env)
 
     print("\tCopying Easy-RSA files to OpenVPN directory")
     subprocess.run(["cp", "-r", easyrsa_dir, "/etc/openvpn/easy-rsa"], check=True, capture_output=True)
+    subprocess.run(["cp", os.path.join(easyrsa_dir, "pki/crl.pem"), "/etc/openvpn/crl.pem"], check=True, capture_output=True)
+    os.chmod('/etc/openvpn/crl.pem', 0o644)
+    dropin = Path('/etc/systemd/system/openvpn@server.service.d')
+    dropin.mkdir(parents=True, exist_ok=True)
+    (dropin/'heist-runtime.conf').write_text('[Service]\nRuntimeDirectory=openvpn\nRuntimeDirectoryMode=0755\nUMask=0077\n')
+    subprocess.run(['systemctl', 'daemon-reload'], check=True, capture_output=True)
 
     print("\tCreating OpenVPN server configuration file")
     with open("/etc/openvpn/server.conf", "w") as openvpn_file:
@@ -786,6 +797,11 @@ verb 7
     print("\tEnabling and starting OpenVPN service")
     subprocess.run(["systemctl", "enable", "openvpn@server"], check=True, capture_output=True)
     subprocess.run(["systemctl", "start", "openvpn@server"], check=True, capture_output=True)
+    for name in ('heist-vpn-crl-refresh.service', 'heist-vpn-crl-refresh.timer'):
+        definition = (Path(PROJECT_ROOT)/'deploy/vpn/systemd'/name).read_text()
+        Path('/etc/systemd/system', name).write_text(definition.replace('/root/heiST', PROJECT_ROOT))
+    subprocess.run(['systemctl', 'daemon-reload'], check=True, capture_output=True)
+    subprocess.run(['systemctl', 'enable', '--now', 'heist-vpn-crl-refresh.timer'], check=True, capture_output=True)
 
     print("\tRemoving working directory")
     subprocess.run(["rm", "-rf", workdir], check=True, capture_output=True)

@@ -1,0 +1,23 @@
+[Unit]
+Description=Refresh heiST VPN certificate revocation list
+AssertPathIsDirectory=/etc/openvpn/easy-rsa/pki
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/root/heiST
+ExecStart=/root/heiST/.venv/bin/python -m heist.platform.users.renew_crl
+TimeoutStartSec=180
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=read-only
+ProtectSystem=strict
+ReadWritePaths=/etc/openvpn /run/lock
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_UNIX
+CapabilityBoundingSet=

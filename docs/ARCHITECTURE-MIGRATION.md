@@ -37,7 +37,9 @@ must never directly execute privileged host code.
 - Preserve worker expiry/cleanup behavior; replace PHP cron with a bounded,
   observable Python service/timer. Test interruption and concurrency.
 - Build a source-bound public API/runtime artifact with the existing Flask stack.
-  The production WSGI server choice requires the user's dependency approval.
+  Gunicorn is approved and pinned in `deploy/web/requirements.txt`. The
+  loopback-only runner and unprivileged service template are available; the
+  offline runtime bundle and rollout adapter still require verification.
 - Replace Apache PHP handling with static React serving and a loopback proxy to
   the unprivileged Python service. Preserve certificate verification and limit
   forwarded-header trust to that local reverse proxy.

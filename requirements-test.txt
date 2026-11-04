@@ -1,4 +1,4 @@
-# Existing platform dependencies only; no additional test framework.
+# Existing platform dependencies and approved production WSGI server.
 Flask>=3.1,<4
 psycopg2-binary>=2.9,<3
 python-dotenv>=1,<2
@@ -7,3 +7,4 @@ proxmoxer>=2,<3
 tenacity>=9,<10
 PyYAML>=6,<7
 scapy>=2.6,<3
+gunicorn==26.2.0

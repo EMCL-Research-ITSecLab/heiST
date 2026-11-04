@@ -14,7 +14,7 @@ BEGIN
     SELECT
         COUNT(DISTINCT cf.id)::BIGINT AS total_flags,
         COUNT(DISTINCT cc.flag_id)::BIGINT AS flags_completed,
-        (COUNT(DISTINCT cc.flag_id) >= COUNT(DISTINCT cf.id))::BOOLEAN AS is_solved
+        (COUNT(DISTINCT cf.id) > 0 AND COUNT(DISTINCT cc.flag_id) >= COUNT(DISTINCT cf.id))::BOOLEAN AS is_solved
     FROM challenge_flags cf
     LEFT JOIN completed_challenges cc ON
         cf.id = cc.flag_id AND
@@ -60,6 +60,8 @@ BEGIN
                     (SELECT MAX(cc.completed_at)
                      FROM completed_challenges cc
                      WHERE cc.flag_id IS NOT NULL
+                       AND cc.user_id = p_user_id
+                       AND cc.challenge_template_id = p_challenge_template_id
                     )
                 ELSE CURRENT_TIMESTAMP
             END AS end_of_last_interval

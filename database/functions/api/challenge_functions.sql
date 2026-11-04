@@ -759,7 +759,7 @@ AS $$
 BEGIN
     UPDATE challenges
     SET
-        expires_at = CURRENT_TIMESTAMP + (p_extend_scalar * INTERVAL '1 hour'),
+        expires_at = GREATEST(expires_at, CURRENT_TIMESTAMP) + (p_extend_scalar * INTERVAL '1 hour'),
         used_extensions = used_extensions + 1
     WHERE id = p_challenge_id;
 END;

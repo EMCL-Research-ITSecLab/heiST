@@ -68,7 +68,8 @@ BEGIN
     FROM challenge_templates ct
     LEFT JOIN solve_counts s ON ct.id = s.challenge_template_id
     LEFT JOIN attempt_counts a ON ct.id = a.challenge_template_id
-    WHERE (p_category IS NULL OR ct.category = p_category)
+    WHERE ct.is_active AND NOT ct.marked_for_deletion
+    AND (p_category IS NULL OR ct.category = p_category)
     AND (p_difficulty IS NULL OR ct.difficulty = p_difficulty)
     AND (p_search IS NULL OR ct.name ILIKE p_search OR ct.description ILIKE p_search)
     ORDER BY

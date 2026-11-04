@@ -142,5 +142,382 @@
       "tests.test_verification.VerificationTests.test_tampering_with_result_counts_or_log_is_detected"
     ],
     "rationale": "Checks valid source-bound evidence and rejection of changed results/logs, wrong revision, dirty source, failed command or nonstrict receipt."
+  },
+  "heist/security/sessions.py::Sessions.__init__": {
+    "tests": [
+      "tests.test_web_sessions.SessionTests.test_invalid_configuration_and_cookie_do_not_reach_storage",
+      "tests.test_web_sessions.SessionTests.test_storage_never_receives_raw_cookie_and_rotation_is_unpredictable",
+      "tests.test_web_database.WebDatabaseTests.test_opaque_session_rotation_expiry_and_revocation_use_real_storage"
+    ],
+    "rationale": "Checks configuration/cookie bounds, unpredictable rotation, digest-only storage and actual PostgreSQL expiry/revocation; malformed cookies do not touch storage."
+  },
+  "heist/security/sessions.py::Sessions.identity": {
+    "tests": [
+      "tests.test_web_sessions.SessionTests.test_invalid_configuration_and_cookie_do_not_reach_storage",
+      "tests.test_web_sessions.SessionTests.test_storage_never_receives_raw_cookie_and_rotation_is_unpredictable",
+      "tests.test_web_database.WebDatabaseTests.test_opaque_session_rotation_expiry_and_revocation_use_real_storage"
+    ],
+    "rationale": "Checks configuration/cookie bounds, unpredictable rotation, digest-only storage and actual PostgreSQL expiry/revocation; malformed cookies do not touch storage."
+  },
+  "heist/security/sessions.py::Sessions.load": {
+    "tests": [
+      "tests.test_web_sessions.SessionTests.test_invalid_configuration_and_cookie_do_not_reach_storage",
+      "tests.test_web_sessions.SessionTests.test_storage_never_receives_raw_cookie_and_rotation_is_unpredictable",
+      "tests.test_web_database.WebDatabaseTests.test_opaque_session_rotation_expiry_and_revocation_use_real_storage"
+    ],
+    "rationale": "Checks configuration/cookie bounds, unpredictable rotation, digest-only storage and actual PostgreSQL expiry/revocation; malformed cookies do not touch storage."
+  },
+  "heist/security/sessions.py::Sessions.rotate": {
+    "tests": [
+      "tests.test_web_sessions.SessionTests.test_invalid_configuration_and_cookie_do_not_reach_storage",
+      "tests.test_web_sessions.SessionTests.test_storage_never_receives_raw_cookie_and_rotation_is_unpredictable",
+      "tests.test_web_database.WebDatabaseTests.test_opaque_session_rotation_expiry_and_revocation_use_real_storage"
+    ],
+    "rationale": "Checks configuration/cookie bounds, unpredictable rotation, digest-only storage and actual PostgreSQL expiry/revocation; malformed cookies do not touch storage."
+  },
+  "heist/security/sessions.py::Sessions.revoke": {
+    "tests": [
+      "tests.test_web_sessions.SessionTests.test_invalid_configuration_and_cookie_do_not_reach_storage",
+      "tests.test_web_sessions.SessionTests.test_storage_never_receives_raw_cookie_and_rotation_is_unpredictable",
+      "tests.test_web_database.WebDatabaseTests.test_opaque_session_rotation_expiry_and_revocation_use_real_storage"
+    ],
+    "rationale": "Checks configuration/cookie bounds, unpredictable rotation, digest-only storage and actual PostgreSQL expiry/revocation; malformed cookies do not touch storage."
+  },
+  "heist/security/sessions.py::Sessions.csrf": {
+    "tests": [
+      "tests.test_web_sessions.SessionTests.test_csrf_token_is_bound_to_session_and_server_secret"
+    ],
+    "rationale": "Checks token binding to both session and server secret, exact token shape and rejection of changed/invalid tokens."
+  },
+  "heist/security/sessions.py::Sessions.valid_csrf": {
+    "tests": [
+      "tests.test_web_sessions.SessionTests.test_csrf_token_is_bound_to_session_and_server_secret"
+    ],
+    "rationale": "Checks token binding to both session and server secret, exact token shape and rejection of changed/invalid tokens."
+  },
+  "heist/api/public/repository.py::Repository.db": {
+    "tests": [
+      "tests.test_web_repository.RepositoryTests.test_connection_reuse_scalar_and_cleanup",
+      "tests.test_web_repository.RepositoryTests.test_connection_initialization_failure_closes_the_unusable_connection"
+    ],
+    "rationale": "Checks lazy connection reuse, scalar result extraction, idempotent closure and closure after failed initialization."
+  },
+  "heist/api/public/repository.py::Repository.close": {
+    "tests": [
+      "tests.test_web_repository.RepositoryTests.test_connection_reuse_scalar_and_cleanup",
+      "tests.test_web_repository.RepositoryTests.test_connection_initialization_failure_closes_the_unusable_connection"
+    ],
+    "rationale": "Checks lazy connection reuse, scalar result extraction, idempotent closure and closure after failed initialization."
+  },
+  "heist/api/public/repository.py::Repository.scalar": {
+    "tests": [
+      "tests.test_web_repository.RepositoryTests.test_connection_reuse_scalar_and_cleanup",
+      "tests.test_web_repository.RepositoryTests.test_connection_initialization_failure_closes_the_unusable_connection"
+    ],
+    "rationale": "Checks lazy connection reuse, scalar result extraction, idempotent closure and closure after failed initialization."
+  },
+  "heist/api/public/repository.py::Repository.call": {
+    "tests": [
+      "tests.test_web_repository.RepositoryTests.test_invalid_function_identifier_never_connects",
+      "tests.test_web_database.WebDatabaseTests.test_restricted_application_role_cannot_read_account_tables_or_create_functions"
+    ],
+    "rationale": "Checks identifier rejection before connection and actual restricted-role stored-function behavior without direct table or schema-creation privileges."
+  },
+  "heist/api/public/repository.py::Repository.transaction": {
+    "tests": [
+      "tests.test_web_repository.RepositoryTests.test_transaction_commits_or_rolls_back_and_restores_mode",
+      "tests.test_web_repository.RepositoryTests.test_nested_transactions_are_rejected"
+    ],
+    "rationale": "Checks commit, exception rollback, restoration of autocommit and rejection of nested transaction ownership."
+  },
+  "heist/api/public/auth.py::bootstrap": {
+    "tests": [
+      "tests.test_web_auth.PublicAuthenticationTests.test_guest_bootstrap_cookie_csrf_login_rotation_and_legacy_upgrade",
+      "tests.test_web_auth.PublicAuthenticationTests.test_unknown_user_and_wrong_password_have_identical_public_failure"
+    ],
+    "rationale": "Checks actual browser bootstrap, secure cookie attributes, public user whitelist, login/CSRF rotation, legacy hash upgrade and indistinguishable bad-credential responses."
+  },
+  "heist/api/public/auth.py::login": {
+    "tests": [
+      "tests.test_web_auth.PublicAuthenticationTests.test_guest_bootstrap_cookie_csrf_login_rotation_and_legacy_upgrade",
+      "tests.test_web_auth.PublicAuthenticationTests.test_unknown_user_and_wrong_password_have_identical_public_failure"
+    ],
+    "rationale": "Checks actual browser bootstrap, secure cookie attributes, public user whitelist, login/CSRF rotation, legacy hash upgrade and indistinguishable bad-credential responses."
+  },
+  "heist/api/public/auth.py::auth_record": {
+    "tests": [
+      "tests.test_web_auth.PublicAuthenticationTests.test_guest_bootstrap_cookie_csrf_login_rotation_and_legacy_upgrade",
+      "tests.test_web_auth.PublicAuthenticationTests.test_unknown_user_and_wrong_password_have_identical_public_failure"
+    ],
+    "rationale": "Checks actual browser bootstrap, secure cookie attributes, public user whitelist, login/CSRF rotation, legacy hash upgrade and indistinguishable bad-credential responses."
+  },
+  "heist/api/public/auth.py::user_result": {
+    "tests": [
+      "tests.test_web_auth.PublicAuthenticationTests.test_guest_bootstrap_cookie_csrf_login_rotation_and_legacy_upgrade",
+      "tests.test_web_auth.PublicAuthenticationTests.test_unknown_user_and_wrong_password_have_identical_public_failure"
+    ],
+    "rationale": "Checks actual browser bootstrap, secure cookie attributes, public user whitelist, login/CSRF rotation, legacy hash upgrade and indistinguishable bad-credential responses."
+  },
+  "heist/api/public/auth.py::encoded_password": {
+    "tests": [
+      "tests.test_web_auth.PublicAuthenticationTests.test_guest_bootstrap_cookie_csrf_login_rotation_and_legacy_upgrade",
+      "tests.test_web_auth.PublicAuthenticationTests.test_unknown_user_and_wrong_password_have_identical_public_failure"
+    ],
+    "rationale": "Checks actual browser bootstrap, secure cookie attributes, public user whitelist, login/CSRF rotation, legacy hash upgrade and indistinguishable bad-credential responses."
+  },
+  "heist/api/public/auth.py::signup": {
+    "tests": [
+      "tests.test_web_auth.PublicAuthenticationTests.test_signup_validates_policy_and_duplicate_accounts_without_partial_success",
+      "tests.test_web_auth.PublicAuthenticationTests.test_closed_registration_and_malformed_password_change_are_clear_errors"
+    ],
+    "rationale": "Checks registration policy, closed registration, duplicate conflict, no partially created invalid account and successful persistent identity."
+  },
+  "heist/api/public/auth.py::logout": {
+    "tests": [
+      "tests.test_web_auth.PublicAuthenticationTests.test_logout_revokes_replayed_cookie"
+    ],
+    "rationale": "Checks that logout invalidates the stored session and replaying the captured cookie produces a guest identity."
+  },
+  "heist/api/public/auth.py::reset_password": {
+    "tests": [
+      "tests.test_web_auth.PublicAuthenticationTests.test_password_change_revokes_old_sessions_and_current_session_is_rotated",
+      "tests.test_web_auth.PublicAuthenticationTests.test_force_reset_flag_and_expired_reset_window_are_preserved"
+    ],
+    "rationale": "Checks durable password replacement, forced-reset expiry, current session rotation and rejection of an old session cookie."
+  },
+  "heist/api/public/auth.py::change_password": {
+    "tests": [
+      "tests.test_web_auth.PublicAuthenticationTests.test_password_change_revokes_old_sessions_and_current_session_is_rotated",
+      "tests.test_web_auth.PublicAuthenticationTests.test_force_reset_flag_and_expired_reset_window_are_preserved"
+    ],
+    "rationale": "Checks durable password replacement, forced-reset expiry, current session rotation and rejection of an old session cookie."
+  },
+  "heist/api/public/context.py::body": {
+    "tests": [
+      "tests.test_web_auth.PublicAuthenticationTests.test_missing_csrf_cross_origin_duplicate_fields_and_insecure_transport_are_denied",
+      "tests.test_web_auth.PublicAuthenticationTests.test_large_and_duplicate_form_requests_fail_before_authentication",
+      "tests.test_web_auth.PublicAuthenticationTests.test_guest_bootstrap_cookie_csrf_login_rotation_and_legacy_upgrade"
+    ],
+    "rationale": "Checks HTTPS, CSRF/origin enforcement, bounded/duplicate request rejection and secure session cookie headers through real Flask requests."
+  },
+  "heist/api/public/context.py::initialize_request": {
+    "tests": [
+      "tests.test_web_auth.PublicAuthenticationTests.test_missing_csrf_cross_origin_duplicate_fields_and_insecure_transport_are_denied",
+      "tests.test_web_auth.PublicAuthenticationTests.test_large_and_duplicate_form_requests_fail_before_authentication",
+      "tests.test_web_auth.PublicAuthenticationTests.test_guest_bootstrap_cookie_csrf_login_rotation_and_legacy_upgrade"
+    ],
+    "rationale": "Checks HTTPS, CSRF/origin enforcement, bounded/duplicate request rejection and secure session cookie headers through real Flask requests."
+  },
+  "heist/api/public/context.py::finish_request": {
+    "tests": [
+      "tests.test_web_auth.PublicAuthenticationTests.test_missing_csrf_cross_origin_duplicate_fields_and_insecure_transport_are_denied",
+      "tests.test_web_auth.PublicAuthenticationTests.test_large_and_duplicate_form_requests_fail_before_authentication",
+      "tests.test_web_auth.PublicAuthenticationTests.test_guest_bootstrap_cookie_csrf_login_rotation_and_legacy_upgrade"
+    ],
+    "rationale": "Checks HTTPS, CSRF/origin enforcement, bounded/duplicate request rejection and secure session cookie headers through real Flask requests."
+  },
+  "heist/api/public/context.py::require_admin": {
+    "tests": [
+      "tests.test_web_administration.AdministrationTests.test_administration_reloads_role_before_platform_access"
+    ],
+    "rationale": "Checks guest/student denial before internal transport, administrator success with safe output, and immediate denial after role revocation."
+  },
+  "heist/api/public/learning.py::explore": {
+    "tests": [
+      "tests.test_web_learning.LearningViewsTests.test_public_explore_hides_inactive_and_retired_exercises_without_flag_leak"
+    ],
+    "rationale": "Checks actual visibility/filter counts and absence of secret flags for anonymous exercise discovery."
+  },
+  "heist/api/public/learning.py::challenge_card": {
+    "tests": [
+      "tests.test_web_learning.LearningViewsTests.test_public_explore_hides_inactive_and_retired_exercises_without_flag_leak"
+    ],
+    "rationale": "Checks actual visibility/filter counts and absence of secret flags for anonymous exercise discovery."
+  },
+  "heist/api/public/learning.py::dashboard": {
+    "tests": [
+      "tests.test_web_learning.LearningViewsTests.test_dashboard_does_not_count_collective_partial_flags_as_full_solves"
+    ],
+    "rationale": "Checks partial flags split across users do not become a full solve, plus cumulative timeline date bins."
+  },
+  "heist/api/public/learning.py::timeline": {
+    "tests": [
+      "tests.test_web_learning.LearningViewsTests.test_dashboard_does_not_count_collective_partial_flags_as_full_solves"
+    ],
+    "rationale": "Checks partial flags split across users do not become a full solve, plus cumulative timeline date bins."
+  },
+  "heist/api/public/profiles.py::basic_profile": {
+    "tests": [
+      "tests.test_web_profiles.ProfileTests.test_profile_reads_require_auth_and_public_view_excludes_private_identity"
+    ],
+    "rationale": "Checks authenticated private reads, real category/point values, public privacy exclusions, unknown profile and invalid section handling."
+  },
+  "heist/api/public/profiles.py::profile_data": {
+    "tests": [
+      "tests.test_web_profiles.ProfileTests.test_profile_reads_require_auth_and_public_view_excludes_private_identity"
+    ],
+    "rationale": "Checks authenticated private reads, real category/point values, public privacy exclusions, unknown profile and invalid section handling."
+  },
+  "heist/api/public/profiles.py::profile_stats": {
+    "tests": [
+      "tests.test_web_profiles.ProfileTests.test_profile_reads_require_auth_and_public_view_excludes_private_identity"
+    ],
+    "rationale": "Checks authenticated private reads, real category/point values, public privacy exclusions, unknown profile and invalid section handling."
+  },
+  "heist/api/public/profiles.py::get_profile": {
+    "tests": [
+      "tests.test_web_profiles.ProfileTests.test_profile_reads_require_auth_and_public_view_excludes_private_identity"
+    ],
+    "rationale": "Checks authenticated private reads, real category/point values, public privacy exclusions, unknown profile and invalid section handling."
+  },
+  "heist/api/public/profiles.py::public_profile": {
+    "tests": [
+      "tests.test_web_profiles.ProfileTests.test_profile_reads_require_auth_and_public_view_excludes_private_identity"
+    ],
+    "rationale": "Checks authenticated private reads, real category/point values, public privacy exclusions, unknown profile and invalid section handling."
+  },
+  "heist/api/public/profiles.py::update_profile": {
+    "tests": [
+      "tests.test_web_profiles.ProfileTests.test_field_changes_use_session_owner_and_preserve_raw_text_for_react",
+      "tests.test_web_profiles.ProfileTests.test_username_email_change_and_duplicate_conflict_are_atomic",
+      "tests.test_web_profiles.ProfileTests.test_vpn_download_is_private_and_platform_identity_is_never_client_supplied"
+    ],
+    "rationale": "Checks session-owned mutations, validators, durable field values, duplicate conflict without partial overwrite, and a private VPN attachment bound to the session user."
+  },
+  "heist/api/public/profiles.py::update_avatar": {
+    "tests": [
+      "tests.test_web_profiles.ProfileTests.test_avatar_upload_and_selection_clean_up_only_owned_generated_images"
+    ],
+    "rationale": "Checks durable generated image URLs, cleanup of the prior owned image and rejection of malformed uploads without changing selection."
+  },
+  "heist/api/public/profiles.py::delete_profile": {
+    "tests": [
+      "tests.test_web_profiles.ProfileTests.test_account_deletion_revokes_cookies_and_frees_ip_only_after_platform_success",
+      "tests.test_web_profiles.ProfileTests.test_failed_vpn_revocation_preserves_account_and_ip_for_retry",
+      "tests.test_web_profiles.ProfileTests.test_account_owner_resources_and_last_admin_are_checked_before_platform_mutation"
+    ],
+    "rationale": "Checks password/ownership/last-admin preflight, revocation ordering, persistent account/IP on failure, successful deletion and replayed-cookie denial."
+  },
+  "heist/api/public/challenges.py::get_challenge": {
+    "tests": [
+      "tests.test_web_challenges.ChallengeTests.test_read_contract_has_no_flag_values_and_solution_unlocks_only_after_full_completion",
+      "tests.test_web_challenges.ChallengeTests.test_same_flag_concurrent_requests_award_points_once",
+      "tests.test_web_challenges.ChallengeTests.test_hint_thresholds_and_user_specific_flags_respect_own_identity"
+    ],
+    "rationale": "Checks secret/solution boundaries, partial and full grading, duplicate/concurrent submissions, exact point totals, hint thresholds and identity-bound flags."
+  },
+  "heist/api/public/challenges.py::submit_flag": {
+    "tests": [
+      "tests.test_web_challenges.ChallengeTests.test_read_contract_has_no_flag_values_and_solution_unlocks_only_after_full_completion",
+      "tests.test_web_challenges.ChallengeTests.test_same_flag_concurrent_requests_award_points_once",
+      "tests.test_web_challenges.ChallengeTests.test_hint_thresholds_and_user_specific_flags_respect_own_identity"
+    ],
+    "rationale": "Checks secret/solution boundaries, partial and full grading, duplicate/concurrent submissions, exact point totals, hint thresholds and identity-bound flags."
+  },
+  "heist/api/public/challenges.py::update_challenge": {
+    "tests": [
+      "tests.test_web_challenges.ChallengeTests.test_read_contract_has_no_flag_values_and_solution_unlocks_only_after_full_completion",
+      "tests.test_web_challenges.ChallengeTests.test_same_flag_concurrent_requests_award_points_once",
+      "tests.test_web_challenges.ChallengeTests.test_hint_thresholds_and_user_specific_flags_respect_own_identity"
+    ],
+    "rationale": "Checks secret/solution boundaries, partial and full grading, duplicate/concurrent submissions, exact point totals, hint thresholds and identity-bound flags."
+  },
+  "heist/api/public/challenges.py::visible_challenge": {
+    "tests": [
+      "tests.test_web_challenges.ChallengeTests.test_drafts_and_retired_exercises_are_hidden_from_unrelated_students"
+    ],
+    "rationale": "Checks direct-ID reads and deployments cannot reveal an unrelated unpublished/retired exercise or reach platform side effects."
+  },
+  "heist/api/public/challenges.py::award_badges": {
+    "tests": [
+      "tests.test_web_challenges.ChallengeTests.test_different_final_flags_racing_across_students_award_first_blood_once"
+    ],
+    "rationale": "Checks simultaneous full completion using different final flags gives First Blood to exactly one student. Other category/master badge branches still require separate acceptance coverage."
+  },
+  "heist/api/public/challenges.py::deploy": {
+    "tests": [
+      "tests.test_web_challenges.ChallengeTests.test_deploy_and_cancel_are_bound_to_session_and_never_stop_another_template"
+    ],
+    "rationale": "Checks root request identity comes from the session, existing launches conflict and cancellation cannot target an unrelated exercise."
+  },
+  "heist/api/public/challenges.py::cancel": {
+    "tests": [
+      "tests.test_web_challenges.ChallengeTests.test_deploy_and_cancel_are_bound_to_session_and_never_stop_another_template"
+    ],
+    "rationale": "Checks root request identity comes from the session, existing launches conflict and cancellation cannot target an unrelated exercise."
+  },
+  "heist/api/public/challenges.py::extend": {
+    "tests": [
+      "tests.test_web_challenges.ChallengeTests.test_extension_adds_hour_preserves_remaining_time_and_enforces_expiry_and_limit",
+      "tests.test_web_challenges.ChallengeTests.test_elapsed_time_stops_at_this_students_last_flag_and_ignores_other_completions"
+    ],
+    "rationale": "Checks extension adds a full hour, limit/expiry rejection and scoped elapsed accounting unaffected by another user or later attempts."
+  },
+  "heist/api/public/challenges.py::timing": {
+    "tests": [
+      "tests.test_web_challenges.ChallengeTests.test_extension_adds_hour_preserves_remaining_time_and_enforces_expiry_and_limit",
+      "tests.test_web_challenges.ChallengeTests.test_elapsed_time_stops_at_this_students_last_flag_and_ignores_other_completions"
+    ],
+    "rationale": "Checks extension adds a full hour, limit/expiry rejection and scoped elapsed accounting unaffected by another user or later attempts."
+  },
+  "heist/platform/challenges/stop.py::stop_challenge": {
+    "tests": [
+      "tests.test_web_challenges.ChallengeTests.test_platform_stop_closes_trace_attempt_and_assignment_together_and_rolls_back_failure"
+    ],
+    "rationale": "Checks real PostgreSQL stop finalizes assignment, lifecycle, traces and attempts, repeats idempotently and retains state when firewall cleanup fails."
+  },
+  "heist/platform/challenges/stop.py::get_user_static_ip_and_challenge_id": {
+    "tests": [
+      "tests.test_web_challenges.ChallengeTests.test_platform_stop_closes_trace_attempt_and_assignment_together_and_rolls_back_failure"
+    ],
+    "rationale": "Checks real PostgreSQL stop finalizes assignment, lifecycle, traces and attempts, repeats idempotently and retains state when firewall cleanup fails."
+  },
+  "heist/platform/challenges/stop.py::mark_challenge_expired": {
+    "tests": [
+      "tests.test_web_challenges.ChallengeTests.test_platform_stop_closes_trace_attempt_and_assignment_together_and_rolls_back_failure"
+    ],
+    "rationale": "Checks real PostgreSQL stop finalizes assignment, lifecycle, traces and attempts, repeats idempotently and retains state when firewall cleanup fails."
+  },
+  "heist/platform/challenges/stop.py::unassign_challenge_from_user": {
+    "tests": [
+      "tests.test_web_challenges.ChallengeTests.test_platform_stop_closes_trace_attempt_and_assignment_together_and_rolls_back_failure"
+    ],
+    "rationale": "Checks real PostgreSQL stop finalizes assignment, lifecycle, traces and attempts, repeats idempotently and retains state when firewall cleanup fails."
+  },
+  "heist/platform/challenges/stop.py::remove_user_iptables_rules": {
+    "tests": [
+      "tests.test_challenge_stop.ChallengeFirewallTests.test_exact_host_rules_are_removed_without_substring_or_comment_matches",
+      "tests.test_challenge_stop.ChallengeFirewallTests.test_failed_listing_and_invalid_address_cannot_be_treated_as_success"
+    ],
+    "rationale": "Checks only exact positive host address rules are removed; similar IPs, subnets, comments and negation remain, while invalid/listing failures propagate."
+  },
+  "heist/platform/users/vpn_config.py::get_user_config": {
+    "tests": [
+      "tests.test_vpn_accounts.VPNAccountsTests.test_concurrent_generation_publishes_one_complete_private_profile_without_revocation",
+      "tests.test_vpn_accounts.VPNAccountsTests.test_generation_failure_keeps_reusable_certificate_and_never_revokes_another_request",
+      "tests.test_vpn_accounts.VPNAccountsTests.test_wrong_common_name_is_rejected_before_publishing_a_profile"
+    ],
+    "rationale": "Checks concurrent generation produces one complete mode-0600 profile, partial failure preserves reusable keys and a wrong certificate identity cannot be published."
+  },
+  "heist/platform/users/delete_vpn.py::delete_user_config": {
+    "tests": [
+      "tests.test_vpn_accounts.VPNAccountsTests.test_revocation_publication_and_disconnect_precede_leaf_file_removal",
+      "tests.test_vpn_accounts.VPNAccountsTests.test_revocation_failure_or_missing_configuration_preserves_all_keys",
+      "tests.test_vpn_accounts.VPNAccountsTests.test_failed_disconnect_is_retryable_and_never_reports_success"
+    ],
+    "rationale": "Checks revoke/CRL/disconnect ordering, leaf file preservation on failure and retry after partial revocation. A separate explicit live VPN rehearsal verifies actual cryptographic/protocol integration."
+  },
+  "heist/platform/users/vpn_files.py::easy_rsa": {
+    "tests": [
+      "tests.test_vpn_accounts.VPNAccountsTests.test_inherited_ca_common_name_is_overridden_with_the_account_identity"
+    ],
+    "rationale": "Checks the account CN overrides inherited CA variables and subprocess execution is bounded and failure-checking."
+  },
+  "heist/api/serve.py::options": {
+    "tests": [
+      "tests.test_web_server.ServerOptionsTests.test_binding_is_loopback_only_and_config_cannot_enable_privileged_ports",
+      "tests.test_web_server.GunicornProcessTests.test_real_workers_require_tls_return_json_errors_and_stop_cleanly"
+    ],
+    "rationale": "Checks loopback-only and unprivileged port selection plus actual worker HTTP/TLS/error/shutdown behavior."
   }
 }

@@ -306,30 +306,21 @@ SET plpgsql.variable_conflict = 'use_column'
 AS $$
 BEGIN
     RETURN QUERY
-    WITH user_solved_challenges AS (
-        SELECT cc.challenge_template_id
+    WITH per_user_solved AS (
+        SELECT cc.challenge_template_id, cc.user_id
         FROM completed_challenges cc
         JOIN challenge_flags cf ON cc.flag_id = cf.id
-        WHERE cc.user_id = p_user_id
-        GROUP BY cc.challenge_template_id
+        GROUP BY cc.challenge_template_id, cc.user_id
         HAVING COUNT(DISTINCT cf.id) = (
-            SELECT COUNT(*)
-            FROM challenge_flags
-            WHERE challenge_template_id = cc.challenge_template_id
+            SELECT COUNT(*) FROM challenge_flags f WHERE f.challenge_template_id = cc.challenge_template_id
         )
     ),
+    user_solved_challenges AS (
+        SELECT challenge_template_id FROM per_user_solved WHERE user_id = p_user_id
+    ),
     global_solved_counts AS (
-        SELECT
-            cc.challenge_template_id,
-            COUNT(DISTINCT cc.user_id) AS solved_count
-        FROM completed_challenges cc
-        JOIN challenge_flags cf ON cc.flag_id = cf.id
-        GROUP BY cc.challenge_template_id
-        HAVING COUNT(DISTINCT cf.id) = (
-            SELECT COUNT(*)
-            FROM challenge_flags
-            WHERE challenge_template_id = cc.challenge_template_id
-        )
+        SELECT challenge_template_id, COUNT(*) AS solved_count
+        FROM per_user_solved GROUP BY challenge_template_id
     ),
     attempted_counts AS (
         SELECT
@@ -349,7 +340,7 @@ BEGIN
     FROM challenge_templates ct
     LEFT JOIN global_solved_counts gsc ON gsc.challenge_template_id = ct.id
     LEFT JOIN attempted_counts ac ON ac.challenge_template_id = ct.id
-    WHERE NOT EXISTS (
+    WHERE ct.is_active AND NOT ct.marked_for_deletion AND NOT EXISTS (
         SELECT 1 FROM user_solved_challenges usc
         WHERE usc.challenge_template_id = ct.id
     )

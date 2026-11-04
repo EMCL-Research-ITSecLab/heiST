@@ -7,8 +7,9 @@ from werkzeug.security import check_password_hash, generate_password_hash
 METHOD = 'scrypt:32768:8:1'
 
 
-def hash_password(password):
-    if not isinstance(password, str) or not 8 <= len(password) <= 72:
+def hash_password(password, *, enforce_policy=True):
+    minimum = 8 if enforce_policy else 1
+    if not isinstance(password, str) or not minimum <= len(password) <= 72:
         raise ValueError('Passwords must contain between 8 and 72 characters')
     return generate_password_hash(password, method=METHOD)
 
@@ -19,6 +20,8 @@ def verify_password(stored, password, legacy_salt=''):
     if re.fullmatch('[a-fA-F0-9]{128}', stored) and isinstance(legacy_salt, str):
         candidate = hashlib.sha512((legacy_salt+password).encode()).hexdigest()
         return hmac.compare_digest(stored.lower(), candidate)
+    if needs_rehash(stored):
+        return False
     try:
         return check_password_hash(stored, password)
     except (ValueError, TypeError):
@@ -26,4 +29,4 @@ def verify_password(stored, password, legacy_salt=''):
 
 
 def needs_rehash(stored):
-    return not isinstance(stored, str) or not stored.startswith(METHOD+'$')
+    return not isinstance(stored, str) or re.fullmatch(re.escape(METHOD)+r'\$[A-Za-z0-9]{1,128}\$[a-f0-9]{128}', stored) is None

@@ -37,7 +37,7 @@ Planning is reviewable; applying it remains blocked until the full dependency,
 role, service, image/template and recovery adapter passes appliance acceptance.
 No schema-3 production release manifest is published in this branch yet.
 
- The installer
+The installer
 checks that pinned hash again, creates an immutable versioned venv, installs with
 `--no-index --no-deps --require-hashes`, checks dependencies and imports the app.
 It records the complete installed runtime inventory. Activation verifies this
@@ -50,3 +50,24 @@ configuration belongs in `/etc/heist/web.env`; writable data belongs in
 installer deliberately does not provision accounts, secrets, Apache, migrations,
 media or services by itself. Their checked deployment and rollback integration
 must complete before this is a production release procedure.
+
+
+## Browser database and configuration boundary
+
+The migration runner accepts a dedicated `heist_web_*` role and a generated
+password only for the browser-runtime protocol. It creates the login, API schema
+access and migration role binding in the same SQL transaction as the migrations.
+A failing migration rolls back role creation as well as DDL and its ledger.
+An existing role is refused for reconciliation. The role has no superuser,
+creation, replication, bypass-RLS or inherited-role privileges, and a bounded
+connection limit. PostgreSQL receives a salted SCRAM verifier, not a plaintext
+password in SQL. Disposable PostgreSQL tests verify real login, wrong-password
+denial, transaction rollback and the exact migration role binding.
+
+`heist.rollout.browser_configuration` builds an explicit whitelist for the web
+service: restricted database credentials, session secret, the internal operation
+token and verified backend identity/CA. Proxmox tokens, root database passwords
+and SSH settings are never copied. Native systemd testing verifies literal
+EnvironmentFile handling; secrets travel through private files/service state,
+never shell interpolation. These helpers still need the checked deployment
+adapter to install the settings and activate the services.

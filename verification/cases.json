@@ -1733,6 +1733,20 @@
       "sources": [
         "tests/integration/web/proxy.py"
       ]
+    },
+    {
+      "id": "AUTO-BROWSER-CONFIGURATION",
+      "area": "web-configuration",
+      "mode": "automated",
+      "procedure": "Run tests/test_browser_configuration.py through tools/check.py.",
+      "expected": "Only declared web credentials/settings enter its environment file; host secrets, unknown keys and control-character injection are refused.",
+      "evidence": [
+        "source-bound test receipt",
+        "test output"
+      ],
+      "sources": [
+        "tests/test_browser_configuration.py"
+      ]
     }
   ]
 }

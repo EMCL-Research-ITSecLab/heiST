@@ -1157,5 +1157,33 @@
       "tests.test_web_proxy.ProxyConfigurationTests.test_paths_host_port_listener_and_unknown_placeholders_cannot_inject_directives"
     ],
     "rationale": "Checks fixed loopback upstream and forwarding policy, normalized paths/listener bounds and configuration-injection refusal. The separate native Apache case verifies actual directives and HTTP behavior."
+  },
+  "heist/rollout/browser_role.py::create": {
+    "tests": [
+      "tests.test_rollout_migrations.MigrationTests.test_browser_role_login_and_guc_are_bound_to_the_same_migration_transaction",
+      "tests.test_rollout_migrations.MigrationTests.test_failed_browser_migration_does_not_leave_a_login_role_behind"
+    ],
+    "rationale": "Real PostgreSQL accepts the SCRAM-backed restricted login, refuses a wrong password and pre-existing role, binds migration SQL to the role, and rolls role creation back after SQL failure."
+  },
+  "heist/rollout/browser_role.py::verifier": {
+    "tests": [
+      "tests.test_rollout_migrations.MigrationTests.test_browser_role_login_and_guc_are_bound_to_the_same_migration_transaction",
+      "tests.test_rollout_migrations.MigrationTests.test_failed_browser_migration_does_not_leave_a_login_role_behind"
+    ],
+    "rationale": "Real PostgreSQL accepts the SCRAM-backed restricted login, refuses a wrong password and pre-existing role, binds migration SQL to the role, and rolls role creation back after SQL failure."
+  },
+  "heist/rollout/browser_configuration.py::configuration": {
+    "tests": [
+      "tests.test_browser_configuration.BrowserConfigurationTests.test_public_configuration_contains_only_restricted_credentials_and_verified_peer_identity",
+      "tests.test_browser_configuration.BrowserConfigurationTests.test_newlines_control_characters_invalid_hosts_and_invalid_ports_cannot_inject_environment"
+    ],
+    "rationale": "Asserts the web-only whitelist, restricted credentials and peer identity; host secrets/unknown settings and control-character injection are refused. Literal EnvironmentFile parsing has a separate native systemd rehearsal."
+  },
+  "heist/rollout/browser_configuration.py::serialize": {
+    "tests": [
+      "tests.test_browser_configuration.BrowserConfigurationTests.test_public_configuration_contains_only_restricted_credentials_and_verified_peer_identity",
+      "tests.test_browser_configuration.BrowserConfigurationTests.test_newlines_control_characters_invalid_hosts_and_invalid_ports_cannot_inject_environment"
+    ],
+    "rationale": "Asserts the web-only whitelist, restricted credentials and peer identity; host secrets/unknown settings and control-character injection are refused. Literal EnvironmentFile parsing has a separate native systemd rehearsal."
   }
 }

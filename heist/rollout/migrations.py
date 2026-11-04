@@ -3,11 +3,19 @@ from contextlib import closing
 from .manifest import blob
 
 
-def migrate(settings, plan):
+def migrate(settings, plan, *, web_role=None, web_password=None):
+    if plan.schema == 3:
+        from .browser_role import validate
+        validate(web_role,web_password)
+    elif web_role is not None or web_password is not None:
+        raise ValueError('Browser role provisioning requires the browser-runtime release protocol')
     with closing(settings.connect()) as connection:
         try:
             with connection.cursor() as cursor:
                 cursor.execute('SELECT pg_advisory_xact_lock(1801801801)')
+                if plan.schema == 3:
+                    from .browser_role import create
+                    create(cursor,web_role,web_password)
                 cursor.execute('''CREATE TABLE IF NOT EXISTS public.heist_schema_migrations (
                     id text PRIMARY KEY, sha256 text NOT NULL, release_commit text NOT NULL,
                     applied_at timestamptz NOT NULL DEFAULT now())''')

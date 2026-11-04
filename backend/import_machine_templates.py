@@ -483,7 +483,8 @@ def install_wazuh_linux(machine_template, allocated_ip,timeout=600):
             "ip link set $iface up && "
             f"ip addr add {allocated_ip}/20 dev $iface && "
             "ip route add default via 10.32.0.1 && "
-            f"printf 'nameserver {_DNS_SERVERS[0]}\\nnameserver {_DNS_SERVERS[1]}\\n' > /etc/resolv.conf"
+            f"printf 'nameserver {_DNS_SERVERS[0]}\\nnameserver {_DNS_SERVERS[1]}\\n' > /run/wazuh-resolv.conf && "
+            "mount --bind /run/wazuh-resolv.conf /etc/resolv.conf"
         )
         result = ga.exec(nic_cmd, capture_output=True, timeout=30)
         if result.exit_code != 0:
@@ -505,6 +506,10 @@ def install_wazuh_linux(machine_template, allocated_ip,timeout=600):
             )
         print(f"[Info] setup_wazuh.sh --install completed on VM {machine_template.id}", flush=True)
 
+        r = ga.exec(["test", "-x", "/var/ossec/bin/wazuh-control"], capture_output=False, timeout=15)
+        if r.exit_code != 0:
+            raise RuntimeError(f"wazuh-agent not installed on VM {machine_template.id}")
+
         while time.monotonic() < deadline:
             elapsed = int(time.monotonic() - start_time)
             try:
@@ -521,6 +526,7 @@ def install_wazuh_linux(machine_template, allocated_ip,timeout=600):
                 if flag_result.exit_code == 0 and timer_result.stdout.strip() == "active":
                     time.sleep(15)  # stability buffer
                     ga.exec(["sync"], capture_output=False, timeout=60)
+                    ga.exec("umount /etc/resolv.conf; rm -f /run/wazuh-resolv.conf", capture_output=False, timeout=15)
                     print(f"[Info] Linux setup complete on VM {machine_template.id}", flush=True)
                     return
                 print(

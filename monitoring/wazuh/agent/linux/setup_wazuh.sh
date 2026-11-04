@@ -314,7 +314,7 @@ fi
 # INSTALL MODE
 if [ "$MODE" == "full" ] || [ "$MODE" == "install" ]; then
     print_info "Downloading and Installing Agent..."
-    eval "$CMD_INSTALL"
+    eval "$CMD_INSTALL" || { print_error "Agent install failed"; exit 1; }
 
     print_info "Adding Localfiles..."
     if [ -f /var/monitoring/wazuh-agent/config/localfile_ossec_config ]; then

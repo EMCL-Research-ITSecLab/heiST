@@ -23,11 +23,11 @@ sudo install -m 0640 -o root -g heist-archive deploy/archive/config/web.example.
 
 Set the real source host, read-only source account and closed-log directory in
 `web.json`. Never share a destination across sources. Default destinations are
-under `/var/lib/heist-archive/SOURCE`. Mount the archive data volume at
-`/var/lib/heist-archive`; ensure it is owned by the service account with mode
-0700. Add `AssertPathIsMountPoint=/var/lib/heist-archive` in a service drop-in when
-using that volume, so a missing mount cannot fill the archive VM's root disk.
-Do not enable timers before that mount assertion has been rehearsed.
+under `/var/lib/heist-archive/files/SOURCE`. Mount the archive data volume at
+`/var/lib/heist-archive`; make its root owned by root with mode 0751, and keep each service
+subdirectory private to its own account. The unit asserts that this is a mount
+point, so a missing volume cannot silently fill the archive VM's root disk.
+Rehearse that assertion before enabling timers.
 
 Create a dedicated source-reader SSH key per source; install its private key as
 `/etc/heist/archive/keys/web.key` with root-only permissions. Pin the independently
@@ -71,13 +71,13 @@ The backend can read one source receipt over a dedicated read-only SSH connectio
 ```dotenv
 HEIST_ARCHIVE_STATUS_HOST=heist-archive-status
 HEIST_ARCHIVE_STATUS_USER=heist-archive
-HEIST_ARCHIVE_STATUS_FILE=/var/lib/heist-archive/web/status.json
+HEIST_ARCHIVE_STATUS_FILE=/var/lib/heist-archive/files/web/status.json
 HEIST_ARCHIVE_MAX_AGE_SECONDS=1800
 ```
 
 Configure the backend host's SSH alias with a dedicated identity and pinned host
 key. On the archive VM restrict that key to the fixed command
-`head -c 65537 -- /var/lib/heist-archive/web/status.json`, with forwarding/PTY
+`head -c 65537 -- /var/lib/heist-archive/files/web/status.json`, with forwarding/PTY
 prohibited. This connection cannot start a service, change logs or read arbitrary
 files. Allow the account a shell only for this forced command and keep password
 login disabled. The backend bounds the read and timeout and exposes only
@@ -99,3 +99,67 @@ capacity, retention, off-VM backup and restore requirements explicitly. Verify
 sample restoration and digest comparison on independent storage. Run
 `ARCHIVE-TIMER`, `ARCHIVE-FAILURES` and `ARCHIVE-RESTORE` from the
 [test concept](TEST-CONCEPT.md) before deployment.
+
+
+## Native systemd journal collection
+
+For service/system journals use the distribution's `systemd-journal-upload` on
+sources and `systemd-journal-remote` on the archive VM. The closed-file timer above
+covers file/packet-capture archives that journal transport does not contain.
+Keep both pipelines in the source inventory and test their failure/restore paths.
+
+Reviewed templates are under `deploy/archive/journal/`. Install the matching
+systemd journal packages on supported sources/collector. The collector needs
+systemd 253 or newer for the configured storage limits; sources need version 249
+or newer for `NetworkTimeoutSec=`. Check `systemd --version` before installing
+these snippets. Older collectors need a separately tested retention procedure;
+silently ignored options do not enforce a storage limit. These minimums follow
+the [collector 255 manual](https://www.freedesktop.org/software/systemd/man/255/journal-remote.conf.html)
+and [upload 255 manual](https://www.freedesktop.org/software/systemd/man/255/journal-upload.conf.html).
+Use a private journal CA,
+one source certificate/key per machine, and a collector certificate matching
+`ARCHIVE_HOST`. Keep CA signing keys offline and private keys outside Git; grant
+read access only to the corresponding daemon account. Configure firewall access
+to TCP19532 only from the intended source network. Do not enable plaintext HTTP
+or set certificate verification to `all`/disabled.
+
+Install source snippets as:
+
+- `source/60-heist-persistent.conf` → `/etc/systemd/journald.conf.d/60-heist.conf`
+- `source/60-heist-upload.conf` → `/etc/systemd/journal-upload.conf.d/60-heist.conf`
+- `source/60-heist-restart.conf` → `/etc/systemd/system/systemd-journal-upload.service.d/60-heist.conf`
+
+Replace the host placeholder and certificate paths, verify permissions, then
+restart journald and enable the upload service. The package's upload unit must
+retain its `--save-state` argument so it can resume from its saved cursor. Inspect
+`systemctl cat systemd-journal-upload.service` on the target distribution.
+
+Install collector snippets as:
+
+- `collector/60-heist-remote.conf` → `/etc/systemd/journal-remote.conf.d/60-heist.conf`
+- `collector/60-heist-storage.conf` → `/etc/systemd/system/systemd-journal-remote.service.d/60-heist.conf`
+
+Create `/var/lib/heist-archive/journal` owned by the package's journal-remote
+account with mode0700. Enable the vendor `systemd-journal-remote.socket`; the
+service consumes its HTTPS socket descriptor. Confirm the vendor binary path,
+service user and socket configuration with `systemctl cat` before activation.
+Do not run the collector as root or change the file-archive directory ownership
+recursively: journal collection and closed-file collection use separate accounts.
+
+Set storage/retention limits from measured lecture volume; the shipped values are
+starting limits, not a guarantee that a full semester fits. Source buffer limits
+can cause loss during an extended collector outage. Verify delivery with a unique
+`logger -t heist-acceptance TEST_ID` event from each source, inspect it using
+`journalctl --directory=/var/lib/heist-archive/journal`, interrupt/restart transport,
+and prove recovery without unexplained gaps/duplicates. Reject a source with an
+unknown certificate and a collector with the wrong certificate. Check source
+machine-ID uniqueness after cloning. TLS authenticates transport; it does not
+prove a compromised lab machine's event contents are truthful.
+
+The console's current file-archive receipt reports closed-file runs. Native
+journal delivery must be monitored independently per source; a recent file receipt
+is not proof of journal completeness. Consult the official
+[journal upload configuration](https://www.freedesktop.org/software/systemd/man/latest/journal-upload.conf.html),
+[collector configuration](https://www.freedesktop.org/software/systemd/man/latest/journal-remote.conf.html)
+and [collector service](https://www.freedesktop.org/software/systemd/man/latest/systemd-journal-remote.service.html)
+when validating the target OS package configuration.

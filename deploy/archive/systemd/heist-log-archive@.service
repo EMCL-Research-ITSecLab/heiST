@@ -4,13 +4,14 @@ Documentation=https://www.freedesktop.org/software/systemd/man/systemd.timer.htm
 Wants=network-online.target
 After=network-online.target
 RequiresMountsFor=/var/lib/heist-archive
+AssertPathIsMountPoint=/var/lib/heist-archive
 
 [Service]
 Type=oneshot
 User=heist-archive
 Group=heist-archive
 UMask=0077
-StateDirectory=heist-archive
+StateDirectory=heist-archive/files
 StateDirectoryMode=0700
 LoadCredential=identity:/etc/heist/archive/keys/%i.key
 LoadCredential=known_hosts:/etc/heist/archive/known_hosts

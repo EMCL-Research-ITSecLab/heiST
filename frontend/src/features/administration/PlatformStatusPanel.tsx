@@ -40,7 +40,7 @@ export function PlatformStatusPanel() {
         </section>
         <section aria-label="Log archive status">
           <h3>Log archive</h3>
-          <p>Archive VM <Badge tone={tone(text(archive.status))}>{text(archive.status, 'unknown')}</Badge></p>
+          <p>File archive receipt <Badge tone={tone(text(archive.status))}>{text(archive.status, 'unknown')}</Badge></p>
           <p>Last successful run: {timestamp(archive.last_success_at)}</p>
           <p className="muted">{archive.status === 'not configured' ? 'Configure the read-only archive receipt connection on the backend host.' : 'Receipts come from the separate archive VM. A stale or failed receipt requires investigation.'}</p>
           {Object.keys(row(archive.counters)).length > 0 && <dl className="summary-counts">

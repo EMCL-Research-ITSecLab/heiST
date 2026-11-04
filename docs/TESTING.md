@@ -34,26 +34,12 @@ and PostgreSQL tests; privileged VM acceptance belongs on a local workstation.
 
 ## Web application
 
-PHPUnit remains the migration reference while the browser API moves to Flask.
-The maintained browser interface uses React; see [FRONTEND.md](FRONTEND.md). Install those existing dependencies as described by
-the web application's Composer file. From a workstation with PHP and the
-`webserver/html/vendor/` directory present:
-
-```sh
-make test-frontend PYTHON=.venv/bin/python
-```
-
-This lints maintained PHP files then runs the existing `phpunit.xml` suite.
-Warnings and deprecations fail the command. The bootstrap rebases application
-class mappings when an external vendor cache is reused, so the current source
-is tested rather than a different installed release.
-Container-backed methods are explicitly tagged `database` and excluded by
-default. To include them, run `python3 tools/check.py --frontend
---frontend-database` on a disposable host with Docker and a cached `postgres:15`
-image. Those tests create their own databases; they must never use production
-credentials. Inspect the PHPUnit summary before claiming database coverage.
-The command fails if the PHP runtime or PHPUnit is missing; it never installs
-packages silently. Frontend runtime tests are separate from Python API tests.
+The maintained web application uses React and Flask. Run `make test-frontend`
+(or `make test-ui`) for strict TypeScript and transport tests, then
+`make test-ui-browser` for the production build and isolated browser fixtures.
+See [FRONTEND.md](FRONTEND.md). The PHP tree, Composer dependencies and PHPUnit
+CI job have been removed. Flask contract tests are part of `tools/check.py` and
+include disposable PostgreSQL authorization/session/grading checks.
 
 `tests/end-to-end/` contains the existing Playwright UI tests. They and
 `tests/integration/platform/` perform live actions (including user/challenge deletion and

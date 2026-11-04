@@ -54,7 +54,8 @@ and native journal forwarding have dedicated deployment templates.
   idempotent agent removal. Sandboxed VMDK conversion and normalized disk import
   have passed on the isolated Proxmox appliance.
 - React checks include strict TypeScript, transport tests, production build and
-  browser fixtures. PHP tests remain a contract reference during migration.
+  browser fixtures. PHP source, Composer/PHPUnit paths and legacy web provisioning
+  have been removed.
 - The verification catalogue and reviewed assertion mappings distinguish
   executed code from behavior verified by assertions. Remaining function and
   appliance coverage is an explicit release gate.
@@ -75,8 +76,8 @@ The static React/loopback Flask Apache template has passed a separate native
 TLS/proxy test, including spoofed forwarding headers and PHP denial. Its checked deployment adapter, Apache installation/replacement,
 restricted-role provisioning, private media migration and fresh installer remain
 release gates. The legacy rollout protocol rejects standalone UI bundles before
-maintenance. Keep PHP as a migration reference until the replacement installer
-and full-appliance acceptance pass; the deployed replacement must contain no PHP.
+maintenance. The repository now contains the React/Flask application only;
+installed legacy production VMs are handled through checked migration/recovery.
 
 Recovery now validates and restores declared host configuration files. Future
 checkpoints preserve sequence high-water marks outside VM snapshots, advance

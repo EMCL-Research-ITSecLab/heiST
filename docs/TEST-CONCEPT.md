@@ -66,11 +66,10 @@ python3 -m tools.verification run --suite python --output /tmp/heist-evidence/py
 python3 -m tools.verification run --suite ui --output /tmp/heist-evidence/ui
 python3 -m tools.verification run --suite ui-build --output /tmp/heist-evidence/build
 python3 -m tools.verification run --suite browser --output /tmp/heist-evidence/browser
-python3 -m tools.verification run --suite php --output /tmp/heist-evidence/php
 ```
 
-The PHP suite remains a migration reference until Flask parity is accepted. The
-final architecture has no PHP dependency. Reports contain the commit, dirty-tree
+The application has no PHP dependency. Flask/React contracts replace the removed
+PHP suite; legacy VM migration and recovery still require appliance acceptance. Reports contain the commit, dirty-tree
 state, command, exit status, timestamps, duration and artifact checksums. Logs and
 results are private. Do not publish raw evidence without reviewing it for fixture
 credentials or solutions. Evidence written from an uncommitted checkout is useful

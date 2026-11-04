@@ -27,16 +27,6 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends dnsmasq-base qemu-utils
       - run: make check
 
-  frontend:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends php-cli php-xml php-pgsql php-curl php-mbstring composer
-      - name: Install the web application's existing dependencies
-        working-directory: webserver/html
-        run: composer install --no-interaction --prefer-dist
-      - run: python3 tools/check.py --frontend
-
   react-ui:
     strategy:
       fail-fast: false

@@ -1,6 +1,6 @@
 # Flask API and repository migration
 
-The agreed final architecture removes PHP and the old `webserver/` source tree.
+PHP and the old `webserver/` source tree have been removed.
 React remains in `frontend/`. Existing Flask/PostgreSQL components are retained;
 no additional application framework is introduced. The public application runs
 as an unprivileged service on the web VM. VM lifecycle operations remain behind
@@ -48,8 +48,8 @@ must never directly execute privileged host code.
 - Extend fresh installation and rollout adapters for the new web runtime,
   dependency changes and database migration. Older runners must reject the new
   protocol. Preserve a whole-VM rollback to the current production baseline.
-- Remove obsolete PHP, Composer, views, JS/CSS, worker cron and installer paths
-  only after Flask contract and appliance parity checks pass.
+- Repository PHP/Composer/views/worker provisioning is removed. Migrate and remove
+  the installed legacy runtime only through a verified VM checkpoint and adapter.
 - Keep every supported function in the inventory and map behavior assertions to
   passing tests. Run the full catalogue and final-commit recovery rehearsal.
 

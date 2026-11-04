@@ -255,7 +255,7 @@ DEFAULTS = {
     "DATABASE_PASSWORD": "",
     "DATABASE_PORT": "5432",
     "DATABASE_HOST": "10.0.0.102",
-    "WEBSERVER_FILES_DIR": "/root/heiST/webserver",
+    "WEB_DEPLOYMENT_FILES_DIR": "/root/heiST/deploy/web",
     "WEBSERVER_USER": "www-data",
     "WEBSERVER_GROUP": "www-data",
     "WEBSERVER_ROOT": "/var/www/html",
@@ -496,7 +496,7 @@ SectionSpec(
             field("DATABASE_PASSWORD", "Database password", "secret", secret=True, description="Password assigned to the PostgreSQL role used by the challenge backend."),
             field("DATABASE_PORT", "Database port", "port", description="TCP port for PostgreSQL.", example="5432"),
             field("DATABASE_HOST", "Database host", "ip", description="The IP address assigned to the database VM on the backend network.", example="10.0.0.102"),
-            field("WEBSERVER_DATABASE_USER", "Webserver database user", description="Restricted database account used by the PHP web application.", example="api_user"),
+            field("WEBSERVER_DATABASE_USER", "Webserver database user", description="Restricted database account used by the Flask browser application.", example="api_user"),
             field("WEBSERVER_DATABASE_PASSWORD", "Webserver database password", "secret", secret=True, description="Password for the web application's PostgreSQL account."),
             field("DATABASE_FILES_DIR", "Database files directory", "path",
                   description="Absolute path to the repository's database assets on the setup machine."),
@@ -513,7 +513,7 @@ SectionSpec(
             field("WEBSERVER_USER", "Webserver user", description="Linux user that owns or runs the web application files on the target VM.", example="www-data"),
             field("WEBSERVER_GROUP", "Webserver group", description="Group ownership for the web application files.", example="www-data"),
             field("WEBSERVER_ROOT", "Webserver document root", "path", description="Document root on the webserver VM.", example="/var/www/html"),
-            field("WEBSERVER_FILES_DIR", "Webserver files directory", "path", description="Absolute path to the repository's webserver assets on the setup machine."),
+            field("WEB_DEPLOYMENT_FILES_DIR", "Webserver files directory", "path", description="Absolute path to the repository's browser deployment templates on the setup machine."),
         ],
     ),
     SectionSpec(
@@ -1201,7 +1201,7 @@ def write_env_file(values: dict[str, str]) -> None:
 
     sections = [
         ("Core Proxmox / Installer", ["PROXMOX_HOST", "PROXMOX_USER", "PROXMOX_PASSWORD", "PROXMOX_PORT", "BACKEND_PORT", "PROXMOX_INTERNAL_IP", "PROXMOX_EXTERNAL_IP", "PROXMOX_HOSTNAME", "UBUNTU_BASE_SERVER_URL"]),
-        ("Backend / Database / Webserver", ["DATABASE_FILES_DIR", "DATABASE_NAME", "DATABASE_USER", "DATABASE_PASSWORD", "DATABASE_PORT", "DATABASE_HOST", "WEBSERVER_FILES_DIR", "WEBSERVER_USER", "WEBSERVER_GROUP", "WEBSERVER_ROOT", "WEBSERVER_HOST", "WEBSERVER_HTTP_PORT", "WEBSERVER_HTTPS_PORT", "BACKEND_FILES_DIR", "WEBSERVER_DATABASE_USER", "WEBSERVER_DATABASE_PASSWORD", "WEBSITE_ADMIN_USER", "WEBSITE_ADMIN_PASSWORD", "BACKEND_AUTHENTICATION_TOKEN", "LECTURE_SIGNUP_TOKEN", "BACKEND_LOGGING_DIR"]),
+        ("Backend / Database / Webserver", ["DATABASE_FILES_DIR", "DATABASE_NAME", "DATABASE_USER", "DATABASE_PASSWORD", "DATABASE_PORT", "DATABASE_HOST", "WEB_DEPLOYMENT_FILES_DIR", "WEBSERVER_USER", "WEBSERVER_GROUP", "WEBSERVER_ROOT", "WEBSERVER_HOST", "WEBSERVER_HTTP_PORT", "WEBSERVER_HTTPS_PORT", "BACKEND_FILES_DIR", "WEBSERVER_DATABASE_USER", "WEBSERVER_DATABASE_PASSWORD", "WEBSITE_ADMIN_USER", "WEBSITE_ADMIN_PASSWORD", "BACKEND_AUTHENTICATION_TOKEN", "LECTURE_SIGNUP_TOKEN", "BACKEND_LOGGING_DIR"]),
         ("Networking / VPN / VM Import", ["OPENVPN_SUBNET", "OPENVPN_SERVER_IP", "BACKEND_NETWORK_SUBNET", "BACKEND_NETWORK_ROUTER", "BACKEND_NETWORK_DEVICE", "BACKEND_NETWORK_HOST_MIN", "BACKEND_NETWORK_HOST_MAX", "DATABASE_MAC_ADDRESS", "WEBSERVER_MAC_ADDRESS", "CHALLENGES_ROOT_SUBNET", "CHALLENGES_ROOT_SUBNET_MASK"]),
         ("Monitoring VM", ["MONITORING_FILES_DIR", "MONITORING_VPN_INTERFACE", "MONITORING_DMZ_INTERFACE", "MONITORING_HOST", "MONITORING_VM_ID", "MONITORING_VM_NAME", "MONITORING_VM_MAC_ADDRESS", "MONITORING_VM_MEMORY", "MONITORING_VM_CORES", "MONITORING_VM_DISK", "MONITORING_VM_USER", "MONITORING_VM_PASSWORD", "PROXMOX_LVM_STORAGE", "PROXMOX_SSH_KEYFILE", "PROXMOX_EXPORTER_TOKEN_NAME", "WAZUH_NETWORK_DEVICE", "WAZUH_NETWORK_DEVICE_IPV6", "WAZUH_NETWORK_DEVICE_CIDR", "WAZUH_NETWORK_SUBNET", "WAZUH_MANAGER_IPV6", "CLOUD_INIT_NETWORK_DEVICE", "CLOUD_INIT_NETWORK_DEVICE_IP", "CLOUD_INIT_NETWORK_DEVICE_CIDR", "CLOUD_INIT_NETWORK_SUBNET", "MONITORING_DNS"]),
         ("Grafana / Prometheus / Exporters", ["GRAFANA_PORT", "GRAFANA_USER", "GRAFANA_PASSWORD", "GRAFANA_FILES_SETUP_DIR", "GRAFANA_FILES_DIR", "PROMETHEUS_PORT", "POSTGRES_EXPORTER_PORT", "POSTGRES_EXPORTER_PASSWORD", "PROXMOX_EXPORTER_PORT", "MONITORING_VM_EXPORTER_PORT", "DATABASE_VM_EXPORTER_PORT", "WEBSERVER_VM_EXPORTER_PORT", "WEBSERVER_APACHE_EXPORTER_PORT", "PROXMOX_NODE_EXPORTER_PORT"]),

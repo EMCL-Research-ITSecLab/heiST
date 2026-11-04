@@ -3,8 +3,8 @@
 The student workspace and administration console use React, TypeScript and Vite.
 The browser uses the unprivileged Flask REST API under `/api/`; authenticated
 platform operations pass to a separate privileged API. The browser never receives
-the internal authentication token. PHP is retained only as a migration reference
-until the checked replacement deployment and appliance acceptance pass.
+the internal authentication token. The PHP application, Composer/PHPUnit paths
+and legacy PHP provisioning have been removed from the repository.
 
 ## Source layout
 

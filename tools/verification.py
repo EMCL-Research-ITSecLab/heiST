@@ -50,7 +50,6 @@ def collect(suite, output, *, strict=False):
     before = provenance()
     commands = {
         'python': [sys.executable, 'tools/check.py', '--report', str(output/'results.json')],
-        'php': [sys.executable, 'tools/check.py', '--frontend', '--report', str(output/'results.json')],
         'ui': ['npm', '--prefix', 'frontend', 'run', 'check'],
         'browser': [sys.executable, 'tests/browser/ui_smoke.py'],
         'ui-build': ['npm', '--prefix', 'frontend', 'run', 'build'],
@@ -58,7 +57,7 @@ def collect(suite, output, *, strict=False):
         'proxmox': [sys.executable, '-m', 'tests.integration.proxmox.resources'],
     }
     command = commands[suite]
-    if strict and suite in ('python', 'php'):
+    if strict and suite == 'python':
         command.append('--fail-on-skip')
     started = time.monotonic()
     with (output/'output.log').open('wb') as log:
@@ -88,7 +87,7 @@ def verify_evidence(directory, commit, *, require_strict=False):
         raise ValueError('Evidence is failing, dirty, changed during execution or from another revision')
     if hashlib.sha256((directory/'output.log').read_bytes()).hexdigest() != result['log_sha256']:
         raise ValueError('Evidence log checksum differs')
-    required = {'output.log', 'results.json'} if result['suite'] in ('python', 'php') else {'output.log'}
+    required = {'output.log', 'results.json'} if result['suite'] == 'python' else {'output.log'}
     if set(result.get('artifacts', {})) != required:
         raise ValueError('Incomplete suite artifacts')
     for name, digest in result['artifacts'].items():
@@ -97,7 +96,7 @@ def verify_evidence(directory, commit, *, require_strict=False):
     if require_strict:
         if not result['strict']:
             raise ValueError('Strict prerequisite coverage was not requested')
-        if result['suite'] in ('python', 'php'):
+        if result['suite'] == 'python':
             counts = json.loads((directory/'results.json').read_text())['counts']
             if counts.get('skipped') or not counts.get('tests'):
                 raise ValueError('Required tests were skipped or no tests ran')
@@ -110,7 +109,7 @@ def main(argv=None):
     sub = parser.add_subparsers(dest='action', required=True)
     sub.add_parser('catalogue', help='Validate case completeness and automated module traceability')
     run = sub.add_parser('run', help='Execute an explicit local test suite and retain private evidence')
-    run.add_argument('--suite', choices=('python', 'php', 'ui', 'ui-build', 'browser', 'vpn', 'proxmox'), required=True)
+    run.add_argument('--suite', choices=('python', 'ui', 'ui-build', 'browser', 'vpn', 'proxmox'), required=True)
     run.add_argument('--output', type=Path, required=True)
     run.add_argument('--strict', action='store_true')
     gate = sub.add_parser('verify-evidence', help='Verify one suite receipt; this is not whole-release approval')

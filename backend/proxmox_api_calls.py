@@ -141,6 +141,22 @@ def shutdown_vm_api_call(machine):
     subprocess.run(["qm", "stop", str(machine.id), "--skiplock"], check=True, capture_output=True)
 
 
+def graceful_shutdown_vm_api_call(machine, timeout=180):
+    """
+    Cleanly shut down a virtual machine (guest agent / ACPI).
+    """
+    result = subprocess.run(
+        ["qm", "shutdown", str(machine.id), "--timeout", str(timeout)],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"Graceful shutdown of VM {machine.id} failed: "
+            f"{(result.stderr or result.stdout).strip()}"
+        )
+
+
 def vm_is_stopped_api_call(machine):
     """
     Check if a virtual machine is stopped in Proxmox.

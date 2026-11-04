@@ -1,5 +1,7 @@
 import subprocess
 import os
+import re
+import shlex
 from dotenv import load_dotenv, find_dotenv
 
 from backend.get_db_connection import db_connection_context
@@ -55,20 +57,16 @@ def mark_challenge_expired(challenge_id, db_conn):
 
 
 def remove_user_iptables_rules(user_static_ip):
-    """
-    Remove all iptables rules that contain the user's static IP.
-    """
-    # Get all iptables rules
-    result = subprocess.run(["sudo", "iptables", "-S"], capture_output=True, text=True)
-    rules = result.stdout.splitlines()
+    result = subprocess.run(["sudo", "iptables", "-S"], capture_output=True, text=True, check=True)
+    ip = str(user_static_ip).split("/")[0]
+    pattern = re.compile(rf"(?<![\d.]){re.escape(ip)}(?:/32)?(?![\d.])")
 
-    # Filter rules that contain the user's static IP
-    rules_to_remove = [rule for rule in rules if user_static_ip in rule]
-
-    # Remove each rule
-    for rule in rules_to_remove:
-        delete_rule = rule.replace("-A", "-D")  # Change -A to -D to delete the rule
-        subprocess.run(["sudo", "iptables"] + delete_rule.split(), check=True, capture_output=True)
+    for rule in result.stdout.splitlines():
+        if not rule.startswith("-A ") or not pattern.search(rule):
+            continue
+        delete_rule = rule.replace("-A", "-D", 1)
+        subprocess.run(["sudo", "iptables"] + shlex.split(delete_rule),
+                       check=False, capture_output=True)
 
 
 def unassign_challenge_from_user(user_id, db_conn):

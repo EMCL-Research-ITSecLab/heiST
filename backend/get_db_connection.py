@@ -15,14 +15,18 @@ def get_db_connection():
     """
     Establish a connection to the PostgreSQL database.
     """
-    print("[DB] Opening new database connection")
-
+    print("[DB] Opening new database connection", flush=True)
 
     db_conn = psycopg2.connect(
         host=DB_HOST,
         database=DB_NAME,
         user=DB_USER,
-        password=DB_PASSWORD
+        password=DB_PASSWORD,
+        connect_timeout=10,
+        keepalives=1,
+        keepalives_idle=30,
+        keepalives_interval=10,
+        keepalives_count=3,
     )
     db_conn.autocommit = True
     return db_conn
@@ -37,4 +41,7 @@ def db_connection_context():
     try:
         yield db_conn
     finally:
-        db_conn.close()
+        try:
+            db_conn.close()
+        except Exception:
+            pass

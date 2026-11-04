@@ -788,5 +788,187 @@
       "tests.test_teardown_safety.TeardownSafetyTests.test_bridge_timeout_and_inventory_failure_propagate"
     ],
     "rationale": "Checks kernel bridge timeout and unconfirmed hypervisor inventory cannot be silently treated as successful cleanup."
+  },
+  "heist/artifacts/ova.py::members": {
+    "tests": [
+      "tests.test_ova_envelope.OvaEnvelopeTests.test_offsets_reference_only_embedded_files_and_capacity_units",
+      "tests.test_ova_envelope.OvaEnvelopeTests.test_links_extended_headers_and_special_files_are_refused",
+      "tests.test_ova_envelope.OvaEnvelopeTests.test_paths_duplicates_and_unexpected_payloads_are_refused",
+      "tests.test_ova_envelope.OvaEnvelopeTests.test_corruption_truncation_concatenation_compression_and_symlink",
+      "tests.test_ova_envelope.OvaEnvelopeTests.test_non_regular_input_is_rejected_without_blocking"
+    ],
+    "rationale": "Checks regular bounded archive intake, valid payload offsets, header/link/path rejection, checksum/truncation/end-marker failures and nonblocking FIFO rejection; does not certify disk contents."
+  },
+  "heist/artifacts/ova.py::read_exact": {
+    "tests": [
+      "tests.test_ova_envelope.OvaEnvelopeTests.test_offsets_reference_only_embedded_files_and_capacity_units",
+      "tests.test_ova_envelope.OvaEnvelopeTests.test_links_extended_headers_and_special_files_are_refused",
+      "tests.test_ova_envelope.OvaEnvelopeTests.test_paths_duplicates_and_unexpected_payloads_are_refused",
+      "tests.test_ova_envelope.OvaEnvelopeTests.test_corruption_truncation_concatenation_compression_and_symlink",
+      "tests.test_ova_envelope.OvaEnvelopeTests.test_non_regular_input_is_rejected_without_blocking"
+    ],
+    "rationale": "Checks regular bounded archive intake, valid payload offsets, header/link/path rejection, checksum/truncation/end-marker failures and nonblocking FIFO rejection; does not certify disk contents."
+  },
+  "heist/artifacts/ova.py::inspect_envelope": {
+    "tests": [
+      "tests.test_ova_envelope.OvaEnvelopeTests.test_offsets_reference_only_embedded_files_and_capacity_units",
+      "tests.test_ova_envelope.OvaEnvelopeTests.test_links_extended_headers_and_special_files_are_refused",
+      "tests.test_ova_envelope.OvaEnvelopeTests.test_paths_duplicates_and_unexpected_payloads_are_refused",
+      "tests.test_ova_envelope.OvaEnvelopeTests.test_corruption_truncation_concatenation_compression_and_symlink",
+      "tests.test_ova_envelope.OvaEnvelopeTests.test_non_regular_input_is_rejected_without_blocking"
+    ],
+    "rationale": "Checks regular bounded archive intake, valid payload offsets, header/link/path rejection, checksum/truncation/end-marker failures and nonblocking FIFO rejection; does not certify disk contents."
+  },
+  "heist/artifacts/ova.py::descriptor": {
+    "tests": [
+      "tests.test_ova_envelope.OvaEnvelopeTests.test_every_disk_requires_unique_local_reference_and_real_size",
+      "tests.test_ova_envelope.OvaEnvelopeTests.test_entity_doctype_invalid_xml_and_utf16_are_refused",
+      "tests.test_ova_envelope.OvaEnvelopeTests.test_size_entry_virtual_and_descriptor_limits_are_enforced",
+      "tests.test_ova_envelope.OvaEnvelopeTests.test_offsets_reference_only_embedded_files_and_capacity_units"
+    ],
+    "rationale": "Checks UTF-8/namespace/DTD/entity rejection, local one-to-one disk references, exact file sizes and bounded declared capacity units; no real VMDK parser is exercised."
+  },
+  "heist/artifacts/ova.py::capacity": {
+    "tests": [
+      "tests.test_ova_envelope.OvaEnvelopeTests.test_every_disk_requires_unique_local_reference_and_real_size",
+      "tests.test_ova_envelope.OvaEnvelopeTests.test_entity_doctype_invalid_xml_and_utf16_are_refused",
+      "tests.test_ova_envelope.OvaEnvelopeTests.test_size_entry_virtual_and_descriptor_limits_are_enforced",
+      "tests.test_ova_envelope.OvaEnvelopeTests.test_offsets_reference_only_embedded_files_and_capacity_units"
+    ],
+    "rationale": "Checks UTF-8/namespace/DTD/entity rejection, local one-to-one disk references, exact file sizes and bounded declared capacity units; no real VMDK parser is exercised."
+  },
+  "heist/artifacts/ova.py::Limits.__post_init__": {
+    "tests": [
+      "tests.test_ova_envelope.OvaEnvelopeTests.test_size_entry_virtual_and_descriptor_limits_are_enforced"
+    ],
+    "rationale": "Rejects a boolean disk limit; configured positive limits also reject oversized descriptor, archive, disk payload and virtual size."
+  },
+  "heist/artifacts/uploads.py::UploadStore.create": {
+    "tests": [
+      "tests.test_upload_store.UploadStoreTests.test_limits_expiry_quota_and_storage_failure",
+      "tests.test_upload_store.UploadStoreTests.test_out_of_order_duplicate_restart_seal_and_quarantine"
+    ],
+    "rationale": "Checks owner/name/size/OS admission, pending-upload count, expired receiving window and insufficient storage; per-owner admission is not a global storage reservation."
+  },
+  "heist/artifacts/uploads.py::UploadStore.owner_directory": {
+    "tests": [
+      "tests.test_upload_store.UploadStoreTests.test_limits_expiry_quota_and_storage_failure",
+      "tests.test_upload_store.UploadStoreTests.test_out_of_order_duplicate_restart_seal_and_quarantine"
+    ],
+    "rationale": "Checks owner/name/size/OS admission, pending-upload count, expired receiving window and insufficient storage; per-owner admission is not a global storage reservation."
+  },
+  "heist/artifacts/uploads.py::UploadStore.available": {
+    "tests": [
+      "tests.test_upload_store.UploadStoreTests.test_limits_expiry_quota_and_storage_failure",
+      "tests.test_upload_store.UploadStoreTests.test_out_of_order_duplicate_restart_seal_and_quarantine"
+    ],
+    "rationale": "Checks owner/name/size/OS admission, pending-upload count, expired receiving window and insufficient storage; per-owner admission is not a global storage reservation."
+  },
+  "heist/artifacts/uploads.py::UploadStore.receiving": {
+    "tests": [
+      "tests.test_upload_store.UploadStoreTests.test_limits_expiry_quota_and_storage_failure",
+      "tests.test_upload_store.UploadStoreTests.test_out_of_order_duplicate_restart_seal_and_quarantine"
+    ],
+    "rationale": "Checks owner/name/size/OS admission, pending-upload count, expired receiving window and insufficient storage; per-owner admission is not a global storage reservation."
+  },
+  "heist/artifacts/uploads.py::UploadStore.session": {
+    "tests": [
+      "tests.test_upload_store.UploadStoreTests.test_owner_size_index_conflict_and_missing_chunks",
+      "tests.test_upload_store.UploadStoreTests.test_durable_chunk_receipt_recovers_after_interrupted_metadata_write",
+      "tests.test_upload_store.UploadStoreTests.test_out_of_order_duplicate_restart_seal_and_quarantine",
+      "tests.test_upload_store.UploadStoreTests.test_concurrent_operation_cannot_bypass_upload_lease"
+    ],
+    "rationale": "Checks owner namespaces, exact indexes/lengths, conflicting and identical replay, restart recovery with persisted chunk size, interrupted receipts and native exclusive lease contention."
+  },
+  "heist/artifacts/uploads.py::UploadStore.put": {
+    "tests": [
+      "tests.test_upload_store.UploadStoreTests.test_owner_size_index_conflict_and_missing_chunks",
+      "tests.test_upload_store.UploadStoreTests.test_durable_chunk_receipt_recovers_after_interrupted_metadata_write",
+      "tests.test_upload_store.UploadStoreTests.test_out_of_order_duplicate_restart_seal_and_quarantine",
+      "tests.test_upload_store.UploadStoreTests.test_concurrent_operation_cannot_bypass_upload_lease"
+    ],
+    "rationale": "Checks owner namespaces, exact indexes/lengths, conflicting and identical replay, restart recovery with persisted chunk size, interrupted receipts and native exclusive lease contention."
+  },
+  "heist/artifacts/uploads.py::UploadStore.status": {
+    "tests": [
+      "tests.test_upload_store.UploadStoreTests.test_owner_size_index_conflict_and_missing_chunks",
+      "tests.test_upload_store.UploadStoreTests.test_durable_chunk_receipt_recovers_after_interrupted_metadata_write",
+      "tests.test_upload_store.UploadStoreTests.test_out_of_order_duplicate_restart_seal_and_quarantine",
+      "tests.test_upload_store.UploadStoreTests.test_concurrent_operation_cannot_bypass_upload_lease"
+    ],
+    "rationale": "Checks owner namespaces, exact indexes/lengths, conflicting and identical replay, restart recovery with persisted chunk size, interrupted receipts and native exclusive lease contention."
+  },
+  "heist/artifacts/uploads.py::UploadStore.summary": {
+    "tests": [
+      "tests.test_upload_store.UploadStoreTests.test_owner_size_index_conflict_and_missing_chunks",
+      "tests.test_upload_store.UploadStoreTests.test_durable_chunk_receipt_recovers_after_interrupted_metadata_write",
+      "tests.test_upload_store.UploadStoreTests.test_out_of_order_duplicate_restart_seal_and_quarantine",
+      "tests.test_upload_store.UploadStoreTests.test_concurrent_operation_cannot_bypass_upload_lease"
+    ],
+    "rationale": "Checks owner namespaces, exact indexes/lengths, conflicting and identical replay, restart recovery with persisted chunk size, interrupted receipts and native exclusive lease contention."
+  },
+  "heist/artifacts/uploads.py::UploadStore.seal": {
+    "tests": [
+      "tests.test_upload_store.UploadStoreTests.test_corrupt_chunk_never_seals_and_cancel_is_repeatable",
+      "tests.test_upload_store.UploadStoreTests.test_seal_crash_before_receipt_can_be_retried_or_cancelled_without_leaking_payload",
+      "tests.test_upload_store.UploadStoreTests.test_out_of_order_duplicate_restart_seal_and_quarantine"
+    ],
+    "rationale": "Checks complete byte assembly, corrupted/missing chunks, crash between payload and receipt, safe repeat/cancel, immutable sealed state and retained quarantine; no database image registration occurs."
+  },
+  "heist/artifacts/uploads.py::UploadStore.cancel": {
+    "tests": [
+      "tests.test_upload_store.UploadStoreTests.test_corrupt_chunk_never_seals_and_cancel_is_repeatable",
+      "tests.test_upload_store.UploadStoreTests.test_seal_crash_before_receipt_can_be_retried_or_cancelled_without_leaking_payload",
+      "tests.test_upload_store.UploadStoreTests.test_out_of_order_duplicate_restart_seal_and_quarantine"
+    ],
+    "rationale": "Checks complete byte assembly, corrupted/missing chunks, crash between payload and receipt, safe repeat/cancel, immutable sealed state and retained quarantine; no database image registration occurs."
+  },
+  "heist/api/public/artifacts.py::create": {
+    "tests": [
+      "tests.test_web_artifacts.ArtifactUploadTests.test_transfer_and_seal_do_not_publish_unvalidated_disk",
+      "tests.test_web_artifacts.ArtifactUploadTests.test_role_revocation_and_cross_account_ownership_block_all_staging_operations",
+      "tests.test_web_artifacts.ArtifactUploadTests.test_invalid_chunk_content_and_size_cancel_and_unauthenticated_access"
+    ],
+    "rationale": "Real PostgreSQL/session tests assert administrator role refresh, owner isolation, chunk content/index errors, retry/cancel behavior and explicit 202 quarantine without registering a selectable disk. Worker and import integration remain unverified."
+  },
+  "heist/api/public/artifacts.py::status": {
+    "tests": [
+      "tests.test_web_artifacts.ArtifactUploadTests.test_transfer_and_seal_do_not_publish_unvalidated_disk",
+      "tests.test_web_artifacts.ArtifactUploadTests.test_role_revocation_and_cross_account_ownership_block_all_staging_operations",
+      "tests.test_web_artifacts.ArtifactUploadTests.test_invalid_chunk_content_and_size_cancel_and_unauthenticated_access"
+    ],
+    "rationale": "Real PostgreSQL/session tests assert administrator role refresh, owner isolation, chunk content/index errors, retry/cancel behavior and explicit 202 quarantine without registering a selectable disk. Worker and import integration remain unverified."
+  },
+  "heist/api/public/artifacts.py::chunk": {
+    "tests": [
+      "tests.test_web_artifacts.ArtifactUploadTests.test_transfer_and_seal_do_not_publish_unvalidated_disk",
+      "tests.test_web_artifacts.ArtifactUploadTests.test_role_revocation_and_cross_account_ownership_block_all_staging_operations",
+      "tests.test_web_artifacts.ArtifactUploadTests.test_invalid_chunk_content_and_size_cancel_and_unauthenticated_access"
+    ],
+    "rationale": "Real PostgreSQL/session tests assert administrator role refresh, owner isolation, chunk content/index errors, retry/cancel behavior and explicit 202 quarantine without registering a selectable disk. Worker and import integration remain unverified."
+  },
+  "heist/api/public/artifacts.py::seal": {
+    "tests": [
+      "tests.test_web_artifacts.ArtifactUploadTests.test_transfer_and_seal_do_not_publish_unvalidated_disk",
+      "tests.test_web_artifacts.ArtifactUploadTests.test_role_revocation_and_cross_account_ownership_block_all_staging_operations",
+      "tests.test_web_artifacts.ArtifactUploadTests.test_invalid_chunk_content_and_size_cancel_and_unauthenticated_access"
+    ],
+    "rationale": "Real PostgreSQL/session tests assert administrator role refresh, owner isolation, chunk content/index errors, retry/cancel behavior and explicit 202 quarantine without registering a selectable disk. Worker and import integration remain unverified."
+  },
+  "heist/api/public/artifacts.py::cancel": {
+    "tests": [
+      "tests.test_web_artifacts.ArtifactUploadTests.test_transfer_and_seal_do_not_publish_unvalidated_disk",
+      "tests.test_web_artifacts.ArtifactUploadTests.test_role_revocation_and_cross_account_ownership_block_all_staging_operations",
+      "tests.test_web_artifacts.ArtifactUploadTests.test_invalid_chunk_content_and_size_cancel_and_unauthenticated_access"
+    ],
+    "rationale": "Real PostgreSQL/session tests assert administrator role refresh, owner isolation, chunk content/index errors, retry/cancel behavior and explicit 202 quarantine without registering a selectable disk. Worker and import integration remain unverified."
+  },
+  "heist/api/public/artifacts.py::staged_operation.wrapped": {
+    "tests": [
+      "tests.test_web_artifacts.ArtifactUploadTests.test_transfer_and_seal_do_not_publish_unvalidated_disk",
+      "tests.test_web_artifacts.ArtifactUploadTests.test_role_revocation_and_cross_account_ownership_block_all_staging_operations",
+      "tests.test_web_artifacts.ArtifactUploadTests.test_invalid_chunk_content_and_size_cancel_and_unauthenticated_access"
+    ],
+    "rationale": "Real PostgreSQL/session tests assert administrator role refresh, owner isolation, chunk content/index errors, retry/cancel behavior and explicit 202 quarantine without registering a selectable disk. Worker and import integration remain unverified."
   }
 }

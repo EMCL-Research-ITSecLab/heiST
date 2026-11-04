@@ -332,6 +332,21 @@
       ]
     },
     {
+      "id": "AUTO-OVA-ENVELOPE",
+      "area": "ova_envelope",
+      "mode": "automated",
+      "procedure": "Run tests/test_ova_envelope.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_ova_envelope.py"
+      ]
+    },
+    {
       "id": "AUTO-PASSWORDS",
       "area": "passwords",
       "mode": "automated",
@@ -587,6 +602,21 @@
       ]
     },
     {
+      "id": "AUTO-UPLOAD-STORE",
+      "area": "upload_store",
+      "mode": "automated",
+      "procedure": "Run tests/test_upload_store.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_upload_store.py"
+      ]
+    },
+    {
       "id": "AUTO-VERIFICATION",
       "area": "verification",
       "mode": "automated",
@@ -674,6 +704,21 @@
       ],
       "sources": [
         "tests/test_web_administration.py"
+      ]
+    },
+    {
+      "id": "AUTO-WEB-ARTIFACTS",
+      "area": "web_artifacts",
+      "mode": "automated",
+      "procedure": "Run tests/test_web_artifacts.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_web_artifacts.py"
       ]
     },
     {
@@ -1043,7 +1088,7 @@
       "area": "artifacts",
       "mode": "appliance",
       "procedure": "Upload a large artifact; retry duplicate/out-of-order chunks; tamper total size/index/upload owner; cancel and interrupt before/after finalize.",
-      "expected": "All chunks are accounted for exactly once; cross-user access fails; temporary files expire; ambiguous finalization is reconciled safely.",
+      "expected": "All chunks are accounted for exactly once; cross-user access fails; temporary files expire; ambiguous finalization is reconciled safely. Staging assertions alone do not satisfy worker expiry/import acceptance.",
       "evidence": [
         "exact source/artifact/fixture identities",
         "dated commands/screenshots/results",
@@ -1057,7 +1102,7 @@
       "area": "artifacts",
       "mode": "appliance",
       "procedure": "Feed tar traversal, absolute names, links, duplicate members, XML entities, huge expansion, missing disks, malformed OVF and excessive virtual sizes.",
-      "expected": "No external fetch, path escape or resource exhaustion; actual and declared disk constraints agree; validation failures remove owned temporary files.",
+      "expected": "No external fetch, path escape or resource exhaustion; actual and declared disk constraints agree; validation failures clean up or retain explicitly owned quarantine for reconciliation. Envelope tests alone do not validate disk contents.",
       "evidence": [
         "exact source/artifact/fixture identities",
         "dated commands/screenshots/results",

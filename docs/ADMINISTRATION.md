@@ -30,3 +30,24 @@ The final architecture is being migrated from PHP to the existing Flask stack.
 Do not remove the old web runtime from an installed appliance until the exact
 Flask replacement and deployment adapter pass the PHP-removal, authentication,
 file-validation, worker and recovery cases in the catalogue.
+
+## Partial imports and quarantined transfers
+
+An exercise definition saved inactive after an import error must be inspected
+before retrying provisioning. Keep its identifier and the corresponding Proxmox
+task IDs. A timeout does not prove that the operation failed; do not submit a
+second definition or delete its metadata to retry. Confirm machine readiness
+before publishing. Retirement prevents new allocation while preserving current
+students and grades. Permanent deletion requires confirmed instance teardown.
+
+The candidate Flask artifact endpoints report `RECEIVING`, `SEALED` or
+`CANCELLED`. `SEALED` means transfer complete in private quarantine, not that a
+VM image is validated or ready for an exercise. The import worker and its
+reconciliation controls are still being migrated. Do not manually register a
+quarantined payload to bypass inspection. Unsealed transfers can be cancelled;
+expired receiving sessions currently need that explicit cancellation.
+
+The candidate cleanup service closes launch admission until it produces a
+completed receipt. Preserve unresolved VM/network/monitoring records and inspect
+native task results before recovery. Monitoring TLS failures require repairing
+certificate trust/SAN configuration, not disabling certificate verification.

@@ -9,8 +9,8 @@ The implemented contracts include authentication/session bootstrap, learning
 views, private/public profiles, avatar storage, password change, VPN download,
 account removal, challenge reads/start/stop/flag submission/time extension,
 administrator diagnostics, announcement administration and exercise authoring/
-management. Artifact upload, expiry reconciliation and installation/rollout integration
-remain migration work. The React transport still uses the PHP reference until
+management. Artifact staging is implemented; disk validation/import, expiry reconciliation
+and installation/rollout integration remain migration work. The React transport still uses the PHP reference until
 all contracts and the new appliance runtime have passed acceptance. This is
 not a release approval or an instruction to deploy the partial migration.
 
@@ -180,3 +180,34 @@ python tools/verification.py run --suite proxmox --strict \
 
 This covers physical VM operations, not OVA import, network creation, monitoring
 TLS or the complete student workflow. Those remain separate appliance gates.
+
+## Quarantined artifact intake
+
+The new administrator-only `/api/admin/artifact-uploads` endpoints create a
+server-generated upload identity, accept indexed `application/octet-stream`
+chunks, report progress, cancel an unsealed transfer and seal a complete transfer.
+Chunks are 4 MiB; the last chunk must have its exact remaining length. A repeated
+chunk is accepted only when its bytes match. Private owner namespaces, per-upload
+file leases, durable chunk receipts and atomic assembly support retries and
+process restarts without accepting a different payload for an existing index.
+There are at most two pending transfers per owner, each at most 16 GiB, with a
+24-hour receiving window and staging-space checks. Expired transfers currently
+require explicit cancellation; automatic expiry cleanup is pending worker work.
+Quota admission is per owner, not a reservation of shared storage across owners.
+
+Sealing returns HTTP 202 and state `SEALED`, with an explicit quarantine message.
+It does not insert a `disk_files` record, make the artifact selectable or contact
+Proxmox. Once a transfer is sealed, cancellation is refused because later job
+outcomes must be reconciled. The React transport still uses the old complete
+upload contract until validation, durable jobs and privileged transfer are ready.
+
+`heist/artifacts/ova.py` inspects uncompressed USTAR/GNU regular-file envelopes
+without extraction. It rejects extended/sparse headers, links, unsafe or duplicate
+names, unexpected members, malformed/non-UTF-8 XML, DTD/entity declarations,
+external references, mismatched file sizes and inconsistent disk declarations.
+The default disk payload and declared virtual-size limits preserve the existing
+16-GiB policy. Optional manifests are bounded archive members, not authenticated
+signatures, and their checksums are not yet verified. Envelope inspection does
+not parse VMDK content: sandboxed disk validation must independently check format,
+virtual size, backing/external extents and conversion before publication. It is
+not yet connected to sealing or used as import authorization.

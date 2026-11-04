@@ -61,8 +61,8 @@ and native journal forwarding have dedicated deployment templates.
 ## Remaining merge/release gates
 
 This branch is still a draft. The React transport currently uses the PHP
-reference API. Artifact/chunk upload and worker contracts must finish moving to
-Flask before deleting `webserver/` and Composer/PHP paths. Authoring contracts
+reference API. Chunk intake now stages and seals owner-isolated transfers in quarantine.
+Disk validation/import and worker contracts must finish moving to Flask before deleting `webserver/` and Composer/PHP paths. Authoring contracts
 are tested with real PostgreSQL; actual machine import remains an appliance gate.
 The new Gunicorn runtime needs source-bound offline artifacts, fresh installation,
 Apache configuration, media migration, release protocol/migration binding and a

@@ -13,6 +13,7 @@ must never directly execute privileged host code.
 |---|---|
 | `heist/api/public/` | Browser API contracts, route authorization and response encoding |
 | `heist/api/internal.py` | Authenticated internal platform API; no browser sessions |
+| `heist/artifacts/` | Private resumable staging and bounded OVA envelope inspection; no privileged import |
 | `heist/security/` | Password compatibility/upgrades, sessions, CSRF, authorization and rate limits |
 | `heist/platform/` | Challenge, image, pool and user/VPN application services |
 | `heist/infrastructure/` | Proxmox, guest, network and database adapters |

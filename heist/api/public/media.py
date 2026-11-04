@@ -131,6 +131,17 @@ def image_format(data):
     raise ApiError('Choose a PNG, JPEG or static GIF image')
 
 
+def public_url(value):
+    if isinstance(value,str):
+        for kind in ('avatars','challenge_images'):
+            prefix='/uploads/'+kind+'/'
+            if value.startswith(prefix):
+                name=value[len(prefix):]
+                if re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,127}\.(?:png|jpe?g|gif)',name,re.I):
+                    return '/api/media/'+kind+'/'+name
+    return value
+
+
 def media_directory(kind, *, create=False):
     if kind not in ('avatars', 'challenge_images'):
         raise ApiError('Media not found', 404)

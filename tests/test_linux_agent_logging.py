@@ -1,11 +1,10 @@
-import ast
 import os
 from pathlib import Path
 import subprocess
 import tempfile
 from types import SimpleNamespace
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 
 class AgentLoggingTests(unittest.TestCase):
@@ -28,18 +27,16 @@ class AgentLoggingTests(unittest.TestCase):
                 self.assertIn('/etc/systemd/system/bash_loggin_timer.timer', trace[-1])
 
     def test_template_freeze_never_falls_back_to_forced_stop(self):
-        source = Path(__file__).resolve().parents[1] / 'heist/infrastructure/proxmox/client.py'
-        tree = ast.parse(source.read_text())
-        function = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == 'shutdown_vm_api_call')
-        namespace = {'subprocess': Mock()}
-        exec(compile(ast.Module(body=[function], type_ignores=[]), str(source), 'exec'), namespace)
-        namespace['shutdown_vm_api_call'](SimpleNamespace(id=123))
-        args, kwargs = namespace['subprocess'].run.call_args
-        self.assertEqual(args[0][:2], ['qm', 'shutdown'])
-        self.assertNotIn('--skiplock', args[0])
-        self.assertEqual(args[0][args[0].index('--forceStop') + 1], '0')
-        self.assertTrue(kwargs['check'])
-        self.assertGreater(kwargs['timeout'], 0)
-        namespace['subprocess'].run.side_effect = TimeoutError('guest refused shutdown')
-        with self.assertRaises(TimeoutError):
-            namespace['shutdown_vm_api_call'](SimpleNamespace(id=123))
+        from heist.infrastructure.proxmox import client
+        native=Mock()
+        with patch.object(client,'require_vm_ownership'),patch.object(client.subprocess,'run',native):
+            client.shutdown_vm_api_call(SimpleNamespace(id=123))
+            args,kwargs=native.call_args
+            self.assertEqual(args[0][:2],['qm','shutdown'])
+            self.assertNotIn('--skiplock',args[0])
+            self.assertEqual(args[0][args[0].index('--forceStop')+1],'0')
+            self.assertTrue(kwargs['check'])
+            self.assertGreater(kwargs['timeout'],0)
+            native.side_effect=TimeoutError('guest refused shutdown')
+            with self.assertRaises(TimeoutError):
+                client.shutdown_vm_api_call(SimpleNamespace(id=123))

@@ -4,7 +4,7 @@ import { number, payload, row, rows, text, truth } from '../../lib/data.ts';
 import { Link } from '../../lib/router.tsx';
 import { useResource } from '../../lib/state.tsx';
 export function Operations() {
-  const resource = useResource('/backend/manage-ctf.php?action=get_challenges', 15000), data = payload(resource.data), stats = row(data.stats), challenges = rows(data.challenges);
+  const resource = useResource('/api/admin/challenges', 15000), data = payload(resource.data), stats = row(data.stats), challenges = rows(data.challenges);
   return <>
     <PageTitle
       eyebrow="ADMINISTRATION / LAB OVERVIEW"

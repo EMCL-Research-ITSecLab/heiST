@@ -17,6 +17,7 @@ def create_app(config=None, *, repository_factory=None, internal_client_factory=
     app = Flask(__name__, static_folder=None)
     app.config.update(WEB_SESSION_SECRET=os.environ.get('WEB_SESSION_SECRET'), REGISTRATION_ENABLED=True,
                       DATA_ROOT=os.environ.get('HEIST_WEB_DATA_ROOT', '/var/lib/heist-web'),
+                      MAINTENANCE_FILE=os.environ.get('HEIST_WEB_MAINTENANCE_FILE','/run/heist-web-maintenance'),
                       MAX_CONTENT_LENGTH=1024**3+1024**2, MAX_FORM_MEMORY_SIZE=1024**2, MAX_FORM_PARTS=100)
     app.config.update(config or {})
     secret = app.config['WEB_SESSION_SECRET']
@@ -29,15 +30,14 @@ def create_app(config=None, *, repository_factory=None, internal_client_factory=
         repository_factory = lambda: Repository(settings.connect)
     if internal_client_factory is None:
         from .internal_client import InternalClient
-        internal_client_factory = lambda: InternalClient(
-            'https://'+os.environ.get('BACKEND_HOST', 'localhost')+':'+os.environ.get('BACKEND_PORT', '8000'),
-            os.environ.get('BACKEND_AUTHENTICATION_TOKEN'), certificate=os.environ.get('HEIST_BACKEND_CA_FILE') or True)
+        internal_client_factory = InternalClient.from_environment
     app.extensions['internal_client_factory'] = internal_client_factory
     app.extensions['repository_factory'] = repository_factory
     app.extensions['clock'] = clock or (lambda: datetime.now(timezone.utc))
     app.extensions['dummy_password_hash'] = hash_password('non-account-timing-placeholder')
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
-    from . import administration, artifacts, auth, authoring, challenges, context, learning, media, profiles
+    from . import administration, artifacts, auth, authoring, challenges, context, health, learning, media, profiles
+    app.register_blueprint(health.blueprint,url_prefix='/api')
     app.register_blueprint(auth.blueprint, url_prefix='/api')
     app.register_blueprint(learning.blueprint, url_prefix='/api')
     app.register_blueprint(media.blueprint, url_prefix='/api')

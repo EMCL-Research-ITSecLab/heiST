@@ -112,6 +112,14 @@ class ManifestTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'another source'):
             build_plan(self.root, target, 'releases/release.json', 'config', artifact)
 
+    def test_legacy_rollout_adapter_cannot_deploy_standalone_frontend(self):
+        from tests.test_ui_assets import bundle
+        target = self.frontend_target()
+        artifact = self.root/'frontend.tar.gz'
+        artifact.write_bytes(bundle(target, standalone=True))
+        with self.assertRaisesRegex(ValueError, 'browser-runtime deployment protocol'):
+            build_plan(self.root, target, 'releases/release.json', 'config', artifact)
+
     def test_moving_unchanged_python_requirements_is_supported(self):
         (self.root/'heist/installer').mkdir(parents=True)
         (self.root/'setup/requirements.txt').rename(self.root/'heist/installer/requirements.txt')

@@ -179,5 +179,51 @@ def main(argv=None):
     return 0
 
 
+def install_internal(data,root,commit,artifact_sha256):
+    """Stage only the approved Gunicorn wheel; preserve the original host venv."""
+    if digest(data)!=artifact_sha256:
+        raise ValueError('Internal runtime artifact checksum differs')
+    _,files=inspect_bundle(data,commit)
+    gunicorn=next(body for name,body in files.items() if name.startswith('wheels/') and wheel_identity(Path(name).name,body)[0]=='gunicorn')
+    source={name.removeprefix('source/'):digest(body) for name,body in files.items() if name.startswith('source/')}
+    root=assert_directory(root)
+    versions=assert_directory(root/'versions')
+    destination=versions/commit
+    receipt={'schema':1,'source_commit':commit,'wheel_sha256':digest(gunicorn),'source_files':source}
+    if destination.exists():
+        if json.loads((destination/'metadata.json').read_text())!=receipt or file_hash(destination/'gunicorn.whl')!=receipt['wheel_sha256']:
+            raise ValueError('Existing internal runtime differs')
+    else:
+        with tempfile.TemporaryDirectory(prefix='.internal-',dir=versions) as temporary:
+            stage=Path(temporary)
+            (stage/'gunicorn.whl').write_bytes(gunicorn)
+            (stage/'metadata.json').write_text(json.dumps(receipt,sort_keys=True)+'\n')
+            for path in stage.iterdir():
+                path.chmod(0o600)
+                with path.open('rb') as stream:
+                    os.fsync(stream.fileno())
+            descriptor=os.open(stage,os.O_DIRECTORY|os.O_RDONLY)
+            try:
+                os.fsync(descriptor)
+            finally:
+                os.close(descriptor)
+            os.rename(stage,destination)
+            descriptor=os.open(versions,os.O_DIRECTORY|os.O_RDONLY)
+            try:
+                os.fsync(descriptor)
+            finally:
+                os.close(descriptor)
+    temporary=root/'.current-new'
+    temporary.unlink(missing_ok=True)
+    temporary.symlink_to(Path('versions')/commit,target_is_directory=True)
+    os.replace(temporary,root/'current')
+    descriptor=os.open(root,os.O_DIRECTORY|os.O_RDONLY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+    return {'source_commit':commit,'artifact_sha256':artifact_sha256}
+
+
 if __name__ == '__main__':
     raise SystemExit(main())

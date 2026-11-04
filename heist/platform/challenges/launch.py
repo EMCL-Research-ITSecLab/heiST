@@ -25,7 +25,7 @@ from heist.platform.challenges.stop import stop_challenge
 from heist.platform.challenges.warmup import warmup_challenge, stop_dnsmasq_process, start_dnsmasq_process
 from heist.platform.challenges.timing import launch_timing_logger
 from heist.infrastructure.database import db_connection_context
-from heist.platform.challenges.ownership import take_ready_instance, assign_instance
+from heist.platform.challenges.ownership import take_ready_instance, assign_instance, finalize_launch
 from heist.platform.challenges.availability import require_available_template
 from heist.platform.images.locking import template_guard
 from heist.infrastructure.proxmox.guest_agent import GuestAgent, GuestAgentError
@@ -144,7 +144,7 @@ def _launch_challenge(challenge_template_id, user_id, vpn_monitoring_device, dmz
                 add_iptables_rules(challenge, user_vpn_ip, vpn_monitoring_device, dmz_monitoring_device)
                 launch_timing_logger(start_time_firewall, "[FIREWALL RULES COMPLETE]", challenge_template_id, user_id)
 
-                reset_expiration_timer(challenge.id, db_conn, expiration_duration_minutes=60)
+                finalize_launch(db_conn, challenge.id, user_id)
 
             except Exception as e:
                 stop_challenge(user_id)
@@ -774,22 +774,6 @@ def add_running_challenge_to_user(challenge, user_id, db_conn):
 
     assign_instance(db_conn, challenge.id, user_id)
     print(f"[Info] Exclusively assigned running challenge {challenge.id} to user {user_id}", flush=True)
-
-
-def reset_expiration_timer(challenge_id, db_conn, expiration_duration_minutes=60):
-    """
-    Reset the expiration timer for the challenge.
-    """
-    print(f"[Info] Resetting expiration timer for challenge {challenge_id} to {expiration_duration_minutes} minutes", flush=True)
-
-    with db_conn.cursor() as cursor:
-        cursor.execute("""
-                       UPDATE challenges
-                       SET expires_at = CURRENT_TIMESTAMP + INTERVAL '%s minutes'
-                       WHERE id = %s
-                       """, (expiration_duration_minutes, challenge_id))
-
-    print(f"[Info] Successfully reset expiration timer for challenge {challenge_id}", flush=True)
 
 
 def start_dnsmasq_instances(challenge, user_vpn_ip):

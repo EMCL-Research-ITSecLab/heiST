@@ -21,7 +21,7 @@ function exportDiagnostics(data: Record<string, unknown>) {
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 export function PlatformStatusPanel() {
-  const resource = useResource('/backend/admin-operations.php', 30000);
+  const resource = useResource('/api/admin/operations', 30000);
   const data = payload(resource.data), archive = row(data.archive), release = row(data.release);
   const storage = row(data.storage), lifecycle = row(data.lifecycle);
   return <Card title="Platform diagnostics" action={<button className="secondary small" onClick={resource.reload}>Refresh diagnostics</button>}>

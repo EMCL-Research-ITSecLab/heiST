@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Area, Card, Empty, Field, Notice, PageTitle, ResourceState, Select, Stat } from '../../components/ui.tsx';
-import { post } from '../../lib/api.ts';
+import { request } from '../../lib/api.ts';
 import { categories, difficulties, number, rows, text } from '../../lib/data.ts';
 import { Link, useRouter } from '../../lib/router.tsx';
 import { useAction, useResource } from '../../lib/state.tsx';
@@ -35,7 +35,7 @@ type Hint = {
 };
 const key = () => crypto.randomUUID();
 export function CreateChallenge() {
-  const resource = useResource('/backend/create-ctf.php'), action = useAction(), router = useRouter();
+  const resource = useResource('/api/admin/challenges/options'), action = useAction(), router = useRouter();
   const [machines, setMachines] = useState<Machine[]>([]), [networks, setNetworks] = useState<Network[]>([]), [flags, setFlags] = useState<Flag[]>([]), [hints, setHints] = useState<Hint[]>([]);
   const ovaOptions: [
     string,
@@ -61,7 +61,7 @@ export function CreateChallenge() {
     form.set('subnets', JSON.stringify(networks.map(network => ({ name: network.name, dmz: network.dmz, accessible: network.accessible, attached_vms: network.machines.map(id => machines.find(vm => vm.key === id)?.name).filter(Boolean) }))));
     form.set('flags', JSON.stringify(flags.map((flag, index) => ({ flag: flag.flag, description: flag.description, points: flag.points, order_index: index, user_specific: flag.user_specific, vm_name: machines.find(vm => vm.key === flag.machine)?.name ?? null }))));
     form.set('hints', JSON.stringify(hints.map((hint, index) => ({ hint_text: hint.hint_text, unlock_points: hint.unlock_points, order_index: index }))));
-    await action.run(() => post('create-ctf', form), () => router.navigate('/manage-ctf'));
+    await action.run(() => request('/api/admin/challenges', {method: 'POST', body: form}), () => router.navigate('/manage-ctf'));
   }
   return <>
     <PageTitle

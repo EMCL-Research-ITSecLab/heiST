@@ -33,6 +33,8 @@ def get_challenge():
     user = require_user()
     template_id = positive_id(request.args.get('id'), 'challenge identifier')
     value = visible_challenge(user, template_id)
+    from .media import public_url
+    value['image_path']=public_url(value.get('image_path'))
     status = repository().scalar('get_challenge_user_status', user['id'], template_id)
     progress = repository().call('get_solve_progress_data', user['id'], template_id, one=True)
     flags = repository().call('get_challenge_flags', template_id)
@@ -115,9 +117,6 @@ def deploy(user, template):
     if repo.scalar('get_user_running_challenge', user['id']) is not None:
         raise ApiError('Stop your running challenge before starting another one', 409)
     response = internal().request('start', {'user_id': user['id'], 'challenge_template_id': template['id']})
-    with repo.transaction():
-        repo.call('create_new_challenge_attempt', user['id'], template['id'])
-        repo.call('start_user_network_trace', user['id'], template['id'])
     return {'success': True, 'message': 'Challenge started', 'entrypoints': response.get('entrypoints', []), **timing(user['id'], template['id'])}
 
 

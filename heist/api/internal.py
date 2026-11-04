@@ -17,7 +17,10 @@ def create_app(config=None, services=None):
                               TEMPLATE_LOCK_DIRECTORY=os.getenv('HEIST_TEMPLATE_LOCK_DIRECTORY', '/run/heist-template-operations'),
                               CLEANUP_FILE=os.getenv('HEIST_CLEANUP_FILE', '/var/lock/cleanup_complete.lock'),
                               OPERATION_DIRECTORY=os.getenv('HEIST_OPERATION_DIRECTORY', '/var/lib/heist/operations'),
-                              MAX_CONTENT_LENGTH=65536, MAINTENANCE_FILE=os.getenv('HEIST_MAINTENANCE_FILE', '/run/heist-maintenance'))
+                              ARTIFACT_INTAKE_DIRECTORY=os.getenv('HEIST_ARTIFACT_INTAKE', '/var/lib/heist/artifact-intake'),
+                              ARTIFACT_LIBRARY_DIRECTORY=os.getenv('HEIST_ARTIFACT_LIBRARY', '/var/lib/vz/import'),
+                              NORMALIZED_IMAGE_DIRECTORY=os.getenv('HEIST_NORMALIZED_IMAGES', '/var/lib/heist/normalized-images'),
+                              MAX_CONTENT_LENGTH=4*1024**2, MAINTENANCE_FILE=os.getenv('HEIST_MAINTENANCE_FILE', '/run/heist-maintenance'))
     application.config.update(config or {})
     services = services or {}
 
@@ -30,7 +33,7 @@ def create_app(config=None, services=None):
         if 'get_db_connection' in services:
             return services['get_db_connection']()
         from heist.config import DatabaseSettings
-        return DatabaseSettings.from_mapping(timeout=3).connect()
+        return DatabaseSettings.from_mapping(timeout=3).connect(autocommit=True)
 
     @application.before_request
     def authenticate():
@@ -40,7 +43,7 @@ def create_app(config=None, services=None):
         supplied = request.headers.get('Authentication-Token', '')
         if not expected or not hmac.compare_digest(supplied.encode(), expected.encode()):
             return {'error': 'Unauthorized', 'success': False}, 401
-        if request.method == 'POST' and Path(application.config['MAINTENANCE_FILE']).exists():
+        if request.method in ('POST','PUT','DELETE') and Path(application.config['MAINTENANCE_FILE']).exists():
             return {'error': 'Maintenance in progress', 'success': False}, 503
         if request.path == '/launch-challenge' and not cleanup_is_complete(application.config['CLEANUP_FILE']):
             return {'error': 'Startup cleanup requires reconciliation', 'success': False}, 503
@@ -50,6 +53,7 @@ def create_app(config=None, services=None):
         return {'error': 'Request body too large', 'success': False}, 413
 
     def identifiers(*names):
+        request.max_content_length = 65536
         data = request.get_json(silent=True)
         if not isinstance(data, dict):
             raise ValueError('JSON object required')
@@ -145,6 +149,8 @@ def create_app(config=None, services=None):
         def handler(name=name, fields=fields, message=message, database=database, download=download):
             return action(name, fields, message, database, download)
         application.add_url_rule('/' + route, name, handler, methods=['POST'])
+    from heist.api.artifact_intake import blueprint as artifact_blueprint
+    application.register_blueprint(artifact_blueprint(connection))
     return application
 
 
@@ -152,6 +158,5 @@ load_dotenv()
 app = create_app()
 
 if __name__ == '__main__':
-    app.run(host=os.getenv('BACKEND_HOST', '10.0.0.1'), port=int(os.getenv('BACKEND_PORT', '8000')),
-            ssl_context=(os.getenv('BACKEND_CERTIFICATE_FILE', '/root/heiST/backend.crt'),
-                         os.getenv('BACKEND_CERTIFICATE_KEY_FILE', '/root/heiST/backend.key')))
+    from heist.api.internal_serve import main
+    raise SystemExit(main())

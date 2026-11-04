@@ -18,8 +18,8 @@ import { Link, RouterProvider, useRouter } from './lib/router.tsx';
 import { SessionProvider, useAction, useSession } from './lib/state.tsx';
 export const routes = [
   ['/', 'public'], ['/landing', 'public'], ['/login', 'public'], ['/signup', 'public'],
-  ['/explore', 'public'], ['/challenge', 'public'], ['/dashboard', 'student'],
-  ['/profile', 'student'], ['/profile/:username', 'public'], ['/profile_public', 'public'],
+  ['/explore', 'public'], ['/challenge', 'student'], ['/dashboard', 'student'],
+  ['/profile', 'student'], ['/profile/:username', 'student'], ['/profile_public', 'student'],
   ['/reset-password', 'student'], ['/activity', 'student'], ['/badges', 'student'],
   ['/announcements', 'student'], ['/create-ctf', 'admin'], ['/manage-ctf', 'admin'],
   ['/upload-diskfile', 'admin'], ['/manage-announcements', 'admin'], ['/operations', 'admin'], ['/404', 'public'],
@@ -29,7 +29,12 @@ function Redirect({ to }: {
 }) { const router = useRouter(); useEffect(() => router.navigate(to, true), [to]); return <div className="loading" role="status">Opening your workspace…</div>; }
 function RouteContent() {
   const { location } = useRouter(), session = useSession(), path = location.split('?')[0].replace(/\/$/, '') || '/';
-  const publicProfile = path.startsWith('/profile/') ? decodeURIComponent(path.slice(9)) : path === '/profile_public' ? new URLSearchParams(location.split('?')[1]).get('username') ?? '' : undefined;
+  let publicProfile: string | undefined;
+  try {
+    publicProfile = path.startsWith('/profile/') ? decodeURIComponent(path.slice(9)) : path === '/profile_public' ? new URLSearchParams(location.split('?')[1]).get('username') ?? '' : undefined;
+  } catch {
+    publicProfile = undefined;
+  }
   const route = routes.find(([p]) => p === path || p === '/profile/:username' && publicProfile);
   if (session.loading)
     return <div className="loading" role="status">

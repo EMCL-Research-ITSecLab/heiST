@@ -1,5 +1,3 @@
-from hashlib import sha256
-import random
 import os
 import subprocess
 import time
@@ -67,8 +65,8 @@ def import_machine_templates(challenge_template_id, db_conn, ip_pool):
         print(f"[Info] Machine template import completed successfully in {elapsed_time:.2f}s", flush=True)
     except Exception as e:
         print(f"[Error] Failed during import process: {e}", flush=True)
-        print(f"[Info] Undoing machine template import for challenge {challenge_template_id}", flush=True)
-        undo_import_machine_templates(challenge_template)
+        # Preserve identifiers and native tasks for explicit reconciliation.
+        # A failed response does not prove that create/import has stopped.
         raise RuntimeError(f"Failed to import disk images: {e}")
 
 
@@ -112,7 +110,12 @@ def fetch_machine_templates(challenge_template, db_conn):
         for machine_template_id, proxmox_filename, cores, ram_gb, guest_os in cursor.fetchall():
             print(f"[Debug] Processing machine template {machine_template_id} (guest_os={guest_os})", flush=True)
 
+            from pathlib import Path
+            if not isinstance(proxmox_filename, str) or Path(proxmox_filename).name != proxmox_filename or not proxmox_filename.endswith('.ova'):
+                raise ValueError('Invalid managed image filename')
             disk_file_path = os.path.join(PROXMOX_STORAGE_BASE_DIR, proxmox_filename)
+            if Path(disk_file_path).is_symlink():
+                raise ValueError('Managed images must not be symlinks')
 
             # Check if the disk file path is valid
             if not os.path.exists(disk_file_path):
@@ -121,9 +124,9 @@ def fetch_machine_templates(challenge_template, db_conn):
             if not os.path.isfile(disk_file_path):
                 print(f"[Error] Disk file path is not a file: {disk_file_path}", flush=True)
                 raise ValueError(f"Disk file path {disk_file_path} is not a file.")
-            if not disk_file_path.endswith(('.ova', '.iso')):
-                print(f"[Error] Disk file path is not valid OVA or ISO: {disk_file_path}", flush=True)
-                raise ValueError(f"Disk file path {disk_file_path} is not a valid OVA or ISO file.")
+            if not disk_file_path.endswith('.ova'):
+                print(f"[Error] Disk file path is not a supported OVA: {disk_file_path}", flush=True)
+                raise ValueError(f"Disk file path {disk_file_path} is not a supported OVA file.")
 
             print(f"[Info] Creating machine template {machine_template_id} with {cores} cores, {ram_gb}GB RAM", flush=True)
             print(f"[Debug] Disk file: {disk_file_path}", flush=True)
@@ -143,144 +146,11 @@ def fetch_machine_templates(challenge_template, db_conn):
     print(f"[Info] Successfully fetched {machines_fetched} machine templates for challenge {challenge_template.id}", flush=True)
 
 
-def check_user_input(user_input):
-    """
-    Sanitize user input to prevent command injection attacks.
-    """
-    import re
-
-    blacklist_pattern = r"""[;&|><`$\\'"*?{}\[\]~!#()=]+"""
-    if re.search(blacklist_pattern, user_input):
-        print(f"[Error] Input validation failed - potentially dangerous characters detected", flush=True)
-        raise ValueError("Input contains potentially dangerous characters.")
-
-    print(f"[Debug] Input validation passed", flush=True)
-
-
 def import_disk_images_to_vm_templates(challenge_template):
-    """
-    Import the disk images to VM templates.
-    """
-    print(f"[Info] Importing disk images for {len(challenge_template.machine_templates)} machine templates", flush=True)
-
-    images_imported = 0
+    from heist.platform.images.provision import import_normalized
     for machine_template in challenge_template.machine_templates.values():
-        disk_file_path = machine_template.disk_file_path
-        print(f"[Info] Validating disk file for machine template {machine_template.id}", flush=True)
-        check_user_input(disk_file_path)
+        import_normalized(machine_template.disk_file_path, machine_template.id, PROXMOX_IMAGE_STORAGE)
 
-        disk_file_extension = os.path.splitext(disk_file_path)[1].lower()
-        print(f"[Debug] Disk file extension: {disk_file_extension}", flush=True)
-
-        if disk_file_extension == ".ova":
-            print(f"[Info] Converting OVA file to machine template {machine_template.id}", flush=True)
-            convert_ova_to_machine_template(disk_file_path, machine_template.id)
-            images_imported += 1
-
-        elif disk_file_extension == ".iso":
-            print(f"[Info] Converting ISO file to machine template {machine_template.id}", flush=True)
-            convert_iso_to_machine_template(disk_file_path, machine_template.id)
-            images_imported += 1
-
-    print(f"[Info] Successfully imported {images_imported} disk images for challenge", flush=True)
-
-
-def convert_ova_to_machine_template(disk_file_path, machine_template_id):
-    """
-    Convert an OVA disk image file to a machine template.
-    """
-    print(f"[Info] Starting OVA to machine template conversion for VM {machine_template_id}", flush=True)
-    print(f"[Debug] OVA file path: {disk_file_path}", flush=True)
-
-    tmp_dir_name = f"proxmox_import_{sha256(str(time.time()).encode() + b' ' + str(random.randint(0, 2**20)).encode()).hexdigest()}"
-
-    tmp_dir = os.path.join("/tmp", tmp_dir_name)
-    print(f"[Debug] Creating temporary extraction directory: {tmp_dir}", flush=True)
-    os.makedirs(tmp_dir, exist_ok=True)
-
-    # Extract the OVA file
-    try:
-        print(f"[Info] Extracting OVA file to {tmp_dir}", flush=True)
-        subprocess.run(["tar", "-xvf", disk_file_path, "-C", tmp_dir], check=True, capture_output=True)
-        print(f"[Info] OVA file extraction completed successfully", flush=True)
-    except Exception as e:
-        print(f"[Error] Failed to extract OVA file: {e}", flush=True)
-        raise RuntimeError(f"Failed to extract OVA file: {e}")
-
-    # Find the OVF file
-    print(f"[Info] Searching for OVF file in extracted archive", flush=True)
-    ovf_file_count = 0
-    ovf_file = None
-    for file in os.listdir(tmp_dir):
-        if file.endswith(".ovf"):
-            ovf_file = os.path.join(tmp_dir, file)
-            ovf_file_count += 1
-            print(f"[Debug] Found OVF file: {file}", flush=True)
-
-    if not ovf_file:
-        print(f"[Error] No OVF file found in OVA archive", flush=True)
-        raise ValueError("No OVF file found in the OVA archive.")
-
-    if ovf_file_count > 1:
-        print(f"[Error] Multiple OVF files found: {ovf_file_count}", flush=True)
-        raise ValueError("Multiple OVF files found in the OVA archive. Please provide a single OVF file.")
-
-    # Convert the OVF file to a Proxmox template
-    try:
-        print(f"[Info] Importing OVF to Proxmox as machine template {machine_template_id}", flush=True)
-        subprocess.run(["qm", "importovf", str(machine_template_id), ovf_file,
-                        PROXMOX_IMAGE_STORAGE], check=True, capture_output=True)
-        print(f"[Info] OVF import completed successfully for machine template {machine_template_id}", flush=True)
-    except Exception as e1:
-        print(f"[Error] Failed to import OVF file: {e1}", flush=True)
-        print(f"[Info] Cleaning up failed import - unlocking and destroying VM {machine_template_id}", flush=True)
-        try:
-            subprocess.run(["qm", "unlock", str(machine_template_id)], check=True, capture_output=True)
-            subprocess.run(["qm", "destroy", str(machine_template_id)], check=True, capture_output=True)
-            print(f"[Info] Cleanup completed for VM {machine_template_id}", flush=True)
-        except Exception:
-            pass
-
-        raise RuntimeError(f"Failed to import OVA file: {e1}")
-
-    # Clean up the temporary directory
-    try:
-        print(f"[Info] Removing temporary extraction directory: {tmp_dir}", flush=True)
-        subprocess.run(["rm", "-rf", tmp_dir], check=True, capture_output=True)
-        print(f"[Info] Temporary directory cleanup completed", flush=True)
-    except Exception as e:
-        print(f"[Error] Failed to clean up temporary directory: {e}", flush=True)
-        raise RuntimeError(f"Failed to clean up temporary directory: {e}")
-
-
-def convert_iso_to_machine_template(disk_file_path, machine_template_id):
-    """
-    Convert an ISO disk image file to a machine template.
-    """
-    print(f"[Info] Starting ISO to machine template conversion for VM {machine_template_id}", flush=True)
-    print(f"[Debug] ISO file path: {disk_file_path}", flush=True)
-
-    # Convert the ISO file to a Proxmox template
-    try:
-        if "|" in disk_file_path or ";" in disk_file_path or "&" in disk_file_path:
-            print(f"[Error] Invalid characters in disk file path", flush=True)
-            raise ValueError("Invalid characters in disk file path.")
-
-        print(f"[Info] Importing ISO to Proxmox as machine template {machine_template_id}", flush=True)
-        subprocess.run(["qm", "importdisk", str(machine_template_id), disk_file_path,
-                        PROXMOX_IMAGE_STORAGE], check=True, capture_output=True)
-        print(f"[Info] ISO import completed successfully for machine template {machine_template_id}", flush=True)
-    except Exception as e1:
-        print(f"[Error] Failed to import ISO file: {e1}", flush=True)
-        print(f"[Info] Cleaning up failed import - unlocking and destroying VM {machine_template_id}", flush=True)
-        try:
-            subprocess.run(["qm", "unlock", str(machine_template_id)], check=True, capture_output=True)
-            subprocess.run(["qm", "destroy", str(machine_template_id)], check=True, capture_output=True)
-            print(f"[Info] Cleanup completed for VM {machine_template_id}", flush=True)
-        except Exception as e2:
-            pass
-
-        raise RuntimeError(f"Failed to import ISO file: {e1}")
 
 def _collect_agent_files(config_dir):
     """
@@ -607,38 +477,3 @@ def mark_challenge_template_as_ready(challenge_template, db_conn):
         db_conn.commit()
 
     print(f"[Info] Challenge template {challenge_template.id} successfully marked as ready", flush=True)
-
-
-def undo_import_machine_templates(challenge_template):
-    """
-    Undo the import of machine templates.
-    """
-    print(f"[Error] Undoing machine template import for challenge {challenge_template.id}", flush=True)
-    vms_deleted = 0
-
-    for machine_template in challenge_template.machine_templates.values():
-        try:
-            print(f"[Info] Attempting to delete VM {machine_template.id}", flush=True)
-            delete_vm_api_call(machine_template)
-            vms_deleted += 1
-            print(f"[Info] Successfully deleted VM {machine_template.id}", flush=True)
-        except Exception as e:
-            print(f"[Warning] Failed to delete VM {machine_template.id} via API: {e}", flush=True)
-            try:
-                print(f"[Debug] Attempting to unlock VM {machine_template.id}", flush=True)
-                subprocess.run(["qm", "unlock", str(machine_template.id)], check=True, capture_output=True)
-            except Exception:
-                pass
-            try:
-                subprocess.run(["qm", "stop", str(machine_template.id)], check=True, capture_output=True)
-            except Exception:
-                pass
-            try:
-                print(f"[Debug] Attempting to destroy VM {machine_template.id}", flush=True)
-                subprocess.run(["qm", "destroy", str(machine_template.id), "--skiplock"], check=True, capture_output=True)
-                vms_deleted += 1
-                print(f"[Info] Successfully destroyed VM {machine_template.id}", flush=True)
-            except Exception as e3:
-                print(f"[Warning] Failed to destroy VM {machine_template.id}: {e3}", flush=True)
-
-    print(f"[Info] Cleanup completed - {vms_deleted} VMs deleted during undo process", flush=True)

@@ -133,7 +133,7 @@ def fetch_networks(challenge, db_conn):
 def delete_wazuh_agent(machine_id):
     from heist.infrastructure.monitoring.wazuh import Wazuh
     client = Wazuh(MONITORING_HOST, WAZUH_PORT, WAZUH_USER, WAZUH_PASSWORD,
-                   certificate=os.getenv('WAZUH_CA_CERTIFICATE_FILE') or True)
+                   certificate=os.getenv('WAZUH_CA_CERTIFICATE_FILE') or True, pinned_certificate=os.getenv('WAZUH_PINNED_CERTIFICATE_FILE'))
     try:
         return client.remove_agent(machine_id)
     finally:

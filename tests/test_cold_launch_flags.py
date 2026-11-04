@@ -16,7 +16,7 @@ class ColdLaunchFlagTests(unittest.TestCase):
         namespace = {name: noop for name in (
             'launch_timing_logger', 'require_available_template', 'acquire_exclusive_launch_lock', 'release_exclusive_launch_lock',
             'fetch_machines', 'fetch_networks_and_connections', 'start_dnsmasq_instances',
-            'force_dhcp_renew_on_windows_machines', 'add_iptables_rules', 'reset_expiration_timer')}
+            'force_dhcp_renew_on_windows_machines', 'add_iptables_rules', 'finalize_launch')}
         namespace['renew_linux_entrypoints'] = Mock()
         flags = [{'id': 1, 'order_index': 1, 'user_specific': True, 'machine_template_id': 123,
                   'flag': 'synthetic-test-secret'}]

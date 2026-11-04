@@ -76,3 +76,18 @@ class ValidationTests(unittest.TestCase):
                        lambda: website('javascript:alert(1)'), lambda: website('https://user:password@example.invalid'), lambda: choice(True, ['true'], 'category')):
             with self.assertRaises(ApiError):
                 action()
+
+class TLSIdentityTests(unittest.TestCase):
+    def test_explicit_certificate_name_does_not_change_private_target_or_disable_verification(self):
+        from heist.api.public.internal_client import TLSIdentityAdapter
+        adapter=TLSIdentityAdapter('heist-pilot')
+        self.assertEqual(adapter.poolmanager.connection_pool_kw['assert_hostname'],'heist-pilot')
+        self.assertEqual(adapter.poolmanager.connection_pool_kw['server_hostname'],'heist-pilot')
+        session=Mock()
+        client=InternalClient('https://10.0.0.1:8000','token',certificate='/etc/heist/backend-ca.crt',server_name='heist-pilot',session=session)
+        self.assertEqual(client.origin,'https://10.0.0.1:8000')
+        self.assertEqual(client.certificate,'/etc/heist/backend-ca.crt')
+        self.assertEqual(session.mount.call_args.args[0],'https://10.0.0.1:8000/')
+        for value in ('heist-pilot\n','https://elsewhere.invalid','user@host','../host','',False):
+            with self.assertRaises(ValueError):
+                InternalClient('https://10.0.0.1','token',server_name=value)

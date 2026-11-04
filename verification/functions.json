@@ -1106,5 +1106,49 @@
       "tests.test_runtime_bundle.RuntimeBundleTests.test_activation_rejects_modified_installation_and_never_switches_current"
     ],
     "rationale": "Checks installed source mutation detection and atomic current-link activation in a private temporary root; native CPython installation/service startup are not implied."
+  },
+  "heist/rollout/host_configuration.py::inspect_checkpoint": {
+    "tests": [
+      "tests.test_host_configuration.HostConfigurationTests.test_restore_replaces_changed_private_configuration_with_checkpoint_bytes",
+      "tests.test_host_configuration.HostConfigurationTests.test_incomplete_duplicate_unexpected_and_corrupt_archives_are_refused"
+    ],
+    "rationale": "Validates exact allowed file set, complete bytes and archive digest before recovery; rejects corruption, missing, duplicate and escaped entries."
+  },
+  "heist/rollout/host_configuration.py::restore_files": {
+    "tests": [
+      "tests.test_host_configuration.HostConfigurationTests.test_restore_replaces_changed_private_configuration_with_checkpoint_bytes",
+      "tests.test_host_configuration.HostConfigurationTests.test_all_destinations_are_checked_before_any_file_is_replaced"
+    ],
+    "rationale": "Checks atomic private-byte restoration and prevalidates all destinations, rejecting symlinks and writes into Proxmox-managed state before any replacement."
+  },
+  "heist/rollout/identifiers.py::capture": {
+    "tests": [
+      "tests.test_web_database.WebDatabaseTests.test_snapshot_recovery_preserves_allocation_history_and_invalidates_restored_sessions"
+    ],
+    "rationale": "Real PostgreSQL models sequence rewind, retains the larger host history, advances repeated recovery, invalidates restored sessions and preserves account credentials. Full native VM rollback remains a separate gate."
+  },
+  "heist/rollout/identifiers.py::preserve": {
+    "tests": [
+      "tests.test_web_database.WebDatabaseTests.test_snapshot_recovery_preserves_allocation_history_and_invalidates_restored_sessions"
+    ],
+    "rationale": "Real PostgreSQL models sequence rewind, retains the larger host history, advances repeated recovery, invalidates restored sessions and preserves account credentials. Full native VM rollback remains a separate gate."
+  },
+  "heist/rollout/identifiers.py::reconcile": {
+    "tests": [
+      "tests.test_web_database.WebDatabaseTests.test_snapshot_recovery_preserves_allocation_history_and_invalidates_restored_sessions"
+    ],
+    "rationale": "Real PostgreSQL models sequence rewind, retains the larger host history, advances repeated recovery, invalidates restored sessions and preserves account credentials. Full native VM rollback remains a separate gate."
+  },
+  "heist/infrastructure/proxmox/client.py::detach_network_device_api_call": {
+    "tests": [
+      "tests.test_proxmox_resource_removal.ResourceRemovalTests.test_detach_confirms_absence_before_address_lease_can_be_released"
+    ],
+    "rationale": "Confirms GET/PUT/GET detachment ordering, idempotent initial absence, and refusal to release on persistent or unknown NIC state."
+  },
+  "heist/rollout/guest_firewall.py::sync_public_marker": {
+    "tests": [
+      "tests.test_rollout_web.WebMaintenanceTests.test_runtime_marker_is_visible_without_access_to_private_state"
+    ],
+    "rationale": "Checks runtime marker content/mode, removal, and symlink refusal preserving its target. Actual boot firewall behavior is a separate native gate."
   }
 }

@@ -9,10 +9,11 @@ The implemented contracts include authentication/session bootstrap, learning
 views, private/public profiles, avatar storage, password change, VPN download,
 account removal, challenge reads/start/stop/flag submission/time extension,
 administrator diagnostics, announcement administration and exercise authoring/
-management. Artifact staging is implemented; disk validation/import, expiry reconciliation
-and installation/rollout integration remain migration work. The React transport still uses the PHP reference until
-all contracts and the new appliance runtime have passed acceptance. This is
-not a release approval or an instruction to deploy the partial migration.
+management, resumable artifact upload, disk validation and image publication.
+React calls these Flask REST endpoints. A Python timer implements expiry and a
+separate unprivileged worker handles sealed image transfers. Installation/rollout
+integration and whole-appliance acceptance remain release gates; these contracts
+alone do not authorize deploying the migration.
 
 ## Sessions and database boundaries
 
@@ -61,9 +62,10 @@ infrastructure result keeps the definition retired for reconciliation.
 
 Shared launch/warmup guards conflict with exclusive internal import/delete
 requests. Provisioning rechecks availability at the privileged boundary so a
-previously queued warmup cannot start a retired definition. These process locks
-cover concurrent running requests; durable recovery of abandoned Proxmox tasks
-after a worker/host crash remains part of the pending job/reconciliation work.
+previously queued warmup cannot start a retired definition. The durable operation journal records intent before effects and blocks new
+mutations after uncertain worker/task outcomes. Recovery requires independent
+native-task/resource checks and an explicit local resolution; it does not replay
+VM provisioning automatically.
 
 Legacy SHA512 password hashes remain readable and are upgraded to salted
 scrypt after a valid login. A forced-reset account must complete its reset
@@ -83,7 +85,11 @@ owned pidfd rather than signalling a potentially recycled numeric PID.
 
 Wazuh requests now verify TLS. Existing installations need a certificate with a
 matching hostname/IP SAN and either system trust or an absolute
-`WAZUH_CA_CERTIFICATE_FILE` path. Missing credentials, failed TLS or an ambiguous
+`WAZUH_CA_CERTIFICATE_FILE` path. For an existing self-signed service without
+SANs, `WAZUH_PINNED_CERTIFICATE_FILE` can trust its exact leaf copied through a
+verified administration channel. This pins identity while retaining certificate
+chain and expiry verification; it does not trust a certificate fetched from an
+unauthenticated API connection. Missing credentials, failed TLS or an ambiguous
 agent-deletion response prevent resource release. The pending deployment adapter
 must configure and verify this trust before enabling the new runtime.
 
@@ -192,14 +198,13 @@ file leases, durable chunk receipts and atomic assembly support retries and
 process restarts without accepting a different payload for an existing index.
 There are at most two pending transfers per owner, each at most 16 GiB, with a
 24-hour receiving window and staging-space checks. Expired transfers currently
-require explicit cancellation; automatic expiry cleanup is pending worker work.
+require explicit cancellation; stale receiving transfers expire after 24 hours; the worker reclaims completed staging data.
 Quota admission is per owner, not a reservation of shared storage across owners.
 
 Sealing returns HTTP 202 and state `SEALED`, with an explicit quarantine message.
 It does not insert a `disk_files` record, make the artifact selectable or contact
 Proxmox. Once a transfer is sealed, cancellation is refused because later job
-outcomes must be reconciled. The React transport still uses the old complete
-upload contract until validation, durable jobs and privileged transfer are ready.
+outcomes must be reconciled. React sends binary chunks with a session CSRF header; a stable transfer identity survives browser/worker retries.
 
 `heist/artifacts/ova.py` inspects uncompressed USTAR/GNU regular-file envelopes
 without extraction. It rejects extended/sparse headers, links, unsafe or duplicate
@@ -209,8 +214,14 @@ The default disk payload and declared virtual-size limits preserve the existing
 16-GiB policy. Optional manifests are bounded archive members, not authenticated
 signatures, and their checksums are not yet verified. Envelope inspection does
 not parse VMDK content: sandboxed disk validation must independently check format,
-virtual size, backing/external extents and conversion before publication. It is
-not yet connected to sealing or used as import authorization.
+virtual size, backing/external extents and conversion before publication. It is connected to the sealed-upload worker and privileged intake. The host
+then parses VMDKs inside a separate mount/network/PID namespace without host
+secrets or network access, drops privileges, enforces resource limits and converts
+to standalone QCOW2. The host verifies output headers, capacity and hashes before
+publication. Native Proxmox import uses those normalized disks and a BIOS/SATA
+hardware profile; explicitly EFI/Secure Boot or multi-machine OVAs are rejected.
+An available disk is not evidence that an exercise boots and solves correctly;
+that requires the challenge acceptance rehearsal.
 
 ## Interrupted operations and expiry
 
@@ -243,3 +254,15 @@ Failures preserve assignments and fail the service visibly. The platform timer
 replaces the PHP worker only when the deployment adapter installs it and removes
 the old cron entry. Pool restart no longer converts unknown provisioning to
 teardown; unresolved provisioning requires explicit reconciliation.
+
+
+## Allocation history across rollback
+
+New rollout checkpoints preserve all public sequence high-water marks in private
+host state outside VM snapshots. Recovery advances restored sequences and disables
+legacy resource reclaim triggers before writers resume. It also deletes restored
+Flask sessions, preventing revoked sessions from returning after a database rewind.
+This repairs allocation policy without rewriting student or grade rows. The host
+history must be backed up and retained with the independent recovery material.
+Legacy PHP sessions and registered template/image state still need complete
+checkpoint integration before the full rollout is approved.

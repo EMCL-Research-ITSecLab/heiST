@@ -6,7 +6,7 @@ import { Link } from '../../lib/router.tsx';
 import { useAction, useResource } from '../../lib/state.tsx';
 export function Challenge() {
   const id = number(new URLSearchParams(window.location.search).get('id'));
-  const resource = useResource(`/backend/challenge.php?id=${id}`, 15000), challenge = row(resource.data.challenge), status = row(challenge.challenge_status), action = useAction();
+  const resource = useResource(`/api/challenge?id=${id}`, 15000), challenge = row(resource.data.challenge), status = row(challenge.challenge_status), action = useAction();
   const [flag, setFlag] = useState(''), [confirm, setConfirm] = useState(false), [tick, setTick] = useState(0);
   const running = text(status.challenge_status) === 'running';
   useEffect(() => { const timer = window.setInterval(() => setTick(v => v + 1), 1000); return () => clearInterval(timer); }, []);

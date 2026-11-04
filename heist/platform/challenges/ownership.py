@@ -49,3 +49,35 @@ def assign_instance(connection, challenge_id, user_id):
         """, (user_id, challenge_id, user_id, challenge_id, user_id))
         if cursor.fetchone() is None:
             raise RuntimeError('Instance ownership could not be assigned exclusively')
+
+
+def finalize_launch(connection, challenge_id, user_id):
+    """Commit the deadline, attempt and monitoring traces exactly once per instance.
+
+    VM/network setup has finished. Row locks serialize expiry/stop, while the
+    activation key makes a response-loss retry unable to create another attempt
+    or reset the deadline. This is a database guarantee, not external-task replay.
+    """
+    with connection:
+        with connection.cursor() as cursor:
+            cursor.execute('''SELECT c.challenge_template_id, u.username, u.email
+                              FROM public.users u JOIN public.challenges c ON c.id=u.running_challenge
+                              WHERE u.id=%s AND c.id=%s AND c.lifecycle_state='ACTIVE'
+                              FOR UPDATE OF u,c''', (user_id, challenge_id))
+            row = cursor.fetchone()
+            if row is None:
+                raise RuntimeError('Launch assignment changed before activation')
+            template, username, email = row
+            cursor.execute('SELECT user_id FROM public.instance_activations WHERE challenge_id=%s', (challenge_id,))
+            previous = cursor.fetchone()
+            if previous:
+                if previous[0] != user_id:
+                    raise RuntimeError('Activation belongs to another user')
+                return
+            cursor.execute('''INSERT INTO public.completed_challenges(user_id,challenge_template_id,started_at)
+                              VALUES (%s,%s,CURRENT_TIMESTAMP) RETURNING id''', (user_id, template))
+            attempt = cursor.fetchone()[0]
+            cursor.execute('''INSERT INTO public.user_network_trace(username,email,subnet)
+                              SELECT %s,%s,subnet FROM public.networks WHERE challenge_id=%s''', (username, email, challenge_id))
+            cursor.execute("UPDATE public.challenges SET expires_at=CURRENT_TIMESTAMP+INTERVAL '1 hour' WHERE id=%s", (challenge_id,))
+            cursor.execute('INSERT INTO public.instance_activations(challenge_id,user_id,attempt_id) VALUES (%s,%s,%s)', (challenge_id, user_id, attempt))

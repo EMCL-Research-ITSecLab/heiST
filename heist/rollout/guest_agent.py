@@ -21,6 +21,7 @@ PROGRAM = Path('/usr/local/lib/heist/maintenance_firewall.py')
 UNIT = Path('/etc/systemd/system/heist-web-maintenance.service')
 CRON_GUARD = Path('/etc/systemd/system/cron.service.d/heist-maintenance.conf')
 APACHE_GUARD = Path('/etc/systemd/system/apache2.service.d/heist-maintenance.conf')
+PREVIOUS_FIREWALL_SHA256 = '823bf1bb0458c42f1ad7999a9ce370f4c4e22926ab2e367da80b22437146b23a'
 
 
 def atomic_write(path, text, mode=0o644):
@@ -60,12 +61,12 @@ def install_guard(config):
     STATE.mkdir(mode=0o700, exist_ok=True)
     atomic_write(STATE / 'maintenance', 'maintenance\n', mode=0o600)
     PROGRAM.parent.mkdir(parents=True, exist_ok=True)
-    if PROGRAM.exists() and PROGRAM.read_text() != config['program']:
+    if PROGRAM.exists() and PROGRAM.read_text() != config['program'] and hashlib.sha256(PROGRAM.read_bytes()).hexdigest()!=PREVIOUS_FIREWALL_SHA256:
         raise RuntimeError('An unknown maintenance guard already exists')
     atomic_write(PROGRAM, config['program'], mode=0o755)
     atomic_write(UNIT,
         '[Unit]\nDescription=heiST public web maintenance gate\n'
-        'Before=apache2.service cron.service\n\n'
+        'Before=apache2.service cron.service heist-web.service heist-artifacts.service\n\n'
         '[Service]\nType=oneshot\nExecStart=/usr/bin/python3 ' + str(PROGRAM) + '\n'
         'RemainAfterExit=yes\n\n[Install]\nWantedBy=multi-user.target\n'
     )

@@ -6,7 +6,7 @@ export function Feed({ kind }: {
   kind: 'announcements' | 'activity' | 'badges';
 }) {
   const [page, setPage] = useState(1), [range, setRange] = useState('all'), [filter, setFilter] = useState('all');
-  const resource = useResource(`/backend/${kind}.php?` + new URLSearchParams({ page: String(page), range, importance: filter, type: filter, category: 'all' }));
+  const resource = useResource(`/api/${kind}?` + new URLSearchParams({ page: String(page), range, importance: filter, type: filter, category: 'all' }));
   const data = payload(resource.data), badges = rows(data.badges), stats = row(data.stats), items = rows(data.announcements ?? data.activities);
   return <>
     <PageTitle eyebrow={kind === 'badges' ? 'YOUR ACHIEVEMENTS' : 'STAY IN THE LOOP'} title={kind === 'badges' ? 'Milestones worth remembering.' : kind === 'activity' ? 'Your investigation journal.' : 'From the heiST team.'} description={kind === 'badges' ? 'Every achievement is a reminder of what you’ve learned.' : kind === 'activity' ? 'Challenges, discoveries and progress in one place.' : 'Platform news, upcoming events and maintenance notices.'} />

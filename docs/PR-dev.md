@@ -50,8 +50,9 @@ and native journal forwarding have dedicated deployment templates.
 - A native Proxmox rehearsal creates a separate diskless, NIC-less temporary VM
   and verifies actual start/stop/template/delete tasks and confirmed absence.
   Database tests cover teardown eligibility, orphan network discovery and atomic
-  metadata/subnet rollback. Monitoring adapter tests cover verified TLS and
-  ambiguous deletion failures; a live Wazuh TLS gate remains pending.
+  metadata/subnet rollback. The live monitoring rehearsal also verifies pinned TLS and selective,
+  idempotent agent removal. Sandboxed VMDK conversion and normalized disk import
+  have passed on the isolated Proxmox appliance.
 - React checks include strict TypeScript, transport tests, production build and
   browser fixtures. PHP tests remain a contract reference during migration.
 - The verification catalogue and reviewed assertion mappings distinguish
@@ -60,16 +61,29 @@ and native journal forwarding have dedicated deployment templates.
 
 ## Remaining merge/release gates
 
-This branch is still a draft. The React transport currently uses the PHP
-reference API. Chunk intake now stages and seals owner-isolated transfers in quarantine.
-Disk validation/import and worker contracts must finish moving to Flask before deleting `webserver/` and Composer/PHP paths. Authoring contracts
-are tested with real PostgreSQL; actual machine import remains an appliance gate.
-The new Gunicorn runtime needs source-bound offline artifacts, fresh installation,
-Apache configuration, media migration, release protocol/migration binding and a
-whole-appliance rollback rehearsal. Existing VPN installations need a checked
-maintenance migration for CRL/management/renewal configuration. Existing Wazuh certificates require checked trust/SAN migration. Startup cleanup
-must complete before launch admission. Native archive
-units and renewal units require their own real systemd failure/catch-up tests.
+This branch is still a draft. The React UI now calls the Flask REST API,
+including resumable binary image uploads. The image worker transfers sealed
+uploads to the privileged host under stable identities; publication requires
+bounded envelope inspection and sandboxed disk conversion. Uncertain operations
+retain their receipts and require reconciliation. Retirement checks references
+and retains a recovery copy of the source image.
+
+The new runtime has passed offline installation and unprivileged Gunicorn checks
+on the isolated web VM. Its checked deployment adapter, Apache replacement,
+restricted-role provisioning, private media migration and fresh installer remain
+release gates. The legacy rollout protocol rejects standalone UI bundles before
+maintenance. Keep PHP as a migration reference until the replacement installer
+and full-appliance acceptance pass; the deployed replacement must contain no PHP.
+
+Recovery now validates and restores declared host configuration files. Future
+checkpoints preserve sequence high-water marks outside VM snapshots, advance
+restored allocators and invalidate restored Flask sessions. Full recovery still
+needs template VM/image checkpoints and legacy PHP-session invalidation, followed
+by a native upgrade/failure/rollback rehearsal. Existing VPN installations need
+a checked CRL/management/renewal migration; existing monitoring installations need
+checked certificate trust configuration. Native archive and renewal units require
+real systemd failure/catch-up tests. Every remaining function mapping must be
+reviewed against passing behavior assertions, not just execution counts.
 
 Do not describe these pending gates as production-ready. The implementation and
 acceptance details are in `docs/WEB-API.md`, `docs/ARCHITECTURE-MIGRATION.md` and

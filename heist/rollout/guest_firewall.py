@@ -1,9 +1,11 @@
 """Persistent web maintenance gate. Only this program's own chains are managed."""
 from pathlib import Path
 import subprocess
+import os
 
 CHAIN = 'HEIST_WEB_MAINT'
 MARKER = Path('/var/lib/heist/maintenance')
+PUBLIC_MARKER = Path('/run/heist-web-maintenance')
 
 
 def configure(enabled, run=subprocess.run):
@@ -35,5 +37,23 @@ def configure(enabled, run=subprocess.run):
             input='\n'.join(rules) + '\n', text=True, check=True)
 
 
+def sync_public_marker(enabled,path=PUBLIC_MARKER):
+    path=Path(path)
+    if path.is_symlink():
+        raise ValueError('Maintenance marker must not be a symlink')
+    if enabled:
+        descriptor=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_TRUNC|os.O_NOFOLLOW,0o600)
+        with os.fdopen(descriptor,'w') as stream:
+            stream.write('maintenance\n')
+            stream.flush();os.fsync(stream.fileno())
+    else:
+        path.unlink(missing_ok=True)
+
+
 if __name__ == '__main__':
-    configure(MARKER.exists())
+    enabled=MARKER.exists()
+    if enabled:
+        sync_public_marker(True)
+    configure(enabled)
+    if not enabled:
+        sync_public_marker(False)

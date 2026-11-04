@@ -110,3 +110,11 @@ class UploadStoreTests(unittest.TestCase):
             with self.assertRaises(BlockingIOError):
                 self.store.seal(1, identifier)
         self.assertEqual(self.store.put(1, identifier, 0, io.BytesIO(b'abcd'))['received'], [0])
+
+    def test_stable_host_identity_rejects_different_transfer_metadata(self):
+        identity='f'*32
+        value=self.store.create(1,'stable.ova',4,'linux',identifier=identity)
+        self.assertEqual(self.store.create(1,'stable.ova',4,'linux',identifier=identity),value)
+        with self.assertRaises(UploadError):
+            self.store.create(1,'different.ova',4,'linux',identifier=identity)
+        self.assertEqual(self.store.status(1,identity)['name'],'stable.ova')

@@ -76,6 +76,12 @@ def fetch_running_challenges(challenge_template, db_conn):
     return challenges
 
 
+def release_import_lease(identifier):
+    from heist.infrastructure.network.cloud_init_pool import ip_pool
+    if (ip_pool.state_directory()/'leases.sqlite3').exists():
+        ip_pool.release_ip(identifier)
+
+
 def delete_machine_template_vms(challenge_template):
     """
     Delete the machine template VMs for a challenge.
@@ -89,3 +95,4 @@ def delete_machine_template_vms(challenge_template):
         if not vm_is_stopped_api_call(machine_template):
             raise RuntimeError('Imported template did not shut down cleanly')
         delete_vm_api_call(machine_template)
+        release_import_lease(machine_template.id)

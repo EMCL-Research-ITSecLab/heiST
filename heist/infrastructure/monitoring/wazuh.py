@@ -5,10 +5,11 @@ from pathlib import Path
 import re
 
 import requests
+from heist.infrastructure.tls import PinnedCertificateAdapter
 
 
 class Wazuh:
-    def __init__(self, host, port, username, password, *, certificate=True, session=None):
+    def __init__(self, host, port, username, password, *, certificate=True, pinned_certificate=None, session=None):
         if not isinstance(host, str) or not host:
             raise ValueError('Configure the monitoring API host')
         try:
@@ -25,9 +26,11 @@ class Wazuh:
             raise ValueError('Monitoring API TLS requires verification or an absolute CA file')
         self.origin = 'https://'+host+':'+str(int(port))
         self.credentials = (username, password)
-        self.certificate = certificate
+        self.certificate = pinned_certificate if pinned_certificate and certificate is True else certificate
         self.session = session or requests.Session()
         self.session.trust_env = False
+        if pinned_certificate is not None:
+            self.session.mount(self.origin+'/',PinnedCertificateAdapter(pinned_certificate))
 
     def call(self, method, path, *, raw=False, **options):
         try:

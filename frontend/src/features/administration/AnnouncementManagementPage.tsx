@@ -5,8 +5,8 @@ import { date, number, payload, rows, text, type Row } from '../../lib/data.ts';
 import { useAction, useResource } from '../../lib/state.tsx';
 export function ManageAnnouncements() {
   const [page, setPage] = useState(1), [editing, setEditing] = useState<Row | null>(null), [deleting, setDeleting] = useState<Row | null>(null);
-  const resource = useResource(`/backend/manage-announcements.php?action=list&page=${page}`), data = payload(resource.data), action = useAction();
-  async function save(event: FormEvent<HTMLFormElement>) { event.preventDefault(); const body = Object.fromEntries(new FormData(event.currentTarget)); await action.run(() => request('/backend/manage-announcements.php?action=' + (editing?.id ? 'update' : 'create'), { method: 'POST', body: { ...body, ...(editing?.id ? { id: editing.id } : {}) } }), () => { setEditing(null); resource.reload(); }); }
+  const resource = useResource(`/api/admin/announcements?page=${page}`), data = payload(resource.data), action = useAction();
+  async function save(event: FormEvent<HTMLFormElement>) { event.preventDefault(); const body = Object.fromEntries(new FormData(event.currentTarget)); await action.run(() => request('/api/admin/announcements'+(editing?.id ? '/'+text(editing.id) : ''), { method: editing?.id ? 'PUT' : 'POST', body }), () => { setEditing(null); resource.reload(); }); }
   return <>
     <PageTitle
       eyebrow="ADMINISTRATION / COMMUNICATION"
@@ -77,7 +77,7 @@ export function ManageAnnouncements() {
       confirm="Delete announcement"
       busy={action.busy}
       onClose={() => setDeleting(null)}
-      onConfirm={() => void action.run(() => request('/backend/manage-announcements.php?action=delete', { method: 'POST', body: { id: deleting.id } }), () => { setDeleting(null); resource.reload(); })}>
+      onConfirm={() => void action.run(() => request('/api/admin/announcements/'+text(deleting.id), { method: 'DELETE' }), () => { setDeleting(null); resource.reload(); })}>
       <p>
         {text(deleting.title)}
       </p>

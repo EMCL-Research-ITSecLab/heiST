@@ -13,7 +13,7 @@ must never directly execute privileged host code.
 |---|---|
 | `heist/api/public/` | Browser API contracts, route authorization and response encoding |
 | `heist/api/internal.py` | Authenticated internal platform API; no browser sessions |
-| `heist/artifacts/` | Private resumable staging and bounded OVA envelope inspection; no privileged import |
+| `heist/artifacts/` | Resumable staging, bounded OVA inspection and isolated disk normalization; role-specific workers |
 | `heist/security/` | Password compatibility/upgrades, sessions, CSRF, authorization and rate limits |
 | `heist/platform/` | Challenge, image, pool and user/VPN application services |
 | `heist/infrastructure/` | Proxmox, guest, network and database adapters |
@@ -40,7 +40,8 @@ must never directly execute privileged host code.
 - Build a source-bound public API/runtime artifact with the existing Flask stack.
   Gunicorn is approved and pinned in `deploy/web/requirements.txt`. The
   loopback-only runner and unprivileged service template are available; the
-  offline runtime bundle and rollout adapter still require verification.
+  offline runtime has passed installation/WSGI checks on the isolated web VM;
+  the complete rollout adapter remains a release gate.
 - Replace Apache PHP handling with static React serving and a loopback proxy to
   the unprivileged Python service. Preserve certificate verification and limit
   forwarded-header trust to that local reverse proxy.

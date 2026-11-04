@@ -86,3 +86,14 @@ class OperationJournalTests(unittest.TestCase):
             with self.subTest(scope=scope, resource=resource), self.assertRaises(ValueError):
                 self.journal.execute(scope, resource, 'launch', {}, effect, request_id=identifier)
         effect.assert_not_called()
+
+    def test_checked_rejection_is_durable_but_allows_a_new_operation_identity(self):
+        from heist.platform.jobs.journal import RejectedOperation
+        effect=Mock(side_effect=RejectedOperation('Image is still required by an exercise'))
+        with self.assertRaises(RejectedOperation):
+            self.execute(effect)
+        self.assertEqual(self.journal.inspect('user',1)['state'],'REJECTED')
+        with self.assertRaises(RejectedOperation):
+            self.execute(effect)
+        effect.assert_called_once()
+        self.assertTrue(self.journal.execute('user',1,'launch',{'id':2},lambda:True))

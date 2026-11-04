@@ -104,7 +104,9 @@ def build_plan(repository, target, manifest_path, config_sha256, ui_bundle=None)
             raise ValueError('This release requires a source-bound --ui-bundle built on a workstation')
         path = Path(ui_bundle).resolve(strict=True)
         data = path.read_bytes()
-        inspect_bundle(data, target)
+        ui_metadata,_=inspect_bundle(data, target)
+        if ui_metadata['schema']!=1:
+            raise ValueError('Standalone Flask frontend requires the new browser-runtime deployment protocol')
         bundle = {'path': str(path), 'sha256': digest(data)}
     elif ui_bundle:
         raise ValueError('This release does not declare a frontend bundle')

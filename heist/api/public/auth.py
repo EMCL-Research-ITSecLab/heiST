@@ -39,9 +39,10 @@ def auth_record(username, password):
 
 
 def user_result():
+    from .media import public_url
     if not g.user:
         return None
-    return {'username': g.user['username'], 'avatar_url': g.user.get('avatar_url', '/assets/avatars/avatar1.png'),
+    return {'username': g.user['username'], 'avatar_url': public_url(g.user.get('avatar_url', '/assets/avatars/avatar1.png')),
             'is_admin': g.user.get('is_admin') is True}
 
 

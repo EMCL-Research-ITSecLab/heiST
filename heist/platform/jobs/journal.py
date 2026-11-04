@@ -18,12 +18,16 @@ class RecoveryRequired(RuntimeError):
     pass
 
 
+class RejectedOperation(RuntimeError):
+    """A checked precondition refused the request before any side effect."""
+
+
 class Journal:
     def __init__(self, directory):
         self.directory = private_directory(directory)
 
     def resource(self, scope, identifier):
-        if scope not in ('user', 'template', 'pool') or type(identifier) is not int or identifier <= 0:
+        if scope not in ('user', 'template', 'pool', 'artifact') or type(identifier) is not int or identifier <= 0:
             raise ValueError('Invalid operation resource')
         return private_directory(self.directory/f'{scope}-{identifier}')
 
@@ -49,6 +53,8 @@ class Journal:
                     raise RecoveryRequired('Operation identifier was already used for different input')
                 if previous['state'] == 'SUCCEEDED':
                     return previous['result']
+                if previous['state']=='REJECTED':
+                    raise RejectedOperation(previous['message'])
                 raise RecoveryRequired('The previous operation requires reconciliation')
             current = directory/'current.json'
             if current.exists():
@@ -70,6 +76,11 @@ class Journal:
                 write_json(receipt, value)
                 write_json(current, value)
                 return result
+            except RejectedOperation as error:
+                value.update(state='REJECTED',message=str(error)[:500])
+                write_json(receipt,value)
+                write_json(current,value)
+                raise
             except BaseException:
                 # If disk I/O prevents recording failure, the original RUNNING
                 # intent still blocks new work after the process lease is lost.

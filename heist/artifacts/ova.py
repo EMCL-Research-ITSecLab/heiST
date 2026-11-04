@@ -133,6 +133,21 @@ def descriptor(content, entries, limits):
         raise InvalidOva('Invalid OVF XML') from None
     if root.tag != '{'+OVF+'}Envelope':
         raise InvalidOva('Invalid OVF namespace or envelope')
+    if len(root.findall('.//{'+OVF+'}VirtualSystem')) > 1:
+        raise InvalidOva('Import one virtual machine per OVA')
+    # The supported importer creates a BIOS/SATA VM. Do not silently publish an
+    # explicitly EFI-only image as compatible with that hardware profile.
+    for item in root.iter():
+        local = item.tag.rsplit('}', 1)[-1].lower()
+        attributes = {name.rsplit('}', 1)[-1].lower(): value.strip().lower()
+                      for name, value in item.attrib.items()}
+        if local == 'config' and attributes.get('key', '').lower() == 'firmware':
+            if attributes.get('value') not in ('bios', 'seabios'):
+                raise InvalidOva('Only BIOS firmware is currently supported')
+        if local == 'firmware' and (attributes.get('type') or (item.text or '').strip().lower()) not in ('bios', 'seabios'):
+            raise InvalidOva('Only BIOS firmware is currently supported')
+        if local == 'config' and attributes.get('key', '').lower() in ('secureboot', 'uefi.secureboot.enabled') and attributes.get('value') not in ('false', '0'):
+            raise InvalidOva('Secure Boot images require an EFI importer')
     attribute = lambda name: '{'+OVF+'}'+name
     references = {}
     for item in root.findall('./{'+OVF+'}References/{'+OVF+'}File'):

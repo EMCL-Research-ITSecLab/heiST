@@ -53,7 +53,7 @@ class UploadStore:
         if shutil.disk_usage(self.root).free < size+self.RESERVE_BYTES:
             raise UploadError('Insufficient staging storage')
 
-    def create(self, owner, name, size, guest_os):
+    def create(self, owner, name, size, guest_os, *, identifier=None):
         if not isinstance(name, str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_. -]{0,190}\.ova', name, re.IGNORECASE) or '..' in name:
             raise UploadError('Choose a simple .ova filename')
         if type(size) is not int or not 0 < size <= self.MAX_BYTES:
@@ -62,16 +62,25 @@ class UploadStore:
             raise UploadError('Invalid guest operating system')
         owner_directory = self.owner_directory(owner)
         with maintenance_lock(owner_directory):
+            if identifier is not None:
+                if not isinstance(identifier,str) or not re.fullmatch('[0-9a-f]{32}',identifier):
+                    raise UploadError('Invalid upload identifier')
+                existing = owner_directory/identifier
+                if existing.exists():
+                    with self.session(owner, identifier) as (_, previous):
+                        if (previous['name'],previous['size'],previous['guest_os']) != (name,size,guest_os):
+                            raise UploadError('Existing upload identity has different input')
+                        return self.summary(previous)
             pending = []
             for child in owner_directory.iterdir():
                 if re.fullmatch('[0-9a-f]{32}', child.name) and child.is_dir() and not child.is_symlink():
                     state = json.loads((child/'metadata.json').read_text())
-                    if state['state'] != 'CANCELLED':
+                    if state['state'] not in ('CANCELLED','READY','FAILED'):
                         pending.append(state)
             if len(pending) >= self.MAX_PENDING:
                 raise UploadError('Finish or cancel an existing upload first')
             self.available(size*2+sum(item['size']*2 for item in pending))
-            identifier = uuid.uuid4().hex
+            identifier = identifier or uuid.uuid4().hex
             directory = private_directory(owner_directory/('.initializing-'+identifier))
             value = {'schema': 1, 'id': identifier, 'owner': owner, 'name': name, 'size': size,
                      'guest_os': guest_os, 'created': self.clock(), 'state': 'RECEIVING',
@@ -88,11 +97,32 @@ class UploadStore:
     def summary(self, value):
         return {key: value[key] for key in ('id', 'name', 'size', 'guest_os', 'state', 'chunk_bytes')} | {
             'received': sorted(int(index) for index in value['chunks']),
-            'expires': value['created']+self.EXPIRY_SECONDS}
+            'expires': value['created']+self.EXPIRY_SECONDS,
+            **{key:value[key] for key in ('message','artifact_id') if key in value}}
 
     def status(self, owner, identifier):
-        with self.session(owner, identifier) as (_, value):
-            return self.summary(value)
+        if not isinstance(identifier,str) or not re.fullmatch('[0-9a-f]{32}',identifier):
+            raise UploadError('Invalid upload identifier')
+        directory=self.owner_directory(owner)/identifier
+        if directory.is_symlink() or not directory.is_dir():
+            raise UploadError('Upload not found')
+        value=json.loads((directory/'metadata.json').read_text())
+        if value['id']!=identifier or value['owner']!=owner:
+            raise UploadError('Upload ownership mismatch')
+        return self.summary(value)
+
+    def list(self, owner):
+        directory = self.owner_directory(owner)
+        values = []
+        for path in directory.iterdir():
+            if not re.fullmatch('[0-9a-f]{32}', path.name) or path.is_symlink() or not path.is_dir():
+                continue
+            metadata = json.loads((path/'metadata.json').read_text())
+            if metadata['owner'] != owner or metadata['id'] != path.name:
+                raise UploadError('Upload ownership mismatch')
+            if metadata['state'] != 'CANCELLED':
+                values.append(self.summary(metadata))
+        return sorted(values, key=lambda value: value['expires'], reverse=True)
 
     def receiving(self, value):
         if value['state'] != 'RECEIVING':
@@ -129,7 +159,7 @@ class UploadStore:
 
     def seal(self, owner, identifier):
         with self.session(owner, identifier) as (directory, value):
-            if value['state'] == 'SEALED':
+            if value['state'] in ('SEALED','PROCESSING','READY'):
                 return self.summary(value)
             self.receiving(value)
             chunk_bytes = value['chunk_bytes']
@@ -165,10 +195,40 @@ class UploadStore:
                 partial.unlink(missing_ok=True)
             return self.summary(value)
 
+    def discard_payload(self, directory):
+        directory=Path(directory)
+        for path in directory.glob('*.chunk'):
+            path.unlink()
+        for name in ('assembling','payload.ova'):
+            (directory/name).unlink(missing_ok=True)
+        fsync_directory(directory)
+
+    def expire(self, owner):
+        # Parent and child leases follow the same order as initialization. Live
+        # chunk/conversion work is skipped; no process is killed to reclaim space.
+        count=0
+        parent=self.owner_directory(owner)
+        with maintenance_lock(parent):
+            for path in parent.iterdir():
+                if not re.fullmatch('[a-f0-9]{32}',path.name) or path.is_symlink() or not path.is_dir():
+                    continue
+                try:
+                    with self.session(owner,path.name) as (directory,value):
+                        if value['state'] in ('READY','FAILED','CANCELLED'):
+                            self.discard_payload(directory)
+                        elif value['state']=='RECEIVING' and self.clock()>=value['created']+self.EXPIRY_SECONDS:
+                            value.update(state='CANCELLED',message='Incomplete transfer expired')
+                            write_json(directory/'metadata.json',value)
+                            self.discard_payload(directory)
+                            count+=1
+                except BlockingIOError:
+                    continue
+        return count
+
     def cancel(self, owner, identifier):
         with self.session(owner, identifier) as (directory, value):
-            if value['state'] not in ('RECEIVING', 'CANCELLED'):
-                raise UploadError('Sealed uploads require job reconciliation, not cancellation')
+            if value['state'] not in ('RECEIVING', 'CANCELLED','FAILED','READY'):
+                raise UploadError('Running or uncertain validation requires reconciliation before closing its receipt')
             value['state'] = 'CANCELLED'
             write_json(directory/'metadata.json', value)
             for path in directory.glob('*.chunk'):
@@ -176,4 +236,14 @@ class UploadStore:
             (directory/'assembling').unlink(missing_ok=True)
             (directory/'payload.ova').unlink(missing_ok=True)
             fsync_directory(directory)
+            return self.summary(value)
+
+    def retry(self,owner,identifier):
+        with self.session(owner,identifier) as (directory,value):
+            if value['state']!='NEEDS_REVIEW':
+                raise UploadError('Only an interrupted transfer awaiting review can be retried')
+            if not (directory/'payload.ova').is_file():
+                raise UploadError('Original staged bytes are unavailable; begin a new transfer')
+            value.update(state='PROCESSING',attempts=0,next_attempt=0,message='Retry queued with the original image identity')
+            write_json(directory/'metadata.json',value)
             return self.summary(value)

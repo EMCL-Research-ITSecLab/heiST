@@ -17,6 +17,8 @@ def basic_profile(user_id, *, public=False):
     value = repository().call('get_public_profile_data' if public else 'get_basic_profile_data', user_id, one=True)
     if value is None:
         raise ApiError('Profile not found', 404)
+    from .media import public_url
+    value['avatar_url']=public_url(value.get('avatar_url'))
     value['join_date'] = value['created_at']
     value['rank'] = repository().scalar('get_user_rank', user_id, value['total_points'])
     return value

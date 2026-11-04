@@ -78,3 +78,17 @@ class WazuhTests(unittest.TestCase):
                 Wazuh('monitor.invalid', 55000, 'user', 'password', certificate=certificate)
         with self.assertRaises(ValueError):
             Wazuh('monitor.invalid', 55000, 'user', None)
+
+    def test_trusted_legacy_leaf_is_pinned_without_disabling_ca_verification(self):
+        import hashlib,ssl,tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as temporary:
+            path=Path(temporary)/'leaf.pem'
+            path.write_text('-----BEGIN CERTIFICATE-----\nYWJj\n-----END CERTIFICATE-----\n')
+            session=Mock()
+            client=Wazuh('monitoring.invalid',55000,'test-user','private-test-password',pinned_certificate=str(path),session=session)
+            self.assertEqual(client.certificate,str(path))
+            adapter=session.mount.call_args.args[1]
+            self.assertEqual(adapter.fingerprint,hashlib.sha256(b'abc').hexdigest())
+            self.assertIs(adapter.poolmanager.connection_pool_kw['assert_hostname'],False)
+            self.assertEqual(adapter.poolmanager.connection_pool_kw['assert_fingerprint'],adapter.fingerprint)

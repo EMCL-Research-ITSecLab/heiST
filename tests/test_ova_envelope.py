@@ -13,6 +13,14 @@ XML = b'''<?xml version="1.0"?><Envelope xmlns="http://schemas.dmtf.org/ovf/enve
 
 
 class OvaEnvelopeTests(unittest.TestCase):
+    def test_explicit_efi_secure_boot_and_multiple_machine_envelopes_are_refused(self):
+        for extra in (b'<Config key="firmware" value="efi"/>', b'<Firmware type="EFI"/>',
+                      b'<Config key="uefi.secureBoot.enabled" value="true"/>',
+                      b'<VirtualSystem/><VirtualSystem/>'):
+            with self.subTest(extra=extra), self.assertRaises(InvalidOva):
+                inspect_envelope(self.archive(XML.replace(b'</Envelope>', extra+b'</Envelope>')))
+        inspect_envelope(self.archive(XML.replace(b'</Envelope>', b'<Config key="firmware" value="bios"/></Envelope>')))
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)

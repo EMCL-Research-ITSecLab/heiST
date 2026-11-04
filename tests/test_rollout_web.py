@@ -8,6 +8,37 @@ from heist.rollout import guest_agent, guest_firewall
 
 
 class WebMaintenanceTests(unittest.TestCase):
+    def test_runtime_marker_is_visible_without_access_to_private_state(self):
+        with tempfile.TemporaryDirectory() as directory:
+            marker = Path(directory)/'public-marker'
+            guest_firewall.sync_public_marker(True, marker)
+            self.assertEqual(marker.read_text(), 'maintenance\n')
+            self.assertEqual(marker.stat().st_mode & 0o777, 0o600)
+            guest_firewall.sync_public_marker(False, marker)
+            self.assertFalse(marker.exists())
+            target = Path(directory)/'private';target.write_text('untouched')
+            marker.symlink_to(target)
+            with self.assertRaises(ValueError):
+                guest_firewall.sync_public_marker(True, marker)
+            self.assertEqual(target.read_text(), 'untouched')
+
+    def test_only_the_known_previous_guard_can_be_upgraded(self):
+        import hashlib
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            previous = '# previous trusted guard'
+            program = root/'program.py';program.write_text(previous)
+            with patch.multiple(guest_agent, STATE=root/'state', PROGRAM=program,
+                                UNIT=root/'guard.service', CRON_GUARD=root/'cron.d/guard.conf',
+                                APACHE_GUARD=root/'apache.d/guard.conf',
+                                PREVIOUS_FIREWALL_SHA256=hashlib.sha256(previous.encode()).hexdigest()), patch.object(guest_agent.subprocess, 'run'):
+                guest_agent.install_guard({'program': '# current trusted guard'})
+                self.assertEqual(program.read_text(), '# current trusted guard')
+                program.write_text('# unexpected local modification')
+                with self.assertRaisesRegex(RuntimeError, 'unknown maintenance guard'):
+                    guest_agent.install_guard({'program': '# current trusted guard'})
+                self.assertEqual(program.read_text(), '# unexpected local modification')
+
     def test_rules_cover_both_families_and_leave_loopback_and_other_ports(self):
         run = Mock(return_value=Mock(returncode=1))
         guest_firewall.configure(True, run)

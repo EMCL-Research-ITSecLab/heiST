@@ -24,7 +24,7 @@ class ResourceTests(unittest.TestCase):
         created = False
         try:
             created = True
-            result = client.make_api_call('POST', endpoint, {'vmid': vm.id, 'name': name, 'memory': 128, 'cores': 1, 'sockets': 1, 'kvm': 0, 'onboot': 0})
+            result = client.make_api_call('POST', endpoint, {'vmid': vm.id, 'name': name, 'description':client.ownership_marker(vm.id), 'tags':client.ownership_tags(vm.id), 'memory': 128, 'cores': 1, 'sockets': 1, 'kvm': 0, 'onboot': 0})
             if isinstance(result.get('data'), str) and result['data'].startswith('UPID:'):
                 wait_for_task(client.make_api_call, client.node, result, timeout=30)
             self.assertTrue(client.vm_exists_api_call(vm))

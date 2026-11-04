@@ -11,11 +11,14 @@ from heist.ui_assets import digest, inspect_bundle, install_bundle, verify_insta
 COMMIT = 'a' * 40
 
 
-def bundle(revision=COMMIT, asset='assets/ui/index-one.js', body=b'console.log("heiST")', extra=None):
+def bundle(revision=COMMIT, asset='assets/ui/index-one.js', body=b'console.log("heiST")', extra=None, standalone=False):
     files = {asset: body}
-    manifest = {'source_commit': revision, 'file': asset, 'css': [], 'assets': {asset: digest(body)}}
+    if standalone:
+        files.update({'index.html': b'<html><body><div id="root"></div></body></html>',
+                      'assets/avatars/default_avatar.png': b'fixture static avatar'})
+    manifest = {'source_commit': revision, 'file': asset, 'css': [], 'assets': {name: digest(data) for name,data in files.items()}}
     files['ui-manifest.json'] = json.dumps(manifest).encode()
-    metadata = {'schema': 1, 'source_commit': revision, 'files': {name: digest(data) for name, data in files.items()}}
+    metadata = {'schema': 2 if standalone else 1, 'source_commit': revision, 'files': {name: digest(data) for name, data in files.items()}}
     files['metadata.json'] = json.dumps(metadata).encode()
     files.update(extra or {})
     stream = io.BytesIO()
@@ -28,6 +31,20 @@ def bundle(revision=COMMIT, asset='assets/ui/index-one.js', body=b'console.log("
 
 
 class UiAssetTests(unittest.TestCase):
+    def test_standalone_bundle_covers_index_and_presets_and_detects_local_index_edits(self):
+        payload = bundle(standalone=True)
+        metadata, files = inspect_bundle(payload, COMMIT)
+        self.assertEqual(metadata['schema'], 2)
+        self.assertIn('index.html', files)
+        self.assertIn('assets/avatars/default_avatar.png', files)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            install_bundle(payload, root, COMMIT)
+            verify_installation(root, COMMIT)
+            (root/'index.html').write_text('local modification')
+            with self.assertRaisesRegex(ValueError, 'changed locally'):
+                install_bundle(payload, root, COMMIT)
+
     def test_exact_source_installs_and_owned_old_assets_are_removed(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

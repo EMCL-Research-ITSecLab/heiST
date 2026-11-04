@@ -30,11 +30,12 @@ def main(argv=None):
     subprocess.run(['npm', 'run', 'build'], cwd=ROOT/'frontend', check=True)
     dist = ROOT/'frontend/dist'
     entry = json.loads((dist/'.vite/manifest.json').read_text())['index.html']
-    files = {str(path.relative_to(dist)): path.read_bytes() for path in (dist/'assets/ui').rglob('*') if path.is_file()}
+    files = {str(path.relative_to(dist)): path.read_bytes() for path in (dist/'assets').rglob('*') if path.is_file()}
+    files['index.html']=(dist/'index.html').read_bytes()
     manifest = {'file': entry['file'], 'css': entry.get('css', []), 'source_commit': revision,
                 'assets': {name: digest(body) for name, body in files.items()}}
     files['ui-manifest.json'] = json.dumps(manifest, sort_keys=True).encode()
-    metadata = {'schema': 1, 'source_commit': revision, 'files': {name: digest(body) for name, body in files.items()}}
+    metadata = {'schema': 2, 'source_commit': revision, 'files': {name: digest(body) for name, body in files.items()}}
     output = io.BytesIO()
     with tarfile.open(fileobj=output, mode='w:gz') as archive:
         for name, body in {'metadata.json': json.dumps(metadata, sort_keys=True).encode(), **files}.items():
@@ -43,7 +44,10 @@ def main(argv=None):
     bundle = output.getvalue()
     inspect_bundle(bundle, revision)
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_bytes(bundle)
+    if not args.development and (subprocess.check_output(['git','-C',str(ROOT),'status','--porcelain']).strip() or subprocess.check_output(['git','-C',str(ROOT),'rev-parse','HEAD'],text=True).strip()!=revision):
+        raise ValueError('Source changed during frontend build')
+    with args.output.open('xb') as stream:
+        stream.write(bundle)
     if args.install_web_root:
         install_bundle(bundle, args.install_web_root, revision)
     print('Verified frontend artifact:', args.output)

@@ -28,7 +28,8 @@ def optional_filter(name, allowed):
 def challenge_card(value, user_id=None):
     result = dict(value)
     result['title'] = value['name']
-    result['image'] = value.get('image_path') or '/assets/images/ctf-default.png'
+    from .media import public_url
+    result['image'] = public_url(value.get('image_path')) or '/assets/images/ctf-default.png'
     if user_id:
         result['solved'] = bool(repository().scalar('get_user_solved_challenge', user_id, value['id']))
     else:

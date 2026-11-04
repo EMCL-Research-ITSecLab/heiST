@@ -7,7 +7,7 @@ import { useAction, useResource, useSession } from '../../lib/state.tsx';
 export function Profile({ username }: {
   username?: string;
 }) {
-  const publicView = Boolean(username), resource = useResource(publicView ? '/backend/profile_view.php?username=' + encodeURIComponent(username!) : '/backend/profile.php');
+  const publicView = Boolean(username), resource = useResource(publicView ? '/api/profiles/' + encodeURIComponent(username!) : '/api/profile');
   const data = payload(resource.data), basic = row(data.basic ?? data.profile), stats = row(data.stats), action = useAction(), session = useSession(), router = useRouter();
   const [deleting, setDeleting] = useState(false), [password, setPassword] = useState('');
   async function save(event: FormEvent<HTMLFormElement>, name: string) {
@@ -162,7 +162,7 @@ export function Profile({ username }: {
       confirm="Delete account"
       busy={action.busy}
       onClose={() => { setDeleting(false); setPassword(''); }}
-      onConfirm={() => void action.run(() => request('/backend/profile.php', { method: 'DELETE', body: { password } }), async () => { await session.refresh(); router.navigate('/landing', true); })}>
+      onConfirm={() => void action.run(() => request('/api/profile', { method: 'DELETE', body: { password } }), async () => { await session.refresh(); router.navigate('/landing', true); })}>
       <p>This cannot be undone. Enter your current password to confirm.</p>
       <Field
         label="Current password"

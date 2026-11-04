@@ -1,6 +1,7 @@
 """Verify and install a source-bound, static frontend release; no Node runtime required."""
 import argparse
 import hashlib
+import gzip
 import io
 import json
 import os
@@ -22,9 +23,22 @@ def asset_path(name):
         raise ValueError('Unsafe frontend asset path')
     path = PurePosixPath(name)
     if (not isinstance(name, str) or str(path) != name or '..' in path.parts or
-            not re.fullmatch(r'assets/ui/[a-zA-Z0-9_./-]+', name)):
+            not (name=='index.html' or re.fullmatch(r'assets/ui/[a-zA-Z0-9_./-]+',name) or re.fullmatch(r'assets/(?:avatars|images)/[a-zA-Z0-9_.-]+\.(?:png|jpe?g|gif)',name))):
         raise ValueError('Unsafe frontend asset path')
     return name
+
+
+class BoundedStream:
+    def __init__(self,stream):
+        self.stream=stream
+        self.remaining=MAX_BYTES+4*1024**2
+
+    def read(self,size):
+        if size<0 or size>self.remaining:
+            raise ValueError('Expanded frontend stream exceeds size limit')
+        data=self.stream.read(size)
+        self.remaining-=len(data)
+        return data
 
 
 def inspect_bundle(data, expected_commit=None):
@@ -32,8 +46,10 @@ def inspect_bundle(data, expected_commit=None):
         raise ValueError('Frontend bundle exceeds the size limit')
     files = {}
     total = 0
-    with tarfile.open(fileobj=io.BytesIO(data), mode='r|gz') as archive:
+    with tarfile.open(fileobj=BoundedStream(gzip.GzipFile(fileobj=io.BytesIO(data))), mode='r|') as archive:
         for member in archive:
+            if member.name in ('metadata.json','ui-manifest.json') and member.size>512*1024:
+                raise ValueError('Frontend metadata exceeds size limit')
             if not member.isfile() or member.name in files or member.size > MAX_BYTES or len(files) >= 1024:
                 raise ValueError('Unsupported or duplicate frontend bundle member')
             if member.name not in ('metadata.json', 'ui-manifest.json'):
@@ -44,8 +60,10 @@ def inspect_bundle(data, expected_commit=None):
             with archive.extractfile(member) as source:
                 files[member.name] = source.read()
     metadata = json.loads(files.pop('metadata.json'))
-    if set(metadata) != {'schema', 'source_commit', 'files'} or metadata['schema'] != 1:
+    if set(metadata) != {'schema', 'source_commit', 'files'} or metadata['schema'] not in (1,2):
         raise ValueError('Unsupported frontend bundle schema')
+    if (metadata['schema']==2) != ('index.html' in files):
+        raise ValueError('Standalone frontend requires its versioned index document')
     revision = metadata['source_commit']
     if expected_commit and revision != expected_commit:
         raise ValueError('Frontend bundle was built from another source commit')

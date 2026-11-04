@@ -35,7 +35,7 @@ def main():
             errors, failures = [], []
             page.on('pageerror', lambda error: errors.append(str(error)))
             page.on('response', lambda response: failures.append((urlsplit(response.url).path, response.status))
-                    if '/backend/' in response.url and response.status >= 400 else None)
+                    if '/api/' in response.url and response.status >= 400 else None)
             page.goto(origin + '/login')
             page.locator('input[name=username]').fill(args.username)
             page.locator('input[name=password]').fill(password)
@@ -45,7 +45,7 @@ def main():
             if args.admin:
                 routes += ['/manage-ctf', '/create-ctf', '/upload-diskfile', '/manage-announcements', '/operations']
             for route in routes:
-                with page.expect_response(lambda response: '/backend/' in response.url and not response.url.endswith('/session.php')) as response:
+                with page.expect_response(lambda response: '/api/' in response.url and not response.url.endswith('/session')) as response:
                     page.goto(origin + route)
                 response.value.finished()
                 page.get_by_role('main').get_by_role('heading').first.wait_for()

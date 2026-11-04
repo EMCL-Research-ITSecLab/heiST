@@ -86,6 +86,8 @@ def inspect_bundle(data, expected_commit, *, source_files=None, pinned_requireme
     with tarfile.open(fileobj=BoundedReader(compressed, MAX_BYTES+4*1024**2), mode='r|') as archive:
         for item in archive:
             safe_path(item.name)
+            if item.name=='metadata.json' and item.size>1024**2:
+                raise ValueError('Runtime metadata exceeds size limit')
             if not item.isfile() or item.name in files or len(files) >= 2048 or not 0 <= item.size <= MAX_BYTES:
                 raise ValueError('Invalid or duplicate runtime member')
             total += item.size

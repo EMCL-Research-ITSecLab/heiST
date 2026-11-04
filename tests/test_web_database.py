@@ -62,6 +62,8 @@ class WebDatabaseTests(unittest.TestCase):
                     cursor.execute((root/'releases/migrations/0005_account_deletion.sql').read_text())
                     cursor.execute((root/'releases/migrations/0006_authoring_state.sql').read_text())
                     cursor.execute((root/'releases/migrations/0007_monotonic_resource_ids.sql').read_text())
+                    cursor.execute((root/'releases/migrations/0008_instance_activation.sql').read_text())
+                    cursor.execute((root/'releases/migrations/0009_artifact_availability.sql').read_text())
                     cursor.execute("INSERT INTO public.vpn_static_ips(vpn_static_ip) SELECT ('10.64.0.'||n)::inet FROM generate_series(2,250) n ON CONFLICT DO NOTHING")
             cls.api_settings = {**cls.settings, 'user': cls.role, 'password': cls.password}
         except BaseException:
@@ -237,6 +239,40 @@ class WebDatabaseTests(unittest.TestCase):
                     cursor.execute('INSERT INTO public.'+reclaim+'(id) VALUES (%s) ON CONFLICT DO NOTHING', (previous,))
                     cursor.execute('SELECT public.allocate_'+resource+'_id()')
                     self.assertGreater(cursor.fetchone()[0], previous)
+
+    def test_snapshot_recovery_preserves_allocation_history_and_invalidates_restored_sessions(self):
+        from types import SimpleNamespace
+        import tempfile
+        from heist.rollout.identifiers import preserve, reconcile
+        settings = SimpleNamespace(connect=lambda: self.psycopg2.connect(**self.settings))
+        self.sessions.rotate(user_id=self.user_id)
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary)/'id-watermarks.json'
+            with closing(settings.connect()) as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute('SELECT public.allocate_challenge_id()')
+                    current = cursor.fetchone()[0]
+                    cursor.execute("SELECT setval('public.challenges_id_seq',%s,true)", (current+200,))
+            history = preserve(settings, path)
+            high = history['challenges_id_seq']
+            # Model a VM snapshot rewinding PostgreSQL sequence state. No
+            # production database or VM is restored by this contract test.
+            with closing(settings.connect()) as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute("SELECT setval('public.challenges_id_seq',%s,true)", (current,))
+                    cursor.execute('SELECT username,password_hash FROM public.users WHERE id=%s', (self.user_id,))
+                    protected = cursor.fetchone()
+            self.assertEqual(preserve(settings, path)['challenges_id_seq'], high)
+            reconcile(settings, history)
+            reconcile(settings, history)
+            with closing(settings.connect()) as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute('SELECT public.allocate_challenge_id()')
+                    self.assertGreater(cursor.fetchone()[0], high)
+                    cursor.execute('SELECT count(*) FROM public.web_sessions')
+                    self.assertEqual(cursor.fetchone()[0], 0)
+                    cursor.execute('SELECT username,password_hash FROM public.users WHERE id=%s', (self.user_id,))
+                    self.assertEqual(cursor.fetchone(), protected)
 
     def test_monotonic_migration_advances_past_existing_and_reclaimed_high_water_marks(self):
         with closing(self.psycopg2.connect(**self.settings)) as connection:

@@ -5,7 +5,7 @@ from pathlib import Path
 from flask import Blueprint, current_app, request
 
 from heist.artifacts.uploads import UploadError, UploadStore
-from .context import body, rate_limit, require_admin
+from .context import body, internal, rate_limit, repository, require_admin
 from .errors import ApiError
 
 blueprint = Blueprint('artifacts', __name__)
@@ -59,4 +59,32 @@ def seal(store, owner, identifier):
 @blueprint.delete('/admin/artifact-uploads/<identifier>')
 @staged_operation
 def cancel(store, owner, identifier):
-    return {'success': True, 'data': store.cancel(owner, identifier)}
+    return {'success': True, 'data': store.cancel(owner, identifier),'message':'Transfer receipt closed'}
+
+
+@blueprint.get('/admin/artifacts')
+@staged_operation
+def library(store, owner):
+    values = repository().call('web_disk_files', owner)
+    return {'success': True, 'data': {
+        'ovas': [{**item, 'filename': item['display_name']} for item in values],
+        'uploads': store.list(owner),
+        'limits': {'MAX_FILE_SIZE': store.MAX_BYTES, 'CHUNK_SIZE': store.CHUNK_BYTES}}}
+
+
+@blueprint.delete('/admin/artifacts/<identifier>')
+def retire(identifier):
+    from .validation import positive_id
+    user = require_admin()
+    identifier = positive_id(identifier,'image identifier')
+    if not repository().scalar('get_filename_by_id',identifier,user['id']):
+        raise ApiError('Image not found',404)
+    internal().request('delete_artifact',{'artifact_id':identifier,'user_id':user['id']})
+    return {'success':True,'message':'Image retired; its recovery copy is retained for administrator cleanup'}
+
+
+@blueprint.post('/admin/artifact-uploads/<identifier>/retry')
+@staged_operation
+def retry(store,owner,identifier):
+    rate_limit('retry-image',str(owner),20,3600)
+    return {'success':True,'data':store.retry(owner,identifier),'message':'Validation retry queued'}

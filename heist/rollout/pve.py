@@ -277,6 +277,8 @@ class PVE:
     def checkpoint(self, transaction):
         directory=private_directory(Path(self.config.backup_directory)/transaction.path.name)
         transaction.save(backup_directory=str(directory))
+        from .identifiers import preserve
+        transaction.save(id_watermarks=preserve(self.database,self.state/'id-watermarks.json'))
         if transaction.plan.ui_bundle:
             from heist.ui_assets import inspect_bundle, digest
             bundle = transaction.plan.ui_bundle
@@ -306,11 +308,9 @@ class PVE:
             transaction.save(snapshots=snapshots)
         git(self.installation,'update-ref','refs/heist/releases/'+transaction.plan.target,transaction.plan.target)
         git(self.installation,'bundle','create',str(directory/'source.bundle'),'--all')
-        files=[Path(self.config.backend_env),self.installation/'setup/.env',self.installation/'config/installer.env',Path(self.config.api_certificate)]
-        key=self.environment.get('BACKEND_CERTIFICATE_KEY_FILE')
-        if key:files.append(Path(key))
+        files=self.host_configuration_paths()
         hashes={str(path):sha256(path) for path in files if path.is_file()}
-        with tarfile.open(directory/'host-configuration.tar.gz','w:gz') as archive:
+        with tarfile.open(directory/'host-configuration.tar.gz','w:gz',dereference=True) as archive:
             for path in files:
                 if path.is_file():archive.add(path,arcname=str(path).lstrip('/'),recursive=False)
         for name in ('source.bundle', 'host-configuration.tar.gz'):
@@ -318,7 +318,16 @@ class PVE:
                 os.fsync(stream.fileno())
         fsync_directory(directory)
         transaction.save(preserved_files=hashes)
+        transaction.save(host_configuration_sha256=sha256(directory/'host-configuration.tar.gz'))
         write_json(directory/'checkpoint.json',transaction.data)
+
+    def host_configuration_paths(self):
+        paths = [Path(self.config.backend_env), self.installation/'setup/.env',
+                 self.installation/'config/installer.env', Path(self.config.api_certificate)]
+        key = self.environment.get('BACKEND_CERTIFICATE_KEY_FILE')
+        if key:
+            paths.append(Path(key))
+        return paths
 
     def _verify_archive(self,transaction,path):
         with (Path(transaction.data['backup_directory'])/'archive-verify.log').open('ab') as log:
@@ -407,7 +416,7 @@ class PVE:
         if target and transaction.plan.ui_bundle and transaction.data['kind'] != 'rollback':
             program = UI_AGENT + '\nverify_installation(' + repr(self.config.web_root) + ', ' + repr(transaction.plan.target) + ')\n'
             self.config.vm('web').ssh.run(['python3', '-c', program], timeout=60)
-        for name,digest in transaction.data.get('preserved_files',{}).items():
+        for name,digest in transaction.data.get('resume_preserved_files',transaction.data.get('preserved_files',{})).items():
             if sha256(name)!=digest:raise RuntimeError('Preserved deployment configuration changed')
         legacy=not target or transaction.data['kind']=='rollback'
         self.wait(lambda:self._health(legacy=legacy,local_web=True, frontend=bool(target and transaction.plan.ui_bundle and transaction.data['kind'] != 'rollback')),'platform health')
@@ -424,6 +433,13 @@ class PVE:
         for item in snapshots.values():
             path=Path(item['path'])
             if path.stat().st_size!=item['bytes'] or sha256(path)!=item['sha256']:raise RuntimeError('Recovery archive checksum differs')
+        from .host_configuration import inspect_checkpoint, restore_files
+        configuration = None
+        if checkpoint.data.get('preserved_files'):
+            configuration = inspect_checkpoint(
+                Path(checkpoint.data['backup_directory'])/'host-configuration.tar.gz',
+                checkpoint.data['preserved_files'], self.host_configuration_paths(),
+                archive_sha256=checkpoint.data.get('host_configuration_sha256'))
         self._host_guard()
         self.command(['systemctl','stop',*self.units],timeout=180)
         for vm in self.config.vms:
@@ -433,17 +449,31 @@ class PVE:
             self.tasks.run(transaction,'restore-'+checkpoint.path.name+'-'+vm.role,'/nodes/'+self.node+'/qemu',
                 {'archive':snapshots[vm.role]['path'],'vmid':vm.vmid,'force':1})
         self._checkout(transaction,checkpoint.plan.source)
+        if configuration is not None:
+            restore_files(configuration)
+            from dotenv import dotenv_values
+            self.environment = dotenv_values(self.config.backend_env)
+            self.database = DatabaseSettings.from_mapping(self.environment)
         self._host_guard()
         for name,hexadecimal in {**checkpoint.data.get('replaced_shims', {}), **checkpoint.data.get('legacy_shims', {})}.items():
             path=self.installation/name;path.write_bytes(bytes.fromhex(hexadecimal));path.chmod(0o755)
         for name,hexadecimal in checkpoint.data.get('generated',{}).items():
             path=self.installation/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(bytes.fromhex(hexadecimal))
         transaction.save(expected_target_hashes=checkpoint.data['protected_hashes'],
+            resume_preserved_files=checkpoint.data.get('preserved_files', {}),
             expected_target_generated=checkpoint.data.get('generated', {}),
             resume_web_runtime=checkpoint.data.get('web_runtime'),
             resume_host_services=checkpoint.data['host_services'],resume_web_services=checkpoint.data['web_services'])
         self.start_vms()
         # Restored web checkpoints intentionally retain their maintenance gate.
+        if transaction.data.get('id_watermarks'):
+            from .identifiers import preserve, reconcile
+            # The live host history survives every VM restore, including an
+            # older checkpoint followed by recovery of the newer safety copy.
+            history = preserve(self.database,self.state/'id-watermarks.json')
+            for name,value in transaction.data['id_watermarks'].items():
+                history[name] = max(history.get(name,0),value)
+            reconcile(self.database,history)
         self.remote(self.config.vm('web'),web.INSTALL_GUARD,{'program':web.FIREWALL})
         self.command(['systemctl','start','backend'])
         self.remote(self.config.vm('web'),web.FINISH,{'services':{'apache2':{'active':True,'enabled':False},'cron':{'active':False,'enabled':False}},'open':False})

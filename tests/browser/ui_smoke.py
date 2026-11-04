@@ -59,8 +59,7 @@ class BrowserTests(unittest.TestCase):
         self.password_change = False
         self.failed = False
         self.mutations = []
-        self.context.route('**/backend/**', self.api)
-        self.context.route('**/config/general.config.json', lambda route: route.fulfill(json={'upload': {'MAX_FILE_SIZE': 10000, 'CHUNK_SIZE': 5, 'CHUNK_UPLOAD_THRESHOLD': 10}}))
+        self.context.route('**/api/**', self.api)
 
     def tearDown(self):
         self.context.close()
@@ -68,26 +67,32 @@ class BrowserTests(unittest.TestCase):
 
     def api(self, route):
         request = route.request
-        endpoint = urlsplit(request.url).path.rsplit('/', 1)[-1]
-        if request.method == 'POST':
+        endpoint = urlsplit(request.url).path.removeprefix('/api/')
+        if request.method in ('POST','PUT','DELETE'):
             self.mutations.append((endpoint, request.post_data or '', request.headers))
-            if endpoint == 'login.php':
+            if endpoint == 'login':
                 self.role = 'student'
-            if endpoint == 'reset-password.php':
+            if endpoint == 'reset-password':
                 self.password_change = False
-            if endpoint == 'logout.php':
+            if endpoint == 'logout':
                 self.role = 'guest'
-            return route.fulfill(json={'success': True, 'message': 'Changes saved.', 'redirect': '/dashboard', 'uploadId': 'owned-test-upload'})
-        if endpoint == 'session.php':
+            if endpoint=='admin/artifact-uploads':
+                return route.fulfill(status=201,json={'success':True,'data':{'id':'b'*32,'name':'fixture.ova','size':12,'guest_os':'linux','state':'RECEIVING','chunk_bytes':5}})
+            if endpoint.endswith('/seal'):
+                return route.fulfill(status=202,json={'success':True,'data':{'state':'SEALED'},'message':'Transfer complete. Validation is pending.'})
+            return route.fulfill(json={'success': True, 'message': 'Changes saved.', 'redirect': '/dashboard'})
+        if endpoint == 'session':
             return route.fulfill(json={'success': True, 'data': {'is_logged_in': self.role != 'guest', 'requires_password_change': self.password_change, 'csrf_token': 'a'*64, 'user': {'username': 'investigator', 'is_admin': self.role == 'admin'}}})
         if self.failed:
             return route.fulfill(status=503, json={'success': False, 'message': 'Temporary service failure'})
-        if endpoint == 'admin-operations.php':
+        if endpoint == 'admin/operations':
             return route.fulfill(json={'success': True, 'data': {'database': 'ready', 'maintenance': False, 'source_version': '0.3.0', 'services': [{'unit': 'backend.service', 'state': 'active', 'detail': 'running'}], 'archive': {'status': 'stale', 'last_success_at': '2026-10-30T10:00:00Z'}, 'lifecycle': {'ACTIVE': 2}, 'release': {'version': '0.3.0'}, 'checked_at': '2026-10-30T11:00:00Z'}})
-        if endpoint == 'create-ctf.php':
+        if endpoint == 'admin/challenges/options':
             return route.fulfill(json={'success': True, 'ovas': [{'filename': 'fixture.ova'}]})
-        if endpoint == 'challenge.php':
+        if endpoint == 'challenge':
             return route.fulfill(json={'success': True, 'challenge': {'id': 1, 'name': 'Identity lab', 'description': '<script>window.injected=true</script>', 'is_active': True, 'flags_total': 2, 'challenge_status': {'challenge_status': 'running'}, 'remaining_seconds': 3600}})
+        if endpoint=='admin/artifacts':
+            return route.fulfill(json={'success':True,'data':{'ovas':[],'uploads':[],'limits':{'MAX_FILE_SIZE':10000,'CHUNK_SIZE':5}}})
         data = {'challenges': [], 'stats': {}, 'pagination': {'total_pages': 1}, 'badges': [], 'activities': [], 'announcements': [], 'ovas': [], 'user': {}, 'profile': {}}
         route.fulfill(json={'success': True, 'data': data})
 
@@ -120,9 +125,9 @@ class BrowserTests(unittest.TestCase):
         self.page.get_by_role('button', name='Sign in').click()
         self.page.wait_for_url('**/explore')
         endpoint, body, headers = self.mutations[0]
-        self.assertEqual(endpoint, 'login.php')
+        self.assertEqual(endpoint, 'login')
         self.assertEqual(headers.get('x-csrf-token'), 'a'*64)
-        self.assertIn('csrf_token', body)
+        self.assertNotIn('name="csrf_token"', body)
 
     def test_forced_password_change_uses_existing_api_field_names(self):
         self.role = 'student'
@@ -134,7 +139,7 @@ class BrowserTests(unittest.TestCase):
         self.page.get_by_label('Confirm password').fill('new-test-password')
         self.page.get_by_role('button', name='Save new password').click()
         self.page.wait_for_url('**/dashboard')
-        self.assertEqual(self.mutations[0][0], 'reset-password.php')
+        self.assertEqual(self.mutations[0][0], 'reset-password')
         for field in ('current_password', 'new_password', 'confirm_password'):
             self.assertIn('name="' + field + '"', self.mutations[0][1])
 
@@ -170,8 +175,8 @@ class BrowserTests(unittest.TestCase):
         self.page.get_by_role('button', name='Create challenge', exact=False).click()
         self.page.wait_for_url('**/manage-ctf')
         endpoint, body, headers = self.mutations[0]
-        self.assertEqual(endpoint, 'create-ctf.php')
-        for field in ('vms', 'subnets', 'flags', 'hints', 'csrf_token'):
+        self.assertEqual(endpoint, 'admin/challenges')
+        for field in ('vms', 'subnets', 'flags', 'hints'):
             self.assertIn('name="' + field + '"', body)
         self.assertIn('gateway', body)
         self.assertIn('fixture.ova', body)
@@ -183,15 +188,13 @@ class BrowserTests(unittest.TestCase):
         self.visit('/upload-diskfile')
         self.page.locator('input[type=file]').set_input_files({'name': 'fixture.ova', 'mimeType': 'application/octet-stream', 'buffer': b'abcdefghijkl'})
         self.page.get_by_role('button', name='Upload artifact').click()
-        self.page.get_by_text('Artifact uploaded and validated.', exact=False).wait_for()
+        self.page.get_by_text('Transfer complete. Validation is pending.', exact=True).wait_for()
         requests = [(endpoint, body) for endpoint, body, _ in self.mutations]
         self.assertEqual(len(requests), 5)
-        self.assertEqual(json.loads(requests[0][1])['phase'], 'init')
-        self.assertEqual(json.loads(requests[-1][1])['phase'], 'finalize')
-        for endpoint, body in requests[1:-1]:
-            self.assertEqual(endpoint, 'upload-diskfile.php')
-            self.assertIn('name="chunkIndex"', body)
-            self.assertIn('name="csrf_token"', body)
+        self.assertEqual(json.loads(requests[0][1])['name'],'fixture.ova')
+        self.assertTrue(requests[-1][0].endswith('/seal'))
+        self.assertEqual([endpoint.rsplit('/',1)[-1] for endpoint,_ in requests[1:-1]],['0','1','2'])
+        self.assertEqual([body for _,body in requests[1:-1]],['abcde','fghij','kl'])
 
 
     def test_administrator_diagnostics_show_stale_archive_and_export(self):

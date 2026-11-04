@@ -1,0 +1,44 @@
+[Unit]
+Description=heiST verified artifact transfer worker
+After=network-online.target heist-web-maintenance.service
+Requires=heist-web-maintenance.service
+ConditionPathExists=!/var/lib/heist/maintenance
+Wants=network-online.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=heist-web
+Group=heist-web
+WorkingDirectory=/var/lib/heist-web
+EnvironmentFile=/etc/heist/web.env
+Environment=PYTHONPATH=/opt/heist-web/current/source
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/opt/heist-web/current/venv/bin/python -m heist.artifacts.worker
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=40
+KillSignal=SIGTERM
+UMask=0077
+StateDirectory=heist-web
+StateDirectoryMode=0700
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+MemoryMax=1G
+TasksMax=64
+LimitNOFILE=4096
+
+[Install]
+WantedBy=multi-user.target

@@ -3,7 +3,7 @@ import { number, payload, row, rows, text } from '../../lib/data.ts';
 import { Link } from '../../lib/router.tsx';
 import { useResource, useSession } from '../../lib/state.tsx';
 export function Dashboard() {
-  const resource = useResource('/backend/dashboard.php', 30000), data = payload(resource.data), user = row(data.user), progress = row(data.progress), active = row(data.active_challenge), timeline = row(data.timeline);
+  const resource = useResource('/api/dashboard', 30000), data = payload(resource.data), user = row(data.user), progress = row(data.progress), active = row(data.active_challenge), timeline = row(data.timeline);
   const session = useSession();
   return <>
     <PageTitle

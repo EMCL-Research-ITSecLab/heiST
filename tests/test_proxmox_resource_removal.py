@@ -9,7 +9,20 @@ from heist.platform.images import delete_templates
 
 
 class ResourceRemovalTests(unittest.TestCase):
+    def test_detach_confirms_absence_before_address_lease_can_be_released(self):
+        with patch.object(client, 'make_api_call', side_effect=[{'data': {'net30': 'bridge=vmbr-cloud'}}, {'data': None}, {'data': {}}]) as call:
+            client.detach_network_device_api_call(123)
+            self.assertEqual([item.args[0] for item in call.call_args_list], ['GET', 'PUT', 'GET'])
+        for configuration in ({'net30': 'still attached'}, None):
+            with patch.object(client, 'make_api_call', side_effect=[{'data': {'net30': 'present'}}, {'data': None}, {'data': configuration}]), self.assertRaisesRegex(RuntimeError, 'retain its address lease'):
+                client.detach_network_device_api_call(123)
+        with patch.object(client, 'make_api_call', return_value={'data': {}}) as call:
+            self.assertTrue(client.detach_network_device_api_call(123)['already_absent'])
+            self.assertEqual(call.call_count, 1)
+
     def setUp(self):
+        ownership=patch.object(client,'require_vm_ownership')
+        ownership.start();self.addCleanup(ownership.stop)
         self.vm = SimpleNamespace(id=123)
 
     def test_inventory_failure_or_malformed_response_never_means_vm_absence(self):

@@ -1,6 +1,7 @@
 """Request-scoped resources and server-side authorization for the browser API."""
 import hashlib
 import json
+from pathlib import Path
 
 from flask import current_app, g, request
 
@@ -96,6 +97,11 @@ def initialize_request():
         return
     if not request.is_secure:
         raise ApiError('HTTPS is required', 400)
+    if request.endpoint in ('health.live','health.ready'):
+        g.raw_session=None
+        return
+    if Path(current_app.config['MAINTENANCE_FILE']).exists():
+        raise ApiError('Scheduled maintenance is in progress',503)
     if request.endpoint is None or request.endpoint == 'media.get_media':
         return
     if g.raw_session:

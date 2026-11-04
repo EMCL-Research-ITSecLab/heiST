@@ -7,7 +7,7 @@ import tarfile
 import tempfile
 import unittest
 from unittest.mock import patch
-from zipfile import ZipFile
+from zipfile import ZipFile, ZipInfo
 
 from heist.runtime_bundle import BoundedReader, digest, hashed_requirements, inspect_bundle, wheel_identity
 from heist.web_runtime import activate, public_interpreter, verify
@@ -20,7 +20,7 @@ REQUIREMENTS = b'gunicorn==26.2.0\npip==24.0\n'
 def wheel(name='gunicorn', version='26.2.0'):
     stream = io.BytesIO()
     with ZipFile(stream, 'w') as archive:
-        archive.writestr(name+'-'+version+'.dist-info/METADATA', 'Name: '+name+'\nVersion: '+version+'\n')
+        archive.writestr(ZipInfo(name+'-'+version+'.dist-info/METADATA', (1980,1,1,0,0,0)), 'Name: '+name+'\nVersion: '+version+'\n')
     return stream.getvalue()
 
 

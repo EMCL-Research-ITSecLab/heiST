@@ -1,11 +1,11 @@
 import { useState, type FormEvent } from 'react';
 import { Area, Badge, Card, Confirm, Empty, Field, Notice, PageTitle, Pager, ResourceState, Select, Stat } from '../../components/ui.tsx';
-import { post, request } from '../../lib/api.ts';
+import { request } from '../../lib/api.ts';
 import { categories, difficulties, number, payload, row, rows, text, truth, type Row } from '../../lib/data.ts';
 import { Link } from '../../lib/router.tsx';
 import { useAction, useResource } from '../../lib/state.tsx';
 export function ManageChallenges() {
-  const resource = useResource('/backend/manage-ctf.php?action=get_challenges', 30000), data = payload(resource.data), stats = row(data.stats), action = useAction();
+  const resource = useResource('/api/admin/challenges', 30000), data = payload(resource.data), stats = row(data.stats), action = useAction();
   const [search, setSearch] = useState(''), [state, setState] = useState('all'), [editing, setEditing] = useState<Row | null>(null), [deleting, setDeleting] = useState<Row | null>(null), [force, setForce] = useState(false), [leader, setLeader] = useState<Row | null>(null);
   const [category, setCategory] = useState('all'), [sort, setSort] = useState('name'), [page, setPage] = useState(1);
   const filtered = rows(data.challenges).filter(c => text(c.name).toLowerCase().includes(search.toLowerCase()) && (state === 'all' || (state === 'active' ? truth(c.is_active) && !truth(c.marked_for_deletion) : state === 'retired' ? truth(c.marked_for_deletion) : !truth(c.is_active))));
@@ -13,7 +13,7 @@ export function ManageChallenges() {
     .sort((a, b) => (sort === 'deployments' ? number(b.active_deployments) - number(a.active_deployments) : text(a.name).localeCompare(text(b.name))) || number(a.id) - number(b.id));
   const totalPages = Math.max(1, Math.ceil(matching.length / 20)), currentPage = Math.min(page, totalPages);
   const challenges = matching.slice((currentPage - 1) * 20, currentPage * 20);
-  async function edit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); const form = new FormData(event.currentTarget); form.set('action', 'update_challenge'); form.set('id', text(editing?.id)); form.set('isActive', form.has('isActive') ? 'true' : 'false'); await action.run(() => post('manage-ctf', form), () => { setEditing(null); resource.reload(); }); }
+  async function edit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); const form = new FormData(event.currentTarget); form.set('isActive', form.has('isActive') ? 'true' : 'false'); await action.run(() => request('/api/admin/challenges/'+text(editing?.id), {method: 'PUT', body: Object.fromEntries(form)}), () => { setEditing(null); resource.reload(); }); }
   return <>
     <PageTitle
       eyebrow="ADMINISTRATION / CHALLENGES"
@@ -85,7 +85,7 @@ export function ManageChallenges() {
                   <div className="table-actions">
                     <button className="secondary small" onClick={() => setEditing(c)}>Edit</button>
                     <button className="secondary small" onClick={() => setLeader(c)}>Leaderboard</button>
-                    {truth(c.marked_for_deletion) ? <button className="secondary small" disabled={action.busy} onClick={() => { const form = new FormData(); form.set('action', 'restore_challenge'); form.set('id', text(c.id)); void action.run(() => post('manage-ctf', form), resource.reload); }}>Restore</button> : <button className="danger subtle small" onClick={() => { setForce(false); setDeleting(c); }}>Retire</button>}
+                    {truth(c.marked_for_deletion) ? <button className="secondary small" disabled={action.busy} onClick={() => { const form = new FormData(); form.set('action', 'restore_challenge'); form.set('id', text(c.id)); void action.run(() => request('/api/admin/challenges/'+text(editing?.id), {method: 'PUT', body: Object.fromEntries(form)}), resource.reload); }}>Restore</button> : <button className="danger subtle small" onClick={() => { setForce(false); setDeleting(c); }}>Retire</button>}
                     <button className="danger subtle small" onClick={() => { setForce(true); setDeleting(c); }}>Delete</button>
                   </div>
                 </td>
@@ -138,7 +138,7 @@ export function ManageChallenges() {
       confirm={force ? 'Delete challenge and instances' : 'Retire challenge'}
       busy={action.busy}
       onClose={() => setDeleting(null)}
-      onConfirm={() => void action.run(() => request('/backend/manage-ctf.php', { method: 'DELETE', body: { action: 'delete_challenge', id: number(deleting.id), force } }), () => { setDeleting(null); resource.reload(); })}>
+      onConfirm={() => void action.run(() => request('/api/admin/challenges/'+text(deleting.id), { method: 'DELETE', body: { force } }), () => { setDeleting(null); resource.reload(); })}>
       <p>
         {force ? 'This removes the challenge and its instances. Exercise and grading data may be removed under the server’s retention rules. This cannot be undone from the console.' : 'The challenge will be marked for removal. The server will preserve or retire existing instances according to its lifecycle rules.'}
       </p>
@@ -153,7 +153,7 @@ function Leaderboard({ challenge, onClose }: {
   challenge: Row;
   onClose: () => void;
 }) {
-  const [page, setPage] = useState(1), resource = useResource(`/backend/manage-ctf.php?action=get_leaderboard&id=${number(challenge.id)}&page=${page}&limit=10`), data = payload(resource.data);
+  const [page, setPage] = useState(1), resource = useResource(`/api/admin/challenges/${number(challenge.id)}/leaderboard?page=${page}`), data = payload(resource.data);
   return <Card title={`Leaderboard · ${text(challenge.name)}`} action={<button className="secondary" onClick={onClose}>Close</button>}>
     <ResourceState {...resource}>
       <div className="table-wrap">

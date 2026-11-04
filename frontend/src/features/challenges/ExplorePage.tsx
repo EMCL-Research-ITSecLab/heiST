@@ -5,7 +5,7 @@ import { useResource } from '../../lib/state.tsx';
 export function Explore() {
   const [search, setSearch] = useState(''), [query, setQuery] = useState(''), [category, setCategory] = useState('all'), [difficulty, setDifficulty] = useState('all'), [sort, setSort] = useState('popularity'), [page, setPage] = useState(1);
   const params = new URLSearchParams({ search: query, category, difficulty, sort, page: String(page) });
-  const resource = useResource('/backend/explore.php?' + params), data = payload(resource.data), challenges = rows(data.challenges ?? data.data), pagination = row(data.pagination);
+  const resource = useResource('/api/explore?' + params), data = payload(resource.data), challenges = rows(data.challenges ?? data.data), pagination = row(data.pagination);
   return <>
     <PageTitle eyebrow="CHALLENGE LIBRARY" title="Find your next investigation." description="Explore real environments and follow your curiosity." />
     <form className="filter-bar" onSubmit={e => { e.preventDefault(); setQuery(search); setPage(1); }}>

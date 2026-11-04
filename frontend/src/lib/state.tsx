@@ -14,7 +14,7 @@ export function SessionProvider({ children }: {
   const [user, setUser] = useState<User | null>(null), [loading, setLoading] = useState(true), [error, setError] = useState('');
   const refresh = useCallback(async () => {
     try {
-      const data = payload(await request('/backend/session.php'));
+      const data = payload(await request('/api/session'));
       const record = row(data.user);
       setCsrf(text(data.csrf_token));
       setUser(truth(data.is_logged_in) ? { username: text(record.username), admin: truth(record.is_admin), avatar: text(record.avatar_url), passwordChange: truth(data.requires_password_change) } : null);

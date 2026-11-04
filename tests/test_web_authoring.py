@@ -33,7 +33,7 @@ class AuthoringTests(unittest.TestCase):
         self.platform = Mock()
         self.platform.request.side_effect = self.operation
         self.app.extensions['internal_client_factory'] = lambda: self.platform
-        self.sql("INSERT INTO disk_files(user_id,display_name,proxmox_filename) VALUES (%s,'Debian','owned.ova')", (self.user_id,))
+        self.sql("INSERT INTO disk_files(user_id,display_name,proxmox_filename) VALUES (%s,'Debian',%s)", (self.user_id,self.username+'.ova'))
         self.value = exercise()
         self.value['name'] = self.username+' exercise'
 

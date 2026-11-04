@@ -1,92 +1,110 @@
-import threading
+"""Persistent temporary-address leases; imports never reset the pool on restart."""
+from contextlib import contextmanager
+from datetime import datetime, timezone
 import ipaddress
+import os
+from pathlib import Path
+import sqlite3
 import time
-from typing import Dict, Set, Optional
+
+from heist.files import private_directory
+
 
 class IPPoolManager:
-    _instance = None
-    _instance_lock = threading.Lock()
+    def __init__(self, directory=None, *, network='10.32.0.0/20'):
+        self.directory=Path(directory) if directory else None
+        self.network=ipaddress.ip_network(network)
+        if self.network.version!=4 or not 4<=self.network.num_addresses<=4096:
+            raise ValueError('Cloud-init pool must be a bounded IPv4 network')
+        gateway=self.network.network_address+1
+        self.addresses=tuple(str(address) for address in self.network.hosts() if address!=gateway)
 
-    def __new__(cls):
-        with cls._instance_lock:
-            if cls._instance is None:
-                cls._instance = super().__new__(cls)
-                cls._instance._initialize()
-            return cls._instance
+    def state_directory(self):
+        return self.directory or Path(os.environ.get('HEIST_CLOUD_INIT_STATE','/var/lib/heist/cloud-init'))
 
-    def _initialize(self):
-        self.pool_lock = threading.RLock()
-        self.wait_condition = threading.Condition(self.pool_lock)
+    @contextmanager
+    def connection(self):
+        directory=private_directory(self.state_directory())
+        path=directory/'leases.sqlite3'
+        if path.is_symlink():
+            raise ValueError('Lease database must not be a symlink')
+        connection=sqlite3.connect(path,timeout=5,isolation_level=None)
+        path.chmod(0o600)
+        try:
+            connection.execute('PRAGMA synchronous=FULL')
+            connection.execute('PRAGMA journal_mode=WAL')
+            connection.execute('BEGIN IMMEDIATE')
+            connection.execute('CREATE TABLE IF NOT EXISTS configuration(network TEXT PRIMARY KEY)')
+            connection.execute('CREATE TABLE IF NOT EXISTS leases(vm_id INTEGER PRIMARY KEY, ip TEXT UNIQUE NOT NULL, allocated_at TEXT NOT NULL)')
+            values=connection.execute('SELECT network FROM configuration').fetchall()
+            if values and values!=[(str(self.network),)]:
+                raise ValueError('Existing cloud-init leases use another network')
+            connection.execute('INSERT OR IGNORE INTO configuration(network) VALUES(?)',(str(self.network),))
+            connection.commit()
+            yield connection
+        finally:
+            connection.close()
 
-        self.network = ipaddress.ip_network('10.32.0.0/20')
-        hosts = [str(ip) for ip in self.network.hosts()]
-        self.available_ips: Set[str] = set(hosts)
-        self.allocated_ips: Dict[int, str] = {}
-        self.allocated_ip_set: Set[str] = set()
+    def validate_vm(self,vm_id):
+        if type(vm_id) is not int or not 0<vm_id<2**63:
+            raise ValueError('A positive VM identifier is required')
 
-        self.total_ips = len(hosts)
-
-    def allocate_ip(self, vm_id: int, timeout: float = 300.0, reuse_existing: bool = True) -> Optional[str]:
-        """
-        Allocate an IP for vm_id. If reuse_existing is True and vm_id already has an IP,
-        return it instead of allocating a new one.
-        """
-        start = time.time()
-        with self.wait_condition:
-            if reuse_existing:
-                existing = self.allocated_ips.get(vm_id)
+    def allocate_ip(self,vm_id,timeout=300.0,reuse_existing=True):
+        self.validate_vm(vm_id)
+        if not isinstance(timeout,(int,float)) or isinstance(timeout,bool) or not 0<=timeout<=3600:
+            raise ValueError('Use a bounded lease wait')
+        deadline=time.monotonic()+timeout
+        while True:
+            with self.connection() as connection:
+                connection.execute('BEGIN IMMEDIATE')
+                existing=connection.execute('SELECT ip FROM leases WHERE vm_id=?',(vm_id,)).fetchone()
                 if existing:
-                    return existing
+                    if not reuse_existing:
+                        raise ValueError('VM already has a lease; reconcile before replacing it')
+                    connection.commit()
+                    return existing[0]
+                used={row[0] for row in connection.execute('SELECT ip FROM leases')}
+                if not used.issubset(set(self.addresses)):
+                    raise ValueError('Lease inventory contains an address outside this pool')
+                available=next((address for address in self.addresses if address not in used),None)
+                if available is not None:
+                    connection.execute('INSERT INTO leases(vm_id,ip,allocated_at) VALUES(?,?,?)',(vm_id,available,datetime.now(timezone.utc).isoformat()))
+                    connection.commit()
+                    return available
+                connection.rollback()
+            if time.monotonic()>=deadline:
+                return None
+            time.sleep(min(.1,max(0,deadline-time.monotonic())))
 
-            while True:
-                if self.available_ips:
-                    ip = self.available_ips.pop()
-                    self.allocated_ips[vm_id] = ip
-                    self.allocated_ip_set.add(ip)
-                    self.wait_condition.notify_all()
-                    return ip
+    def release_ip(self,vm_id):
+        """Caller must have confirmed NIC detachment or native VM absence."""
+        self.validate_vm(vm_id)
+        with self.connection() as connection:
+            connection.execute('BEGIN IMMEDIATE')
+            removed=connection.execute('DELETE FROM leases WHERE vm_id=?',(vm_id,)).rowcount
+            connection.commit()
+            return bool(removed)
 
-                remaining = timeout - (time.time() - start)
-                if remaining <= 0:
-                    return None
-                self.wait_condition.wait(remaining)
+    def get_allocated_ip(self,vm_id):
+        self.validate_vm(vm_id)
+        with self.connection() as connection:
+            row=connection.execute('SELECT ip FROM leases WHERE vm_id=?',(vm_id,)).fetchone()
+            return row[0] if row else None
 
-    def release_ip(self, vm_id: int) -> bool:
-        """Release IP assigned to vm_id and notify waiting threads."""
-        with self.wait_condition:
-            ip = self.allocated_ips.pop(vm_id, None)
-            if not ip:
-                return False
-            # return to pool
-            if ip not in self.available_ips:
-                self.available_ips.add(ip)
-            self.allocated_ip_set.discard(ip)
-            self.wait_condition.notify_all()
-            return True
+    def get_pool_status(self):
+        with self.connection() as connection:
+            leases=connection.execute('SELECT vm_id FROM leases ORDER BY vm_id').fetchall()
+            return {'total_ips':len(self.addresses),'available_ips':len(self.addresses)-len(leases),
+                    'allocated_ips':len(leases),'allocated_vms':[row[0] for row in leases]}
 
-    def get_allocated_ip(self, vm_id: int) -> Optional[str]:
-        with self.pool_lock:
-            return self.allocated_ips.get(vm_id)
-
-    def get_pool_status(self) -> Dict:
-        with self.pool_lock:
-            return {
-                "total_ips": self.total_ips,
-                "available_ips": len(self.available_ips),
-                "allocated_ips": len(self.allocated_ips),
-                "allocated_vms": list(self.allocated_ips.keys())
-            }
-
-    def is_ip_allocated(self, ip: str) -> bool:
-        with self.pool_lock:
-            return ip in self.allocated_ip_set
+    def is_ip_allocated(self,ip):
+        with self.connection() as connection:
+            return connection.execute('SELECT 1 FROM leases WHERE ip=?',(str(ip),)).fetchone() is not None
 
     def cleanup(self):
-        with self.wait_condition:
-            self.available_ips.update(self.allocated_ips.values())
-            self.allocated_ips.clear()
-            self.allocated_ip_set.clear()
-            self.wait_condition.notify_all()
+        if self.get_pool_status()['allocated_ips']:
+            raise RuntimeError('Outstanding leases require independent VM/NIC reconciliation; bulk reset is refused')
 
-# Singleton
-ip_pool = IPPoolManager()
+
+# Constructing the service performs no filesystem access or database connection.
+ip_pool=IPPoolManager()

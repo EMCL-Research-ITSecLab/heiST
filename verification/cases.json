@@ -92,6 +92,21 @@
       ]
     },
     {
+      "id": "AUTO-CLOUD-INIT-LEASES",
+      "area": "cloud_init_leases",
+      "mode": "automated",
+      "procedure": "Run tests/test_cloud_init_leases.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_cloud_init_leases.py"
+      ]
+    },
+    {
       "id": "AUTO-COLD-LAUNCH-FLAGS",
       "area": "cold_launch_flags",
       "mode": "automated",
@@ -167,6 +182,66 @@
       ]
     },
     {
+      "id": "AUTO-HOST-CONFIGURATION",
+      "area": "host_configuration",
+      "mode": "automated",
+      "procedure": "Run tests/test_host_configuration.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_host_configuration.py"
+      ]
+    },
+    {
+      "id": "AUTO-IMAGE-PIPELINE",
+      "area": "image_pipeline",
+      "mode": "automated",
+      "procedure": "Run tests/test_image_pipeline.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_image_pipeline.py"
+      ]
+    },
+    {
+      "id": "AUTO-IMAGE-PROVISION",
+      "area": "image_provision",
+      "mode": "automated",
+      "procedure": "Run tests/test_image_provision.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_image_provision.py"
+      ]
+    },
+    {
+      "id": "AUTO-INSTANCE-ACTIVATION",
+      "area": "instance_activation",
+      "mode": "automated",
+      "procedure": "Run tests/test_instance_activation.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_instance_activation.py"
+      ]
+    },
+    {
       "id": "AUTO-INSTANCE-OWNERSHIP",
       "area": "instance_ownership",
       "mode": "automated",
@@ -179,6 +254,21 @@
       ],
       "sources": [
         "tests/test_instance_ownership.py"
+      ]
+    },
+    {
+      "id": "AUTO-INTERNAL-SERVER",
+      "area": "internal_server",
+      "mode": "automated",
+      "procedure": "Run tests/test_internal_server.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_internal_server.py"
       ]
     },
     {
@@ -689,6 +779,21 @@
       ],
       "sources": [
         "tests/test_vm_cpu.py"
+      ]
+    },
+    {
+      "id": "AUTO-VM-OWNERSHIP",
+      "area": "vm_ownership",
+      "mode": "automated",
+      "procedure": "Run tests/test_vm_ownership.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All assertions pass; prerequisites are present in the release environment; no skipped or expected-failure coverage is accepted without an explicit reviewed exception.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output",
+        "function trace and reviewed assertion mapping"
+      ],
+      "sources": [
+        "tests/test_vm_ownership.py"
       ]
     },
     {
@@ -1552,6 +1657,51 @@
       "sources": [
         "tests/integration/proxmox/resources.py",
         "docs/WEB-API.md"
+      ]
+    },
+    {
+      "id": "MONITORING-TLS-LIFECYCLE",
+      "area": "monitoring",
+      "mode": "appliance",
+      "procedure": "Run tests/integration/monitoring/lifecycle.py with its explicit disposable-host opt-in and prerequisites.",
+      "expected": "All native positive and negative assertions pass; temporary resources are removed; existing platform resources remain unchanged.",
+      "evidence": [
+        "exact source and isolated appliance identity",
+        "native test output",
+        "resource cleanup confirmation"
+      ],
+      "sources": [
+        "tests/integration/monitoring/lifecycle.py"
+      ]
+    },
+    {
+      "id": "IMAGES-NATIVE-NORMALIZATION",
+      "area": "images",
+      "mode": "appliance",
+      "procedure": "Run tests/integration/images/normalization.py with its explicit disposable-host opt-in and prerequisites.",
+      "expected": "All native positive and negative assertions pass; temporary resources are removed; existing platform resources remain unchanged.",
+      "evidence": [
+        "exact source and isolated appliance identity",
+        "native test output",
+        "resource cleanup confirmation"
+      ],
+      "sources": [
+        "tests/integration/images/normalization.py"
+      ]
+    },
+    {
+      "id": "IMAGES-NATIVE-IMPORT",
+      "area": "images",
+      "mode": "appliance",
+      "procedure": "Run tests/integration/images/import_vm.py with its explicit disposable-host opt-in and prerequisites.",
+      "expected": "All native positive and negative assertions pass; temporary resources are removed; existing platform resources remain unchanged.",
+      "evidence": [
+        "exact source and isolated appliance identity",
+        "native test output",
+        "resource cleanup confirmation"
+      ],
+      "sources": [
+        "tests/integration/images/import_vm.py"
       ]
     }
   ]

@@ -39,3 +39,17 @@ class PublicBoundaryTests(unittest.TestCase):
         self.assertNotIn('private', response.get_data(as_text=True))
         self.assertEqual(response.headers['X-Content-Type-Options'], 'nosniff')
         self.assertIn('no-store', response.headers['Cache-Control'])
+
+    def test_maintenance_closes_browser_routes_but_liveness_stays_available(self):
+        from pathlib import Path
+        import tempfile
+        factory=Mock()
+        with tempfile.TemporaryDirectory() as temporary:
+            marker=Path(temporary)/'maintenance';marker.touch()
+            app=create_app({'WEB_SESSION_SECRET':'a'*64,'MAINTENANCE_FILE':str(marker)},repository_factory=factory)
+            client=app.test_client()
+            self.assertEqual(client.get('/api/session',base_url='https://localhost').status_code,503)
+            self.assertEqual(client.post('/api/login',base_url='https://localhost',json={}).status_code,503)
+            self.assertEqual(client.get('/api/health/ready',base_url='https://localhost',environ_overrides={'REMOTE_ADDR':'192.0.2.1'}).status_code,503)
+            self.assertEqual(client.get('/api/health/live',base_url='https://localhost').status_code,200)
+            factory.assert_not_called()

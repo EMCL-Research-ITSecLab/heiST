@@ -1,6 +1,7 @@
 [Unit]
 Description=heiST browser API
-After=network-online.target
+After=network-online.target heist-web-maintenance.service
+Requires=heist-web-maintenance.service
 Wants=network-online.target
 StartLimitIntervalSec=60
 StartLimitBurst=5

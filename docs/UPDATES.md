@@ -171,3 +171,29 @@ permission to rerun installation over production.
 Build the UI artifact on a workstation from the exact reviewed commit. See
 [frontend release artifacts](FRONTEND.md). Use the older manifest explicitly when
 rehearsing a historical 0.2.0 release without a React bundle.
+
+
+## Template and source-image checkpoints
+
+New checkpoints include registered stopped template VMs and opaque host image
+library files, in addition to the three infrastructure VMs and SQL. Launchable
+exercises with missing templates, running/importing/locked templates, temporary
+cloud NICs, unused disks and unbacked/external storage are refused. Template VM
+UUID/name identity is checked again before restoration; a different VM at a stale
+numeric ID is never overwritten.
+
+Image copies have a complete checksum-bound inventory and are verified before
+recovery changes any VM. Recovery restores the exact source library and preserves
+newer/conflicting bytes in a separate private quarantine. Newer template VMs from
+an explicit older-version rollback remain stopped and recorded with the newer
+safety checkpoint; they are not silently deleted. Retain those recovery copies
+until the rollback retention policy permits collection.
+
+The native `tests.integration.proxmox.checkpoint` rehearsal uses a new, tagged,
+NIC-less 1-GiB sparse template. It writes known guest bytes, creates and verifies a
+real compressed VMA, deliberately changes the bytes, restores UUID/content and
+removes the invocation-owned VM. It requires root,
+`HEIST_ISOLATED_PROXMOX_TESTS=1`, an unused `HEIST_TEST_VMID`, private
+`HEIST_TEST_BACKEND_ENV`, `HEIST_TEST_STORAGE` and an independent
+`HEIST_TEST_BACKUP_DIRECTORY`. It must run only on the disposable test host.
+Full multi-VM upgrade/rollback acceptance remains a separate release gate.

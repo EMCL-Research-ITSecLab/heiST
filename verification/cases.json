@@ -1747,6 +1747,49 @@
       "sources": [
         "tests/test_browser_configuration.py"
       ]
+    },
+    {
+      "id": "AUTO-IMAGE-CHECKPOINT",
+      "area": "recovery",
+      "mode": "automated",
+      "procedure": "Run tests/test_image_checkpoint.py through tools/check.py.",
+      "expected": "Checkpoint integrity, identity and preservation assertions pass; uncertain/corrupt state cannot overwrite live resources.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output"
+      ],
+      "sources": [
+        "tests/test_image_checkpoint.py"
+      ]
+    },
+    {
+      "id": "AUTO-TEMPLATE-CHECKPOINT",
+      "area": "recovery",
+      "mode": "automated",
+      "procedure": "Run tests/test_template_checkpoint.py through tools/check.py.",
+      "expected": "Checkpoint integrity, identity and preservation assertions pass; uncertain/corrupt state cannot overwrite live resources.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output"
+      ],
+      "sources": [
+        "tests/test_template_checkpoint.py"
+      ]
+    },
+    {
+      "id": "PROXMOX-TEMPLATE-RECOVERY",
+      "area": "recovery",
+      "mode": "appliance",
+      "procedure": "Run tests.integration.proxmox.checkpoint on the disposable Proxmox host with an unused VM ID and independent backup mount.",
+      "expected": "A real VMA verifies and restores original guest disk bytes and UUID after deliberate corruption; only the invocation-owned stopped template is replaced/deleted.",
+      "evidence": [
+        "native output",
+        "exact source and VM identities",
+        "resource cleanup proof"
+      ],
+      "sources": [
+        "tests/integration/proxmox/checkpoint.py"
+      ]
     }
   ]
 }

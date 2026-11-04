@@ -14,6 +14,7 @@ import sys
 import tarfile
 import time
 import uuid
+from types import SimpleNamespace
 
 from heist.config import DatabaseSettings
 from heist import ui_assets
@@ -99,6 +100,29 @@ class PVE:
                         raise RuntimeError('Database is not ready')
         except OperationalError as error:
             raise RuntimeError('Database connection is not ready') from error
+
+    def template_catalogue(self):
+        from .template_checkpoint import identity
+        with closing(self.database.connect()) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT m.id,t.ready_to_launch FROM machine_templates m JOIN challenge_templates t ON t.id=m.challenge_template_id')
+                registered=dict(cursor.fetchall())
+        inventory=self.request('GET','/nodes/'+self.node+'/qemu',None)
+        if not isinstance(inventory,list) or any(not isinstance(item,dict) or type(item.get('vmid')) is not int for item in inventory):
+            raise RuntimeError('Template VM inventory was not confirmed')
+        present={item['vmid'] for item in inventory}
+        result={}
+        for identifier,ready in registered.items():
+            if identifier in {vm.vmid for vm in self.config.vms}:
+                raise RuntimeError('Template identity overlaps infrastructure')
+            if identifier not in present:
+                if ready:raise RuntimeError('A launchable exercise is missing a template VM')
+                result[str(identifier)]={'absent':True}
+                continue
+            vm=SimpleNamespace(vmid=identifier)
+            if self.is_running(vm):raise RuntimeError('Template VMs must be stopped before maintenance')
+            result[str(identifier)]=identity(self.configuration(vm))
+        return result
 
     def assert_idle(self, *, allow_ready):
         with closing(self.database.connect()) as connection:
@@ -191,6 +215,13 @@ class PVE:
         backup=Path(self.config.backup_directory)
         if not backup.is_dir() or backup.stat().st_dev==self.installation.stat().st_dev:
             raise RuntimeError('Provide a mounted backup filesystem separate from installation source')
+        templates=self.template_catalogue()
+        from .template_checkpoint import disk_capacity
+        for identifier,item in templates.items():
+            if not item.get('absent'):
+                capacity+=disk_capacity(self.configuration(SimpleNamespace(vmid=int(identifier))))
+        from .image_checkpoint import inventory
+        capacity+=sum(item['bytes'] for item in inventory(self.environment.get('HEIST_ARTIFACT_LIBRARY','/var/lib/vz/import')).values())
         if shutil.disk_usage(backup).free<capacity+16*1024**3:
             raise RuntimeError('Backup volume needs all infrastructure virtual capacities plus 16 GiB free')
         if self.marker.exists():raise RuntimeError('An existing maintenance transaction must be resumed first')
@@ -283,6 +314,11 @@ class PVE:
         transaction.save(backup_directory=str(directory))
         from .identifiers import preserve
         transaction.save(id_watermarks=preserve(self.database,self.state/'id-watermarks.json'))
+        templates=self.template_catalogue()
+        transaction.save(template_catalogue=templates)
+        from .image_checkpoint import create
+        library=self.environment.get('HEIST_ARTIFACT_LIBRARY','/var/lib/vz/import')
+        transaction.save(image_checkpoint=create(library,directory/'image-library'))
         if transaction.plan.ui_bundle:
             from heist.ui_assets import inspect_bundle, digest
             bundle = transaction.plan.ui_bundle
@@ -300,12 +336,18 @@ class PVE:
             if self.is_running(vm):self.command(['qm','shutdown',vm.vmid,'--timeout','180'],timeout=210)
             if self.is_running(vm):raise RuntimeError('VM did not shut down cleanly: '+role)
         snapshots={}
-        for vm in self.config.vms:
+        template_vms=[SimpleNamespace(role='template-'+identifier,vmid=int(identifier))
+                      for identifier,item in templates.items() if not item.get('absent')]
+        for vm in (*self.config.vms,*template_vms):
             self.tasks.run(transaction,'backup-'+vm.role,'/nodes/'+self.node+'/vzdump',
                 {'vmid':vm.vmid,'mode':'stop','compress':'zstd','dumpdir':str(directory),'remove':0})
             files=list(directory.glob('vzdump-qemu-'+str(vm.vmid)+'-*.vma.zst'))
             if len(files)!=1:raise RuntimeError('No unique completed VM archive: '+vm.role)
             self._verify_archive(transaction,files[0])
+            if vm.role.startswith('template-'):
+                from .template_checkpoint import identity
+                if identity(self.configuration(vm))!=templates[str(vm.vmid)]:
+                    raise RuntimeError('Template identity changed during checkpoint')
             with files[0].open('rb') as stream:
                 os.fsync(stream.fileno())
             snapshots[vm.role]={'path':str(files[0]),'sha256':sha256(files[0]),'bytes':files[0].stat().st_size}
@@ -432,11 +474,34 @@ class PVE:
         checkpoint=checkpoint or transaction
         self.tasks.settle(transaction)
         snapshots=checkpoint.data['snapshots']
-        if set(snapshots)!={vm.role for vm in self.config.vms}:raise RuntimeError('Checkpoint is incomplete')
+        template_catalogue=checkpoint.data.get('template_catalogue',{})
+        template_vms=[SimpleNamespace(role='template-'+identifier,vmid=int(identifier))
+                      for identifier,item in template_catalogue.items() if not item.get('absent')]
+        expected={vm.role for vm in (*self.config.vms,*template_vms)}
+        if set(snapshots)!=expected:raise RuntimeError('Checkpoint is incomplete')
         # Validate every archive before stopping/replacing any infrastructure VM.
         for item in snapshots.values():
             path=Path(item['path'])
             if path.stat().st_size!=item['bytes'] or sha256(path)!=item['sha256']:raise RuntimeError('Recovery archive checksum differs')
+        if template_vms:
+            from .template_checkpoint import require_same_vm
+            present={item['vmid'] for item in self.request('GET','/nodes/'+self.node+'/qemu',None)}
+            for vm in template_vms:
+                if vm.vmid in present:
+                    if self.is_running(vm):raise RuntimeError('Refusing to overwrite a running template VM')
+                    require_same_vm(self.configuration(vm),template_catalogue[str(vm.vmid)])
+        retained={key:item for key,item in transaction.data.get('template_catalogue',{}).items()
+                  if not item.get('absent') and template_catalogue.get(key,{}).get('absent',key not in template_catalogue)}
+        if retained:
+            from .template_checkpoint import require_same_vm
+            for identifier,item in retained.items():
+                vm=SimpleNamespace(vmid=int(identifier))
+                if self.is_running(vm):raise RuntimeError('Newer template VM must remain stopped during rollback')
+                require_same_vm(self.configuration(vm),item)
+            transaction.save(retained_newer_templates=retained)
+        if checkpoint.data.get('image_checkpoint'):
+            from .image_checkpoint import inspect
+            inspect(checkpoint.data['image_checkpoint'],self.environment.get('HEIST_ARTIFACT_LIBRARY','/var/lib/vz/import'))
         from .host_configuration import inspect_checkpoint, restore_files
         configuration = None
         if checkpoint.data.get('preserved_files'):
@@ -449,9 +514,15 @@ class PVE:
         for vm in self.config.vms:
             if self.is_running(vm):self.command(['qm','shutdown',vm.vmid,'--timeout','180'],timeout=210)
             if self.is_running(vm):raise RuntimeError('Refusing to overwrite a live VM')
-        for vm in self.config.vms:
+        for vm in (*self.config.vms,*template_vms):
             self.tasks.run(transaction,'restore-'+checkpoint.path.name+'-'+vm.role,'/nodes/'+self.node+'/qemu',
                 {'archive':snapshots[vm.role]['path'],'vmid':vm.vmid,'force':1})
+        if checkpoint.data.get('image_checkpoint'):
+            from .image_checkpoint import restore
+            receipt=restore(checkpoint.data['image_checkpoint'],
+                self.environment.get('HEIST_ARTIFACT_LIBRARY','/var/lib/vz/import'),
+                self.state/'image-recovery'/transaction.path.name)
+            transaction.save(image_recovery=receipt)
         self._checkout(transaction,checkpoint.plan.source)
         if configuration is not None:
             restore_files(configuration)

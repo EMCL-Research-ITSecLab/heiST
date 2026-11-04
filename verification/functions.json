@@ -1185,5 +1185,58 @@
       "tests.test_browser_configuration.BrowserConfigurationTests.test_newlines_control_characters_invalid_hosts_and_invalid_ports_cannot_inject_environment"
     ],
     "rationale": "Asserts the web-only whitelist, restricted credentials and peer identity; host secrets/unknown settings and control-character injection are refused. Literal EnvironmentFile parsing has a separate native systemd rehearsal."
+  },
+  "heist/rollout/image_checkpoint.py::create": {
+    "tests": [
+      "tests.test_image_checkpoint.ImageCheckpointTests.test_recovery_restores_exact_old_library_and_keeps_newer_bytes_for_safety_recovery",
+      "tests.test_image_checkpoint.ImageCheckpointTests.test_corruption_unknown_files_and_destination_symlinks_refuse_before_library_changes",
+      "tests.test_image_checkpoint.ImageCheckpointTests.test_manifest_tampering_missing_payload_and_wrong_library_are_refused"
+    ],
+    "rationale": "Real private filesystem copies recover old/new image generations, preserve newer bytes separately and reject corrupt, incomplete, wrong-library and symlink state before overwriting the library. No guest disk is parsed."
+  },
+  "heist/rollout/image_checkpoint.py::inspect": {
+    "tests": [
+      "tests.test_image_checkpoint.ImageCheckpointTests.test_recovery_restores_exact_old_library_and_keeps_newer_bytes_for_safety_recovery",
+      "tests.test_image_checkpoint.ImageCheckpointTests.test_corruption_unknown_files_and_destination_symlinks_refuse_before_library_changes",
+      "tests.test_image_checkpoint.ImageCheckpointTests.test_manifest_tampering_missing_payload_and_wrong_library_are_refused"
+    ],
+    "rationale": "Real private filesystem copies recover old/new image generations, preserve newer bytes separately and reject corrupt, incomplete, wrong-library and symlink state before overwriting the library. No guest disk is parsed."
+  },
+  "heist/rollout/image_checkpoint.py::restore": {
+    "tests": [
+      "tests.test_image_checkpoint.ImageCheckpointTests.test_recovery_restores_exact_old_library_and_keeps_newer_bytes_for_safety_recovery",
+      "tests.test_image_checkpoint.ImageCheckpointTests.test_corruption_unknown_files_and_destination_symlinks_refuse_before_library_changes",
+      "tests.test_image_checkpoint.ImageCheckpointTests.test_manifest_tampering_missing_payload_and_wrong_library_are_refused"
+    ],
+    "rationale": "Real private filesystem copies recover old/new image generations, preserve newer bytes separately and reject corrupt, incomplete, wrong-library and symlink state before overwriting the library. No guest disk is parsed."
+  },
+  "heist/rollout/image_checkpoint.py::copy_file": {
+    "tests": [
+      "tests.test_image_checkpoint.ImageCheckpointTests.test_recovery_restores_exact_old_library_and_keeps_newer_bytes_for_safety_recovery",
+      "tests.test_image_checkpoint.ImageCheckpointTests.test_corruption_unknown_files_and_destination_symlinks_refuse_before_library_changes",
+      "tests.test_image_checkpoint.ImageCheckpointTests.test_manifest_tampering_missing_payload_and_wrong_library_are_refused"
+    ],
+    "rationale": "Real private filesystem copies recover old/new image generations, preserve newer bytes separately and reject corrupt, incomplete, wrong-library and symlink state before overwriting the library. No guest disk is parsed."
+  },
+  "heist/rollout/template_checkpoint.py::identity": {
+    "tests": [
+      "tests.test_template_checkpoint.TemplateCheckpointTests.test_stable_uuid_and_notes_are_recorded_without_changing_template_settings",
+      "tests.test_template_checkpoint.TemplateCheckpointTests.test_uncovered_disks_external_state_and_incomplete_imports_are_refused"
+    ],
+    "rationale": "Checks UUID/name identity without modifying source settings and rejects external/uncovered disks, incomplete import state and unknown template UUIDs. Actual VMA content recovery is a separate native gate."
+  },
+  "heist/rollout/template_checkpoint.py::disk_capacity": {
+    "tests": [
+      "tests.test_template_checkpoint.TemplateCheckpointTests.test_stable_uuid_and_notes_are_recorded_without_changing_template_settings",
+      "tests.test_template_checkpoint.TemplateCheckpointTests.test_uncovered_disks_external_state_and_incomplete_imports_are_refused"
+    ],
+    "rationale": "Checks UUID/name identity without modifying source settings and rejects external/uncovered disks, incomplete import state and unknown template UUIDs. Actual VMA content recovery is a separate native gate."
+  },
+  "heist/rollout/template_checkpoint.py::require_same_vm": {
+    "tests": [
+      "tests.test_template_checkpoint.TemplateCheckpointTests.test_stable_uuid_and_notes_are_recorded_without_changing_template_settings",
+      "tests.test_template_checkpoint.TemplateCheckpointTests.test_uncovered_disks_external_state_and_incomplete_imports_are_refused"
+    ],
+    "rationale": "Checks UUID/name identity without modifying source settings and rejects external/uncovered disks, incomplete import state and unknown template UUIDs. Actual VMA content recovery is a separate native gate."
   }
 }

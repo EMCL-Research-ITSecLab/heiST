@@ -17,7 +17,7 @@ class APITests(TestCase):
         self.db = MagicMock()
         self.db.cursor.return_value.__enter__.return_value.fetchone.return_value = (1,)
         self.connect = Mock(return_value=self.db)
-        self.app = create_app({'TESTING': True, 'BACKEND_AUTHENTICATION_TOKEN': 'test-only', 'MAINTENANCE_FILE': str(self.marker), 'CLEANUP_FILE': str(self.cleanup), 'TEMPLATE_LOCK_DIRECTORY': str(Path(self.temp.name)/'template-locks')}, {
+        self.app = create_app({'TESTING': True, 'OPERATION_DIRECTORY': str(Path(self.temp.name)/'operations'), 'BACKEND_AUTHENTICATION_TOKEN': 'test-only', 'MAINTENANCE_FILE': str(self.marker), 'CLEANUP_FILE': str(self.cleanup), 'TEMPLATE_LOCK_DIRECTORY': str(Path(self.temp.name)/'template-locks')}, {
             'launch_challenge': self.launch, 'delete_user_config': self.delete,
             'delete_machine_templates': Mock(side_effect=RuntimeError('private failure')), 'get_db_connection': self.connect})
         self.client = self.app.test_client()

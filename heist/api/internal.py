@@ -8,6 +8,7 @@ from heist.environment import load_backend_env as load_dotenv
 from flask import Flask, redirect, request, send_file
 from heist.infrastructure.locking import OperationBusy, operation_guard
 from heist.runtime import cleanup_is_complete
+from heist.platform.jobs.journal import Journal, RecoveryRequired
 
 
 def create_app(config=None, services=None):
@@ -15,6 +16,7 @@ def create_app(config=None, services=None):
     application.config.update(BACKEND_AUTHENTICATION_TOKEN=os.getenv('BACKEND_AUTHENTICATION_TOKEN'),
                               TEMPLATE_LOCK_DIRECTORY=os.getenv('HEIST_TEMPLATE_LOCK_DIRECTORY', '/run/heist-template-operations'),
                               CLEANUP_FILE=os.getenv('HEIST_CLEANUP_FILE', '/var/lock/cleanup_complete.lock'),
+                              OPERATION_DIRECTORY=os.getenv('HEIST_OPERATION_DIRECTORY', '/var/lib/heist/operations'),
                               MAX_CONTENT_LENGTH=65536, MAINTENANCE_FILE=os.getenv('HEIST_MAINTENANCE_FILE', '/run/heist-maintenance'))
     application.config.update(config or {})
     services = services or {}
@@ -64,6 +66,7 @@ def create_app(config=None, services=None):
     def action(name, fields, message, database=False, download=False):
         try:
             values = identifiers(*fields)
+            operation_id = Journal.request_id(request.headers.get('Idempotency-Key'))
         except ValueError:
             return {'error': 'Invalid input data', 'success': False}, 400
         db = None
@@ -79,15 +82,22 @@ def create_app(config=None, services=None):
                 values.append(ip_pool)
             guard = operation_guard(application.config['TEMPLATE_LOCK_DIRECTORY'], values[0], shared=name == 'launch_challenge') if name in ('launch_challenge', 'import_machine_templates', 'delete_machine_templates') else nullcontext()
             with guard:
-                result = service(name)(*values)
+                if name in ('launch_challenge', 'stop_challenge', 'import_machine_templates', 'delete_machine_templates'):
+                    scope = 'user' if name in ('launch_challenge', 'stop_challenge') else 'template'
+                    identifier = values[1] if name == 'launch_challenge' else values[0]
+                    journal = Journal(application.config['OPERATION_DIRECTORY'])
+                    result = journal.execute(scope, identifier, name, request.get_json(),
+                                             lambda: service(name)(*values), request_id=operation_id)
+                else:
+                    result = service(name)(*values)
             if download:
                 return send_file(result, as_attachment=True)
             response = {'message': message, 'success': True}
             if name == 'launch_challenge':
                 response['entrypoints'] = result
             return response, 200
-        except OperationBusy:
-            return {'error': 'An exercise image operation is still running', 'success': False}, 409
+        except (OperationBusy, BlockingIOError, RecoveryRequired):
+            return {'error': 'An operation is running or requires reconciliation; inspect before retrying', 'success': False}, 409
         except Exception:
             application.logger.exception('Backend action failed: %s', name)
             return {'error': 'Backend operation failed', 'success': False}, 500

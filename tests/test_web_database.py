@@ -61,6 +61,7 @@ class WebDatabaseTests(unittest.TestCase):
                     cursor.execute((root/'releases/migrations/0004_grading_time.sql').read_text())
                     cursor.execute((root/'releases/migrations/0005_account_deletion.sql').read_text())
                     cursor.execute((root/'releases/migrations/0006_authoring_state.sql').read_text())
+                    cursor.execute((root/'releases/migrations/0007_monotonic_resource_ids.sql').read_text())
                     cursor.execute("INSERT INTO public.vpn_static_ips(vpn_static_ip) SELECT ('10.64.0.'||n)::inet FROM generate_series(2,250) n ON CONFLICT DO NOTHING")
             cls.api_settings = {**cls.settings, 'user': cls.role, 'password': cls.password}
         except BaseException:
@@ -223,3 +224,31 @@ class WebDatabaseTests(unittest.TestCase):
                         self.repo.db()
                 finally:
                     cursor.execute(sql.SQL('REVOKE {} FROM {}').format(sql.Identifier(self.observer_role), sql.Identifier(self.role)))
+
+    def test_resource_allocators_never_reuse_reclaimed_ids(self):
+        with closing(self.psycopg2.connect(**self.settings)) as connection:
+            connection.autocommit = True
+            with connection.cursor() as cursor:
+                for resource, reclaim in (('user', 'user_id_reclaim'), ('machine', 'machine_id_reclaim'),
+                                          ('machine_template', 'machine_template_id_reclaim'),
+                                          ('network', 'network_id_reclaim'), ('challenge', 'challenge_id_reclaim')):
+                    cursor.execute('SELECT public.allocate_'+resource+'_id()')
+                    previous = cursor.fetchone()[0]
+                    cursor.execute('INSERT INTO public.'+reclaim+'(id) VALUES (%s) ON CONFLICT DO NOTHING', (previous,))
+                    cursor.execute('SELECT public.allocate_'+resource+'_id()')
+                    self.assertGreater(cursor.fetchone()[0], previous)
+
+    def test_monotonic_migration_advances_past_existing_and_reclaimed_high_water_marks(self):
+        with closing(self.psycopg2.connect(**self.settings)) as connection:
+            connection.autocommit = True
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT last_value FROM public.challenges_id_seq')
+                high = cursor.fetchone()[0]+100
+                cursor.execute('INSERT INTO public.challenge_id_reclaim(id) VALUES (%s)', (high,))
+                cursor.execute("SELECT password_hash, username FROM public.users WHERE id=%s", (self.user_id,))
+                protected = cursor.fetchone()
+                cursor.execute((Path(__file__).resolve().parents[1]/'releases/migrations/0007_monotonic_resource_ids.sql').read_text())
+                cursor.execute('SELECT public.allocate_challenge_id()')
+                self.assertGreater(cursor.fetchone()[0], high)
+                cursor.execute("SELECT password_hash, username FROM public.users WHERE id=%s", (self.user_id,))
+                self.assertEqual(cursor.fetchone(), protected)

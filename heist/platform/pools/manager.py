@@ -339,26 +339,18 @@ class PoolManager:
     def cleanup_leftover_from_crashed_processes(self):
         print("[CLEANUP] Checking for orphaned challenges")
 
-        cleanup_db_conn = get_db_connection()
-        ids = []
-        with cleanup_db_conn.cursor() as cursor:
-            cursor.execute("""
-                UPDATE challenges
-                SET lifecycle_state = 'TERMINATING'
-                WHERE lifecycle_state IN ('PROVISIONING', 'TERMINATING')
-                RETURNING id
-            """)
-            ids = [row[0] for row in cursor.fetchall()]
-
-        print(f"[CLEANUP] Found {len(ids)} orphaned challenges")
-
+        from heist.platform.jobs.journal import RecoveryRequired
+        with get_db_connection() as cleanup_db_conn:
+            with cleanup_db_conn.cursor() as cursor:
+                cursor.execute("SELECT COUNT(*) FROM challenges WHERE lifecycle_state = 'PROVISIONING'")
+                if cursor.fetchone()[0]:
+                    raise RecoveryRequired('Interrupted provisioning requires reconciliation before pool restart')
+                cursor.execute("SELECT id FROM challenges WHERE lifecycle_state = 'TERMINATING'")
+                ids = [row[0] for row in cursor.fetchall()]
+        # A provisioning state does not prove that a native task has stopped.
+        # Only previously claimed teardown is safe to resume idempotently.
         for cid in ids:
-            print(f"[CLEANUP] Scheduling teardown for orphaned instance {cid}")
-            threading.Thread(
-                target=teardown_challenge_backend,
-                args=(cid,),
-                daemon=True
-            ).start()
+            teardown_challenge_backend(cid)
 
     def teardown_expired_challenges(self):
         print("[EXPIRED] Checking for expired challenges")

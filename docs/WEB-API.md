@@ -211,3 +211,35 @@ signatures, and their checksums are not yet verified. Envelope inspection does
 not parse VMDK content: sandboxed disk validation must independently check format,
 virtual size, backing/external extents and conversion before publication. It is
 not yet connected to sealing or used as import authorization.
+
+## Interrupted operations and expiry
+
+Privileged start/stop/import/delete requests now write intent to a private,
+fsynced operation journal before invoking infrastructure. Resource leases cover
+execution. A repeated operation identity with identical input returns its recorded
+success; different input with the same identity is rejected. Exceptions or worker
+loss leave `NEEDS_REVIEW` (or an uncertain `RUNNING` record), blocking further
+mutations for that resource. External effects are not assumed to be exactly once.
+The web transport retains the same internal identity within a request; ambiguous
+outcomes still require status checks rather than an automatic fresh operation.
+
+`heist jobs status --scope user --resource ID` inspects a receipt. Local root
+recovery requires platform maintenance, the exact current operation identifier
+and a reason recording independent checks of native tasks/resources. Resolution
+acknowledges those checks; it does not execute teardown or reconstruct a lost
+result. Preserve operation journals across source updates and recovery. Browser
+recovery controls and full native-task reconciliation remain integration work.
+
+Migration `0007_monotonic_resource_ids.sql` stops recycling account, instance,
+network and machine IDs, advancing sequences past existing/reclaimed high-water
+marks without changing existing rows. It requires quiesced writers. Hypervisor
+inventory must still be checked for foreign/orphan resource collisions; sequence
+monotonicity does not certify ownership of an existing VM.
+
+The Python expiry service checks at most 100 expired assignments per sweep and
+rechecks assignment identity and expiry under row locks before removing access.
+A concurrent extension or changed assignment makes the stale expiry a no-op.
+Failures preserve assignments and fail the service visibly. The platform timer
+replaces the PHP worker only when the deployment adapter installs it and removes
+the old cron entry. Pool restart no longer converts unknown provisioning to
+teardown; unresolved provisioning requires explicit reconciliation.

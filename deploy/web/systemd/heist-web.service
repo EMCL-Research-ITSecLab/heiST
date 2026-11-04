@@ -11,6 +11,8 @@ User=heist-web
 Group=heist-web
 WorkingDirectory=/var/lib/heist-web
 EnvironmentFile=/etc/heist/web.env
+Environment=PYTHONPATH=/opt/heist-web/current/source
+Environment=PYTHONDONTWRITEBYTECODE=1
 ExecStart=/opt/heist-web/current/venv/bin/python -m heist.api.serve
 Restart=on-failure
 RestartSec=5

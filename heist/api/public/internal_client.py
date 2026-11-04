@@ -2,6 +2,7 @@
 from urllib.parse import urlsplit
 from pathlib import Path
 import json
+import uuid
 import requests
 from .errors import ApiError
 
@@ -30,14 +31,17 @@ class InternalClient:
         self.certificate = certificate
         self.session = session or requests.Session()
         self.session.trust_env = False
+        self.operation_ids = {}
 
     def request(self, operation, payload=None, *, download=False):
         if operation not in OPERATIONS:
             raise ValueError('Unsupported platform operation')
         method, endpoint, timeout = OPERATIONS[operation]
+        fingerprint = json.dumps([operation, payload], sort_keys=True)
+        operation_id = self.operation_ids.setdefault(fingerprint, uuid.uuid4().hex)
         try:
             response = self.session.request(method, self.origin+endpoint, json=payload,
-                        headers={'Authentication-Token': self.token, 'Accept': 'application/json'},
+                        headers={'Authentication-Token': self.token, 'Accept': 'application/json', 'Idempotency-Key': operation_id},
                         verify=self.certificate, timeout=(3, timeout), allow_redirects=False, stream=True)
             try:
                 if not 200 <= response.status_code < 300:

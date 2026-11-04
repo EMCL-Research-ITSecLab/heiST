@@ -15,7 +15,7 @@ CHALLENGES_ROOT_SUBNET_MASK_INT = sum(bin(int(x)).count('1') for x in CHALLENGES
 CHALLENGES_ROOT_SUBNET_CIDR = f"{CHALLENGES_ROOT_SUBNET}/{CHALLENGES_ROOT_SUBNET_MASK_INT}"
 
 
-def stop_challenge(user_id):
+def stop_challenge(user_id, *, expected_challenge_id=None, only_if_expired=False):
     """
     Stop a challenge for a user.
     """
@@ -27,6 +27,16 @@ def stop_challenge(user_id):
                 cursor.execute("SET LOCAL lock_timeout = '5s'")
                 cursor.execute("SET LOCAL statement_timeout = '10s'")
             user_static_ip, challenge_id = get_user_static_ip_and_challenge_id(user_id, db_conn)
+            if expected_challenge_id is not None and challenge_id != expected_challenge_id:
+                db_conn.rollback()
+                return False
+            if challenge_id is not None and only_if_expired:
+                with db_conn.cursor() as cursor:
+                    cursor.execute("SELECT expires_at <= CURRENT_TIMESTAMP FROM challenges WHERE id=%s FOR UPDATE", (challenge_id,))
+                    row = cursor.fetchone()
+                    if not row or row[0] is not True:
+                        db_conn.rollback()
+                        return False
             if challenge_id is not None:
                 remove_user_iptables_rules(user_static_ip)
                 with db_conn.cursor() as cursor:
@@ -46,6 +56,7 @@ def stop_challenge(user_id):
                 mark_challenge_expired(challenge_id, db_conn)
                 unassign_challenge_from_user(user_id, db_conn)
             db_conn.commit()
+            return challenge_id is not None
         except BaseException:
             db_conn.rollback()
             raise

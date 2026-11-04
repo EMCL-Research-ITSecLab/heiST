@@ -1,0 +1,11 @@
+[Unit]
+Description=Check heiST assignment expiry every minute
+
+[Timer]
+OnBootSec=60s
+OnUnitActiveSec=60s
+AccuracySec=5s
+Unit=heist-expiry.service
+
+[Install]
+WantedBy=timers.target

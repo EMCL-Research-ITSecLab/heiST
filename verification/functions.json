@@ -465,9 +465,11 @@
   },
   "heist/platform/challenges/stop.py::stop_challenge": {
     "tests": [
-      "tests.test_web_challenges.ChallengeTests.test_platform_stop_closes_trace_attempt_and_assignment_together_and_rolls_back_failure"
+      "tests.test_expiry.ExpiryTests.test_expired_assignment_is_unassigned_atomically_and_cannot_stop_a_new_instance",
+      "tests.test_expiry.ExpiryTests.test_extension_or_assignment_change_wins_over_stale_expiry_observation",
+      "tests.test_expiry.ExpiryTests.test_failed_firewall_cleanup_preserves_assignment_and_failed_sweep_is_visible"
     ],
-    "rationale": "Checks real PostgreSQL stop finalizes assignment, lifecycle, traces and attempts, repeats idempotently and retains state when firewall cleanup fails."
+    "rationale": "Real PostgreSQL checks atomic expiry/unassignment, stale identity and extension no-ops, and preserved assignment after firewall failure. Exact native firewall rule parsing is separately reviewed."
   },
   "heist/platform/challenges/stop.py::get_user_static_ip_and_challenge_id": {
     "tests": [
@@ -970,5 +972,139 @@
       "tests.test_web_artifacts.ArtifactUploadTests.test_invalid_chunk_content_and_size_cancel_and_unauthenticated_access"
     ],
     "rationale": "Real PostgreSQL/session tests assert administrator role refresh, owner isolation, chunk content/index errors, retry/cancel behavior and explicit 202 quarantine without registering a selectable disk. Worker and import integration remain unverified."
+  },
+  "heist/platform/jobs/journal.py::Journal.execute": {
+    "tests": [
+      "tests.test_operation_journal.OperationJournalTests.test_successful_retry_returns_recorded_result_without_repeating_effects",
+      "tests.test_operation_journal.OperationJournalTests.test_actual_worker_exit_leaves_uncertain_intent_and_blocks_other_work",
+      "tests.test_operation_journal.OperationJournalTests.test_exceptions_record_review_and_intent_io_failure_prevents_effects",
+      "tests.test_operation_journal.OperationJournalTests.test_live_operation_lease_blocks_second_writer_and_reports_running",
+      "tests.test_operation_journal.OperationJournalTests.test_invalid_resource_key_and_idempotency_key_never_call_effect"
+    ],
+    "rationale": "Real process death, native exclusive leases, durable intent, identical replay, input mismatch and explicit exact-ID recovery are asserted; journal recovery does not certify external task ownership or automatically replay effects."
+  },
+  "heist/platform/jobs/journal.py::Journal.inspect": {
+    "tests": [
+      "tests.test_operation_journal.OperationJournalTests.test_successful_retry_returns_recorded_result_without_repeating_effects",
+      "tests.test_operation_journal.OperationJournalTests.test_actual_worker_exit_leaves_uncertain_intent_and_blocks_other_work",
+      "tests.test_operation_journal.OperationJournalTests.test_exceptions_record_review_and_intent_io_failure_prevents_effects",
+      "tests.test_operation_journal.OperationJournalTests.test_live_operation_lease_blocks_second_writer_and_reports_running",
+      "tests.test_operation_journal.OperationJournalTests.test_invalid_resource_key_and_idempotency_key_never_call_effect"
+    ],
+    "rationale": "Real process death, native exclusive leases, durable intent, identical replay, input mismatch and explicit exact-ID recovery are asserted; journal recovery does not certify external task ownership or automatically replay effects."
+  },
+  "heist/platform/jobs/journal.py::Journal.resolve": {
+    "tests": [
+      "tests.test_operation_journal.OperationJournalTests.test_successful_retry_returns_recorded_result_without_repeating_effects",
+      "tests.test_operation_journal.OperationJournalTests.test_actual_worker_exit_leaves_uncertain_intent_and_blocks_other_work",
+      "tests.test_operation_journal.OperationJournalTests.test_exceptions_record_review_and_intent_io_failure_prevents_effects",
+      "tests.test_operation_journal.OperationJournalTests.test_live_operation_lease_blocks_second_writer_and_reports_running",
+      "tests.test_operation_journal.OperationJournalTests.test_invalid_resource_key_and_idempotency_key_never_call_effect"
+    ],
+    "rationale": "Real process death, native exclusive leases, durable intent, identical replay, input mismatch and explicit exact-ID recovery are asserted; journal recovery does not certify external task ownership or automatically replay effects."
+  },
+  "heist/platform/jobs/journal.py::Journal.resource": {
+    "tests": [
+      "tests.test_operation_journal.OperationJournalTests.test_successful_retry_returns_recorded_result_without_repeating_effects",
+      "tests.test_operation_journal.OperationJournalTests.test_actual_worker_exit_leaves_uncertain_intent_and_blocks_other_work",
+      "tests.test_operation_journal.OperationJournalTests.test_exceptions_record_review_and_intent_io_failure_prevents_effects",
+      "tests.test_operation_journal.OperationJournalTests.test_live_operation_lease_blocks_second_writer_and_reports_running",
+      "tests.test_operation_journal.OperationJournalTests.test_invalid_resource_key_and_idempotency_key_never_call_effect"
+    ],
+    "rationale": "Real process death, native exclusive leases, durable intent, identical replay, input mismatch and explicit exact-ID recovery are asserted; journal recovery does not certify external task ownership or automatically replay effects."
+  },
+  "heist/platform/jobs/journal.py::Journal.request_id": {
+    "tests": [
+      "tests.test_operation_journal.OperationJournalTests.test_successful_retry_returns_recorded_result_without_repeating_effects",
+      "tests.test_operation_journal.OperationJournalTests.test_actual_worker_exit_leaves_uncertain_intent_and_blocks_other_work",
+      "tests.test_operation_journal.OperationJournalTests.test_exceptions_record_review_and_intent_io_failure_prevents_effects",
+      "tests.test_operation_journal.OperationJournalTests.test_live_operation_lease_blocks_second_writer_and_reports_running",
+      "tests.test_operation_journal.OperationJournalTests.test_invalid_resource_key_and_idempotency_key_never_call_effect"
+    ],
+    "rationale": "Real process death, native exclusive leases, durable intent, identical replay, input mismatch and explicit exact-ID recovery are asserted; journal recovery does not certify external task ownership or automatically replay effects."
+  },
+  "heist/platform/challenges/expiry.py::expired_assignments": {
+    "tests": [
+      "tests.test_expiry.ExpiryTests.test_failed_firewall_cleanup_preserves_assignment_and_failed_sweep_is_visible"
+    ],
+    "rationale": "Real PostgreSQL expiry selection, independent assignment sweep parameters and visible partial failure; native firewall is mocked to protect the appliance host."
+  },
+  "heist/platform/challenges/expiry.py::sweep": {
+    "tests": [
+      "tests.test_expiry.ExpiryTests.test_failed_firewall_cleanup_preserves_assignment_and_failed_sweep_is_visible"
+    ],
+    "rationale": "Real PostgreSQL expiry selection, independent assignment sweep parameters and visible partial failure; native firewall is mocked to protect the appliance host."
+  },
+  "heist/runtime_bundle.py::requirements": {
+    "tests": [
+      "tests.test_runtime_bundle.RuntimeBundleTests.test_exact_source_and_wheels_produce_hash_locked_offline_requirements",
+      "tests.test_runtime_bundle.RuntimeBundleTests.test_correct_internal_hashes_cannot_disguise_altered_git_source",
+      "tests.test_runtime_bundle.RuntimeBundleTests.test_missing_unpinned_duplicate_and_wrong_platform_wheels_fail",
+      "tests.test_runtime_bundle.RuntimeBundleTests.test_pax_size_expansion_is_bounded_before_tar_parser_allocates_payload"
+    ],
+    "rationale": "Checks trusted Git byte comparison, complete wheel/pin identity, hashed offline input and bounded compressed/PAX expansion. Native venv installation and update adapters remain separate acceptance gates."
+  },
+  "heist/runtime_bundle.py::wheel_identity": {
+    "tests": [
+      "tests.test_runtime_bundle.RuntimeBundleTests.test_exact_source_and_wheels_produce_hash_locked_offline_requirements",
+      "tests.test_runtime_bundle.RuntimeBundleTests.test_correct_internal_hashes_cannot_disguise_altered_git_source",
+      "tests.test_runtime_bundle.RuntimeBundleTests.test_missing_unpinned_duplicate_and_wrong_platform_wheels_fail",
+      "tests.test_runtime_bundle.RuntimeBundleTests.test_pax_size_expansion_is_bounded_before_tar_parser_allocates_payload"
+    ],
+    "rationale": "Checks trusted Git byte comparison, complete wheel/pin identity, hashed offline input and bounded compressed/PAX expansion. Native venv installation and update adapters remain separate acceptance gates."
+  },
+  "heist/runtime_bundle.py::safe_path": {
+    "tests": [
+      "tests.test_runtime_bundle.RuntimeBundleTests.test_exact_source_and_wheels_produce_hash_locked_offline_requirements",
+      "tests.test_runtime_bundle.RuntimeBundleTests.test_correct_internal_hashes_cannot_disguise_altered_git_source",
+      "tests.test_runtime_bundle.RuntimeBundleTests.test_missing_unpinned_duplicate_and_wrong_platform_wheels_fail",
+      "tests.test_runtime_bundle.RuntimeBundleTests.test_pax_size_expansion_is_bounded_before_tar_parser_allocates_payload"
+    ],
+    "rationale": "Checks trusted Git byte comparison, complete wheel/pin identity, hashed offline input and bounded compressed/PAX expansion. Native venv installation and update adapters remain separate acceptance gates."
+  },
+  "heist/runtime_bundle.py::inspect_bundle": {
+    "tests": [
+      "tests.test_runtime_bundle.RuntimeBundleTests.test_exact_source_and_wheels_produce_hash_locked_offline_requirements",
+      "tests.test_runtime_bundle.RuntimeBundleTests.test_correct_internal_hashes_cannot_disguise_altered_git_source",
+      "tests.test_runtime_bundle.RuntimeBundleTests.test_missing_unpinned_duplicate_and_wrong_platform_wheels_fail",
+      "tests.test_runtime_bundle.RuntimeBundleTests.test_pax_size_expansion_is_bounded_before_tar_parser_allocates_payload"
+    ],
+    "rationale": "Checks trusted Git byte comparison, complete wheel/pin identity, hashed offline input and bounded compressed/PAX expansion. Native venv installation and update adapters remain separate acceptance gates."
+  },
+  "heist/runtime_bundle.py::hashed_requirements": {
+    "tests": [
+      "tests.test_runtime_bundle.RuntimeBundleTests.test_exact_source_and_wheels_produce_hash_locked_offline_requirements",
+      "tests.test_runtime_bundle.RuntimeBundleTests.test_correct_internal_hashes_cannot_disguise_altered_git_source",
+      "tests.test_runtime_bundle.RuntimeBundleTests.test_missing_unpinned_duplicate_and_wrong_platform_wheels_fail",
+      "tests.test_runtime_bundle.RuntimeBundleTests.test_pax_size_expansion_is_bounded_before_tar_parser_allocates_payload"
+    ],
+    "rationale": "Checks trusted Git byte comparison, complete wheel/pin identity, hashed offline input and bounded compressed/PAX expansion. Native venv installation and update adapters remain separate acceptance gates."
+  },
+  "heist/runtime_bundle.py::BoundedReader.read": {
+    "tests": [
+      "tests.test_runtime_bundle.RuntimeBundleTests.test_exact_source_and_wheels_produce_hash_locked_offline_requirements",
+      "tests.test_runtime_bundle.RuntimeBundleTests.test_correct_internal_hashes_cannot_disguise_altered_git_source",
+      "tests.test_runtime_bundle.RuntimeBundleTests.test_missing_unpinned_duplicate_and_wrong_platform_wheels_fail",
+      "tests.test_runtime_bundle.RuntimeBundleTests.test_pax_size_expansion_is_bounded_before_tar_parser_allocates_payload"
+    ],
+    "rationale": "Checks trusted Git byte comparison, complete wheel/pin identity, hashed offline input and bounded compressed/PAX expansion. Native venv installation and update adapters remain separate acceptance gates."
+  },
+  "heist/web_runtime.py::inventory": {
+    "tests": [
+      "tests.test_runtime_bundle.RuntimeBundleTests.test_activation_rejects_modified_installation_and_never_switches_current"
+    ],
+    "rationale": "Checks installed source mutation detection and atomic current-link activation in a private temporary root; native CPython installation/service startup are not implied."
+  },
+  "heist/web_runtime.py::verify": {
+    "tests": [
+      "tests.test_runtime_bundle.RuntimeBundleTests.test_activation_rejects_modified_installation_and_never_switches_current"
+    ],
+    "rationale": "Checks installed source mutation detection and atomic current-link activation in a private temporary root; native CPython installation/service startup are not implied."
+  },
+  "heist/web_runtime.py::activate": {
+    "tests": [
+      "tests.test_runtime_bundle.RuntimeBundleTests.test_activation_rejects_modified_installation_and_never_switches_current"
+    ],
+    "rationale": "Checks installed source mutation detection and atomic current-link activation in a private temporary root; native CPython installation/service startup are not implied."
   }
 }

@@ -9,6 +9,8 @@ MODULE_COMMANDS = {
     'update': ('heist.rollout.cli', 'Alias for the full-platform release controller'),
     'db': ('heist.maintenance.database', 'Back up or restore PostgreSQL'),
     'upgrade': ('heist.rollout.cli', 'Plan, deploy or recover a full platform release'),
+    'jobs': ('heist.platform.jobs.cli', 'Inspect or reconcile interrupted operations'),
+    'expiry': ('heist.platform.challenges.expiry', 'Expire student assignments safely'),
     'web': ('heist.api.serve', 'Run the unprivileged browser API with Gunicorn'),
 }
 SERVICE_COMMANDS = {

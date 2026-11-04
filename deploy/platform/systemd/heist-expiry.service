@@ -1,0 +1,13 @@
+[Unit]
+Description=Expire finished heiST student assignments
+After=network-online.target
+ConditionPathExists=!/run/heist-maintenance
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/root/heiST
+ExecStart=/root/heiST/.venv/bin/python -m heist.platform.challenges.expiry
+UMask=0077
+TimeoutStartSec=120
+KillMode=control-group

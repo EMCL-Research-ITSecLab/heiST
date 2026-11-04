@@ -124,3 +124,61 @@ class ManifestTests(unittest.TestCase):
         (self.root/'heist/installer').mkdir(parents=True)
         (self.root/'setup/requirements.txt').rename(self.root/'heist/installer/requirements.txt')
         self.assertEqual(self.plan().version, '0.2.0')
+
+    def browser_runtime_target(self):
+        from tests import test_runtime_bundle as fixtures
+        self.manifest.update(schema=3,frontend=True,web_runtime=True)
+        for name,body in fixtures.SOURCES.items():
+            self.write(name,body.decode())
+        self.write('deploy/web/requirements.txt',fixtures.REQUIREMENTS.decode())
+        self.git('rm','-qr','webserver')
+        self.write('releases/release.json',json.dumps(self.manifest))
+        self.commit()
+        target=self.git('rev-parse','HEAD').strip()
+        self.git('checkout','-q','--detach',self.source)
+        return target
+
+    def runtime_artifacts(self,target,change=None):
+        from unittest.mock import patch
+        from tests import test_runtime_bundle as fixtures
+        from tests.test_ui_assets import bundle
+        ui,runtime=self.root/'ui.tar.gz',self.root/'runtime.tar.gz'
+        ui.write_bytes(bundle(target,standalone=True))
+        with patch.object(fixtures,'COMMIT',target):
+            runtime.write_bytes(fixtures.bundle(change))
+        return ui,runtime
+
+    def test_runtime_plan_binds_both_artifacts_and_all_code_to_immutable_git(self):
+        from heist.runtime_bundle import digest
+        from heist.rollout.manifest import Plan
+        target=self.browser_runtime_target()
+        ui,runtime=self.runtime_artifacts(target)
+        plan=build_plan(self.root,target,'releases/release.json','config',ui,runtime)
+        self.assertEqual(plan.schema,3)
+        self.assertEqual(plan.runtime_bundle,{'path':str(runtime),'sha256':digest(runtime.read_bytes())})
+        self.assertEqual(plan.web_after,())
+        self.assertEqual(Plan.from_dict(plan.to_dict()),plan)
+        self.runtime_artifacts(target,lambda files:files.update({'source/heist/api/serve.py':b'print("altered")\n'}))
+        with self.assertRaisesRegex(ValueError,'trusted Git'):
+            build_plan(self.root,target,'releases/release.json','config',ui,runtime)
+
+    def test_runtime_plan_refuses_missing_runtime_legacy_ui_and_changed_dependency_pins(self):
+        from tests.test_ui_assets import bundle
+        target=self.browser_runtime_target()
+        ui,runtime=self.runtime_artifacts(target)
+        with self.assertRaisesRegex(ValueError,'--runtime-bundle'):
+            build_plan(self.root,target,'releases/release.json','config',ui)
+        ui.write_bytes(bundle(target))
+        with self.assertRaisesRegex(ValueError,'standalone frontend'):
+            build_plan(self.root,target,'releases/release.json','config',ui,runtime)
+        self.runtime_artifacts(target,lambda files:files.update({'requirements.txt':b'gunicorn==99\npip==24.0\n'}))
+        with self.assertRaisesRegex(ValueError,'trusted source'):
+            build_plan(self.root,target,'releases/release.json','config',ui,runtime)
+
+    def test_legacy_release_cannot_accept_an_undeclared_runtime(self):
+        target=self.frontend_target()
+        ui,_=self.runtime_artifacts(target)
+        from tests.test_ui_assets import bundle
+        ui.write_bytes(bundle(target))
+        with self.assertRaisesRegex(ValueError,'does not declare a browser runtime'):
+            build_plan(self.root,target,'releases/release.json','config',ui,'undeclared.tar.gz')

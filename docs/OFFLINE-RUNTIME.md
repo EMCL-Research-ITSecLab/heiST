@@ -25,8 +25,19 @@ prints the source commit and artifact SHA256; retain both with the release.
 Dependency pins and wheel hashes must be reviewed as release input. Bundle
 checksums bind contents to the artifact, not to a publisher signature.
 
-Release planning must compare bundle source bytes with the target's immutable
-Git objects and requirements, then pin the full artifact hash. The installer
+Schema-3 release planning compares every bundled Python source byte and the
+requirements with the target's immutable Git objects, requires the matching
+standalone UI bundle and pins both full artifact hashes. The CLI accepts
+`--ui-bundle` and `--runtime-bundle` only when the release declares them. Schema-1
+and schema-2 releases refuse an undeclared runtime. Planning tests reject altered
+source even when an artifact's internal checksums have been recomputed.
+
+The Proxmox execution adapter currently refuses schema 3 before maintenance.
+Planning is reviewable; applying it remains blocked until the full dependency,
+role, service, image/template and recovery adapter passes appliance acceptance.
+No schema-3 production release manifest is published in this branch yet.
+
+ The installer
 checks that pinned hash again, creates an immutable versioned venv, installs with
 `--no-index --no-deps --require-hashes`, checks dependencies and imports the app.
 It records the complete installed runtime inventory. Activation verifies this

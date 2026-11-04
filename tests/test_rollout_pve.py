@@ -12,6 +12,13 @@ from heist.rollout.pve import PVE
 
 
 class RestoreIdentityTests(unittest.TestCase):
+    def test_unfinished_runtime_adapter_is_refused_before_any_host_mutation(self):
+        adapter=PVE.__new__(PVE)
+        adapter.command=Mock();adapter.remote=Mock()
+        with self.assertRaisesRegex(RuntimeError,'no maintenance was entered'):
+            adapter.preflight(SimpleNamespace(schema=3))
+        adapter.command.assert_not_called();adapter.remote.assert_not_called()
+
     def test_old_restore_and_newer_safety_recovery_have_distinct_task_identities(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

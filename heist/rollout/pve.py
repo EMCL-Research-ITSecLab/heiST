@@ -126,6 +126,8 @@ class PVE:
         return result
 
     def preflight(self, plan):
+        if plan.schema == 3:
+            raise RuntimeError('Browser runtime deployment/recovery adapter is not yet approved; no maintenance was entered')
         if os.geteuid()!=0 or not Path('/etc/pve/local').is_dir():
             raise RuntimeError('Rollouts require root on the declared Proxmox host')
         if sys.version_info<(3,12):raise RuntimeError('Rollout runner requires Python 3.12 or newer')
@@ -135,7 +137,9 @@ class PVE:
         if str(self.installation.resolve())!=plan.installation or revision(self.installation,'HEAD')!=plan.source:
             raise RuntimeError('Installed source changed after planning')
         if not plan.rollback:
-            if build_plan(self.installation,plan.target,plan.manifest_path,self.config_sha256, plan.ui_bundle['path'] if plan.ui_bundle else None)!=plan:
+            if build_plan(self.installation,plan.target,plan.manifest_path,self.config_sha256,
+                          plan.ui_bundle['path'] if plan.ui_bundle else None,
+                          plan.runtime_bundle['path'] if plan.runtime_bundle else None)!=plan:
                 raise RuntimeError('Release/configuration changed after planning')
         if self.database.host!=self.config.vm('database').host:
             raise RuntimeError('The configured database is not the checkpointed database VM')

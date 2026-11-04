@@ -31,6 +31,7 @@ class Plan:
     source_version: str = 'unknown'
     rollback: bool = False
     ui_bundle: dict | None = None
+    runtime_bundle: dict | None = None
 
     def to_dict(self):
         return json.loads(json.dumps(asdict(self)))
@@ -86,7 +87,7 @@ def web_files(repository, commit, *, production):
     return tuple(sorted(result))
 
 
-def build_plan(repository, target, manifest_path, config_sha256, ui_bundle=None):
+def build_plan(repository, target, manifest_path, config_sha256, ui_bundle=None, runtime_bundle=None):
     repository = Path(repository).resolve()
     source = revision(repository, 'HEAD')
     target = revision(repository, target)
@@ -94,22 +95,53 @@ def build_plan(repository, target, manifest_path, config_sha256, ui_bundle=None)
     body = blob(repository, target, manifest_path)
     release = json.loads(body)
     required = {'schema', 'version', 'supported_from', 'migrations', 'protected_tables'}
-    frontend = release.get('schema') == 2 and release.get('frontend') is True
-    if set(release) != required | ({'frontend'} if frontend else set()) or release['schema'] not in (1, 2) or (release['schema'] == 2 and not frontend):
+    schema = release.get('schema')
+    frontend = schema in (2,3) and release.get('frontend') is True
+    runtime = schema == 3 and release.get('web_runtime') is True
+    if (type(schema) is not int or set(release) != required | ({'frontend'} if frontend else set()) | ({'web_runtime'} if runtime else set()) or
+            schema not in (1,2,3) or (schema in (2,3) and not frontend) or (schema == 3 and not runtime)):
         raise ValueError('Unsupported or incomplete release manifest')
     bundle = None
     if frontend:
-        from heist.ui_assets import inspect_bundle, digest
+        from heist.ui_assets import inspect_bundle, digest, MAX_BYTES
         if not ui_bundle:
             raise ValueError('This release requires a source-bound --ui-bundle built on a workstation')
         path = Path(ui_bundle).resolve(strict=True)
+        if path.stat().st_size > MAX_BYTES:
+            raise ValueError('Frontend bundle exceeds size limit')
         data = path.read_bytes()
         ui_metadata,_=inspect_bundle(data, target)
-        if ui_metadata['schema']!=1:
+        if not runtime and ui_metadata['schema']!=1:
             raise ValueError('Standalone Flask frontend requires the new browser-runtime deployment protocol')
+        if runtime and ui_metadata['schema']!=2:
+            raise ValueError('Browser runtime requires the standalone frontend bundle')
         bundle = {'path': str(path), 'sha256': digest(data)}
     elif ui_bundle:
         raise ValueError('This release does not declare a frontend bundle')
+    browser_runtime = None
+    if runtime:
+        from heist.runtime_bundle import inspect_bundle, digest, MAX_BYTES
+        if not runtime_bundle:
+            raise ValueError('This release requires a source-bound --runtime-bundle built on a workstation')
+        path = Path(runtime_bundle).resolve(strict=True)
+        if path.stat().st_size > MAX_BYTES:
+            raise ValueError('Browser runtime bundle exceeds size limit')
+        data = path.read_bytes()
+        sources = {}
+        for entry in git(repository,'ls-tree','-r','-z',target,'--','heist/').split(b'\0'):
+            if not entry:
+                continue
+            metadata,name = entry.split(b'\t',1)
+            name = name.decode()
+            if name.endswith('.py'):
+                if metadata.split()[0] not in (b'100644',b'100755'):
+                    raise ValueError('Runtime source must contain only regular Git files')
+                sources[name] = blob(repository,target,name)
+        inspect_bundle(data,target,source_files=sources,
+                       pinned_requirements=blob(repository,target,'deploy/web/requirements.txt'))
+        browser_runtime = {'path':str(path),'sha256':digest(data)}
+    elif runtime_bundle:
+        raise ValueError('This release does not declare a browser runtime bundle')
     if not re.fullmatch(r'\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?', release['version']):
         raise ValueError('Release version must be a semantic version')
     if source not in release['supported_from']:
@@ -117,18 +149,22 @@ def build_plan(repository, target, manifest_path, config_sha256, ui_bundle=None)
     if source == target:
         raise ValueError('Target is already installed')
     # Protocol v1 installs source, not new system/Python/Composer dependencies.
-    for candidates in (('heist/installer/requirements.txt', 'setup/requirements.txt'), ('webserver/html/composer.lock',)):
+    dependencies = [('heist/installer/requirements.txt', 'setup/requirements.txt')]
+    if not runtime:
+        dependencies.append(('webserver/html/composer.lock',))
+    for candidates in dependencies:
         values = []
         for commit in (source, target):
             name = next((name for name in candidates if git(repository, 'ls-tree', commit, '--', name)), None)
             values.append(blob(repository, commit, name) if name else None)
         if values[0] != values[1]:
             raise ValueError('Release needs a dependency migration not supported by protocol v1: ' + candidates[0])
-    old_composer = json.loads(blob(repository, source, 'webserver/html/composer.json'))
-    new_composer = json.loads(blob(repository, target, 'webserver/html/composer.json'))
-    for key in ('require', 'require-dev', 'repositories', 'scripts', 'config'):
-        if old_composer.get(key) != new_composer.get(key):
-            raise ValueError('Release changes Composer dependencies/plugins/scripts; an explicit adapter is required')
+    if not runtime:
+        old_composer = json.loads(blob(repository, source, 'webserver/html/composer.json'))
+        new_composer = json.loads(blob(repository, target, 'webserver/html/composer.json'))
+        for key in ('require', 'require-dev', 'repositories', 'scripts', 'config'):
+            if old_composer.get(key) != new_composer.get(key):
+                raise ValueError('Release changes Composer dependencies/plugins/scripts; an explicit adapter is required')
     if not release['protected_tables'] or any(not re.fullmatch(r'[a-z_][a-z0-9_]*', name) for name in release['protected_tables']):
         raise ValueError('Declare protected student/grade tables')
     migrations = []
@@ -154,4 +190,6 @@ def build_plan(repository, target, manifest_path, config_sha256, ui_bundle=None)
         raise ValueError('Release manifest and package versions differ')
     return Plan(release['schema'], str(repository), source, target, release['version'], manifest_path,
         hashlib.sha256(body).hexdigest(), config_sha256, tuple(migrations),
-        web_files(repository, source, production=False), web_files(repository, target, production=True), tuple(release['protected_tables']),source_version, ui_bundle=bundle)
+        web_files(repository, source, production=False),
+        () if runtime else web_files(repository, target, production=True),
+        tuple(release['protected_tables']),source_version, ui_bundle=bundle,runtime_bundle=browser_runtime)

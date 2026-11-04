@@ -1493,7 +1493,7 @@ event dns_request(c: connection, msg: dns_msg, query: string, qtype: count, qcla
     # High entropy detection - Zeek-compatible regex
     if (|query| >= 40) {{
         # Check for long strings of base64/base32-like characters
-        if (/[A-Za-z0-9+\/=]{{40,}}/ in query || /[A-Za-z2-7]{{40,}}/ in query) {{
+        if (/[A-Za-z0-9+\\/=]{{40,}}/ in query || /[A-Za-z2-7]{{40,}}/ in query) {{
             NOTICE([$note=CTF::DNSHighEntropy,
                    $msg=fmt("High entropy DNS query: %s", query),
                    $conn=c]);
@@ -1501,7 +1501,7 @@ event dns_request(c: connection, msg: dns_msg, query: string, qtype: count, qcla
     }}
 
     # Multi-level subdomain detection
-    local subdomains = split_string(query, /\./);
+    local subdomains = split_string(query, /\\./);
     if (|subdomains| > 6) {{
         NOTICE([$note=CTF::SuspiciousSubdomains,
                $msg=fmt("Multi-level DNS (%d): %s", |subdomains|, query),
@@ -1509,7 +1509,7 @@ event dns_request(c: connection, msg: dns_msg, query: string, qtype: count, qcla
     }}
 
     # Hex/IP encoded detection
-    if (/^[0-9a-f]{{8,}}\./ in query || /[0-9]{{1,3}}\.[0-9]{{1,3}}\.[0-9]{{1,3}}\.[0-9]{{1,3}}\./ in query) {{
+    if (/^[0-9a-f]{{8,}}\\./ in query || /[0-9]{{1,3}}\\.[0-9]{{1,3}}\\.[0-9]{{1,3}}\\.[0-9]{{1,3}}\\./ in query) {{
         NOTICE([$note=CTF::HexEncodedDomain,
                $msg=fmt("Hex/IP encoded domain: %s", query),
                $conn=c]);

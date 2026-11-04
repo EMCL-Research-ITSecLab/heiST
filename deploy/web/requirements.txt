@@ -13,3 +13,5 @@ idna==3.20
 urllib3==2.8.0
 certifi==2026.10.23
 gunicorn==26.2.0
+# Existing packaging tool, pinned to bootstrap stdlib venv without system ensurepip.
+pip==24.0

@@ -4,7 +4,9 @@ The candidate runtime builder packages trusted Git Python source and the pinned
 Flask/Gunicorn dependencies for CPython 3.12 on Linux x86_64. It refuses dirty
 source, missing/extra dependencies, duplicate wheel identities and unsupported
 wheel targets. The installation host needs Python 3.12 with venv support, and
-uses no package index during installation.
+uses no package index during installation. A pinned copy of the existing pip
+packaging tool bootstraps a stdlib venv without system ensurepip or an OS package
+download. Use the web VM's system Python, not a private interpreter under `/root`.
 
 Download only the existing approved pins on a workstation:
 

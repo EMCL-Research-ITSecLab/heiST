@@ -15,7 +15,7 @@ import subprocess
 import sys
 import tempfile
 
-from heist.runtime_bundle import MAX_BYTES, digest, hashed_requirements, inspect_bundle
+from heist.runtime_bundle import MAX_BYTES, digest, hashed_requirements, inspect_bundle, wheel_identity
 
 
 def environment():
@@ -70,12 +70,19 @@ def assert_directory(path):
     return path
 
 
+def public_interpreter():
+    executable = Path(os.path.realpath(sys._base_executable))
+    if executable.stat().st_mode & 0o005 != 0o005 or any(parent.stat().st_mode & 0o001 == 0 for parent in executable.parents):
+        raise ValueError('Use the system Python interpreter accessible to the unprivileged web service')
+
+
 def install(data, root, commit, artifact_sha256):
     if not isinstance(artifact_sha256, str) or digest(data) != artifact_sha256:
         raise ValueError('Runtime artifact checksum differs from the deployment plan')
     _, files = inspect_bundle(data, commit)
     if sys.version_info[:2] != (3, 12) or platform.system() != 'Linux' or platform.machine() != 'x86_64':
         raise ValueError('Browser runtime requires CPython 3.12 on Linux x86_64')
+    public_interpreter()
     root = assert_directory(root)
     versions = assert_directory(root/'versions')
     destination = versions/commit
@@ -92,9 +99,11 @@ def install(data, root, commit, artifact_sha256):
         locked = stage/'requirements-hashed.txt'
         locked.write_text(hashed_requirements(files))
         locked.chmod(0o644)
-        subprocess.run([sys.executable, '-I', '-m', 'venv', str(stage/'venv')], env=environment(), check=True, timeout=120, capture_output=True, umask=0o022)
+        subprocess.run([sys.executable, '-I', '-m', 'venv', '--without-pip', str(stage/'venv')], env=environment(), check=True, timeout=120, capture_output=True, umask=0o022)
         python = stage/'venv/bin/python'
-        subprocess.run([str(python), '-I', '-m', 'pip', 'install', '--no-index', '--only-binary=:all:', '--no-deps',
+        bootstrap = next(stage/name for name, body in files.items() if name.startswith('wheels/') and wheel_identity(Path(name).name, body)[0] == 'pip')
+        launch_pip = "import runpy,sys;sys.path.insert(0,sys.argv.pop(1));runpy.run_module('pip',run_name='__main__')"
+        subprocess.run([str(python), '-I', '-c', launch_pip, str(bootstrap), 'install', '--no-index', '--only-binary=:all:', '--no-deps',
                         '--require-hashes', '--find-links', str(stage/'wheels'), '-r', str(locked)],
                        env=environment(), check=True, timeout=180, capture_output=True, umask=0o022)
         subprocess.run([str(python), '-I', '-m', 'pip', 'check'], env=environment(), check=True, timeout=30, capture_output=True, umask=0o022)

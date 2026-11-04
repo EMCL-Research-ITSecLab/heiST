@@ -29,8 +29,8 @@ def requirements(body):
         if name in result:
             raise ValueError('Duplicate runtime dependency')
         result[name] = match[2]
-    if not result or 'gunicorn' not in result:
-        raise ValueError('Declare the approved Gunicorn runtime')
+    if not result or not {'gunicorn', 'pip'}.issubset(result):
+        raise ValueError('Declare the approved Gunicorn runtime and pinned pip bootstrap')
     return result
 
 

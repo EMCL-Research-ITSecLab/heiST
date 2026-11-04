@@ -10,11 +10,11 @@ from unittest.mock import patch
 from zipfile import ZipFile
 
 from heist.runtime_bundle import BoundedReader, digest, hashed_requirements, inspect_bundle, wheel_identity
-from heist.web_runtime import activate, verify
+from heist.web_runtime import activate, public_interpreter, verify
 
 COMMIT = 'a'*40
 SOURCES = {'heist/api/public/__init__.py': b'def create_app(): pass\n', 'heist/api/serve.py': b'pass\n'}
-REQUIREMENTS = b'gunicorn==26.2.0\n'
+REQUIREMENTS = b'gunicorn==26.2.0\npip==24.0\n'
 
 
 def wheel(name='gunicorn', version='26.2.0'):
@@ -26,7 +26,8 @@ def wheel(name='gunicorn', version='26.2.0'):
 
 def bundle(change=None, extras=()):
     files = {'source/'+name: body for name, body in SOURCES.items()} | {'requirements.txt': REQUIREMENTS,
-            'wheels/gunicorn-26.2.0-py3-none-any.whl': wheel()}
+            'wheels/gunicorn-26.2.0-py3-none-any.whl': wheel(),
+            'wheels/pip-24.0-py3-none-any.whl': wheel('pip', '24.0')}
     if change:
         change(files)
     metadata = {'schema': 1, 'source_commit': COMMIT, 'python': 'cp312', 'platform': 'linux_x86_64',
@@ -44,7 +45,7 @@ def bundle(change=None, extras=()):
 class RuntimeBundleTests(unittest.TestCase):
     def test_exact_source_and_wheels_produce_hash_locked_offline_requirements(self):
         _, files = inspect_bundle(bundle(), COMMIT, source_files=SOURCES, pinned_requirements=REQUIREMENTS)
-        self.assertEqual(hashed_requirements(files), 'gunicorn==26.2.0 --hash=sha256:'+digest(wheel())+'\n')
+        self.assertEqual(hashed_requirements(files), 'gunicorn==26.2.0 --hash=sha256:'+digest(wheel())+'\npip==24.0 --hash=sha256:'+digest(wheel('pip', '24.0'))+'\n')
         with self.assertRaises(ValueError):
             inspect_bundle(bundle(), 'b'*40)
         with self.assertRaises(ValueError):
@@ -105,3 +106,11 @@ class RuntimeBundleTests(unittest.TestCase):
             self.assertEqual((root/'current').resolve(), version)
             with self.assertRaises(ValueError):
                 verify(version, '../../outside')
+
+    def test_private_interpreter_is_refused_before_an_unusable_runtime_can_be_installed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            private = Path(temporary)/'python3.12'
+            private.write_bytes(b'placeholder')
+            private.chmod(0o755)
+            with patch('sys._base_executable', str(private)), self.assertRaises(ValueError):
+                public_interpreter()

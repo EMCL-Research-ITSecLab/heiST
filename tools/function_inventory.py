@@ -75,6 +75,7 @@ def evaluate(calls, verification, root=ROOT, *, passed_tests=()):
 
 
 def main(argv=None):
+    sys.path.insert(0, str(ROOT))
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args(argv)

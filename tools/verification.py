@@ -105,6 +105,7 @@ def verify_evidence(directory, commit, *, require_strict=False):
 
 
 def main(argv=None):
+    sys.path.insert(0, str(ROOT))
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest='action', required=True)
     sub.add_parser('catalogue', help='Validate case completeness and automated module traceability')

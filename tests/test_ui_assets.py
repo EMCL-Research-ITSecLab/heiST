@@ -5,6 +5,7 @@ from pathlib import Path
 import tarfile
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from heist.ui_assets import digest, inspect_bundle, install_bundle, verify_installation
 
@@ -31,6 +32,14 @@ def bundle(revision=COMMIT, asset='assets/ui/index-one.js', body=b'console.log("
 
 
 class UiAssetTests(unittest.TestCase):
+    def test_fresh_install_cannot_bootstrap_the_legacy_php_runtime_for_the_flask_ui(self):
+        from heist.installer.cli import main
+        with patch('heist.installer.bootstrap.bootstrap_requirements') as bootstrap:
+            for mode in ([], ['--mode','simple'], ['--mode','advanced']):
+                with self.subTest(mode=mode),self.assertRaisesRegex(RuntimeError,'no infrastructure was changed'):
+                    main(mode)
+            bootstrap.assert_not_called()
+
     def test_standalone_bundle_covers_index_and_presets_and_detects_local_index_edits(self):
         payload = bundle(standalone=True)
         metadata, files = inspect_bundle(payload, COMMIT)

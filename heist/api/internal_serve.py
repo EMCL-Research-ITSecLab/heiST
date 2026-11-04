@@ -8,7 +8,6 @@ import json
 import os
 from pathlib import Path
 import re
-import ssl
 import sys
 
 
@@ -67,3 +66,7 @@ def main(argv=None):
             return create_app()
     Application().run()
     return 0
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

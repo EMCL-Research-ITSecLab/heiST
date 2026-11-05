@@ -1541,6 +1541,8 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory={BACKEND_FILES_DIR}
+Environment=PYTHONUNBUFFERED=1
+Environment=POOL_MINIMAL_SIZE=0
 ExecStart={PROJECT_ROOT}/bin/pool_manager
 Restart=always
 RestartSec=5

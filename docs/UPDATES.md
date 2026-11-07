@@ -197,3 +197,26 @@ removes the invocation-owned VM. It requires root,
 `HEIST_TEST_BACKEND_ENV`, `HEIST_TEST_STORAGE` and an independent
 `HEIST_TEST_BACKUP_DIRECTORY`. It must run only on the disposable test host.
 Full multi-VM upgrade/rollback acceptance remains a separate release gate.
+
+### Browser runtime recovery integration status
+
+The repository no longer contains the PHP application or its package/test tools.
+Historical PHP/Composer names in the Python rollout agent recognize existing
+installations and older checkpoints; they are not a fresh installation path.
+
+`heist.rollout.browser_guest` stages verified offline Python and React artifacts
+behind the persistent web maintenance gate. It creates a dedicated service account,
+preserves original media files, rejects conflicting destination bytes and unsafe
+paths, and starts the API behind maintenance. Artifact writers remain stopped until
+the controller commits. This helper still requires controller/install integration
+and native deployment acceptance; invoking it directly is not an approved rollout.
+
+Host checkpoints now retain the selected immutable privileged Gunicorn runtime and
+record declared configuration files absent before deployment. Recovery can remove
+only unchanged, hash-bound files created by that deployment. Unknown local edits
+are retained for reconciliation, including edits made while VM restoration runs.
+Older and newer runtime selections are restored without deleting cached versions.
+
+Protocol 3 admission and the fresh installer remain closed until full installation,
+legacy migration and multi-VM upgrade/rollback acceptance pass. Portable helper
+assertions and the single-template native recovery test do not satisfy those gates.

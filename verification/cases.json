@@ -1790,6 +1790,34 @@
       "sources": [
         "tests/integration/proxmox/checkpoint.py"
       ]
+    },
+    {
+      "id": "AUTO-BROWSER-GUEST",
+      "area": "recovery",
+      "mode": "automated",
+      "procedure": "Run tests/test_browser_guest.py through tools/check.py.",
+      "expected": "Admission requires root and persistent maintenance; media copies preserve original bytes, reject conflicts and refuse symlink traversal.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output"
+      ],
+      "sources": [
+        "tests/test_browser_guest.py"
+      ]
+    },
+    {
+      "id": "AUTO-INTERNAL-RUNTIME-RECOVERY",
+      "area": "recovery",
+      "mode": "automated",
+      "procedure": "Run tests/test_internal_runtime_recovery.py through tools/check.py.",
+      "expected": "Older and newer runtime selections recover without changing immutable payloads; corrupt files and escaping links are refused.",
+      "evidence": [
+        "source-bound suite receipt",
+        "test output"
+      ],
+      "sources": [
+        "tests/test_internal_runtime_recovery.py"
+      ]
     }
   ]
 }

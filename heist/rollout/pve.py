@@ -33,7 +33,7 @@ from .tasks import Tasks
 UI_AGENT = Path(ui_assets.__file__).read_text().split("if __name__ == '__main__':")[0]
 
 class PVE:
-    units = ('pool_manager','cleanup','backend')
+    units = ('pool_manager','cleanup','backend','heist-expiry.timer','heist-expiry.service')
 
     def __init__(self, config, config_sha256):
         self.config, self.config_sha256 = config, config_sha256
@@ -71,6 +71,26 @@ class PVE:
 
     def is_running(self, vm):
         return self.command(['qm','status',vm.vmid]).decode().strip()=='status: running'
+
+    def template_configuration(self,vm):
+        values=dict(self.configuration(vm))
+        stores={}
+        for name,value in tuple(values.items()):
+            if not re.fullmatch(r'(?:sata|scsi|virtio|ide)\d+',name) or 'media=cdrom' in value or 'cloudinit' in value or re.search(r'(?:^|,)size=',value):
+                continue
+            volume=value.split(',')[0]
+            if ':' not in volume:raise RuntimeError('Template disk does not use managed storage')
+            storage=volume.split(':')[0]
+            if storage not in stores:
+                records=self.request('GET','/nodes/'+self.node+'/storage/'+storage+'/content',{'vmid':vm.vmid})
+                if not isinstance(records,list):raise RuntimeError('Template storage capacity was not confirmed')
+                stores[storage]={item.get('volid'):item.get('size') for item in records if isinstance(item,dict)}
+            size=stores[storage].get(volume)
+            if type(size) is not int or size<=0:raise RuntimeError('Template disk virtual capacity was not confirmed')
+            # Legacy imports may omit size= in qm config. Use the authenticated
+            # storage inventory; never inspect untrusted guest disks as root.
+            values[name]=value+',size='+str((size+1023)//1024)+'K'
+        return values
 
     def wait(self, operation, description):
         deadline=time.monotonic()+self.config.timeout
@@ -121,7 +141,7 @@ class PVE:
                 continue
             vm=SimpleNamespace(vmid=identifier)
             if self.is_running(vm):raise RuntimeError('Template VMs must be stopped before maintenance')
-            result[str(identifier)]=identity(self.configuration(vm))
+            result[str(identifier)]=identity(self.template_configuration(vm))
         return result
 
     def assert_idle(self, *, allow_ready):
@@ -219,7 +239,7 @@ class PVE:
         from .template_checkpoint import disk_capacity
         for identifier,item in templates.items():
             if not item.get('absent'):
-                capacity+=disk_capacity(self.configuration(SimpleNamespace(vmid=int(identifier))))
+                capacity+=disk_capacity(self.template_configuration(SimpleNamespace(vmid=int(identifier))))
         from .image_checkpoint import inventory
         capacity+=sum(item['bytes'] for item in inventory(self.environment.get('HEIST_ARTIFACT_LIBRARY','/var/lib/vz/import')).values())
         if shutil.disk_usage(backup).free<capacity+16*1024**3:
@@ -272,6 +292,7 @@ class PVE:
             for unit in self.units:
                 services[unit]={name:subprocess.run(['systemctl',verb,'--quiet',unit],capture_output=True).returncode==0
                     for name,verb in [('active','is-active'),('enabled','is-enabled')]}
+                services[unit]['installed']=subprocess.run(['systemctl','show','--property=LoadState','--value',unit],capture_output=True,text=True).stdout.strip()!='not-found'
             web_services=json.loads(self.remote(self.config.vm('web'),web.CAPTURE_SERVICES))
             web_runtime=json.loads(self.remote(self.config.vm('web'),web.CAPTURE_RUNTIME, {'root': self.config.web_root}))
             transaction.save(host_services=services, web_services=web_services, web_runtime=web_runtime,
@@ -279,7 +300,7 @@ class PVE:
         self._host_guard()
         self.remote(self.config.vm('web'),web.INSTALL_GUARD,{'program':web.FIREWALL})
         self.remote(self.config.vm('web'),web.QUIESCE)
-        self.command(['systemctl','stop',*self.units],timeout=180)
+        self.command(['systemctl','stop',*[name for name,state in transaction.data['host_services'].items() if state.get('installed',True)]],timeout=180)
         deadline=time.monotonic()+120
         while any(self._prediction_processes()):
             if time.monotonic()>deadline:raise RuntimeError('Prediction worker did not finish')
@@ -328,6 +349,14 @@ class PVE:
             inspect_bundle(data, transaction.plan.target)
             write_file(directory/'frontend.tar.gz', data)
             transaction.save(ui_bundle_checkpoint=str(directory/'frontend.tar.gz'))
+        if transaction.plan.runtime_bundle:
+            from heist.runtime_bundle import digest,inspect_bundle
+            bundle=transaction.plan.runtime_bundle
+            data=Path(bundle['path']).read_bytes()
+            if digest(data)!=bundle['sha256']:raise RuntimeError('Browser runtime changed after planning')
+            inspect_bundle(data,transaction.plan.target)
+            write_file(directory/'web-runtime.tar.gz',data)
+            transaction.save(runtime_bundle_checkpoint=str(directory/'web-runtime.tar.gz'))
         manager=Backups(PostgreSQL(self.database,self.config.vm('database').ssh),directory/'database')
         dump=manager.create('release')
         transaction.save(database_backup=str(dump))
@@ -346,7 +375,7 @@ class PVE:
             self._verify_archive(transaction,files[0])
             if vm.role.startswith('template-'):
                 from .template_checkpoint import identity
-                if identity(self.configuration(vm))!=templates[str(vm.vmid)]:
+                if identity(self.template_configuration(vm))!=templates[str(vm.vmid)]:
                     raise RuntimeError('Template identity changed during checkpoint')
             with files[0].open('rb') as stream:
                 os.fsync(stream.fileno())
@@ -354,7 +383,11 @@ class PVE:
             transaction.save(snapshots=snapshots)
         git(self.installation,'update-ref','refs/heist/releases/'+transaction.plan.target,transaction.plan.target)
         git(self.installation,'bundle','create',str(directory/'source.bundle'),'--all')
-        files=self.host_configuration_paths()
+        from .internal_runtime import capture
+        runtime=capture(self.state/'internal-runtime')
+        transaction.save(internal_runtime=runtime)
+        files=self.host_configuration_paths(runtime)
+        transaction.save(absent_host_files=[str(path) for path in files if not path.exists()])
         hashes={str(path):sha256(path) for path in files if path.is_file()}
         with tarfile.open(directory/'host-configuration.tar.gz','w:gz',dereference=True) as archive:
             for path in files:
@@ -367,12 +400,17 @@ class PVE:
         transaction.save(host_configuration_sha256=sha256(directory/'host-configuration.tar.gz'))
         write_json(directory/'checkpoint.json',transaction.data)
 
-    def host_configuration_paths(self):
+    def host_configuration_paths(self,runtime=None):
         paths = [Path(self.config.backend_env), self.installation/'setup/.env',
                  self.installation/'config/installer.env', Path(self.config.api_certificate)]
         key = self.environment.get('BACKEND_CERTIFICATE_KEY_FILE')
         if key:
             paths.append(Path(key))
+        paths.extend((Path('/etc/systemd/system/backend.service.d/heist-runtime.conf'),
+                      Path('/etc/systemd/system/heist-expiry.service'),
+                      Path('/etc/systemd/system/heist-expiry.timer'),self.state/'wazuh-api-leaf.pem'))
+        from .internal_runtime import paths as runtime_paths
+        paths.extend(runtime_paths(self.state/'internal-runtime',runtime))
         return paths
 
     def _verify_archive(self,transaction,path):
@@ -462,7 +500,9 @@ class PVE:
         if target and transaction.plan.ui_bundle and transaction.data['kind'] != 'rollback':
             program = UI_AGENT + '\nverify_installation(' + repr(self.config.web_root) + ', ' + repr(transaction.plan.target) + ')\n'
             self.config.vm('web').ssh.run(['python3', '-c', program], timeout=60)
-        for name,digest in transaction.data.get('resume_preserved_files',transaction.data.get('preserved_files',{})).items():
+        expected_files=dict(transaction.data.get('resume_preserved_files',transaction.data.get('preserved_files',{})))
+        if target and transaction.data['kind']!='rollback':expected_files.update(transaction.data.get('target_configuration_hashes',{}))
+        for name,digest in expected_files.items():
             if sha256(name)!=digest:raise RuntimeError('Preserved deployment configuration changed')
         legacy=not target or transaction.data['kind']=='rollback'
         self.wait(lambda:self._health(legacy=legacy,local_web=True, frontend=bool(target and transaction.plan.ui_bundle and transaction.data['kind'] != 'rollback')),'platform health')
@@ -489,7 +529,7 @@ class PVE:
             for vm in template_vms:
                 if vm.vmid in present:
                     if self.is_running(vm):raise RuntimeError('Refusing to overwrite a running template VM')
-                    require_same_vm(self.configuration(vm),template_catalogue[str(vm.vmid)])
+                    require_same_vm(self.template_configuration(vm),template_catalogue[str(vm.vmid)])
         retained={key:item for key,item in transaction.data.get('template_catalogue',{}).items()
                   if not item.get('absent') and template_catalogue.get(key,{}).get('absent',key not in template_catalogue)}
         if retained:
@@ -497,20 +537,32 @@ class PVE:
             for identifier,item in retained.items():
                 vm=SimpleNamespace(vmid=int(identifier))
                 if self.is_running(vm):raise RuntimeError('Newer template VM must remain stopped during rollback')
-                require_same_vm(self.configuration(vm),item)
+                require_same_vm(self.template_configuration(vm),item)
             transaction.save(retained_newer_templates=retained)
         if checkpoint.data.get('image_checkpoint'):
             from .image_checkpoint import inspect
             inspect(checkpoint.data['image_checkpoint'],self.environment.get('HEIST_ARTIFACT_LIBRARY','/var/lib/vz/import'))
-        from .host_configuration import inspect_checkpoint, restore_files
+        from .host_configuration import inspect_checkpoint, restore_files, validate_created_files, remove_created_files
         configuration = None
         if checkpoint.data.get('preserved_files'):
             configuration = inspect_checkpoint(
                 Path(checkpoint.data['backup_directory'])/'host-configuration.tar.gz',
-                checkpoint.data['preserved_files'], self.host_configuration_paths(),
+                checkpoint.data['preserved_files'], self.host_configuration_paths(checkpoint.data.get('internal_runtime')),
                 archive_sha256=checkpoint.data.get('host_configuration_sha256'))
+        created={}
+        if checkpoint.data.get('absent_host_files'):
+            known={**transaction.data.get('preserved_files',{}),**transaction.data.get('target_configuration_hashes',{})}
+            created=validate_created_files(checkpoint.data['absent_host_files'],known,self.host_configuration_paths(checkpoint.data.get('internal_runtime')))
+        if 'internal_runtime' in checkpoint.data:
+            from .internal_runtime import validate_current, paths as runtime_paths
+            validate_current(self.state/'internal-runtime')
+            runtime_paths(self.state/'internal-runtime',checkpoint.data['internal_runtime'])
         self._host_guard()
-        self.command(['systemctl','stop',*self.units],timeout=180)
+        stop=[unit for unit in self.units if unit in ('backend','cleanup','pool_manager') or Path('/etc/systemd/system',unit).exists()]
+        self.command(['systemctl','stop',*stop],timeout=180)
+        for unit in ('heist-expiry.timer','heist-expiry.service'):
+            if not checkpoint.data['host_services'].get(unit,{}).get('installed',False) and Path('/etc/systemd/system',unit).exists():
+                self.command(['systemctl','disable','--now',unit],timeout=60)
         for vm in self.config.vms:
             if self.is_running(vm):self.command(['qm','shutdown',vm.vmid,'--timeout','180'],timeout=210)
             if self.is_running(vm):raise RuntimeError('Refusing to overwrite a live VM')
@@ -524,11 +576,18 @@ class PVE:
                 self.state/'image-recovery'/transaction.path.name)
             transaction.save(image_recovery=receipt)
         self._checkout(transaction,checkpoint.plan.source)
+        remove_created_files(created)
         if configuration is not None:
+            if checkpoint.data.get('internal_runtime'):
+                from .internal_runtime import paths as runtime_paths
+                private_directory(runtime_paths(self.state/'internal-runtime',checkpoint.data['internal_runtime'])[0].parent)
             restore_files(configuration)
             from dotenv import dotenv_values
             self.environment = dotenv_values(self.config.backend_env)
             self.database = DatabaseSettings.from_mapping(self.environment)
+        if 'internal_runtime' in checkpoint.data:
+            from .internal_runtime import select
+            select(self.state/'internal-runtime',checkpoint.data['internal_runtime'])
         self._host_guard()
         for name,hexadecimal in {**checkpoint.data.get('replaced_shims', {}), **checkpoint.data.get('legacy_shims', {})}.items():
             path=self.installation/name;path.write_bytes(bytes.fromhex(hexadecimal));path.chmod(0o755)
@@ -574,6 +633,7 @@ class PVE:
             self.command(['systemctl','start','backend','cleanup'],timeout=180)
             transaction.save(writers_may_have_resumed=True)
         for unit,state in services.items():
+            if not state.get('installed',True):continue
             self.command(['systemctl','enable' if state['enabled'] else 'disable',unit])
             if state['active']:self.command(['systemctl','start',unit],timeout=180)
         self.remote(self.config.vm('web'),web.FINISH,{'services':web_services,'open':False})

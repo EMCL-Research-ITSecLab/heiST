@@ -48,12 +48,13 @@ def fsync_directory(path):
 
 def capture_services():
     states = {}
-    for unit in ('apache2', 'cron'):
+    for unit in ('apache2', 'cron','heist-web','heist-artifacts'):
         states[unit] = {
             name: subprocess.run(['systemctl', verb, '--quiet', unit],
                                  capture_output=True).returncode == 0
             for name, verb in [('active', 'is-active'), ('enabled', 'is-enabled')]
         }
+        states[unit]['installed']=subprocess.run(['systemctl','show','--property=LoadState','--value',unit],capture_output=True,text=True).stdout.strip()!='not-found'
     return states
 
 
@@ -81,7 +82,9 @@ def install_guard(config):
 
 
 def quiesce():
-    subprocess.run(['systemctl', 'disable', '--now', 'apache2', 'cron'], check=True)
+    services=capture_services()
+    installed=[name for name,state in services.items() if state['installed']]
+    subprocess.run(['systemctl', 'disable', '--now', *installed], check=True)
     deadline = time.monotonic() + 120
     while True:
         workers = []
@@ -199,6 +202,7 @@ def health(config):
 
 def finish(config):
     for name, state in config['services'].items():
+        if not state.get('installed',True):continue
         subprocess.run(['systemctl', 'enable' if state['enabled'] else 'disable', name], check=True)
         if state['active']:
             subprocess.run(['systemctl', 'start', name], check=True)
@@ -207,6 +211,8 @@ def finish(config):
         fsync_directory(STATE)
         if config['services']['cron']['active']:
             subprocess.run(['systemctl', 'start', 'cron'], check=True)
+        if config['services'].get('heist-artifacts',{}).get('active'):
+            subprocess.run(['systemctl','start','heist-artifacts'],check=True)
         subprocess.run(['python3', str(PROGRAM)], check=True)
 
 

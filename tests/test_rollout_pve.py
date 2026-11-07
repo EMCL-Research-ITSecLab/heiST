@@ -12,6 +12,35 @@ from heist.rollout.pve import PVE
 
 
 class RestoreIdentityTests(unittest.TestCase):
+    def test_legacy_template_capacity_comes_from_authenticated_storage_inventory(self):
+        adapter=PVE.__new__(PVE);adapter.node='pve'
+        adapter.configuration=Mock(return_value={'sata0':'local:123/base.qcow2'})
+        adapter.request=Mock(return_value=[{'volid':'local:123/base.qcow2','size':10*1024**3}])
+        value=adapter.template_configuration(SimpleNamespace(vmid=123))
+        self.assertEqual(value['sata0'],'local:123/base.qcow2,size=10485760K')
+        self.assertEqual(adapter.request.call_args.args,('GET','/nodes/pve/storage/local/content',{'vmid':123}))
+        adapter.request.return_value=[]
+        with self.assertRaisesRegex(RuntimeError,'virtual capacity'):
+            adapter.template_configuration(SimpleNamespace(vmid=123))
+
+    def test_foreign_template_uuid_is_refused_before_any_restore_or_service_change(self):
+        from heist.rollout.template_checkpoint import identity
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);archive=root/'vm.vma.zst';archive.write_bytes(b'archive')
+            saved={'template':'1','name':'template','smbios1':'uuid=5898f7b2-d8bd-42e0-a43e-d90f0f7d19b6'}
+            item={'path':str(archive),'bytes':7,'sha256':hashlib.sha256(b'archive').hexdigest()}
+            roles=('web','database','monitoring')
+            transaction=Transaction(root/'journal',{'snapshots':{role:item for role in (*roles,'template-123')},
+                'template_catalogue':{'123':identity(saved)}})
+            adapter=PVE.__new__(PVE);adapter.node='pve'
+            adapter.config=SimpleNamespace(vms=[SimpleNamespace(role=role) for role in roles])
+            adapter.tasks=Mock();adapter._host_guard=Mock();adapter.command=Mock()
+            adapter.request=Mock(return_value=[{'vmid':123}]);adapter.is_running=Mock(return_value=False)
+            adapter.configuration=Mock(return_value={**saved,'smbios1':'uuid=ac4f2ff8-8edc-4876-bff2-23b64874d29c'})
+            with self.assertRaisesRegex(RuntimeError,'foreign template'):
+                adapter.restore(transaction)
+            adapter._host_guard.assert_not_called();adapter.command.assert_not_called();adapter.tasks.run.assert_not_called()
+
     def test_unfinished_runtime_adapter_is_refused_before_any_host_mutation(self):
         adapter=PVE.__new__(PVE)
         adapter.command=Mock();adapter.remote=Mock()

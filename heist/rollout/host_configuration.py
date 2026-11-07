@@ -50,14 +50,44 @@ def restore_files(values):
     pending = {}
     for name, data in values.items():
         path = Path(name)
-        if path.is_file() and sha256(path) == hashlib.sha256(data).hexdigest():
-            continue
         if path.is_symlink() or any(parent.is_symlink() for parent in path.parents):
             raise RuntimeError('Symlink in host configuration recovery path')
         if path == Path('/etc/pve') or Path('/etc/pve') in path.parents:
             raise RuntimeError('Proxmox manages its own certificates and cluster configuration')
+        if path.is_file() and sha256(path) == hashlib.sha256(data).hexdigest():
+            continue
         if not path.parent.is_dir():
             raise RuntimeError('Host configuration recovery directory is missing')
         pending[path] = data
     for path, data in pending.items():
         write_file(path, data, mode=0o600)
+
+
+def validate_created_files(absent, current_hashes, allowed):
+    """A rollback may remove only a known file created by this deployment."""
+    allowed={str(Path(name)) for name in allowed}
+    pending={}
+    for name in absent:
+        path=Path(name)
+        if name not in allowed or not path.is_absolute() or '..' in path.parts:
+            raise RuntimeError('Undeclared deployment-created configuration path')
+        if path.is_symlink() or any(parent.is_symlink() for parent in path.parents):
+            raise RuntimeError('Symlink in deployment-created configuration path')
+        if not path.exists():continue
+        if not path.is_file() or name not in current_hashes or sha256(path)!=current_hashes[name]:
+            raise RuntimeError('Deployment-created configuration changed; preserve it for reconciliation')
+        pending[path]=current_hashes[name]
+    return pending
+
+
+def remove_created_files(paths):
+    from heist.files import fsync_directory
+    # VM recovery may take minutes. Recheck the complete removal set so a local
+    # edit made after admission is retained, before removing the first file.
+    for path,digest in paths.items():
+        if (path.is_symlink() or any(parent.is_symlink() for parent in path.parents)
+                or not path.is_file() or sha256(path)!=digest):
+            raise RuntimeError('Deployment-created configuration changed during recovery')
+    for path in paths:
+        path.unlink()
+        fsync_directory(path.parent)

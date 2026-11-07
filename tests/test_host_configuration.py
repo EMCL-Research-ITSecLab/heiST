@@ -11,6 +11,22 @@ from heist.files import sha256
 
 
 class HostConfigurationTests(unittest.TestCase):
+    def test_only_unmodified_deployment_created_files_can_be_removed(self):
+        from heist.rollout.host_configuration import validate_created_files,remove_created_files
+        path=self.root/'new-unit.service';path.write_bytes(b'reviewed target')
+        expected={str(path):sha256(path)}
+        pending=validate_created_files([str(path)],expected,[path])
+        self.assertEqual(pending,{path:expected[str(path)]})
+        path.write_bytes(b'unknown local edits')
+        with self.assertRaisesRegex(RuntimeError,'changed'):
+            validate_created_files([str(path)],expected,[path])
+        self.assertEqual(path.read_bytes(),b'unknown local edits')
+        with self.assertRaisesRegex(RuntimeError,'during recovery'):
+            remove_created_files(pending)
+        self.assertEqual(path.read_bytes(),b'unknown local edits')
+        path.write_bytes(b'reviewed target')
+        remove_created_files(pending);self.assertFalse(path.exists())
+
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
@@ -58,3 +74,10 @@ class HostConfigurationTests(unittest.TestCase):
         self.assertEqual(target.read_text(), 'foreign')
         with self.assertRaisesRegex(RuntimeError, 'Proxmox manages'):
             restore_files({'/etc/pve/heist-fixture-do-not-write': b'new data'})
+
+    def test_matching_bytes_do_not_admit_a_symlink_destination(self):
+        target=self.root/'target';target.write_bytes(b'checkpoint data')
+        link=self.root/'link';link.symlink_to(target)
+        with self.assertRaisesRegex(RuntimeError,'Symlink'):
+            restore_files({str(link):b'checkpoint data'})
+        self.assertTrue(link.is_symlink())

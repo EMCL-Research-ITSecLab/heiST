@@ -74,7 +74,11 @@ print('All six platform entry points resolve safely')
                 names = []
                 if isinstance(node, ast.ImportFrom) and node.module and node.module.startswith('heist.'):
                     names.append(node.module)
-                if isinstance(node, ast.Constant) and isinstance(node.value, str) and re.fullmatch(r'heist(?:\.[a-z_]+)+', node.value):
+                # Apache's heist.conf is a configuration filename, not a Python
+                # entry point. Keep real imports checked even with that name.
+                if (isinstance(node, ast.Constant) and isinstance(node.value, str)
+                        and node.value != 'heist.conf'
+                        and re.fullmatch(r'heist(?:\.[a-z_]+)+', node.value)):
                     names.append(node.value)
                 for module in names:
                     if source.relative_to(root).parts[:2] == ('heist', 'rollout') and module in {'heist.backend', 'heist.backend.pool_size_prediction'}:

@@ -1238,5 +1238,56 @@
       "tests.test_template_checkpoint.TemplateCheckpointTests.test_uncovered_disks_external_state_and_incomplete_imports_are_refused"
     ],
     "rationale": "Checks UUID/name identity without modifying source settings and rejects external/uncovered disks, incomplete import state and unknown template UUIDs. Actual VMA content recovery is a separate native gate."
+  },
+  "heist/rollout/internal_runtime.py::capture": {
+    "tests": [
+      "tests.test_internal_runtime_recovery.InternalRuntimeRecoveryTests.test_older_and_newer_selections_recover_without_replacing_immutable_runtime_bytes",
+      "tests.test_internal_runtime_recovery.InternalRuntimeRecoveryTests.test_runtime_parent_symlinks_are_refused_without_reading_external_payloads"
+    ],
+    "rationale": "Checks saved selection identity, immutable file digests, legacy absence and symlink rejection."
+  },
+  "heist/rollout/internal_runtime.py::select": {
+    "tests": [
+      "tests.test_internal_runtime_recovery.InternalRuntimeRecoveryTests.test_older_and_newer_selections_recover_without_replacing_immutable_runtime_bytes",
+      "tests.test_internal_runtime_recovery.InternalRuntimeRecoveryTests.test_corrupt_or_escaping_selection_is_refused_before_switching_current"
+    ],
+    "rationale": "Checks older/newer selection, legacy removal without payload deletion and corrupt runtime refusal."
+  },
+  "heist/rollout/browser_guest.py::migrate_media": {
+    "tests": [
+      "tests.test_browser_guest.BrowserGuestTests.test_legacy_media_is_copied_byte_for_byte_and_repeated_migration_is_idempotent",
+      "tests.test_browser_guest.BrowserGuestTests.test_untrusted_media_symlinks_never_follow_service_owned_paths"
+    ],
+    "rationale": "Checks actual file copy, identical repeated migration, preservation of conflicting newer bytes and external symlink refusal."
+  },
+  "heist/rollout/host_configuration.py::validate_created_files": {
+    "tests": [
+      "tests.test_host_configuration.HostConfigurationTests.test_only_unmodified_deployment_created_files_can_be_removed"
+    ],
+    "rationale": "Checks exact reviewed hash admission, local-edit refusal and preservation of changed bytes."
+  },
+  "heist/rollout/host_configuration.py::remove_created_files": {
+    "tests": [
+      "tests.test_host_configuration.HostConfigurationTests.test_only_unmodified_deployment_created_files_can_be_removed"
+    ],
+    "rationale": "Checks removal of the admitted deployment-created file."
+  },
+  "heist/rollout/pve.py::PVE.template_configuration": {
+    "tests": [
+      "tests.test_rollout_pve.RestoreIdentityTests.test_legacy_template_capacity_comes_from_authenticated_storage_inventory"
+    ],
+    "rationale": "Checks exact authenticated storage request, virtual-capacity conversion and rejection when the inventory lacks a volume."
+  },
+  "heist/rollout/browser_guest.py::read_bundle": {
+    "tests": [
+      "tests.test_browser_guest.BrowserGuestTests.test_oversized_and_symlinked_artifacts_are_refused"
+    ],
+    "rationale": "Checks exact-limit reads and rejection of oversized payloads, symlinks and non-regular files."
+  },
+  "heist/rollout/browser_guest.py::account": {
+    "tests": [
+      "tests.test_browser_guest.BrowserGuestTests.test_shared_primary_group_cannot_access_browser_private_data"
+    ],
+    "rationale": "Checks that an existing shared primary group cannot admit the isolated browser account; does not claim native user creation verification."
   }
 }

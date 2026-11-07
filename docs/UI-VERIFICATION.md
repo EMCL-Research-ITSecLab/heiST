@@ -71,3 +71,19 @@ It verifies secure persistent login/logout cookies, actual announcement
 create/edit/delete persistence and administrator role revocation. CI runs this
 suite against its disposable PostgreSQL service. Preserve database credentials
 in the environment rather than command-line arguments or logs.
+
+## Native web-role rehearsal
+
+`tools/local/rehearse_browser_guest.py` runs only on the opted-in, isolation-verified
+`heist-pilot`. It requires a completed, recovered baseline checkpoint, matching
+protected-data hashes, the original web VM ID, and source-bound runtime/UI bundles.
+It uses a separate disposable PostgreSQL database. The native guest installs the
+real Apache configuration and systemd Gunicorn service behind maintenance, probes
+its session API, kills the service main process to check systemd recovery, then
+restores and verifies the original complete web VM archive. Failed recovery leaves
+a private `RECOVERY_REQUIRED` journal; do not reopen access manually.
+
+This is web-role acceptance only. It does not exercise a complete target platform
+upgrade, target monitoring/VPN integration, fresh-host provisioning, or the full
+upgrade/rollback fault matrix. The production installer and protocol 3 gates remain
+closed. Run the workstation offline verifier immediately before this rehearsal.

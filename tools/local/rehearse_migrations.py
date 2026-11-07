@@ -126,7 +126,7 @@ def main(argv=None):
             assert adapter.protected_hashes(plan.protected_tables)==protected
             with owner.cursor() as cursor:
                 cursor.execute('SELECT count(*) FROM pg_roles WHERE rolname=%s',(roles[0],));assert cursor.fetchone()==(0,)
-            receipt['checks']['failed_upgrade_is_atomic']=True
+            receipt['checks']['failed_upgrade_preserves_rows_schema_and_roles']=True
             passwords=[secrets.token_urlsafe(48),secrets.token_urlsafe(48)]
             migrate(settings,plan,web_role=roles[0],web_password=passwords[0])
             assert adapter.protected_hashes(plan.protected_tables)==protected

@@ -108,6 +108,27 @@ class WebDatabaseTests(unittest.TestCase):
                                (self.username, self.username+'@example.invalid', self.old_hash, self.legacy_salt, '127.0.0.1'))
                 self.user_id = cursor.fetchone()[0]
 
+    def test_legacy_schema_usage_restrictions_still_allow_the_api_without_table_access(self):
+        owner=self.psycopg2.connect(**self.settings)
+        public_usage=False
+        try:
+            with owner.cursor() as cursor:
+                cursor.execute("SELECT EXISTS(SELECT 1 FROM pg_namespace n CROSS JOIN LATERAL aclexplode(COALESCE(n.nspacl,acldefault('n',n.nspowner))) a WHERE n.nspname='public' AND a.grantee=0 AND a.privilege_type='USAGE')")
+                public_usage=cursor.fetchone()[0]
+                cursor.execute('REVOKE USAGE ON SCHEMA public FROM PUBLIC')
+            owner.commit()
+            self.assertEqual(self.repo.call('web_user_identity',self.user_id,one=True)['username'],self.username)
+            with self.repo.db().cursor() as cursor:
+                cursor.execute("SELECT has_schema_privilege(current_user,'public','USAGE'),has_schema_privilege(current_user,'public','CREATE')")
+                self.assertEqual(cursor.fetchone(),(False,False))
+                with self.assertRaises(self.psycopg2.errors.InsufficientPrivilege):cursor.execute('SELECT * FROM public.users')
+        finally:
+            owner.rollback()
+            if public_usage:
+                with owner.cursor() as cursor:cursor.execute('GRANT USAGE ON SCHEMA public TO PUBLIC')
+                owner.commit()
+            owner.close()
+
     def test_opaque_session_rotation_expiry_and_revocation_use_real_storage(self):
         guest = self.sessions.rotate()
         self.assertIsNone(self.sessions.load(guest)['user_id'])

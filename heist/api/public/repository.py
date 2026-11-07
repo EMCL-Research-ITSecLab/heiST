@@ -30,7 +30,12 @@ class Repository:
                             AND NOT EXISTS(SELECT 1 FROM pg_auth_members m JOIN pg_roles r ON r.oid=m.member WHERE r.rolname=current_user)
                             AND NOT has_schema_privilege(current_user,'public','CREATE')
                             AND NOT has_schema_privilege(current_user,'api','CREATE')
-                            AND NOT has_table_privilege(current_user,'public.users','SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+                            AND EXISTS (
+                                SELECT 1 FROM pg_catalog.pg_class c
+                                JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
+                                WHERE n.nspname='public' AND c.relname='users' AND c.relkind='r'
+                                AND NOT pg_catalog.has_table_privilege(current_user,c.oid,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+                            )
                         ''')
                         if cursor.fetchone() != (True,):
                             raise PermissionError('The public API requires a restricted database role')

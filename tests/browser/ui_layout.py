@@ -46,9 +46,11 @@ class LayoutTests(BrowserFixture):
             challenge['description'] = 'evidence'*200
         self.responses['challenge']['challenge']['name'] = long_name
         self.responses['profile']['data']['basic']['full_name'] = long_name
+        self.responses['admin/operations']['data']['release']['commit'] = 'a'*40
+        self.responses['admin/operations']['data']['release']['active_transaction'] = '20261107T101010Z-123456789abc'
         for width in (320, 390, 1024):
             self.page.set_viewport_size({'width': width, 'height': 900})
-            for path in ('/dashboard', '/explore', '/challenge?id=4', '/profile'):
+            for path in ('/dashboard', '/explore', '/challenge?id=4', '/profile', '/operations'):
                 with self.subTest(width=width, path=path):
                     self.settled(path)
                     self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'), width)

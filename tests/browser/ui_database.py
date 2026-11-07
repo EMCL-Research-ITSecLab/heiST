@@ -138,7 +138,7 @@ class BrowserDatabaseTests(unittest.TestCase):
                 cursor.execute('UPDATE public.users SET is_admin=false WHERE id=%s',(self.user_id,))
             connection.commit()
         self.page.goto(self.origin+'/manage-ctf')
-        self.page.get_by_role('heading',name='This space is for administrators.',exact=True).wait_for()
+        self.page.get_by_role('heading',name='Administrator access required',exact=True).wait_for()
         self.assertEqual(self.page.get_by_role('button',name='Delete',exact=True).count(),0)
 
 

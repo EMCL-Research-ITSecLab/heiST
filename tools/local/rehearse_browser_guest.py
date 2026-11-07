@@ -106,15 +106,34 @@ def main(argv=None):
                     raise AssertionError('Native guest did not confirm the reviewed runtime')
                 transaction.save('VERIFYING', browser_deployment=receipt)
                 # No host API or challenge operation is necessary for this check.
-                # Run against the actual loopback Gunicorn listener on the web VM.
-                probe = '''import json,urllib.request,http.cookiejar
-base='http://127.0.0.1:8001'
-def get(path):
- with urllib.request.urlopen(base+path,timeout=15) as response:return json.load(response)
-assert get('/api/health/live')['status']=='alive'
-assert get('/api/session')['success'] is True
-print(json.dumps({'gunicorn_liveness':True,'session_api':True}))
-'''
+                # Verify Apache TLS, static routing and the real proxied Gunicorn API.
+                probe = """import hashlib,hmac,http.client,json,ssl
+from pathlib import Path
+certificate=Path(@CERTIFICATE@)
+context=ssl.create_default_context(cafile=str(certificate))
+context.check_hostname=False
+connection=http.client.HTTPSConnection('127.0.0.1',443,context=context,timeout=15)
+try:
+ connection.connect()
+ expected=hashlib.sha256(ssl.PEM_cert_to_DER_cert(certificate.read_text())).digest()
+ assert hmac.compare_digest(expected,hashlib.sha256(connection.sock.getpeercert(binary_form=True)).digest())
+ def get(path):
+  connection.request('GET',path)
+  response=connection.getresponse();body=response.read(2*1024**2)
+  assert response.status==200
+  return response,body
+ _,html=get('/login')
+ assert b'id="root"' in html
+ _,body=get('/api/health/live')
+ assert json.loads(body)['status']=='alive'
+ response,body=get('/api/session')
+ assert json.loads(body)['success'] is True
+ cookie=response.getheader('Set-Cookie','')
+ assert 'Secure' in cookie and 'HttpOnly' in cookie
+ print(json.dumps({'apache_spa':True,'gunicorn_liveness':True,'session_api':True,'secure_cookie':True,'tls_peer_pinned':True}))
+finally:
+ connection.close()
+""".replace('@CERTIFICATE@',repr(config.web_certificate))
                 checks = json.loads(config.vm('web').ssh.run(['/usr/bin/python3','-c',probe],timeout=30).stdout)
                 # Simulate worker failure; systemd must restart a real worker.
                 config.vm('web').ssh.run(['systemctl','kill','--signal=SIGKILL','--kill-whom=main','heist-web'],timeout=30)

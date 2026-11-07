@@ -79,7 +79,7 @@ in the environment rather than command-line arguments or logs.
 protected-data hashes, the original web VM ID, and source-bound runtime/UI bundles.
 It uses a separate disposable PostgreSQL database. The native guest installs the
 real Apache configuration and systemd Gunicorn service behind maintenance, probes
-its session API, kills the service main process to check systemd recovery, then
+its SPA and session API through pinned Apache HTTPS, checks secure cookies, kills the service main process to check systemd recovery, then
 restores and verifies the original complete web VM archive. Failed recovery leaves
 a private `RECOVERY_REQUIRED` journal; do not reopen access manually.
 

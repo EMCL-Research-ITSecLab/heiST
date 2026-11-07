@@ -1,15 +1,13 @@
 import { ActivityList, Card, ChallengeCard, Empty, PageTitle, ResourceState, Stat } from '../../components/ui.tsx';
 import { number, payload, row, rows, text } from '../../lib/data.ts';
 import { Link } from '../../lib/router.tsx';
-import { useResource, useSession } from '../../lib/state.tsx';
+import { useResource } from '../../lib/state.tsx';
 export function Dashboard() {
   const resource = useResource('/api/dashboard', 30000), data = payload(resource.data), user = row(data.user), progress = row(data.progress), active = row(data.active_challenge), timeline = row(data.timeline);
-  const session = useSession();
   return <>
     <PageTitle
       eyebrow="YOUR LEARNING WORKSPACE"
-      title={`Ready for your next discovery${text(user.username ?? session.user?.username) ? ', ' + text(user.username ?? session.user?.username) : ''}?`}
-      description="Pick up an investigation or find something new to explore."
+      title="Dashboard"
       action={<Link className="button" href="/explore">Explore challenges ↗</Link>} />
     <ResourceState {...resource}>
       <div className="stats-grid">

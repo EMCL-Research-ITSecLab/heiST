@@ -23,7 +23,7 @@ class BrowserTests(BrowserFixture):
     def test_student_cannot_open_administration_or_issue_admin_requests(self):
         self.role = 'student'
         self.visit('/manage-ctf')
-        self.assertIn('This space is for administrators', self.page.locator('main').inner_text())
+        self.assertIn('Administrator access required', self.page.locator('main').inner_text())
         self.assertEqual(self.mutations, [])
         self.assertEqual(self.page.get_by_role('link', name='Create challenge', exact=True).count(), 0)
 
@@ -125,6 +125,7 @@ class BrowserTests(BrowserFixture):
         self.page.get_by_role('link', name='Challenges', exact=True).click()
         self.page.wait_for_url('**/manage-ctf')
         self.page.wait_for_function("document.querySelector('.menu-button').getAttribute('aria-expanded') === 'false'")
+        self.page.get_by_role('button', name='Use light theme').click()
         self.page.get_by_role('button', name='Use dark theme').click()
         self.assertEqual(self.page.locator('html').get_attribute('data-theme'), 'dark')
         self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'), 390)

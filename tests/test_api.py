@@ -26,6 +26,14 @@ class APITests(TestCase):
         return self.client.open(route, method=method, base_url='https://localhost',
             headers={'Authentication-Token': 'test-only'}, **kwargs)
 
+    def test_yaml_preview_is_authenticated_and_has_no_provisioning_or_database_effect(self):
+        value = self.request('/admin/challenges/parse-yaml',json={'yaml':'ctf: {name: Practice}'})
+        self.assertEqual(value.status_code,200)
+        self.assertEqual(value.json['data']['name'],'Practice')
+        self.assertEqual(self.request('/admin/challenges/parse-yaml',json={'yaml':'ctf: &x {vms: *x}'}).status_code,400)
+        self.connect.assert_not_called()
+        self.launch.assert_not_called()
+
     def test_all_routes_require_auth_before_side_effects(self):
         for route in self.app.url_map.iter_rules():
             if route.endpoint != 'static':

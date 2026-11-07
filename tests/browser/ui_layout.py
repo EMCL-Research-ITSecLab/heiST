@@ -132,8 +132,47 @@ class LayoutTests(BrowserFixture):
             }""")
             self.assertEqual(failures, [], theme)
 
+    def test_official_branding_and_plain_page_titles(self):
+        self.settled('/dashboard')
+        logo = self.page.get_by_role('link',name='heiST home').get_by_role('img',name='heiST')
+        self.assertEqual(logo.get_attribute('src'),'/assets/logo/logo_dark.svg')
+        self.assertTrue(logo.evaluate('(image) => image.complete && image.naturalWidth > 0'))
+        self.assertEqual(self.page.get_by_role('main').get_by_role('heading',level=1).inner_text(),'Dashboard')
+        self.role = 'guest'
+        self.settled('/login')
+        self.assertEqual(self.page.get_by_role('main').get_by_role('heading',level=1).inner_text(),'Sign in')
+        self.assertEqual(self.page.get_by_text('Good to have you back.',exact=True).count(),0)
+
+    def test_yaml_import_populates_reviewable_form_without_creating_an_exercise(self):
+        imported = {'name':'Imported lab','description':'Imported description','category':'web','difficulty':'easy','isActive':True,
+                    'vms':[{'name':'target','ova_name':'fixture.ova','cores':2,'ram_gb':2,'domain_name':'lab.test','ad_role':'none'}],
+                    'subnets':[{'name':'entry','accessible':True,'dmz':False,'attached_vms':['target']}],
+                    'flags':[{'flag':'flag-from-yaml','description':'First flag','points':100,'user_specific':True,'vm_name':'target'}],
+                    'hints':[{'hint_text':'Imported hint','unlock_points':0}]}
+        self.responses['admin/challenges/options'] = {'success':True,'ovas':[{'filename':'fixture.ova'}]}
+        requests = []
+        def preview(route):
+            requests.append(route.request.post_data_json)
+            route.fulfill(json={'success':True,'data':imported})
+        self.context.route('**/api/admin/challenges/import-yaml',preview)
+        self.settled('/create-ctf')
+        self.page.get_by_label('YAML file',exact=True).set_input_files({'name':'exercise.yaml','mimeType':'application/yaml','buffer':b'ctf: {name: Imported lab}'})
+        self.page.get_by_text('YAML imported. Review the form before creating the challenge.',exact=True).wait_for()
+        self.assertEqual(self.page.get_by_label('Challenge name',exact=True).input_value(),'Imported lab')
+        self.assertEqual(self.page.get_by_label('Machine name',exact=True).input_value(),'target')
+        self.assertEqual(self.page.get_by_label('Hint text',exact=True).input_value(),'Imported hint')
+        self.assertEqual(requests,[{'yaml':'ctf: {name: Imported lab}'}])
+        self.assertFalse(any(method=='POST' and endpoint=='admin/challenges' for method,endpoint,_ in self.requests))
+        # An invalid replacement must preserve the existing draft.
+        self.context.unroute('**/api/admin/challenges/import-yaml',preview)
+        self.context.route('**/api/admin/challenges/import-yaml',lambda route:route.fulfill(status=400,json={'success':False,'message':'Invalid YAML document'}))
+        self.page.get_by_label('YAML file',exact=True).set_input_files({'name':'bad.yml','mimeType':'application/yaml','buffer':b'ctf: ['})
+        self.page.get_by_text('Invalid YAML document',exact=True).first.wait_for()
+        self.assertEqual(self.page.get_by_label('Challenge name',exact=True).input_value(),'Imported lab')
+
     def test_theme_survives_navigation_and_reload(self):
         self.settled('/dashboard')
+        self.page.get_by_role('button', name='Use light theme').click()
         self.page.get_by_role('button', name='Use dark theme').click()
         self.page.get_by_role('link', name='Challenges', exact=True).click()
         self.page.wait_for_url('**/manage-ctf')

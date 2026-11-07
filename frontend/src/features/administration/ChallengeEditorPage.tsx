@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Area, Card, Empty, Field, Notice, PageTitle, ResourceState, Select, Stat } from '../../components/ui.tsx';
 import { request } from '../../lib/api.ts';
-import { categories, difficulties, number, rows, text } from '../../lib/data.ts';
+import { categories, difficulties, number, row, rows, text, truth, type Row } from '../../lib/data.ts';
 import { Link, useRouter } from '../../lib/router.tsx';
 import { useAction, useResource } from '../../lib/state.tsx';
 type Machine = {
@@ -37,6 +37,7 @@ const key = () => crypto.randomUUID();
 export function CreateChallenge() {
   const resource = useResource('/api/admin/challenges/options'), action = useAction(), router = useRouter();
   const [machines, setMachines] = useState<Machine[]>([]), [networks, setNetworks] = useState<Network[]>([]), [flags, setFlags] = useState<Flag[]>([]), [hints, setHints] = useState<Hint[]>([]);
+  const [imported, setImported] = useState<Row>({}), [importVersion, setImportVersion] = useState(0);
   const ovaOptions: [
     string,
     string
@@ -48,6 +49,23 @@ export function CreateChallenge() {
   function updateNetwork(id: string, change: Partial<Network>) { setNetworks(items => items.map(item => item.key === id ? { ...item, ...change } : item)); }
   function updateFlag(id: string, change: Partial<Flag>) { setFlags(items => items.map(item => item.key === id ? { ...item, ...change } : item)); }
   function updateHint(id: string, change: Partial<Hint>) { setHints(items => items.map(item => item.key === id ? { ...item, ...change } : item)); }
+  async function importYaml(file: File | undefined) {
+    if (!file) return;
+    await action.run(async () => {
+      if (file.size > 256 * 1024) throw new Error('YAML file must be at most 256 KiB');
+      return {...await request('/api/admin/challenges/import-yaml', {method: 'POST', body: {yaml: await file.text()}}), message: 'YAML imported. Review the form before creating the challenge.'};
+    }, result => {
+      const value = row(result.data);
+      const nextMachines = rows(value.vms).map(vm => ({key: key(), name: text(vm.name), ova_name: text(vm.ova_name), cores: number(vm.cores), ram_gb: number(vm.ram_gb), domain_name: text(vm.domain_name), ad_role: text(vm.ad_role)}));
+      const machineKey = (name: unknown) => nextMachines.find(vm => vm.name === name)?.key ?? '';
+      setMachines(nextMachines);
+      setNetworks(rows(value.subnets).map(net => ({key: key(), name: text(net.name), dmz: truth(net.dmz), accessible: truth(net.accessible), machines: (Array.isArray(net.attached_vms) ? net.attached_vms : []).map(machineKey)})));
+      setFlags(rows(value.flags).map(flag => ({key: key(), flag: text(flag.flag), description: text(flag.description), points: number(flag.points), user_specific: truth(flag.user_specific), machine: machineKey(flag.vm_name)})));
+      setHints(rows(value.hints).map(hint => ({key: key(), hint_text: text(hint.hint_text), unlock_points: number(hint.unlock_points)})));
+      setImported(value);
+      setImportVersion(version => version + 1);
+    });
+  }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -66,12 +84,16 @@ export function CreateChallenge() {
   return <>
     <PageTitle
       eyebrow="ADMINISTRATION / NEW CHALLENGE"
-      title="Build a new investigation."
-      description="Define the learning experience, connect its machines and decide what discovery looks like."
+      title="Create challenge"
+      description="Configure machines, networks and flags."
       action={<Link href="/manage-ctf">← Back to challenges</Link>} />
     <Notice error={action.error} message={action.message} />
     <ResourceState {...resource}>
-      <form onSubmit={submit}>
+      <Card title="Import YAML">
+        <p className="muted">Import replaces the current form. It does not create a challenge.</p>
+        <Field label="YAML file" type="file" accept=".yaml,.yml" disabled={action.busy} onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; void importYaml(file); }} />
+      </Card>
+      <form key={importVersion} onSubmit={submit}>
         <fieldset disabled={action.busy} className="editor-fieldset">
           <div className="editor-layout">
             <div>
@@ -79,29 +101,32 @@ export function CreateChallenge() {
                 <Field
                   label="Challenge name"
                   name="name"
+                  defaultValue={text(imported.name)}
                   required
                   maxLength={100}
-                  placeholder="An investigation worth starting"
+                  placeholder="Challenge name"
                   pattern="[a-zA-Z0-9_\- ]+" />
                 <Area
                   label="Description"
                   name="description"
+                  defaultValue={text(imported.description)}
                   required
                   maxLength={2000}
                   placeholder="Give students context, objectives and a starting point." />
                 <div className="form-grid">
-                  <Select label="Category" name="category" options={categories} />
-                  <Select label="Difficulty" name="difficulty" options={difficulties} />
+                  <Select label="Category" name="category" defaultValue={text(imported.category, categories[0])} options={categories} />
+                  <Select label="Difficulty" name="difficulty" defaultValue={text(imported.difficulty, difficulties[0])} options={difficulties} />
                 </div>
                 <Field
                   label="Cover image (optional, up to 2 MiB)"
                   name="image"
                   type="file"
                   accept="image/png,image/jpeg,image/gif" />
-                <Area label="General hint (optional)" name="hint" maxLength={500} />
+                <Area label="General hint (optional)" name="hint" defaultValue={text(imported.hint)} maxLength={500} />
                 <Area
                   label="Tutor solution"
                   name="solution"
+                  defaultValue={text(imported.solution)}
                   maxLength={2000}
                   placeholder="The explanation shown by the server once the exercise is solved." />
               </Card>
@@ -157,7 +182,7 @@ export function CreateChallenge() {
                   </div>
                   <button className="danger subtle small" type="button" onClick={() => { setMachines(items => items.filter(item => item.key !== vm.key)); setNetworks(items => items.map(n => ({ ...n, machines: n.machines.filter(id => id !== vm.key) }))); setFlags(items => items.map(f => f.machine === vm.key ? { ...f, machine: '', user_specific: false } : f)); }}>Remove machine</button>
                 </fieldset>)}
-                {!machines.length && <Empty title="Give your investigation a home">Add machines from your artifact library.</Empty>}
+                {!machines.length && <Empty title="No machines">Add machines from your artifact library.</Empty>}
               </Card>
               <Card title="03 / Networks" action={<button
                 className="secondary small"
@@ -189,7 +214,7 @@ export function CreateChallenge() {
                   </div>
                   <button type="button" className="danger subtle small" onClick={() => setNetworks(items => items.filter(item => item.key !== network.key))}>Remove network</button>
                 </fieldset>)}
-                {!networks.length && <Empty title="Connect the pieces">Add a network and choose which machines belong to it.</Empty>}
+                {!networks.length && <Empty title="No networks">Add a network and choose which machines belong to it.</Empty>}
               </Card>
               <Card title="04 / Flags" action={<button
                 className="secondary small"
@@ -235,7 +260,7 @@ export function CreateChallenge() {
                     <input type="checkbox" checked={flag.user_specific} onChange={e => updateFlag(flag.key, { user_specific: e.target.checked })} />Generate a student-specific flag</label>
                   <button type="button" className="danger subtle small" onClick={() => setFlags(items => items.filter(item => item.key !== flag.key))}>Remove flag</button>
                 </fieldset>)}
-                {!flags.length && <Empty title="Define a discovery">Flags mark the important milestones in an investigation.</Empty>}
+                {!flags.length && <Empty title="No flags">Add the flags students must submit.</Empty>}
               </Card>
               <Card title="05 / Progressive hints" action={<button
                 className="secondary small"
@@ -264,7 +289,7 @@ export function CreateChallenge() {
               </Card>
             </div>
             <aside>
-              <Card title="Ready to share?">
+              <Card title="Availability">
                 <div className="summary-counts">
                   <Stat label="Machines" value={machines.length} />
                   <Stat label="Networks" value={networks.length} />
@@ -272,7 +297,7 @@ export function CreateChallenge() {
                   <Stat label="Total points" value={flags.reduce((total, flag) => total + flag.points, 0)} />
                 </div>
                 <label className="check">
-                  <input type="checkbox" name="isActive" />Make available to students</label>
+                  <input type="checkbox" name="isActive" defaultChecked={truth(imported.isActive)} />Make available to students</label>
                 <p className="muted">Leave this unchecked to create an inactive exercise for review.</p>
                 <button className="full" type="submit" disabled={action.busy}>
                   {action.busy ? 'Creating the environment…' : 'Create challenge →'}

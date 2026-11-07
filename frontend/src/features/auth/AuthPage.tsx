@@ -10,7 +10,7 @@ export function AuthPage({ mode }: {
   const session = useSession(), action = useAction(), router = useRouter();
   const [visible, setVisible] = useState(false);
   const signup = mode === 'signup', reset = mode === 'reset-password';
-  const title = signup ? 'Make room for discovery.' : reset ? 'A fresh start. A stronger password.' : 'Good to have you back.';
+  const title = signup ? 'Create account' : reset ? 'Change password' : 'Sign in';
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const body = new FormData(event.currentTarget);
@@ -24,29 +24,9 @@ export function AuthPage({ mode }: {
     await action.run(() => post(mode, body), async (data) => { await session.refresh(); router.navigate(reset || signup ? '/dashboard' : safeNext(new URLSearchParams(window.location.search).get('next') ?? text(data.redirect, '/dashboard')), true); });
   }
   return <div className="auth-layout">
-    <section className="auth-story">
-      <p className="eyebrow">HEIDELBERG SECURITY TRAINING</p>
-      <h1>
-        {title}
-      </h1>
-      <p>Real environments. Curious minds.<br />Your next investigation starts here.</p>
-      <div className="terminal-art" aria-hidden>
-        <span>heist@lab:~$ investigate</span>
-        <p>✓ Isolated environment</p>
-        <p>✓ Hands-on exercises</p>
-        <p>✓ Learn at your own pace</p>
-        <span className="cursor">_</span>
-      </div>
-      <Link href="/explore">Explore the challenge library ↗</Link>
-    </section>
     <section className="auth-form card">
-      <p className="eyebrow">YOUR LEARNING WORKSPACE</p>
-      <h2>
-        {signup ? 'Create an account' : reset ? 'Change your password' : 'Sign in to heiST'}
-      </h2>
-      <p className="muted">
-        {reset ? 'Your account requires a password change before continuing.' : signup ? 'Build practical security skills, one challenge at a time.' : 'Continue where your last investigation left off.'}
-      </p>
+      <h1>{title}</h1>
+      {reset && <p className="muted">Change your password to continue.</p>}
       <Notice error={action.error} message={action.message} />
       <form onSubmit={submit}>
         {!reset && <Field label="Username" name="username" autoComplete="username" required maxLength={50} />}
@@ -84,7 +64,7 @@ export function AuthPage({ mode }: {
         </button>
       </form>
       {!reset && <p className="auth-alternative">
-        {signup ? 'Already part of heiST?' : 'New to the lab?'} <Link href={signup ? '/login' : '/signup'}>
+        {signup ? 'Have an account?' : 'No account?'} <Link href={signup ? '/login' : '/signup'}>
           {signup ? 'Sign in' : 'Create an account'}
         </Link>
       </p>}

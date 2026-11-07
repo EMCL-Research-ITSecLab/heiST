@@ -55,6 +55,25 @@ class AuthoringTests(unittest.TestCase):
         self.assertEqual(result.status_code, 201, result.json)
         return result.json['id']
 
+    def test_yaml_preview_validates_owned_artifacts_without_creating_or_importing(self):
+        from copy import deepcopy
+        self.assertEqual(self.request('admin/challenges/import-yaml','POST',json={'yaml':'ctf: {}'}).status_code,401)
+        self.login()
+        before = self.sql('SELECT count(*) FROM public.challenge_templates')
+        value = deepcopy(self.value)
+        self.platform.request.side_effect = lambda operation,payload: {'success':True,'data':deepcopy(value)}
+        result = self.request('admin/challenges/import-yaml','POST',json={'yaml':'ctf: {}'})
+        self.assertEqual(result.status_code,200,result.json)
+        self.assertEqual(result.json['data']['vms'][0]['ova_name'],'Debian')
+        self.assertEqual(self.sql('SELECT count(*) FROM public.challenge_templates'),before)
+        self.platform.request.assert_called_once_with('parse_challenge_yaml',{'yaml':'ctf: {}'})
+        value['vms'][0]['ova_name'] = 'foreign.ova'
+        self.assertEqual(self.request('admin/challenges/import-yaml','POST',json={'yaml':'ctf: {}'}).status_code,400)
+        self.update_user('is_admin=FALSE')
+        self.platform.reset_mock()
+        self.assertEqual(self.request('admin/challenges/import-yaml','POST',json={'yaml':'ctf: {}'}).status_code,403)
+        self.platform.request.assert_not_called()
+
     def test_options_create_and_management_roundtrip_with_real_topology(self):
         self.assertEqual(self.request('admin/challenges/options').status_code, 401)
         identifier = self.create()

@@ -7,7 +7,7 @@ export function Explore() {
   const params = new URLSearchParams({ search: query, category, difficulty, sort, page: String(page) });
   const resource = useResource('/api/explore?' + params), data = payload(resource.data), challenges = rows(data.challenges ?? data.data), pagination = row(data.pagination);
   return <>
-    <PageTitle eyebrow="CHALLENGE LIBRARY" title="Find your next investigation." description="Explore real environments and follow your curiosity." />
+    <PageTitle eyebrow="CHALLENGE LIBRARY" title="Challenges" description="Browse exercises by category and difficulty." />
     <form className="filter-bar" onSubmit={e => { e.preventDefault(); setQuery(search); setPage(1); }}>
       <Field
         label="Search challenges"

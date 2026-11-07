@@ -23,7 +23,7 @@ role boundaries, safe error recovery, authoring, binary uploads and diagnostics.
 The populated-state suite checks 90 page/size/theme combinations: nine pages at
 320, 390, 768, 1024 and 1440 CSS pixels, in light and dark themes. Assertions cover
 horizontal overflow, one page heading, runtime errors, loaded visible images,
-retired exercise restoration, paging/filter reset, dialog cancellation and focus,
+official branding and plain headings, YAML preview/draft preservation, retired exercise restoration, paging/filter reset, dialog cancellation and focus,
 mobile keyboard navigation, theme persistence and enabled-button text contrast. CI also runs
 `python tools/testing/screenshots.py --check` to reject stale documentation images.
 These checks catch specified regressions; they are not a complete accessibility

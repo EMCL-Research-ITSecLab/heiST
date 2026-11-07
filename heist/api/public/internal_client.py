@@ -11,6 +11,7 @@ import requests
 from .errors import ApiError
 
 OPERATIONS = {
+    'parse_challenge_yaml': ('POST','/admin/challenges/parse-yaml',15),
     'health': ('GET','/health/ready',10),
     'delete_artifact': ('POST', '/artifacts/retire', 120),
     'operations': ('GET', '/admin/operations', 12),
@@ -82,6 +83,10 @@ class InternalClient:
                     rejected=json.loads(response_bytes(response))
                     if rejected.get('code')=='image_conflict' and isinstance(rejected.get('message'),str) and len(rejected['message'])<=500:
                         raise ApiError(rejected['message'],409)
+                if operation == 'parse_challenge_yaml' and response.status_code == 400:
+                    rejected = json.loads(response_bytes(response))
+                    message = rejected.get('error') if isinstance(rejected,dict) else None
+                    raise ApiError(message if isinstance(message,str) and len(message)<=300 else 'Invalid YAML document',400)
                 if not 200 <= response.status_code < 300:
                     raise ApiError('The platform operation could not be completed. Check its status before retrying.', 503)
                 data = response_bytes(response)

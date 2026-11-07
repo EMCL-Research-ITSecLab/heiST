@@ -205,14 +205,11 @@ small {
   text-decoration:none
 }
 
-.brand span {
-  font-weight:420
-}
-
-.brand i {
-  font-style:normal;
-  color:#67d8c6;
-  margin-left:4px
+.brand img {
+  display:block;
+  width:150px;
+  height:auto;
+  max-width:100%
 }
 
 .workspace-label {
@@ -1216,12 +1213,9 @@ dialog .button-row {
 }
 
 .auth-layout {
-  display:grid;
-  grid-template-columns:1.05fr 1fr;
-  align-items:center;
-  gap:70px;
-  max-width:1050px;
-  margin:28px auto 50px
+  display:block;
+  max-width:480px;
+  margin:40px auto
 }
 
 .auth-story h1 {
@@ -1246,8 +1240,9 @@ dialog .button-row {
   margin:0
 }
 
-.auth-form>h2 {
-  font-size:25px;
+.auth-form>h1 {
+  font-size:26px;
+  margin:0 0 20px;
   letter-spacing:-.8px
 }
 

@@ -16,7 +16,7 @@ export function Profile({ username }: {
     await action.run(() => post('profile', { action: name, ...fields }), async () => { resource.reload(); await session.refresh(); });
   }
   return <>
-    <PageTitle eyebrow={publicView ? 'INVESTIGATOR PROFILE' : 'YOUR ACCOUNT'} title={text(basic.full_name ?? basic.username, publicView ? username : 'Make yourself at home.')} description={publicView ? 'A record of curiosity, practice and discovery.' : 'Manage your identity, connection and account preferences.'} />
+    <PageTitle eyebrow={publicView ? 'PROFILE' : 'YOUR ACCOUNT'} title={text(basic.full_name ?? basic.username, publicView ? username : 'Profile')} description={publicView ? 'Challenge progress and achievements.' : 'Manage your identity, connection and account preferences.'} />
     <Notice error={action.error} message={action.message} />
     <ResourceState {...resource}>
       <div className="profile-summary card">

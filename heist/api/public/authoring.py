@@ -21,6 +21,31 @@ def owned_template(user, identifier):
     return value
 
 
+@blueprint.post('/admin/challenges/import-yaml')
+def import_yaml():
+    user = require_admin()
+    rate_limit('yaml-preview',user['id'],20,300)
+    source = body().get('yaml')
+    if not isinstance(source,str) or len(source.encode('utf-8',errors='replace')) > 256*1024:
+        raise ApiError('YAML file must be at most 256 KiB')
+    result = internal().request('parse_challenge_yaml',{'yaml':source})
+    value = result.get('data')
+    artifacts = repository().call('get_user_available_disk_files',user['id'])
+    if not isinstance(value,dict):
+        raise ApiError('Invalid YAML preview response',503)
+    # Legacy YAML may omit the suffix used by the current upload library.
+    names = {item['display_name'] for item in artifacts}
+    for vm in value.get('vms',[]):
+        name = vm.get('ova_name')
+        if isinstance(name,str) and name not in names and name+'.ova' in names:
+            vm['ova_name'] = name+'.ova'
+    try:
+        definition(value,artifacts)
+    except DefinitionError as error:
+        raise ApiError(str(error)) from None
+    return {'success':True,'data':value}
+
+
 @blueprint.get('/admin/challenges/options')
 def options():
     user = require_admin()

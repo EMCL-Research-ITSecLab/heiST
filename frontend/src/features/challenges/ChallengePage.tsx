@@ -60,7 +60,7 @@ export function Challenge() {
               {number(challenge.flags_submitted)} of {number(challenge.flags_total)} flags submitted</p>
             <progress max={number(challenge.flags_total) || 1} value={number(challenge.flags_submitted)} />
           </Card>
-          {(text(challenge.hint) || rows(challenge.hints).length > 0) && <Card title="A nudge in the right direction">
+          {(text(challenge.hint) || rows(challenge.hints).length > 0) && <Card title="Hints">
             {text(challenge.hint) && <details>
               <summary>General hint</summary>
               <p className="prose">
@@ -109,7 +109,7 @@ export function Challenge() {
                   </tr>)}
                 </tbody>
               </table>
-            </div> : <Empty title="The first solve is still out there" />}
+            </div> : <Empty title="No submissions yet" />}
           </Card>
         </div>
         <aside>

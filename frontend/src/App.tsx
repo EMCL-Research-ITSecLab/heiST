@@ -26,7 +26,7 @@ export const routes = [
 ] as const;
 function Redirect({ to }: {
   to: string;
-}) { const router = useRouter(); useEffect(() => router.navigate(to, true), [to]); return <div className="loading" role="status">Opening your workspace…</div>; }
+}) { const router = useRouter(); useEffect(() => router.navigate(to, true), [to]); return <div className="loading" role="status">Loading…</div>; }
 function RouteContent() {
   const { location } = useRouter(), session = useSession(), path = location.split('?')[0].replace(/\/$/, '') || '/';
   let publicProfile: string | undefined;
@@ -38,10 +38,10 @@ function RouteContent() {
   const route = routes.find(([p]) => p === path || p === '/profile/:username' && publicProfile);
   if (session.loading)
     return <div className="loading" role="status">
-      <span className="spinner" />Opening your workspace…</div>;
+      <span className="spinner" />Loading…</div>;
   if (session.error)
     return <div className="empty" role="alert">
-      <h1>We couldn’t connect to your workspace</h1>
+      <h1>Connection failed</h1>
       <p>
         {session.error}
       </p>
@@ -54,9 +54,9 @@ function RouteContent() {
   if (route?.[1] === 'admin' && !session.user?.admin)
     return <div className="empty">
       <p className="eyebrow">ADMINISTRATION</p>
-      <h1>This space is for administrators.</h1>
+      <h1>Administrator access required</h1>
       <p>Your account does not have permission to manage the platform.</p>
-      <Link className="button" href="/dashboard">Back to your workspace</Link>
+      <Link className="button" href="/dashboard">Dashboard</Link>
     </div>;
   if (publicProfile)
     return <Profile key={path} username={publicProfile} />;
@@ -79,17 +79,17 @@ function RouteContent() {
     case '/manage-announcements': return <ManageAnnouncements />;
     case '/operations': return <Operations />;
     default: return <div className="empty">
-      <p className="eyebrow">404 / OFF THE MAP</p>
-      <h1>A little too far off the beaten path.</h1>
-      <p>This page doesn’t exist. There’s plenty left to investigate.</p>
-      <Link className="button" href="/explore">Explore the labs →</Link>
+      <p className="eyebrow">404</p>
+      <h1>Page not found</h1>
+      <p>This page does not exist.</p>
+      <Link className="button" href="/explore">Challenges</Link>
     </div>;
   }
 }
 function Shell({ children }: {
   children: ReactNode;
 }) {
-  const session = useSession(), router = useRouter(), action = useAction(), [open, setOpen] = useState(false), [dark, setDark] = useState(() => localStorage.getItem('heist-theme') === 'dark');
+  const session = useSession(), router = useRouter(), action = useAction(), [open, setOpen] = useState(false), [dark, setDark] = useState(() => localStorage.getItem('heist-theme') !== 'light');
   const menu = useRef<HTMLButtonElement>(null);
   const [mobile, setMobile] = useState(() => window.matchMedia('(max-width:850px)').matches);
   useEffect(() => {
@@ -126,9 +126,7 @@ function Shell({ children }: {
   return <div className="app">
     <a href="#main-content" className="skip-link">Skip to content</a>
     <aside className={'sidebar ' + (open ? 'open' : '')} id="workspace-navigation" inert={mobile && !open}>
-      <Link href={session.user ? '/dashboard' : '/landing'} className="brand" aria-label="heiST home">hei<span>ST</span>
-        <i aria-hidden>_</i>
-      </Link>
+      <Link href={session.user ? '/dashboard' : '/landing'} className="brand" aria-label="heiST home"><img src="/assets/logo/logo_dark.svg" alt="heiST" width="150" height="48" /></Link>
       <div className="workspace-label">
         <span className="status-dot" />SECURITY TRAINING</div>
       <nav aria-label="Workspace">
@@ -140,12 +138,6 @@ function Shell({ children }: {
         </>}
       </nav>
       <div className="sidebar-bottom">
-        <div className="learning-note">
-          <span aria-hidden>↗</span>
-          <p>Stay curious.<br />
-            <strong>Keep investigating.</strong>
-          </p>
-        </div>
         <p>Heidelberg Security Training</p>
       </div>
     </aside>
@@ -159,7 +151,7 @@ function Shell({ children }: {
           aria-controls="workspace-navigation"
           aria-label="Toggle navigation"
           onClick={() => setOpen(!open)}>☰</button>
-        <span className="topbar-context">THE LEARNING WORKSPACE <span>/</span> <strong>heiST</strong>
+        <span className="topbar-context">heiST
         </span>
         <div className="topbar-actions">
           <button className="icon-button" onClick={() => setDark(!dark)} aria-label={dark ? 'Use light theme' : 'Use dark theme'}>
@@ -171,14 +163,14 @@ function Shell({ children }: {
               <span>
                 {session.user.username}
                 <small>
-                  {session.user.admin ? 'Administrator' : 'Investigator'}
+                  {session.user.admin ? 'Administrator' : 'Student'}
                 </small>
               </span>
             </Link>
             <button className="secondary small" disabled={action.busy} onClick={() => void action.run(() => post('logout', {}), async () => { await session.refresh(); router.navigate('/login', true); })}>Sign out</button>
           </> : <>
             <Link href="/login">Sign in</Link>
-            <Link className="button small" href="/signup">Get started ↗</Link>
+            <Link className="button small" href="/signup">Create account</Link>
           </>}
         </div>
       </header>
@@ -187,8 +179,7 @@ function Shell({ children }: {
         {children}
       </main>
       <footer className="workspace-footer">
-        <span>heiST / A workspace for curious minds.</span>
-        <Link href="/explore">Keep learning ↗</Link>
+        <span>heiST</span>
       </footer>
     </div>
   </div>;

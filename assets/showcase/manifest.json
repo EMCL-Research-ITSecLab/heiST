@@ -3,36 +3,39 @@
   "data": "synthetic documentation fixtures; not an installed-platform acceptance test",
   "browser": "156.0.8078.4",
   "sources": {
-    "frontend/src/App.tsx": "f32c3e06f791deadf9bd99dd88e0f78326894fad68c926981b359d80f7976f54",
+    "frontend/src/App.tsx": "df0a2e10d270dfa7f76b4c008849ca724eacee3204144cda81cb04201bb1065a",
     "frontend/src/components/ui.tsx": "6bd7e951f18365b93c5d0b79386c4d6672bfbe97414a89e992b0b14ee968c728",
     "frontend/src/env.d.ts": "65996936fbb042915f7b74a200fcdde7e410f32a669b1ab9597cfaa4b0faddb5",
-    "frontend/src/features/account/ProfilePage.tsx": "2d638f6961e1027e90f9319ad3f641f6673a7a57c14cde8fcec1a1006f2983e5",
-    "frontend/src/features/administration/AnnouncementManagementPage.tsx": "b0e04633ac435ddd87d0420e77cb1433649069ecb6bcd450773ef1fd9c2b0e03",
-    "frontend/src/features/administration/ArtifactsPage.tsx": "b4912362b05d70973f85e43ffee5ace50b36cd8efa21b34bccd7a35548334c36",
-    "frontend/src/features/administration/ChallengeEditorPage.tsx": "9ae610bb0687cc284a7699c23766d4ccfc5ee6c9c768ed24022870582d5c7033",
-    "frontend/src/features/administration/ChallengeManagementPage.tsx": "ef861f8339957ec0007ecfa7bdc1e764eb99cc927d0f998ad6395212d91ce5c4",
-    "frontend/src/features/administration/OperationsPage.tsx": "92f43f2b0f6de32f0d701385f1053a5c6a96e939d6943dad837cc042ad70b48d",
+    "frontend/src/features/account/ProfilePage.tsx": "ba2225abf19b352a889b36199d81f70c04bf5af09728674617be1921c74de8c0",
+    "frontend/src/features/administration/AnnouncementManagementPage.tsx": "f124cc8f272c60591d840ed611b3948141f7f359a224670b2931f880deb98a00",
+    "frontend/src/features/administration/ArtifactsPage.tsx": "05441570e206dfb6391ba1f7ea9cf86049d854c39840aaa92f8b205d85ce5243",
+    "frontend/src/features/administration/ChallengeEditorPage.tsx": "3f4f92b75a5ffd901e9b23418aa98b76c70363387c2213c1da42fb1c1057dec8",
+    "frontend/src/features/administration/ChallengeManagementPage.tsx": "337164616d7903cf7e119bffb9c691ccb61c52b3a002d136217cfc52c2f03a46",
+    "frontend/src/features/administration/OperationsPage.tsx": "03b75ba07ca7d581f3a1474d859271cb3561d8265a46ea99c39b1c4fc0ed70a3",
     "frontend/src/features/administration/PlatformStatusPanel.tsx": "13fd55dfb6a4c3e7abc531560da3fceac7a8dc5298064042f70b2119c0463900",
     "frontend/src/features/administration/useArtifactUpload.ts": "1f1fff9299ea5309592c27cf9dcca6990a57a8d857ca5ab076b34e6efe3c46e0",
-    "frontend/src/features/auth/AuthPage.tsx": "faff90ef75593ced9d27112309d2ec0c4f65a5c342b97399ba4e2891b1705395",
-    "frontend/src/features/challenges/ChallengePage.tsx": "5437287376697251581225df1be398175c032acedc6604455f896054e9fd7d3f",
-    "frontend/src/features/challenges/ExplorePage.tsx": "4da8c00dfcf3274cb46e5436dee8c7b73fe9a0d70aa9fa1cd2520b1368e92038",
-    "frontend/src/features/community/FeedPage.tsx": "4e7ae6bac5f0d117038cd7aa44507454b3f3373f39989f38216edae2b637f62d",
-    "frontend/src/features/dashboard/DashboardPage.tsx": "1f136543b242c441a72ce5d1ed877fc92b6fda9406e58503ec10b0e1559aa420",
-    "frontend/src/features/welcome/LandingPage.tsx": "de8a85c31ae0979d640527766babe20011b19ff50ee43a2b93799549ab36b60b",
+    "frontend/src/features/auth/AuthPage.tsx": "0ad55d723cbf964081ddd0e02024f9862bc8907655081fc145020da58ac2fd21",
+    "frontend/src/features/challenges/ChallengePage.tsx": "4411e07db1d7bd9630edb4008cb5387f76e23951da467da5e8c0fa5119ea5277",
+    "frontend/src/features/challenges/ExplorePage.tsx": "01914bf9cfe49679b662d9138ae80b171bfe5edf80f06aa553e838a2150746bc",
+    "frontend/src/features/community/FeedPage.tsx": "b4c0b3a1dc6183adad54a916055732dff7dc28682289217038f028ce5096f26e",
+    "frontend/src/features/dashboard/DashboardPage.tsx": "42f71dbeea90fcb78a461ef01e6361c64ffb85ae07f012c8fde6e01fd2cbffc7",
+    "frontend/src/features/welcome/LandingPage.tsx": "9cd429678ee22bbe373b0d918ab3c62308dbbad367fe1942417270c1c0188749",
     "frontend/src/lib/api.ts": "2a99e5d25d67916fbdea5c6829b5ce43b2a14016039055b18659c4f4113253c4",
     "frontend/src/lib/data.ts": "0499d40a4e64b78020c1a040630c1b4b24b4a2f3355277fb4d307c436c3305f0",
     "frontend/src/lib/router.tsx": "80bd96cf8ccdc18de7da5959083eeb4fcfe3c781170143ac212100278e3719c9",
     "frontend/src/lib/state.tsx": "c742d0843694a70014175fb71517f738e8d2eaa528a99dd82c4dc74542ab0aaf",
     "frontend/src/main.tsx": "831a245331f7079be1a8e359123f684a6177e4ac231b70e46fd50e73fbd2f7e9",
-    "frontend/src/styles.css": "f491c8bbcf786a37f72d3e45eaf1d7de6229b26cd56d1ed18d25e78eaaee74ad",
-    "frontend/src/tokens.css": "fbd02d200036859905330b4f22800b1541b7891563c7131c41fd33e1a352f8b9",
+    "frontend/src/styles.css": "c905e4b4f030736a672bf68777a735d17fd36b71e52718429c5ea51e3a3ee5c2",
+    "frontend/src/tokens.css": "1cdfa89e43d01db471d5a2cec396fce5eab023fe5d54124ba115462221a64ad2",
     "frontend/public/assets/avatars/avatar1.png": "717f6f904ed6a511681bd8f7f011699197d911b3119da3886c4baec251c8df2a",
     "frontend/public/assets/avatars/avatar2.png": "97c6ce9676506ada7ad86e1eab731c881798fa2732d526563246c37eb02c0b25",
     "frontend/public/assets/avatars/avatar3.png": "edfa24ca1a4790c12bad2d0a2acaa72cd075ffdb4bae87b743861152936983d1",
     "frontend/public/assets/avatars/default-avatar.png": "abf3ccc277f8d8354ae8d71a0ce4f56c507a7e5e76e479bf52ed9de4d4ccf515",
     "frontend/public/assets/images/ctf-default.png": "16bcccae6f0258537627f339959111c6f2c4bde55b75a9e45c16ee643f3eb6e4",
     "frontend/public/assets/images/default-challenge.jpg": "d4bdc664f8afeaddca449b8b89203711ab14174e038fcbe4101bae2e4fb77f3f",
+    "frontend/public/assets/logo/icon_dark.svg": "720d73baf97eeb0e902ba5bbea476c327ee68772c926872d0584290652ec5be5",
+    "frontend/public/assets/logo/logo_dark.svg": "c737949005f680ee246d02003e47512a5d979c894f160197c183001f673821db",
+    "frontend/public/assets/logo/logo_light.svg": "e6cf270657532d0cba435aa94802b60b464d4f3184d10a7e1865457188520b2e",
     "frontend/package-lock.json": "c3096016a2854685704d114a1ea127214c68672f1d8fdc40cbb607fde933e703",
     "tests/browser/support.py": "767f8e4b1550ebf70c6da4728257edf23b39f03296601fa7f386c69a6ea4a524",
     "tests/browser/showcase_data.py": "0f1a6eef5451ee8800ddaaf783c335c87365fdf18b1580706c284581803a6109",
@@ -48,7 +51,7 @@
         "width": 1440,
         "height": 1000
       },
-      "sha256": "0503ce64c491a98596c05af5bce50a4bb2b0a4f427975e98bc150f8630585e5a"
+      "sha256": "186cab9f2db2640b7308de00f6b08c0e1bbf727b0ea633c44ccc7421474d965e"
     },
     {
       "file": "manage_challenges_light.png",
@@ -59,7 +62,7 @@
         "width": 1440,
         "height": 1000
       },
-      "sha256": "fc95b6ed1b8a3c07aa0b3bf0b43570a79dbc34ca32cfd7b6ea59198575c1c4d1"
+      "sha256": "a54237e820e2b262299c85f00445570463ea4d1505cfafe3c793408cc5859ea1"
     },
     {
       "file": "create_challenge_light.png",
@@ -70,7 +73,7 @@
         "width": 1440,
         "height": 1000
       },
-      "sha256": "a3395316c4db175151810924780e72fc51958f8b7ecd5115a66c4cc64b890e19"
+      "sha256": "07faf7e6473c3264d9d17ba2c76fe56173ae0c97c8e640d671ad483b9abe8874"
     },
     {
       "file": "deploy_challenge_light.png",
@@ -81,7 +84,7 @@
         "width": 1440,
         "height": 1000
       },
-      "sha256": "a3d53476c7d64b2a01415adea062c87aca4e96a5399fe53aca195010c7f038ca"
+      "sha256": "fb0d8bc5e89eecceaf193ea91fda76fc2de21c687014ed526b028410e1fdbc4d"
     },
     {
       "file": "operations_light.png",
@@ -92,7 +95,7 @@
         "width": 1440,
         "height": 1000
       },
-      "sha256": "e33b6af6cd6b0423e5fc2783a6ef47f727c40203d0c6ffb32fc09af29f4a1808"
+      "sha256": "8a90f7b8e7f186ea1446647b26e97280108664fb95d0e1fa3a2957f8c84b1da0"
     },
     {
       "file": "login_light.png",
@@ -103,7 +106,7 @@
         "width": 1440,
         "height": 1000
       },
-      "sha256": "ea925bb6cb941b0595e31536963b475a013cb30d34b30700f1698241f9ca6769"
+      "sha256": "da8cb7b0ba06ace9f39dcf6d38e1344d61ba782ee9473333b1a15858b94078e0"
     },
     {
       "file": "mobile_light.png",
@@ -114,7 +117,7 @@
         "width": 390,
         "height": 844
       },
-      "sha256": "588c971edd77500c0da9e5ac8b678113815f44dab5c74840750705d6c0354f02"
+      "sha256": "855f607e5a1bc182b9d5858e73539846a8b28714748274906ec317c6bc07202a"
     },
     {
       "file": "dashboard_dark.png",
@@ -125,7 +128,7 @@
         "width": 1440,
         "height": 1000
       },
-      "sha256": "ef685edfe54a67c867950d4993d05c59d28b56230c5f3c9571a88c807a62adf3"
+      "sha256": "f6715a48c56cd7c1825bd547579255d3baeada7d2125e9085834b2f173245c42"
     },
     {
       "file": "manage_challenges_dark.png",
@@ -136,7 +139,7 @@
         "width": 1440,
         "height": 1000
       },
-      "sha256": "6e8f82f60e1e506e2a3519c9649c46bde72992fbe5c61690a7d25e326f74e2f1"
+      "sha256": "ca045f4549ed4406c02e278812679b551c3b895525e47f4a34c7171d9b755864"
     },
     {
       "file": "create_challenge_dark.png",
@@ -147,7 +150,7 @@
         "width": 1440,
         "height": 1000
       },
-      "sha256": "b3bc1a96161794bc2fa240492b89920870ba193b61a3ade14c2fd6e8cf6fba91"
+      "sha256": "4dbdb49c395cc23eef33976509514d20601f3b403b93e6b57591c1d4b6d3cfc0"
     },
     {
       "file": "deploy_challenge_dark.png",
@@ -158,7 +161,7 @@
         "width": 1440,
         "height": 1000
       },
-      "sha256": "af6dbdc8b0bbd51b78ecce38a80aa53fb19f2846dac70ee649461cd85e7d5b26"
+      "sha256": "7ddd44908e5081928462a10b8053765205b48e7d024c909bc42b1d6901fa7622"
     },
     {
       "file": "operations_dark.png",
@@ -169,7 +172,7 @@
         "width": 1440,
         "height": 1000
       },
-      "sha256": "6a0f38264386a8b12b7d757392f7255739870bd3e05cdaecc8c3cdafeece5414"
+      "sha256": "15f6442e6d892d5815024fb64f15272f5f0f1d1de6ab13cc28033880ac4dd7aa"
     },
     {
       "file": "login_dark.png",
@@ -180,7 +183,7 @@
         "width": 1440,
         "height": 1000
       },
-      "sha256": "ccaf38629f27f85afe5db768615a7bfbf508c08269711ec6797a7b47a1fb1a97"
+      "sha256": "8b0045b5419c5b1d9b9f59f542c5215cd6f0c09267e61f5eb6800bcb7e969869"
     },
     {
       "file": "mobile_dark.png",
@@ -191,7 +194,7 @@
         "width": 390,
         "height": 844
       },
-      "sha256": "e22c99bb98890f9ec287f93c774af85a7db51af82b2ebcaa6b656c4c26511b8b"
+      "sha256": "bddcb46cbb1e0306902f1680ba56d2b4d04b09f864e89a044269491d86fb9f9c"
     }
   ]
 }

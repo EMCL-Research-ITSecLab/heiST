@@ -8,7 +8,7 @@ export function Operations() {
   return <>
     <PageTitle
       eyebrow="ADMINISTRATION / LAB OVERVIEW"
-      title="Keep the whole picture in view."
+      title="Platform status"
       description="Availability and deployment activity for the exercises you manage."
       action={<button className="secondary" onClick={resource.reload}>Refresh ↻</button>} />
     <PlatformStatusPanel />

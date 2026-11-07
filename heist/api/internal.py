@@ -149,6 +149,17 @@ def create_app(config=None, services=None):
         def handler(name=name, fields=fields, message=message, database=database, download=download):
             return action(name, fields, message, database, download)
         application.add_url_rule('/' + route, name, handler, methods=['POST'])
+    @application.post('/admin/challenges/parse-yaml')
+    def parse_challenge_yaml():
+        from heist.platform.challenges.yaml_definition import parse_yaml
+        from heist.platform.challenges.definition import DefinitionError
+        request.max_content_length = 2*1024**2
+        value = request.get_json(silent=True)
+        try:
+            return {'success':True,'data':parse_yaml(value.get('yaml') if isinstance(value,dict) else None)}
+        except DefinitionError as error:
+            return {'success':False,'error':str(error)},400
+
     from heist.api.artifact_intake import blueprint as artifact_blueprint
     application.register_blueprint(artifact_blueprint(connection))
     return application

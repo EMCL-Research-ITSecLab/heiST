@@ -42,6 +42,15 @@ class TransportTests(unittest.TestCase):
         with self.assertRaises(ApiError):
             self.client.request('operations')
 
+    def test_yaml_preview_preserves_safe_validation_errors_without_retrying(self):
+        self.response.status_code = 400
+        self.response.json.return_value = {'success':False,'error':'Invalid YAML document'}
+        with self.assertRaises(ApiError) as error:self.client.request('parse_challenge_yaml',{'yaml':'ctf: ['})
+        self.assertEqual(error.exception.status,400)
+        self.assertEqual(str(error.exception),'Invalid YAML document')
+        self.session.request.assert_called_once()
+        self.response.close.assert_called_once()
+
     def test_json_failure_is_not_downloaded_as_vpn_configuration(self):
         with self.assertRaises(ApiError):
             self.client.request('vpn', {'user_id': 1}, download=True)

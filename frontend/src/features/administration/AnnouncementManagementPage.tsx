@@ -10,7 +10,7 @@ export function ManageAnnouncements() {
   return <>
     <PageTitle
       eyebrow="ADMINISTRATION / COMMUNICATION"
-      title="Keep everyone in the loop."
+      title="Manage announcements"
       description="Share updates, events and maintenance notices with your students."
       action={<button onClick={() => setEditing({})}>＋ New announcement</button>} />
     <Notice error={action.error} message={action.message} />

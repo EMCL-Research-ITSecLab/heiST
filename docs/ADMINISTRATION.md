@@ -5,7 +5,7 @@ management has search, category/availability filters, sorting and pagination;
 mutations retain server-side ownership and administrator checks. Role revocation
 must be tested independently of the menu state.
 
-The lab overview reports database reachability/schema access, fixed systemd
+The platform status page reports database reachability/schema access, fixed systemd
 service states, instance lifecycle counts, host root-filesystem capacity,
 maintenance state, running source version, last recorded release and the separate
 archive VM receipt. These are observations, not a production-readiness certificate.
@@ -51,3 +51,20 @@ The candidate cleanup service closes launch admission until it produces a
 completed receipt. Preserve unresolved VM/network/monitoring records and inspect
 native task results before recovery. Monitoring TLS failures require repairing
 certificate trust/SAN configuration, not disabling certificate verification.
+
+## Import an exercise from YAML
+
+Open **Create challenge**, choose a `.yaml` or `.yml` file under **Import YAML**,
+and review the populated form. Import replaces the current draft and creates no
+exercise or VM. Existing `ctf` files with named `vms`, `subnets`, `flags` and
+`hints` mappings are supported. Local `ova_path` fields are ignored in the browser;
+upload the images first. Image names must resolve to your available artifacts.
+The editor accepts an omitted `.ova` suffix when it identifies an uploaded file.
+
+The 256-KiB import limit, bounded nesting and entry counts, safe YAML loader,
+duplicate-key refusal and alias refusal apply before preview. Invalid imports
+leave the current draft intact. Select **Create challenge** only after reviewing
+the machines, network membership, flags, hints and availability. Creation retains
+the normal owner, topology, image-readiness and partial-import checks. The existing
+platform PyYAML dependency parses the file; no parser library was added to the
+frontend or browser-service runtime.

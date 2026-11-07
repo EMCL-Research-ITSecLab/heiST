@@ -17,7 +17,7 @@ export function ManageChallenges() {
   return <>
     <PageTitle
       eyebrow="ADMINISTRATION / CHALLENGES"
-      title="A better place to manage the lab."
+      title="Manage challenges"
       description="Manage availability, content and the lifecycle of your exercises."
       action={<Link className="button" href="/create-ctf">＋ Create challenge</Link>} />
     <Notice error={action.error} message={action.message} />

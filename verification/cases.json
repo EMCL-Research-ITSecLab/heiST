@@ -1871,6 +1871,22 @@
       "sources": [
         "tests/browser/ui_database.py"
       ]
+    },
+    {
+      "id": "PILOT-NATIVE-BROWSER-ROLE",
+      "area": "deployment",
+      "mode": "appliance",
+      "procedure": "Run tools/local/rehearse_browser_guest.py against the isolation-verified disposable pilot with its complete recovered checkpoint and exact-source artifacts.",
+      "expected": "Native Apache and Gunicorn install behind maintenance; session probes and worker restart succeed; the original complete web VM is restored and old health verified. This alone does not approve whole-platform upgrades.",
+      "evidence": [
+        "private native-browser transaction journal",
+        "source/artifact hashes",
+        "web VM restore task result",
+        "post-recovery health"
+      ],
+      "sources": [
+        "tools/local/rehearse_browser_guest.py"
+      ]
     }
   ]
 }

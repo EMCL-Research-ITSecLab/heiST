@@ -9,7 +9,7 @@ export function Feed({ kind }: {
   const resource = useResource(`/api/${kind}?` + new URLSearchParams({ page: String(page), range, importance: filter, type: filter, category: 'all' }));
   const data = payload(resource.data), badges = rows(data.badges), stats = row(data.stats), items = rows(data.announcements ?? data.activities);
   return <>
-    <PageTitle eyebrow={kind === 'badges' ? 'YOUR ACHIEVEMENTS' : 'STAY IN THE LOOP'} title={kind === 'badges' ? 'Milestones worth remembering.' : kind === 'activity' ? 'Your investigation journal.' : 'From the heiST team.'} description={kind === 'badges' ? 'Every achievement is a reminder of what you’ve learned.' : kind === 'activity' ? 'Challenges, discoveries and progress in one place.' : 'Platform news, upcoming events and maintenance notices.'} />
+    <PageTitle eyebrow={kind === 'badges' ? 'YOUR ACHIEVEMENTS' : 'STAY IN THE LOOP'} title={kind === 'badges' ? 'Achievements' : kind === 'activity' ? 'Activity' : 'Announcements'} description={kind === 'badges' ? 'Earned achievements.' : kind === 'activity' ? 'Recent challenge activity.' : 'Platform news, upcoming events and maintenance notices.'} />
     {kind !== 'badges' && <div className="filter-bar">
       <Select
         label="Time period"
@@ -64,7 +64,7 @@ export function Feed({ kind }: {
             {text(item.content)}
           </p>
         </Card>)}
-      </div> : <Empty title="You’re all caught up">There are no announcements matching these filters.</Empty>}
+      </div> : <Empty title="No announcements">There are no announcements matching these filters.</Empty>}
       {kind !== 'badges' && <Pager page={page} totalPages={number(data.total_pages) || Math.ceil(number(data.total) / (number(data.per_page) || 10)) || 1} onPage={setPage} />}
     </ResourceState>
   </>;

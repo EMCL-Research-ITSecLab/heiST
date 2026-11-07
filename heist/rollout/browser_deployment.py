@@ -46,7 +46,7 @@ with tempfile.TemporaryDirectory(prefix='heist-browser-') as temporary:
         raise RuntimeError('Incomplete browser deployment package')
     config=json.loads((root/'configuration.json').read_text())
     config.update(runtime_bundle=str(root/'runtime.tar.gz'),ui_bundle=str(root/'frontend.tar.gz'))
-    environment={'PATH':'/usr/bin:/bin','LANG':'C.UTF-8','PYTHONPATH':str(root/'source'),'PYTHONDONTWRITEBYTECODE':'1','PYTHONNOUSERSITE':'1'}
+    environment={'PATH':'/usr/sbin:/usr/bin:/sbin:/bin','LANG':'C.UTF-8','PYTHONPATH':str(root/'source'),'PYTHONDONTWRITEBYTECODE':'1','PYTHONNOUSERSITE':'1'}
     result=subprocess.run(['/usr/bin/python3','-m','heist.rollout.browser_guest'],input=json.dumps(config).encode(),env=environment,cwd=root,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=900)
     if result.returncode:
         sys.stderr.buffer.write(result.stderr)

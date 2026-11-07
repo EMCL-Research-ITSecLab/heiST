@@ -1293,7 +1293,8 @@
   "heist/rollout/browser_deployment.py::package": {
     "tests": [
       "tests.test_browser_deployment.BrowserDeploymentTests.test_bootstrap_delivers_private_configuration_and_verified_artifacts_without_shell_evaluation",
-      "tests.test_browser_deployment.BrowserDeploymentTests.test_bootstrap_retains_native_agent_failure_diagnostics_without_configuration"
+      "tests.test_browser_deployment.BrowserDeploymentTests.test_bootstrap_retains_native_agent_failure_diagnostics_without_configuration",
+      "tests.test_browser_deployment.BrowserDeploymentTests.test_native_bootstrap_can_find_required_administrator_commands"
     ],
     "rationale": "Executes the actual bounded transport bootstrap with harmless source, confirms source delivery, rejects a wrong digest and avoids private stdout."
   },
@@ -1320,5 +1321,24 @@
       "tests.test_rollout_migrations.MigrationTests.test_later_browser_release_without_new_sql_preserves_only_approved_function_grants"
     ],
     "rationale": "Checks a second real PostgreSQL migration skips applied DDL, preserves the explicit execute grant while retaining a denied function, closes old-role login and invalidates restored browser sessions."
+  },
+  "heist/platform/challenges/yaml_definition.py::parse_yaml": {
+    "tests": [
+      "tests.test_challenge_definition.YamlDefinitionTests.test_legacy_mapping_import_preserves_topology_flags_and_hints_without_local_paths",
+      "tests.test_challenge_definition.YamlDefinitionTests.test_unsafe_ambiguous_or_unbounded_yaml_is_refused"
+    ],
+    "rationale": "Parses the legacy mapping format and validates bounds, aliases, tags, duplicate keys, topology and omitted private local paths."
+  },
+  "heist/api/internal.py::create_app.parse_challenge_yaml": {
+    "tests": [
+      "tests.test_api.APITests.test_yaml_preview_is_authenticated_and_has_no_provisioning_or_database_effect"
+    ],
+    "rationale": "Real Flask requests verify authenticated parsing and no database/provisioning effects."
+  },
+  "heist/api/public/authoring.py::import_yaml": {
+    "tests": [
+      "tests.test_web_authoring.AuthoringTests.test_yaml_preview_validates_owned_artifacts_without_creating_or_importing"
+    ],
+    "rationale": "Real restricted PostgreSQL/Flask requests validate owner artifacts, unchanged exercise count and role revocation before platform calls."
   }
 }

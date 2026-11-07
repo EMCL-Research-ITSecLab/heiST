@@ -16,7 +16,7 @@ export function Artifacts() {
     if (file) void transfer.upload(file, guest, limits);
   }
   return <>
-    <PageTitle eyebrow="ADMINISTRATION / ARTIFACT LIBRARY" title="The building blocks of your labs." description="Upload VM artifacts once, then use them in your exercises." />
+    <PageTitle eyebrow="ADMINISTRATION / ARTIFACT LIBRARY" title="VM artifacts" description="Upload VM artifacts once, then use them in your exercises." />
     <Notice error={transfer.error || action.error} message={transfer.message || action.message} />
     <Card title="Upload an artifact">
       <p className="muted">Large uploads use the server’s chunked upload protocol. Validation must finish before the artifact is available.</p>

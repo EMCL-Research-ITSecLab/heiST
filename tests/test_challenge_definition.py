@@ -65,3 +65,29 @@ class DefinitionTests(unittest.TestCase):
         source['vms'][0]['ad_role'] = 'none'
         with self.assertRaises(DefinitionError):
             definition(source, self.artifacts)
+
+
+class YamlDefinitionTests(unittest.TestCase):
+    def test_legacy_mapping_import_preserves_topology_flags_and_hints_without_local_paths(self):
+        import yaml
+        from heist.platform.challenges.yaml_definition import parse_yaml
+        source = exercise()
+        ctf = {k:v for k,v in source.items() if k not in ('vms','subnets','flags','hints','isActive')}
+        ctf.update(is_active=True,vms={'target':{**source['vms'][0],'ova_path':'/private/instructor.ova'}},
+                   subnets={'entry':source['subnets'][0]},flags={'first':source['flags'][0]},
+                   hints={'first':{'hint_text':'Check the service','unlock_points':0}})
+        result = parse_yaml(yaml.safe_dump({'ctf':ctf}))
+        self.assertNotIn('ova_path',result['vms'][0])
+        self.assertEqual(result['subnets'][0]['attached_vms'],['target'])
+        self.assertEqual(result['hints'][0]['order_index'],0)
+        parsed = definition(result,[{'id':42,'display_name':'Debian','guest_os':'linux'}])
+        self.assertEqual(parsed['machines'][0]['disk_file_id'],42)
+        self.assertTrue(parsed['is_active'])
+
+    def test_unsafe_ambiguous_or_unbounded_yaml_is_refused(self):
+        from heist.platform.challenges.yaml_definition import parse_yaml
+        for source in ('ctf: !!python/object:os.system {}','ctf: &a {vms: *a}',
+                       'ctf: {name: first, name: second}','ctf: [wrong]',
+                       'ctf: {vms: [wrong]}','ctf: {flags: {a: wrong}}',
+                       'x'*262145,'ctf: \ud800','ctf: '+('['*30)+(']'*30)):
+            with self.subTest(source=source[:80]),self.assertRaises(DefinitionError):parse_yaml(source)

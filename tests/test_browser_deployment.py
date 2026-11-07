@@ -42,6 +42,13 @@ class BrowserDeploymentTests(unittest.TestCase):
         self.assertEqual(result.stdout,b'')
         self.assertNotIn(config['password'].encode(),result.stderr)
 
+    def test_native_bootstrap_can_find_required_administrator_commands(self):
+        def source(files):
+            files['source/heist/rollout/browser_guest.py'] = b'import shutil; print(shutil.which("useradd"))\n'
+        payload = package(runtime_bundle(source),ui_bundle(standalone=True),{'commit':COMMIT},COMMIT)
+        result = subprocess.run([sys.executable,'-c',BOOTSTRAP,digest(payload)],input=payload,capture_output=True,check=True,timeout=30)
+        self.assertIn(result.stdout.strip(),(b'/usr/sbin/useradd',b'/sbin/useradd'))
+
     def test_bootstrap_refuses_traversal_even_with_a_matching_transport_digest(self):
         stream = io.BytesIO()
         with tarfile.open(fileobj=stream,mode='w') as archive:

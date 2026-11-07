@@ -13,10 +13,10 @@
   --on-accent:#fff;
   --on-danger:#fff;
   --danger-hover:#a63033;
-  --blue:#2865b4;
+  --blue:#166b89;
   --blue-hover:#1b5194;
   --focus:#57a8f3;
-  --nav:#142033;
+  --nav:#1e1e1e;
   --green:#247b63;
   --green-bg:#eaf5ef;
   --amber:#8b671f;
@@ -29,21 +29,21 @@
 
 :root[data-theme=dark] {
   --avatar-surface:#cdd9e8;
-  --canvas:#101923;
-  --surface:#182432;
-  --subtle:#213040;
-  --ink:#e1e9f2;
+  --canvas:#121212;
+  --surface:#1e1e1e;
+  --subtle:#242424;
+  --ink:#fcfcfc;
   --muted:#9aaabd;
   --placeholder:#6e8095;
-  --line:#2b3949;
-  --line-strong:#3b4d61;
+  --line:#333333;
+  --line-strong:#555555;
   --on-accent:#101923;
   --on-danger:#101923;
   --danger-hover:#e7a2a4;
-  --blue:#70a9f1;
-  --blue-hover:#588ed4;
+  --blue:#3aa8d2;
+  --blue-hover:#3191b8;
   --focus:#91c2ff;
-  --nav:#0e1722;
+  --nav:#1e1e1e;
   --green:#87d4b4;
   --green-bg:#1c3b33;
   --amber:#e3c17a;

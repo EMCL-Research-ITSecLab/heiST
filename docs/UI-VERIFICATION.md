@@ -79,7 +79,8 @@ in the environment rather than command-line arguments or logs.
 protected-data hashes, the original web VM ID, and source-bound runtime/UI bundles.
 It uses a separate disposable PostgreSQL database. The native guest installs the
 real Apache configuration and systemd Gunicorn service behind maintenance, probes
-its SPA and session API through pinned Apache HTTPS, checks secure cookies, kills the service main process to check systemd recovery, then
+its SPA and liveness API through pinned Apache HTTPS, verifies public session
+rejection during maintenance and session storage as the restricted service UID, kills the service main process to check systemd recovery, then
 restores and verifies the original complete web VM archive. Failed recovery leaves
 a private `RECOVERY_REQUIRED` journal; do not reopen access manually.
 
@@ -87,3 +88,8 @@ This is web-role acceptance only. It does not exercise a complete target platfor
 upgrade, target monitoring/VPN integration, fresh-host provisioning, or the full
 upgrade/rollback fault matrix. The production installer and protocol 3 gates remain
 closed. Run the workstation offline verifier immediately before this rehearsal.
+
+The native runner may select an already fetched application `--target-commit`
+independently of its own revision; the journal records both. Artifacts and service
+templates remain bound to that application revision. Session checks never remove
+maintenance markers or open the public firewall.

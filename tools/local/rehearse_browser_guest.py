@@ -37,13 +37,14 @@ def main(argv=None):
     parser.add_argument('--checkpoint', required=True, type=Path)
     parser.add_argument('--runtime-bundle', required=True, type=Path)
     parser.add_argument('--ui-bundle', required=True, type=Path)
+    parser.add_argument('--target-commit', help='Already fetched immutable application revision; defaults to the runner revision')
     args = parser.parse_args(argv)
     require_fixture()
     config = Deployment.load(args.config)
     adapter = PVE(config, sha256(args.config))
     checkpoint = Transaction.load(args.checkpoint)
     source = revision(adapter.installation, 'HEAD')
-    commit = revision(ROOT, 'HEAD')
+    commit = revision(ROOT, args.target_commit or 'HEAD')
     if (checkpoint.data['phase'] != 'COMPLETE' or not checkpoint.data.get('checkpoint_ready') or
             checkpoint.plan.source != source or checkpoint.data.get('failures') or
             config.vm('web').vmid != 1000 or (adapter.state/'active.json').exists()):
@@ -69,7 +70,7 @@ def main(argv=None):
                                   {'plan': baseline.to_dict(), 'kind': 'web-role-rehearsal',
                                    'committed': False, 'backup_directory': str(checkpoint.data['backup_directory']),
                                    'checkpoint_ready': True})
-        transaction.save('PREPARED', target_commit=commit, recovery_archive_sha256=saved['sha256'])
+        transaction.save('PREPARED', target_commit=commit, runner_commit=revision(ROOT,'HEAD'), recovery_archive_sha256=saved['sha256'])
         environment = adapter.environment
         previous_url = os.environ.get('TEST_DATABASE_URL')
         os.environ['TEST_DATABASE_URL'] = ('postgresql://'+quote(environment['DB_USER'],safe='')+':'+
@@ -117,24 +118,37 @@ try:
  connection.connect()
  expected=hashlib.sha256(ssl.PEM_cert_to_DER_cert(certificate.read_text())).digest()
  assert hmac.compare_digest(expected,hashlib.sha256(connection.sock.getpeercert(binary_form=True)).digest())
- def get(path):
+ def get(path,status=200):
   connection.request('GET',path)
   response=connection.getresponse();body=response.read(2*1024**2)
-  assert response.status==200
+  assert response.status==status,(path,response.status)
   return response,body
  _,html=get('/login')
  assert b'id="root"' in html
  _,body=get('/api/health/live')
  assert json.loads(body)['status']=='alive'
- response,body=get('/api/session')
- assert json.loads(body)['success'] is True
- cookie=response.getheader('Set-Cookie','')
- assert 'Secure' in cookie and 'HttpOnly' in cookie
- print(json.dumps({'apache_spa':True,'gunicorn_liveness':True,'session_api':True,'secure_cookie':True,'tls_peer_pinned':True}))
+ _,body=get('/api/session',503)
+ assert json.loads(body).get('message')=='Scheduled maintenance is in progress'
+ print(json.dumps({'apache_spa':True,'gunicorn_liveness':True,'maintenance_session_rejected':True,'tls_peer_pinned':True}))
 finally:
  connection.close()
 """.replace('@CERTIFICATE@',repr(config.web_certificate))
                 checks = json.loads(config.vm('web').ssh.run(['/usr/bin/python3','-c',probe],timeout=30).stdout)
+                # Public sessions must stay blocked during maintenance. Exercise
+                # actual session SQL separately as the service UID, without
+                # removing either maintenance marker or opening the firewall.
+                database_probe = """import hashlib,json,os,pwd,subprocess
+from pathlib import Path
+settings={}
+for line in Path('/etc/heist/web.env').read_text().splitlines():
+ key,value=line.split('=',1);settings[key]=json.loads(value)
+user=pwd.getpwnam('heist-web')
+settings.update(PATH='/usr/bin:/bin',PYTHONPATH='/opt/heist-web/current/source',PYTHONDONTWRITEBYTECODE='1')
+program="from heist.config import DatabaseSettings; from heist.api.public.repository import Repository; from heist.security.sessions import Sessions; import json,os; r=Repository(DatabaseSettings.from_mapping().connect); s=Sessions(r,os.environ['WEB_SESSION_SECRET']); token=s.rotate(); assert s.load(token)['user_id'] is None; s.revoke(token); assert s.load(token) is None; r.close(); print(json.dumps({'restricted_database':True,'session_storage':True}))"
+result=subprocess.run(['/opt/heist-web/current/venv/bin/python','-c',program],env=settings,user=user.pw_uid,group=user.pw_gid,extra_groups=[],cwd='/var/lib/heist-web',check=True,capture_output=True,timeout=30)
+print(result.stdout.decode())
+"""
+                checks.update(json.loads(config.vm('web').ssh.run(['/usr/bin/python3','-c',database_probe],timeout=40).stdout))
                 # Simulate worker failure; systemd must restart a real worker.
                 config.vm('web').ssh.run(['systemctl','kill','--signal=SIGKILL','--kill-whom=main','heist-web'],timeout=30)
                 adapter.wait(lambda: json.loads(config.vm('web').ssh.run(['/usr/bin/python3','-c',probe],timeout=30).stdout),
@@ -144,6 +158,13 @@ finally:
             finally:
                 fixture.doCleanups()
         except BaseException as error:
+            if mutated:
+                try:
+                    from heist.files import write_file
+                    diagnostic = config.vm('web').ssh.run(['journalctl','-u','heist-web','--no-pager','-n','40','--output=cat'],timeout=20)
+                    write_file(transaction.path/'browser-journal.log',diagnostic.stdout)
+                except Exception:
+                    pass
             transaction.failure(error)
             raise
         finally:

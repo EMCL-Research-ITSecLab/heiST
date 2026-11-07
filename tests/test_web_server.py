@@ -49,7 +49,7 @@ class GunicornProcessTests(unittest.TestCase):
                         self.assertEqual(error.code, 400)
                         error.close()
                         break
-                    except urllib.error.URLError:
+                    except (urllib.error.URLError, TimeoutError):
                         if process.poll() is not None or time.monotonic() > deadline:
                             self.fail('Gunicorn did not become ready')
                         time.sleep(.05)

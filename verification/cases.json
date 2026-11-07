@@ -1917,6 +1917,21 @@
       "sources": [
         "tools/local/rehearse_migrations.py"
       ]
+    },
+    {
+      "id": "PILOT-TARGET-PRECOMMIT-RECOVERY",
+      "area": "platform acceptance",
+      "mode": "appliance",
+      "procedure": "Run tools/local/rehearse_platform.py on the isolation-verified legacy pilot with its explicit recovered baseline, immutable candidate and source-bound artifacts.",
+      "expected": "Candidate host/web/SQL and template adoption verify behind maintenance; an injected precommit failure triggers actual complete VM/source/configuration recovery. Candidate writers/public access never resume. This is not committed-release rollback or installer approval.",
+      "evidence": [
+        "private platform transaction journal",
+        "candidate and baseline verification",
+        "public rehearsal receipt"
+      ],
+      "sources": [
+        "tools/local/rehearse_platform.py"
+      ]
     }
   ]
 }

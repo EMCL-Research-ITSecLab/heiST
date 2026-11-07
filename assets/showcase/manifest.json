@@ -41,7 +41,7 @@
     "frontend/public/assets/logo/logo_dark.svg": "c737949005f680ee246d02003e47512a5d979c894f160197c183001f673821db",
     "frontend/public/assets/logo/logo_light.svg": "e6cf270657532d0cba435aa94802b60b464d4f3184d10a7e1865457188520b2e",
     "frontend/public/assets/ui/fontawesome-license.txt": "9b914eae88817d63b576eab5aafde7068c7a1abae125d7cdfb034f1da43a9afc",
-    "frontend/package-lock.json": "c3096016a2854685704d114a1ea127214c68672f1d8fdc40cbb607fde933e703",
+    "frontend/package-lock.json": "f20bf26b9bb3073648dca45b3f2190652fc71ebd12958f016440911d634099ff",
     "tests/browser/support.py": "e6a25390a663b108557557b89bc814498c46bac6e1750b09a2773b29b2411661",
     "tests/browser/showcase_data.py": "0f1a6eef5451ee8800ddaaf783c335c87365fdf18b1580706c284581803a6109",
     "tools/testing/screenshots.py": "db7800e7ea5b0d748bd6a2ab04ac7f70a460a8a914d93414a2854cb18df10399"

@@ -56,3 +56,13 @@ class WizardTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, 'disposable heist-pilot'):
                 rehearse(['--config', '/nonexistent/config', '--transaction', 'fixture', '--confirm-version', '0.2.0'])
             load.assert_not_called()
+
+
+class NativePlatformAdmissionTests(unittest.TestCase):
+    def test_platform_rehearsal_requires_isolation_optin_before_loading_deployment(self):
+        from tools.local.rehearse_platform import main as rehearse
+        with patch.dict('os.environ',{'HEIST_PRIVILEGED_TESTS':'0'}),patch('tools.local.rehearse_platform.Deployment.load') as load:
+            with self.assertRaisesRegex(RuntimeError,'disposable heist-pilot'):
+                rehearse(['--config','/missing/config','--checkpoint','/missing/checkpoint','--target','candidate',
+                          '--ui-bundle','/missing/ui','--runtime-bundle','/missing/runtime','--output','/missing/receipt'])
+            load.assert_not_called()

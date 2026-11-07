@@ -96,3 +96,13 @@ The native runner may select an already fetched application `--target-commit`
 independently of its own revision; the journal records both. Artifacts and service
 templates remain bound to that application revision. Session checks never remove
 maintenance markers or open the public firewall.
+
+`tools/local/rehearse_platform.py` can stage the gated candidate on the verified
+disposable pilot and inject a failure after target verification, before commit.
+It reuses only the explicit complete recovered baseline: protected rows, host
+configuration, template identities and every VM archive are checked first. New
+credentials/artifacts use a separate transaction directory; the baseline remains
+immutable. Complete VM/source/config recovery uses the real controller journal.
+Do not remove the referenced baseline or frozen runner during this rehearsal.
+It never commits/opens the candidate, and does not approve installation, all fault
+positions, reboot recovery or rollback after newly written student data.

@@ -81,8 +81,8 @@ installed legacy production VMs are handled through checked migration/recovery.
 
 Recovery now validates and restores declared host configuration files. Future
 checkpoints preserve sequence high-water marks outside VM snapshots, advance
-restored allocators and invalidate restored Flask sessions. Full recovery still
-needs template VM/image checkpoints and legacy PHP-session invalidation, followed
+restored allocators and invalidate restored Flask sessions. Template VM and source-image checkpoints have passed complete legacy baseline
+recovery on the isolated appliance. Full target recovery still needs legacy PHP-session invalidation, followed
 by a native upgrade/failure/rollback rehearsal. Existing VPN installations need
 a checked CRL/management/renewal migration; existing monitoring installations need
 checked certificate trust configuration. Native archive and renewal units require
@@ -92,3 +92,14 @@ reviewed against passing behavior assertions, not just execution counts.
 Do not describe these pending gates as production-ready. The implementation and
 acceptance details are in `docs/WEB-API.md`, `docs/ARCHITECTURE-MIGRATION.md` and
 `docs/TEST-CONCEPT.md`.
+
+
+The controller now assembles the protocol 3 browser bootstrap and host runtime,
+service/expiry configuration, credentialed migrations and template adoption.
+The admission guard remains closed pending native target upgrade, failure and
+rollback acceptance; the clean-host installer remains gated. Operator YAML/image
+helpers use Flask authentication and the new artifact protocol. Frontend coverage
+includes populated responsive/theme/focus/contrast regressions and actual browser
+login, announcement persistence and role revocation against Flask/PostgreSQL.
+README screenshots are generated from the production UI build with synthetic
+records, with source and image hashes checked in CI.

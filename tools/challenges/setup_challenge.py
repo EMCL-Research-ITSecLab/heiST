@@ -2,6 +2,7 @@ import os
 import time
 import datetime
 from tools.challenges.upload_ova_file import upload_all_ova_files
+from .client import request
 from tools.challenges.yaml_parser import yaml_to_create_challenge_form_data
 
 YAML_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -26,16 +27,15 @@ def setup_challenge(admin_session, path_to_yaml, upload_ovas=True, prints=False)
 
     if prints:
         print("\nCreating challenge on the server")
-    response = admin_session.post(admin_session.heist_url + '/backend/create-ctf.php', data=form_data, timeout=(10, 300))
-    challenge_id = response.json().get("challenge_id")
+    result = request(admin_session, 'POST', '/api/admin/challenges', json=form_data, timeout=(10, 1900))
+    challenge_id = result.get('id')
+    if type(challenge_id) is not int or challenge_id <= 0:
+        raise RuntimeError('Exercise creation was not confirmed; inspect existing definitions before retrying')
 
     end_time = time.time()
 
-    if response.status_code != 200 or not response.json().get("success"):
-        raise Exception(f"Failed to create challenge: {response.text}")
-
     if prints:
-        print(f"\nChallenge (ID {challenge_id} created successfully")
+        print(f"\nChallenge ID {challenge_id} created successfully")
         print(f"Total time taken: {datetime.timedelta(seconds=end_time - start_time)}")
 
     return challenge_id

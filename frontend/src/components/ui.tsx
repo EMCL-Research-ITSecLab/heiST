@@ -1,4 +1,4 @@
-import { useEffect, useRef, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
+import { useEffect, useId, useRef, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
 import { date, image, number, text, type Row } from '../lib/data.ts';
 import { Link } from '../lib/router.tsx';
 export function PageTitle({ eyebrow = 'Your workspace', title, description, action }: {
@@ -115,22 +115,24 @@ export function Badge({ children, tone = '' }: {
 export function Field({ label, ...props }: InputHTMLAttributes<HTMLInputElement> & {
   label: string;
 }) {
+  const labelId = useId();
   return <label className="field">
     <span>
-      {label}
+      <span id={labelId}>{label}</span>
       {props.required && <span aria-hidden> *</span>}
     </span>
-    <input {...props} />
+    <input {...props} aria-labelledby={labelId} />
   </label>;
 }
 export function Area({ label, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement> & {
   label: string;
 }) {
+  const labelId = useId();
   return <label className="field">
-    <span>
+    <span id={labelId}>
       {label}
     </span>
-    <textarea rows={4} {...props} />
+    <textarea rows={4} {...props} aria-labelledby={labelId} />
   </label>;
 }
 export function Select({ label, options, ...props }: SelectHTMLAttributes<HTMLSelectElement> & {
@@ -140,11 +142,12 @@ export function Select({ label, options, ...props }: SelectHTMLAttributes<HTMLSe
     string
   ])[];
 }) {
+  const labelId = useId();
   return <label className="field">
-    <span>
+    <span id={labelId}>
       {label}
     </span>
-    <select {...props}>
+    <select {...props} aria-labelledby={labelId}>
       {options.map(option => {
         const [value, name] = Array.isArray(option) ? option : [option, option]; return <option key={value} value={value}>
           {name}
@@ -174,7 +177,12 @@ export function Confirm({ title, children, confirm, onClose, onConfirm, busy = f
   busy?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
-  useEffect(() => { const dialog = ref.current; dialog?.showModal(); return () => dialog?.close(); }, []);
+  useEffect(() => {
+    const dialog = ref.current;
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    dialog?.showModal();
+    return () => { dialog?.close(); if (opener?.isConnected) opener.focus(); };
+  }, []);
   return <dialog ref={ref} onCancel={event => {
     if (busy)
       event.preventDefault();

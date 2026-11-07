@@ -51,8 +51,9 @@ def collect(suite, output, *, strict=False):
     commands = {
         'python': [sys.executable, 'tools/check.py', '--report', str(output/'results.json')],
         'ui': ['npm', '--prefix', 'frontend', 'run', 'check'],
-        'browser': [sys.executable, 'tests/browser/ui_smoke.py'],
+        'browser': [sys.executable, '-m', 'unittest', 'tests.browser.ui_smoke', 'tests.browser.ui_layout'],
         'ui-build': ['npm', '--prefix', 'frontend', 'run', 'build'],
+        'browser-database': [sys.executable, 'tests/browser/ui_database.py'],
         'vpn': ['unshare', '--net', sys.executable, '-m', 'tests.integration.vpn.lifecycle'],
         'proxmox': [sys.executable, '-m', 'tests.integration.proxmox.resources'],
     }
@@ -109,7 +110,7 @@ def main(argv=None):
     sub = parser.add_subparsers(dest='action', required=True)
     sub.add_parser('catalogue', help='Validate case completeness and automated module traceability')
     run = sub.add_parser('run', help='Execute an explicit local test suite and retain private evidence')
-    run.add_argument('--suite', choices=('python', 'ui', 'ui-build', 'browser', 'vpn', 'proxmox'), required=True)
+    run.add_argument('--suite', choices=('python', 'ui', 'ui-build', 'browser', 'browser-database', 'vpn', 'proxmox'), required=True)
     run.add_argument('--output', type=Path, required=True)
     run.add_argument('--strict', action='store_true')
     gate = sub.add_parser('verify-evidence', help='Verify one suite receipt; this is not whole-release approval')

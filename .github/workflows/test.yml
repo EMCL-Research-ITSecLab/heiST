@@ -51,3 +51,37 @@ jobs:
       - run: pip install playwright
       - run: python -m playwright install --with-deps ${{ matrix.browser }}
       - run: python tests/browser/ui_smoke.py
+      - run: python tests/browser/ui_layout.py
+      - run: python tools/testing/screenshots.py --check
+
+  react-database:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: heist_test
+          POSTGRES_PASSWORD: disposable_ci_only
+          POSTGRES_DB: heist_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd 'pg_isready -U heist_test'
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://heist_test:disposable_ci_only@localhost:5432/heist_test
+      HEIST_BROWSER_DATABASE_TESTS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements-test.txt playwright
+      - run: npm --prefix frontend ci --ignore-scripts
+      - run: npm --prefix frontend run build
+      - run: python -m playwright install --with-deps chromium
+      - run: python tests/browser/ui_database.py

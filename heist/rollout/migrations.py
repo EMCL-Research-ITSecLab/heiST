@@ -3,11 +3,13 @@ from contextlib import closing
 from .manifest import blob
 
 
-def migrate(settings, plan, *, web_role=None, web_password=None):
+def migrate(settings, plan, *, web_role=None, web_password=None, previous_web_role=None):
     if plan.schema == 3:
         from .browser_role import validate
         validate(web_role,web_password)
-    elif web_role is not None or web_password is not None:
+        if previous_web_role is not None:
+            validate(previous_web_role,'a'*64)
+    elif web_role is not None or web_password is not None or previous_web_role is not None:
         raise ValueError('Browser role provisioning requires the browser-runtime release protocol')
     with closing(settings.connect()) as connection:
         try:
@@ -16,6 +18,9 @@ def migrate(settings, plan, *, web_role=None, web_password=None):
                 if plan.schema == 3:
                     from .browser_role import create
                     create(cursor,web_role,web_password)
+                    if previous_web_role is not None:
+                        from .browser_role import transfer_permissions
+                        transfer_permissions(cursor,previous_web_role,web_role)
                 cursor.execute('''CREATE TABLE IF NOT EXISTS public.heist_schema_migrations (
                     id text PRIMARY KEY, sha256 text NOT NULL, release_commit text NOT NULL,
                     applied_at timestamptz NOT NULL DEFAULT now())''')
@@ -29,6 +34,13 @@ def migrate(settings, plan, *, web_role=None, web_password=None):
                     cursor.execute(blob(plan.installation,plan.target,migration.path).decode())
                     cursor.execute('INSERT INTO public.heist_schema_migrations(id,sha256,release_commit) VALUES(%s,%s,%s)',
                         (migration.identifier,migration.sha256,plan.target))
+                if plan.schema == 3:
+                    if previous_web_role is not None:
+                        from .browser_role import retire_previous
+                        retire_previous(cursor,previous_web_role)
+                    cursor.execute("SELECT pg_catalog.to_regclass('public.web_sessions')")
+                    if cursor.fetchone()[0] is not None:
+                        cursor.execute('DELETE FROM public.web_sessions')
             connection.commit()
         except BaseException:
             connection.rollback()

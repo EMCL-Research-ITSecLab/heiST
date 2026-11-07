@@ -133,6 +133,60 @@ class MigrationTests(unittest.TestCase):
                 connection.commit()
             finally:connection.close()
 
+    def test_later_browser_release_without_new_sql_preserves_only_approved_function_grants(self):
+        from dataclasses import replace
+        import secrets
+        from psycopg2 import sql
+        previous='heist_web_'+uuid.uuid4().hex
+        current='heist_web_'+uuid.uuid4().hex
+        allowed='allowed_'+uuid.uuid4().hex
+        denied='denied_'+uuid.uuid4().hex
+        self.assertEqual(self.query("SELECT to_regclass('public.web_sessions')"),[(None,)])
+        statement=('CREATE TABLE public.web_sessions(marker integer); '
+                   f'CREATE FUNCTION api.{allowed}() RETURNS integer LANGUAGE sql AS $$ SELECT 17 $$; '
+                   f'CREATE FUNCTION api.{denied}() RETURNS integer LANGUAGE sql AS $$ SELECT 99 $$; '
+                   f'REVOKE ALL ON FUNCTION api.{allowed}(),api.{denied}() FROM PUBLIC; '
+                   f'GRANT EXECUTE ON FUNCTION api.{allowed}() TO {previous};')
+        plan=replace(self.plan,schema=3)
+        try:
+            with patch('heist.rollout.migrations.blob',return_value=statement.encode()):
+                migrate(self.settings,plan,web_role=previous,web_password=secrets.token_urlsafe(48))
+            connection=self.settings.connect()
+            try:
+                with connection.cursor() as cursor:cursor.execute('INSERT INTO public.web_sessions VALUES(17)')
+                connection.commit()
+            finally:connection.close()
+            with patch('heist.rollout.migrations.blob') as read:
+                migrate(self.settings,replace(plan,target='later'),web_role=current,web_password=secrets.token_urlsafe(48),previous_web_role=previous)
+                read.assert_not_called()
+            connection=self.settings.connect()
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute('SELECT has_function_privilege(%s,%s,\'EXECUTE\'),has_function_privilege(%s,%s,\'EXECUTE\')',
+                                   (current,'api.'+allowed+'()',current,'api.'+denied+'()'))
+                    self.assertEqual(cursor.fetchone(),(True,False))
+                    cursor.execute('SELECT count(*) FROM public.web_sessions')
+                    self.assertEqual(cursor.fetchone(),(0,))
+                    cursor.execute('SELECT rolcanlogin FROM pg_roles WHERE rolname=%s',(previous,))
+                    self.assertEqual(cursor.fetchone(),(False,))
+                    cursor.execute('SELECT rolcanlogin FROM pg_roles WHERE rolname=%s',(current,))
+                    self.assertEqual(cursor.fetchone(),(True,))
+            finally:connection.close()
+        finally:
+            connection=self.settings.connect()
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute('DROP TABLE IF EXISTS public.web_sessions')
+                    for name in (allowed,denied):
+                        cursor.execute(sql.SQL('DROP FUNCTION IF EXISTS api.{}()').format(sql.Identifier(name)))
+                    for role in (current,previous):
+                        cursor.execute('SELECT 1 FROM pg_roles WHERE rolname=%s',(role,))
+                        if cursor.fetchone():
+                            cursor.execute(sql.SQL('DROP OWNED BY {}').format(sql.Identifier(role)))
+                            cursor.execute(sql.SQL('DROP ROLE {}').format(sql.Identifier(role)))
+                connection.commit()
+            finally:connection.close()
+
     def test_failed_browser_migration_does_not_leave_a_login_role_behind(self):
         from dataclasses import replace
         import secrets

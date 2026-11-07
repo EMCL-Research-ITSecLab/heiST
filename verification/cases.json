@@ -1818,6 +1818,59 @@
       "sources": [
         "tests/test_internal_runtime_recovery.py"
       ]
+    },
+    {
+      "id": "AUTO-BROWSER-DEPLOYMENT",
+      "area": "deployment",
+      "mode": "automated",
+      "procedure": "Run tests/test_browser_deployment.py with the documented prerequisites.",
+      "expected": "Bounded bootstrap rejects corruption/traversal; credentials remain private and stable; all template identities precede ownership mutation.",
+      "evidence": [
+        "source-bound test output"
+      ],
+      "sources": [
+        "tests/test_browser_deployment.py"
+      ]
+    },
+    {
+      "id": "AUTO-OPERATOR-CLIENT",
+      "area": "operator imports",
+      "mode": "automated",
+      "procedure": "Run tests/test_operator_client.py with the documented prerequisites.",
+      "expected": "Flask authentication rotates CSRF; server-sized binary chunks publish before exercise creation; timeouts and redirects cannot trigger duplicate transfers or credential forwarding.",
+      "evidence": [
+        "source-bound test output"
+      ],
+      "sources": [
+        "tests/test_operator_client.py"
+      ]
+    },
+    {
+      "id": "UI-POPULATED-RESPONSIVE",
+      "area": "frontend",
+      "mode": "automated",
+      "procedure": "Run tests/browser/ui_layout.py with the documented prerequisites.",
+      "expected": "Populated pages fit five widths in both themes; restore, paging, modal/mobile focus, theme persistence and contrast assertions pass.",
+      "evidence": [
+        "source-bound test output"
+      ],
+      "sources": [
+        "tests/browser/ui_layout.py"
+      ]
+    },
+    {
+      "id": "UI-REAL-FLASK-DATABASE",
+      "area": "frontend",
+      "mode": "automated",
+      "procedure": "Run tests/browser/ui_database.py with an explicitly isolated TEST_DATABASE_URL and HEIST_BROWSER_DATABASE_TESTS=1.",
+      "expected": "Real HTTPS browser login/logout, announcement CRUD persistence and role revocation pass through Flask and a restricted PostgreSQL role; no privileged VM operations occur.",
+      "evidence": [
+        "source-bound browser output",
+        "disposable database/role cleanup"
+      ],
+      "sources": [
+        "tests/browser/ui_database.py"
+      ]
     }
   ]
 }

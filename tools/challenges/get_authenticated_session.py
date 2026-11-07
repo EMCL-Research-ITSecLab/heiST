@@ -1,28 +1,24 @@
 """Authenticate operator tools through the public, session-protected web API."""
 import os
-from urllib.parse import urlsplit
+from .client import origin, request
 
 
 def get_authenticated_session(username, password, prints=False, *, base_url=None, ca_file=None):
     import requests
-    base = (base_url or os.environ.get('HEIST_URL', 'https://localhost')).rstrip('/')
-    parsed = urlsplit(base)
-    if parsed.scheme != 'https' or not parsed.hostname or parsed.username or parsed.password or parsed.path not in ('', '/') or parsed.query or parsed.fragment:
-        raise ValueError('HEIST_URL must be a plain HTTPS origin')
+    base = origin(base_url or os.environ.get('HEIST_URL', 'https://localhost'))
     session = requests.Session()
     session.heist_url = base
     session.verify = ca_file or os.environ.get('HEIST_CA_FILE') or True
     try:
-        bootstrap = session.get(base + '/backend/session.php', timeout=(10, 30))
-        bootstrap.raise_for_status()
-        token = bootstrap.json()['data']['csrf_token']
-        response = session.post(base + '/backend/login.php', data={
-            'username': username, 'password': password, 'csrf_token': token,
-        }, timeout=(10, 30))
-        response.raise_for_status()
-        result = response.json()
-        if result.get('success') is not True:
-            raise RuntimeError('Operator authentication was rejected')
+        session.headers.update({'Origin': base})
+        bootstrap = request(session, 'GET', '/api/session')
+        token = bootstrap['data']['csrf_token']
+        if not isinstance(token, str) or len(token) != 64:
+            raise RuntimeError('Invalid bootstrap CSRF token')
+        session.headers.update({'X-CSRF-Token': token})
+        result = request(session, 'POST', '/api/login', json={'username': username, 'password': password})
+        if result.get('redirect') == '/reset-password':
+            raise RuntimeError('Change this operator account password in the browser before importing exercises')
         token = result.get('csrf_token')
         if not isinstance(token, str) or len(token) != 64:
             raise RuntimeError('The server did not return a valid session CSRF token')

@@ -17,3 +17,4 @@ build-ui:
 	npm --prefix frontend run build
 test-ui-browser: build-ui
 	$(PYTHON) tests/browser/ui_smoke.py
+	$(PYTHON) tests/browser/ui_layout.py

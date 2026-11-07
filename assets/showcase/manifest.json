@@ -1,0 +1,197 @@
+{
+  "schema": 1,
+  "data": "synthetic documentation fixtures; not an installed-platform acceptance test",
+  "browser": "156.0.8078.4",
+  "sources": {
+    "frontend/src/App.tsx": "f32c3e06f791deadf9bd99dd88e0f78326894fad68c926981b359d80f7976f54",
+    "frontend/src/components/ui.tsx": "6bd7e951f18365b93c5d0b79386c4d6672bfbe97414a89e992b0b14ee968c728",
+    "frontend/src/env.d.ts": "65996936fbb042915f7b74a200fcdde7e410f32a669b1ab9597cfaa4b0faddb5",
+    "frontend/src/features/account/ProfilePage.tsx": "2d638f6961e1027e90f9319ad3f641f6673a7a57c14cde8fcec1a1006f2983e5",
+    "frontend/src/features/administration/AnnouncementManagementPage.tsx": "b0e04633ac435ddd87d0420e77cb1433649069ecb6bcd450773ef1fd9c2b0e03",
+    "frontend/src/features/administration/ArtifactsPage.tsx": "b4912362b05d70973f85e43ffee5ace50b36cd8efa21b34bccd7a35548334c36",
+    "frontend/src/features/administration/ChallengeEditorPage.tsx": "9ae610bb0687cc284a7699c23766d4ccfc5ee6c9c768ed24022870582d5c7033",
+    "frontend/src/features/administration/ChallengeManagementPage.tsx": "ef861f8339957ec0007ecfa7bdc1e764eb99cc927d0f998ad6395212d91ce5c4",
+    "frontend/src/features/administration/OperationsPage.tsx": "92f43f2b0f6de32f0d701385f1053a5c6a96e939d6943dad837cc042ad70b48d",
+    "frontend/src/features/administration/PlatformStatusPanel.tsx": "13fd55dfb6a4c3e7abc531560da3fceac7a8dc5298064042f70b2119c0463900",
+    "frontend/src/features/administration/useArtifactUpload.ts": "1f1fff9299ea5309592c27cf9dcca6990a57a8d857ca5ab076b34e6efe3c46e0",
+    "frontend/src/features/auth/AuthPage.tsx": "faff90ef75593ced9d27112309d2ec0c4f65a5c342b97399ba4e2891b1705395",
+    "frontend/src/features/challenges/ChallengePage.tsx": "5437287376697251581225df1be398175c032acedc6604455f896054e9fd7d3f",
+    "frontend/src/features/challenges/ExplorePage.tsx": "4da8c00dfcf3274cb46e5436dee8c7b73fe9a0d70aa9fa1cd2520b1368e92038",
+    "frontend/src/features/community/FeedPage.tsx": "4e7ae6bac5f0d117038cd7aa44507454b3f3373f39989f38216edae2b637f62d",
+    "frontend/src/features/dashboard/DashboardPage.tsx": "1f136543b242c441a72ce5d1ed877fc92b6fda9406e58503ec10b0e1559aa420",
+    "frontend/src/features/welcome/LandingPage.tsx": "de8a85c31ae0979d640527766babe20011b19ff50ee43a2b93799549ab36b60b",
+    "frontend/src/lib/api.ts": "2a99e5d25d67916fbdea5c6829b5ce43b2a14016039055b18659c4f4113253c4",
+    "frontend/src/lib/data.ts": "0499d40a4e64b78020c1a040630c1b4b24b4a2f3355277fb4d307c436c3305f0",
+    "frontend/src/lib/router.tsx": "80bd96cf8ccdc18de7da5959083eeb4fcfe3c781170143ac212100278e3719c9",
+    "frontend/src/lib/state.tsx": "c742d0843694a70014175fb71517f738e8d2eaa528a99dd82c4dc74542ab0aaf",
+    "frontend/src/main.tsx": "831a245331f7079be1a8e359123f684a6177e4ac231b70e46fd50e73fbd2f7e9",
+    "frontend/src/styles.css": "b6ba3633a2f957863ec8de65a842b574bd2dc0f486b9e9102b7df4b0ac69a1b2",
+    "frontend/src/tokens.css": "fbd02d200036859905330b4f22800b1541b7891563c7131c41fd33e1a352f8b9",
+    "frontend/public/assets/avatars/avatar1.png": "717f6f904ed6a511681bd8f7f011699197d911b3119da3886c4baec251c8df2a",
+    "frontend/public/assets/avatars/avatar2.png": "97c6ce9676506ada7ad86e1eab731c881798fa2732d526563246c37eb02c0b25",
+    "frontend/public/assets/avatars/avatar3.png": "edfa24ca1a4790c12bad2d0a2acaa72cd075ffdb4bae87b743861152936983d1",
+    "frontend/public/assets/avatars/default-avatar.png": "abf3ccc277f8d8354ae8d71a0ce4f56c507a7e5e76e479bf52ed9de4d4ccf515",
+    "frontend/public/assets/images/ctf-default.png": "16bcccae6f0258537627f339959111c6f2c4bde55b75a9e45c16ee643f3eb6e4",
+    "frontend/public/assets/images/default-challenge.jpg": "d4bdc664f8afeaddca449b8b89203711ab14174e038fcbe4101bae2e4fb77f3f",
+    "frontend/package-lock.json": "c3096016a2854685704d114a1ea127214c68672f1d8fdc40cbb607fde933e703",
+    "tests/browser/support.py": "767f8e4b1550ebf70c6da4728257edf23b39f03296601fa7f386c69a6ea4a524",
+    "tests/browser/showcase_data.py": "0f1a6eef5451ee8800ddaaf783c335c87365fdf18b1580706c284581803a6109",
+    "tools/testing/screenshots.py": "1975dad219219dd8bd6f7c971646216aef4e77a96c7b0c94a40e3518e419fa92"
+  },
+  "captures": [
+    {
+      "file": "dashboard_light.png",
+      "route": "/dashboard",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "sha256": "0503ce64c491a98596c05af5bce50a4bb2b0a4f427975e98bc150f8630585e5a"
+    },
+    {
+      "file": "manage_challenges_light.png",
+      "route": "/manage-ctf",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "sha256": "fc95b6ed1b8a3c07aa0b3bf0b43570a79dbc34ca32cfd7b6ea59198575c1c4d1"
+    },
+    {
+      "file": "create_challenge_light.png",
+      "route": "/create-ctf",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "sha256": "a3395316c4db175151810924780e72fc51958f8b7ecd5115a66c4cc64b890e19"
+    },
+    {
+      "file": "deploy_challenge_light.png",
+      "route": "/challenge?id=4",
+      "role": "student",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "sha256": "a3d53476c7d64b2a01415adea062c87aca4e96a5399fe53aca195010c7f038ca"
+    },
+    {
+      "file": "operations_light.png",
+      "route": "/operations",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "sha256": "e33b6af6cd6b0423e5fc2783a6ef47f727c40203d0c6ffb32fc09af29f4a1808"
+    },
+    {
+      "file": "login_light.png",
+      "route": "/login",
+      "role": "guest",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "sha256": "ea925bb6cb941b0595e31536963b475a013cb30d34b30700f1698241f9ca6769"
+    },
+    {
+      "file": "mobile_light.png",
+      "route": "/dashboard",
+      "role": "student",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "sha256": "588c971edd77500c0da9e5ac8b678113815f44dab5c74840750705d6c0354f02"
+    },
+    {
+      "file": "dashboard_dark.png",
+      "route": "/dashboard",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "sha256": "ef685edfe54a67c867950d4993d05c59d28b56230c5f3c9571a88c807a62adf3"
+    },
+    {
+      "file": "manage_challenges_dark.png",
+      "route": "/manage-ctf",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "sha256": "6e8f82f60e1e506e2a3519c9649c46bde72992fbe5c61690a7d25e326f74e2f1"
+    },
+    {
+      "file": "create_challenge_dark.png",
+      "route": "/create-ctf",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "sha256": "b3bc1a96161794bc2fa240492b89920870ba193b61a3ade14c2fd6e8cf6fba91"
+    },
+    {
+      "file": "deploy_challenge_dark.png",
+      "route": "/challenge?id=4",
+      "role": "student",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "sha256": "af6dbdc8b0bbd51b78ecce38a80aa53fb19f2846dac70ee649461cd85e7d5b26"
+    },
+    {
+      "file": "operations_dark.png",
+      "route": "/operations",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "sha256": "6a0f38264386a8b12b7d757392f7255739870bd3e05cdaecc8c3cdafeece5414"
+    },
+    {
+      "file": "login_dark.png",
+      "route": "/login",
+      "role": "guest",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "sha256": "ccaf38629f27f85afe5db768615a7bfbf508c08269711ec6797a7b47a1fb1a97"
+    },
+    {
+      "file": "mobile_dark.png",
+      "route": "/dashboard",
+      "role": "student",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "sha256": "e22c99bb98890f9ec287f93c774af85a7db51af82b2ebcaa6b656c4c26511b8b"
+    }
+  ]
+}

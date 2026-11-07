@@ -3,6 +3,15 @@
   box-sizing:border-box
 }
 
+/* The route landmark receives programmatic focus; controls keep their focus ring. */
+main:focus {
+  outline:none
+}
+
+h1,h2,h3 {
+  overflow-wrap:anywhere
+}
+
 body {
   margin:0;
   background:var(--canvas);
@@ -36,7 +45,7 @@ button,.button {
   border:1px solid transparent;
   border-radius:8px;
   background:var(--blue);
-  color:white;
+  color:var(--on-accent);
   padding:11px 17px;
   font-weight:650;
   cursor:pointer;
@@ -67,11 +76,11 @@ button:disabled {
 
 .danger {
   background:var(--red);
-  color:white
+  color:var(--on-danger)
 }
 
 .danger:hover:not(:disabled) {
-  background:#a63033
+  background:var(--danger-hover)
 }
 
 .subtle {
@@ -81,7 +90,7 @@ button:disabled {
 }
 
 .subtle:hover:not(:disabled) {
-  color:white
+  color:var(--on-danger)
 }
 
 .small {
@@ -364,7 +373,7 @@ small {
   height:34px;
   border-radius:50%;
   object-fit:cover;
-  background:var(--subtle)
+  background:var(--avatar-surface)
 }
 
 .avatar.large {
@@ -1079,7 +1088,7 @@ details p {
 }
 
 .profile-summary .avatar.large {
-  background:var(--subtle)
+  background:var(--avatar-surface)
 }
 
 .card form+form {

@@ -1,6 +1,7 @@
 :root {
   --sans:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   --mono:"SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --avatar-surface:#e2eaf2;
   --canvas:#f5f6f8;
   --surface:#fff;
   --subtle:#f1f4f6;
@@ -9,6 +10,9 @@
   --placeholder:#95a2b0;
   --line:#e4e9ee;
   --line-strong:#d5dde6;
+  --on-accent:#fff;
+  --on-danger:#fff;
+  --danger-hover:#a63033;
   --blue:#2865b4;
   --blue-hover:#1b5194;
   --focus:#57a8f3;
@@ -24,6 +28,7 @@
 }
 
 :root[data-theme=dark] {
+  --avatar-surface:#cdd9e8;
   --canvas:#101923;
   --surface:#182432;
   --subtle:#213040;
@@ -32,6 +37,9 @@
   --placeholder:#6e8095;
   --line:#2b3949;
   --line-strong:#3b4d61;
+  --on-accent:#101923;
+  --on-danger:#101923;
+  --danger-hover:#e7a2a4;
   --blue:#70a9f1;
   --blue-hover:#588ed4;
   --focus:#91c2ff;

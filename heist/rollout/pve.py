@@ -261,15 +261,23 @@ class PVE:
                     'cleanup': 'backend.cleanup', 'pool_manager': 'backend.pool_manager'}
         return expected.get(path.name) is not None and module_for(path, self.installation) == expected[path.name]
 
+    def browser_runtime_active(self):
+        root = getattr(self, 'installation', None)
+        state = getattr(self, 'state', None)
+        return bool(root and state and (root/'heist/api/internal_serve.py').is_file()
+                    and (state/'internal-runtime/current').is_symlink())
+
     def _health(self, *, legacy, local_web, frontend=False):
         endpoint=self.config.api_url.rstrip('/')+'/health/ready'
-        status=probe(endpoint,self.config.api_certificate,
+        browser = self.browser_runtime_active()
+        certificate = '/etc/pve/local/pve-ssl.pem' if browser else self.config.api_certificate
+        status=probe(endpoint,certificate,
             headers={'Authentication-Token':self.environment['BACKEND_AUTHENTICATION_TOKEN']},
-            statuses=(200,404) if legacy else (200,), ready_json=True)
+            statuses=(200,404) if legacy and not browser else (200,), ready_json=True)
         if status==404 and not legacy:raise RuntimeError('New backend has no readiness endpoint')
         with closing(self.database.connect()) as connection:
             with connection.cursor() as cursor:cursor.execute('SELECT 1');assert cursor.fetchone()==(1,)
-        self.remote(self.config.vm('web'),web.LOCAL_HEALTH,{'certificate':self.config.web_certificate, 'frontend': frontend})
+        self.remote(self.config.vm('web'),web.LOCAL_HEALTH,{'certificate':self.config.web_certificate, 'frontend': frontend, 'browser': browser})
         for command in self.config.monitoring_checks:
             self.config.vm('monitoring').ssh.run(command,timeout=30)
 
@@ -293,6 +301,12 @@ class PVE:
                 services[unit]={name:subprocess.run(['systemctl',verb,'--quiet',unit],capture_output=True).returncode==0
                     for name,verb in [('active','is-active'),('enabled','is-enabled')]}
                 services[unit]['installed']=subprocess.run(['systemctl','show','--property=LoadState','--value',unit],capture_output=True,text=True).stdout.strip()!='not-found'
+            if self.browser_runtime_active():
+                program = 'import json;from pathlib import Path;values=[json.loads(line.split("=",1)[1]) for line in Path("/etc/heist/web.env").read_text().splitlines() if line.startswith("DB_USER=")];assert len(values)==1;print(json.dumps(values[0]))'
+                previous_role = json.loads(self.remote(self.config.vm('web'),program))
+                from .browser_role import validate
+                validate(previous_role,'a'*64)
+                transaction.save(previous_browser_role=previous_role)
             web_services=json.loads(self.remote(self.config.vm('web'),web.CAPTURE_SERVICES))
             web_runtime=json.loads(self.remote(self.config.vm('web'),web.CAPTURE_RUNTIME, {'root': self.config.web_root}))
             transaction.save(host_services=services, web_services=web_services, web_runtime=web_runtime,
@@ -453,6 +467,10 @@ class PVE:
         self._host_guard()
         self.start_vms()
         plan=transaction.plan
+        if plan.schema == 3:
+            from .browser_deployment import deploy
+            deploy(self, transaction)
+            return
         before={name:hashlib.sha256(blob(self.installation,plan.source,'webserver/html/'+name)).hexdigest() for name in plan.web_before}
         after={name:hashlib.sha256(blob(self.installation,plan.target,'webserver/html/'+name)).hexdigest() for name in plan.web_after}
         directory=Path(transaction.data['backup_directory'])
@@ -477,9 +495,21 @@ class PVE:
 
     def migrate(self,transaction):
         # Never retry a migration after an ambiguous failure. Recovery owns that decision.
-        migrate(self.database,transaction.plan)
+        if transaction.plan.schema == 3:
+            from .browser_deployment import credentials
+            secret = credentials(transaction)
+            migrate(self.database,transaction.plan,web_role=secret['role'],web_password=secret['password'],previous_web_role=transaction.data.get('previous_browser_role'))
+            environment = {**os.environ, 'HEIST_BACKEND_ENV': str(self.config.backend_env), 'HEIST_MAINTENANCE_FILE': str(self.marker)}
+            subprocess.run([str(self.installation/'.venv/bin/python'), '-m', 'heist.platform.cleanup'],
+                           cwd=self.installation, env=environment, check=True, capture_output=True, timeout=300)
+        else:
+            migrate(self.database,transaction.plan)
 
     def verify_web_runtime(self, transaction):
+        if self.browser_runtime_active():
+            from .browser_deployment import verify_guest
+            verify_guest(self, revision(self.installation, 'HEAD'))
+            return
         hashes = transaction.data.get('resume_web_runtime', transaction.data.get('web_runtime'))
         if hashes:
             self.remote(self.config.vm('web'), web.VERIFY_RUNTIME, {'hashes': hashes})
@@ -497,7 +527,7 @@ class PVE:
     def verify(self,transaction,*,target):
         self.verify_source(transaction, target=target)
         self.verify_web_runtime(transaction)
-        if target and transaction.plan.ui_bundle and transaction.data['kind'] != 'rollback':
+        if target and transaction.plan.ui_bundle and transaction.data['kind'] != 'rollback' and transaction.plan.schema != 3:
             program = UI_AGENT + '\nverify_installation(' + repr(self.config.web_root) + ', ' + repr(transaction.plan.target) + ')\n'
             self.config.vm('web').ssh.run(['python3', '-c', program], timeout=60)
         expected_files=dict(transaction.data.get('resume_preserved_files',transaction.data.get('preserved_files',{})))
@@ -622,8 +652,8 @@ class PVE:
     def finish(self,transaction):
         if 'host_services' not in transaction.data:return
         self.verify_source(transaction, target=bool(transaction.data.get('committed')))
-        services=transaction.data.get('resume_host_services',transaction.data['host_services'])
-        web_services=transaction.data.get('resume_web_services',transaction.data['web_services'])
+        services=transaction.data.get('resume_host_services',transaction.data.get('target_host_services',transaction.data['host_services']))
+        web_services=transaction.data.get('resume_web_services',transaction.data.get('target_web_services',transaction.data['web_services']))
         self.start_vms()
         self.verify_web_runtime(transaction)
         self.marker.unlink(missing_ok=True)

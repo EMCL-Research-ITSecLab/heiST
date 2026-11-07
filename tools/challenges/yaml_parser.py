@@ -1,3 +1,5 @@
+from .client import artifact_name
+
 def yaml_to_create_challenge_form_data(path_to_yaml, prints=False):
     import json
     import yaml
@@ -27,10 +29,11 @@ def yaml_to_create_challenge_form_data(path_to_yaml, prints=False):
     for name, vm_data in data.get("vms", {}).items():
         vm_entry = {
             "name": name,
-            "ova_name": vm_data.get("ova_name", ""),
+            "ova_name": artifact_name(vm_data.get("ova_name", "")),
             "cores": vm_data.get("cores", 1),
             "ram_gb": vm_data.get("ram_gb", 1),
             "domain_name": vm_data.get("domain_name", ""),
+            "ad_role": vm_data.get("ad_role", "none"),
         }
         form_data["vms"].append(vm_entry)
     form_data["vms"] = json.dumps(form_data["vms"])
@@ -49,7 +52,7 @@ def yaml_to_create_challenge_form_data(path_to_yaml, prints=False):
 
     if prints:
         print("\tProcessing Flags")
-    for flag_data in data.get("flags", []).values():
+    for flag_data in data.get("flags", {}).values():
         flag_entry = {
             "flag": flag_data.get("flag", ""),
             "description": flag_data.get("description", ""),
@@ -63,7 +66,7 @@ def yaml_to_create_challenge_form_data(path_to_yaml, prints=False):
 
     if prints:
         print("\tProcessing Hints")
-    for hint_data in data.get("hints", []).values():
+    for hint_data in data.get("hints", {}).values():
         hint_entry = {
             "hint_text": hint_data.get("hint_text", ""),
             "unlock_points": hint_data.get("unlock_points", 0),
@@ -104,10 +107,11 @@ def retrieve_ova_data(path_to_yaml):
 
         if ova_name and ova_path:
             ova_files.append({
-                "name": ova_name,
-                "path": ova_path
+                "name": artifact_name(ova_name),
+                "path": ova_path,
+                "guest_os": vm_data.get("guest_os", "linux")
             })
         else:
-            raise ValueError(f"VM entry missing 'ova_name' or 'ova_path': {vm_data}")
+            raise ValueError("Each VM entry requires ova_name and ova_path")
 
     return ova_files

@@ -36,3 +36,38 @@ def create(cursor,name,password):
     database=cursor.fetchone()[0]
     cursor.execute(sql.SQL('GRANT CONNECT ON DATABASE {} TO {}').format(sql.Identifier(database),sql.Identifier(name)))
     cursor.execute("SELECT set_config('heist.web_api_role',%s,true)",(name,))
+
+
+def transfer_permissions(cursor, previous, current):
+    """Carry forward only explicit API function grants from the stopped web role.
+
+    A later release may have no pending DDL. Its new login still needs the
+    previous role's approved function grants, including existing exclusions.
+    No memberships, ownership, table access or grant options are inherited.
+    """
+    from psycopg2 import sql
+    validate(previous, 'a'*64)
+    validate(current, 'a'*64)
+    cursor.execute('''SELECT r.oid FROM pg_roles r WHERE r.rolname=%s AND r.rolcanlogin
+        AND NOT (r.rolsuper OR r.rolcreatedb OR r.rolcreaterole OR r.rolreplication OR r.rolbypassrls)
+        AND NOT EXISTS(SELECT 1 FROM pg_auth_members m WHERE m.member=r.oid)
+        AND NOT EXISTS(SELECT 1 FROM pg_database d WHERE d.datname=current_database() AND d.datdba=r.oid)
+        AND NOT has_schema_privilege(r.oid,'api','CREATE')
+        AND NOT has_schema_privilege(r.oid,'public','CREATE')''', (previous,))
+    value=cursor.fetchone()
+    if value is None:
+        raise RuntimeError('Previous browser role is absent or privileged; reconcile before transferring grants')
+    cursor.execute('''SELECT p.proname,pg_get_function_identity_arguments(p.oid)
+        FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace,
+             LATERAL aclexplode(COALESCE(p.proacl,acldefault('f',p.proowner))) a
+        WHERE n.nspname='api' AND a.grantee=%s AND a.privilege_type='EXECUTE' ''',(value[0],))
+    for name, arguments in cursor.fetchall():
+        cursor.execute(sql.SQL('GRANT EXECUTE ON FUNCTION api.{}({}) TO {}').format(
+            sql.Identifier(name),sql.SQL(arguments),sql.Identifier(current)))
+
+
+def retire_previous(cursor, previous):
+    """Stop new logins with the old credential; VM recovery restores its old state."""
+    from psycopg2 import sql
+    validate(previous,'a'*64)
+    cursor.execute(sql.SQL('ALTER ROLE {} NOLOGIN').format(sql.Identifier(previous)))

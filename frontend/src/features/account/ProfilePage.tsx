@@ -20,7 +20,7 @@ export function Profile({ username }: {
     <Notice error={action.error} message={action.message} />
     <ResourceState {...resource}>
       <div className="profile-summary card">
-        <img className="avatar large" src={image(basic.avatar_url)} alt="" />
+        <img className="avatar large" src={image(basic.avatar_url || '/assets/avatars/default-avatar.png')} alt="" />
         <div>
           <h2>
             {text(basic.username)}

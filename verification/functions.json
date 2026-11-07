@@ -1289,5 +1289,35 @@
       "tests.test_browser_guest.BrowserGuestTests.test_shared_primary_group_cannot_access_browser_private_data"
     ],
     "rationale": "Checks that an existing shared primary group cannot admit the isolated browser account; does not claim native user creation verification."
+  },
+  "heist/rollout/browser_deployment.py::package": {
+    "tests": [
+      "tests.test_browser_deployment.BrowserDeploymentTests.test_bootstrap_delivers_private_configuration_and_verified_artifacts_without_shell_evaluation"
+    ],
+    "rationale": "Executes the actual bounded transport bootstrap with harmless source, confirms source delivery, rejects a wrong digest and avoids private stdout."
+  },
+  "heist/rollout/browser_deployment.py::credentials": {
+    "tests": [
+      "tests.test_browser_deployment.BrowserDeploymentTests.test_private_browser_credentials_survive_retry_without_rotating_or_exposing_the_password"
+    ],
+    "rationale": "Checks persisted credential equality, mode0600 and refusal of a broadly readable secret."
+  },
+  "heist/rollout/browser_deployment.py::adopt_templates": {
+    "tests": [
+      "tests.test_browser_deployment.BrowserDeploymentTests.test_all_template_identities_are_checked_before_any_ownership_label_is_written"
+    ],
+    "rationale": "Checks foreign identity refusal before the first write and preservation of existing labels during adoption."
+  },
+  "heist/rollout/browser_role.py::transfer_permissions": {
+    "tests": [
+      "tests.test_rollout_migrations.MigrationTests.test_later_browser_release_without_new_sql_preserves_only_approved_function_grants"
+    ],
+    "rationale": "Checks a second real PostgreSQL migration skips applied DDL, preserves the explicit execute grant while retaining a denied function, closes old-role login and invalidates restored browser sessions."
+  },
+  "heist/rollout/browser_role.py::retire_previous": {
+    "tests": [
+      "tests.test_rollout_migrations.MigrationTests.test_later_browser_release_without_new_sql_preserves_only_approved_function_grants"
+    ],
+    "rationale": "Checks a second real PostgreSQL migration skips applied DDL, preserves the explicit execute grant while retaining a denied function, closes old-role login and invalidates restored browser sessions."
   }
 }

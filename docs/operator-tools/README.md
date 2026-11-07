@@ -15,7 +15,13 @@ importing an application package never starts them.
 Challenge imports use the public HTTPS web origin, trusted CA verification and a
 normal administrator session. Supply `--url`, `--username`, and `--ca-file` when
 using the lab CA; enter the password at the prompt. Images and challenge creation
-use that same origin. There is no default administrator password.
+use that same origin. There is no default administrator password. The helpers now use Flask `/api/`
+endpoints and rotate their CSRF header after login. Uploads stream raw server-sized
+chunks, seal the transfer, then wait for a confirmed `READY` artifact before
+creating an exercise. A pending or uncertain result retains the receipt and is
+not retried as a second upload. Declare `guest_os: windows` in a YAML machine entry
+for Windows artifacts; Linux is the default. Redirects and unverified TLS are
+refused.
 
 Image building requires the explicit `--execute` option. Keep output under
 `HEIST_BUILD_ROOT`, normally `/mnt/data/heist-builds`, rather than the source tree.

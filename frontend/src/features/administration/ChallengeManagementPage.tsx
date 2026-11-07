@@ -83,9 +83,9 @@ export function ManageChallenges() {
                 </td>
                 <td>
                   <div className="table-actions">
-                    <button className="secondary small" onClick={() => setEditing(c)}>Edit</button>
+                    <button className="secondary small" disabled={truth(c.marked_for_deletion)} onClick={() => setEditing(c)}>Edit</button>
                     <button className="secondary small" onClick={() => setLeader(c)}>Leaderboard</button>
-                    {truth(c.marked_for_deletion) ? <button className="secondary small" disabled={action.busy} onClick={() => { const form = new FormData(); form.set('action', 'restore_challenge'); form.set('id', text(c.id)); void action.run(() => request('/api/admin/challenges/'+text(editing?.id), {method: 'PUT', body: Object.fromEntries(form)}), resource.reload); }}>Restore</button> : <button className="danger subtle small" onClick={() => { setForce(false); setDeleting(c); }}>Retire</button>}
+                    {truth(c.marked_for_deletion) ? <button className="secondary small" disabled={action.busy} onClick={() => void action.run(() => request('/api/admin/challenges/'+text(c.id)+'/restore', {method: 'POST', body: {}}), resource.reload)}>Restore</button> : <button className="danger subtle small" onClick={() => { setForce(false); setDeleting(c); }}>Retire</button>}
                     <button className="danger subtle small" onClick={() => { setForce(true); setDeleting(c); }}>Delete</button>
                   </div>
                 </td>

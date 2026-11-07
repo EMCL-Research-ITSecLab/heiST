@@ -58,165 +58,84 @@ Use `bin/heist --help` for the explicit administrator and service commands.
 
 ## Getting Started
 
-### Prerequisites
-- Proxmox VE 9.1-1, other versions might work but are not tested yet
-- Python 3.x, the [installer](bin/install) will install version 3.12 to ensure compatibility with all dependencies during the installation process
-- `root` access to the Proxmox VE host, including the `root` password, Proxmox's hostname, and information about the network configuration (internal and external IP address if the application will run in a NAT environment)
+### Deployment status
 
-### Quick Installation
+This development branch replaces the PHP application with React and Flask. The
+fresh installer and production upgrade adapter remain gated until their complete
+migration and recovery acceptance passes. Do not run the historical PHP installer
+over a production system. See [installation and update status](docs/UPDATES.md)
+and use the [isolated appliance workflow](docs/LOCAL-APPLIANCE.md) for testing.
 
-1. Start from a completely clean Proxmox VE installation, ideally directly after the Proxmox VE installation process has finished and the machine has rebooted
-2. Install `git` on the Proxmox VE host and clone the repository into `/root/heiST`:
-```sh
-apt update
-apt install -y git
-git clone https://github.com/EMCL-Research-ITSecLab/heiST.git /root/heiST
-```
-3. Run the installation script:
-```sh
-cd /root/heiST
-bin/install
-```
-4. Wait for the installation process to bootstrap the application, which might take around 5 minutes.
-5. Navigate through the setup wizard in *Simple Mode*, setting the Proxmox VE hostname, the `root` password, and the network configuration.
-6. (Optional) Set up the web applications `admin` password.
-7. Navigate to *Save configuration and continue*, confirm your changed variables, and select *Save and run setup* to start the setup process.
-8. Wait for the setup process to finish, which might take up to 60 minutes, depending on the hardware of the Proxmox VE host.
-9. After the setup process has finished, you can access the web application at `https://<proxmox_host_ip>`
+The existing legacy baseline has been checkpointed and restored on the disposable
+nested Proxmox appliance, including three service VMs, six templates and eight
+source image files. This verifies baseline recovery; it does not approve a Flask
+migration or a production rollout.
 
+## Using the new workspace
 
-<div align="center">
-  <picture>
-    <source
-      srcset="assets/showcase/installer_dark.png"
-      media="(prefers-color-scheme: dark)"
-      width="600"
-      style="border: white solid 1px; border-radius: 8px;"
-    />
-    <img src="assets/showcase/installer_light.png" alt="Installation Wizard" width="600" />
-  </picture>
-</div>
+The screenshots below show the actual production UI build with deterministic,
+synthetic demonstration records. They are not screenshots of production data.
+See [UI verification and screenshots](docs/UI-VERIFICATION.md) for the test matrix,
+full gallery and regeneration command.
 
+### Student workspace
 
-### Installation Verification
+The overview shows progress, recent activity and the challenge library. Open an
+investigation, connect using your personal VPN configuration and launch its lab.
+The investigation page shows the remaining time, connection details, flag progress
+and available hints. Stopping an instance requires confirmation.
 
-Small isolated staging installations can set `WEBSERVER_VM_MEMORY` and
-`DATABASE_VM_MEMORY` (MiB), and `WEBSERVER_VM_CORES` and `DATABASE_VM_CORES`
-in the advanced installer or `config/installer.env`. Defaults remain 16384/32768 MiB
-and four cores each. For example, a functional pilot may use 4096 MiB and
-two cores per VM; measure production capacity separately.
+<picture>
+  <source srcset="assets/showcase/dashboard_dark.png" media="(prefers-color-scheme: dark)" />
+  <img src="assets/showcase/dashboard_light.png" alt="React student overview with challenge cards and learning progress" width="1000" />
+</picture>
 
-`PROXMOX_LVM_STORAGE` selects existing image storage for infrastructure and
-challenge imports. It defaults to `local-lvm`; directory-backed staging can
-use `local`. Setup adds `import` to the existing `local` content types and,
-when `local` is the image target, also adds `images`. It preserves the storage
-path, existing content and other storage definitions. Provision the selected
-storage before running setup.
-After the installation process has finished, you can verify that the application is running correctly by accessing the web application at `https://<proxmox_host_ip>`, and logging in with the `admin` user and the password you set during the installation process.
-To verify that the monitoring system is working correctly, you can navigate to the *Grafana* dashboard at `https://<proxmox_host_ip>:3000/login`
+<picture>
+  <source srcset="assets/showcase/deploy_challenge_dark.png" media="(prefers-color-scheme: dark)" />
+  <img src="assets/showcase/deploy_challenge_light.png" alt="Investigation with flag submission, VPN connection details and running instance controls" width="1000" />
+</picture>
 
+### Administrator console
 
-## Usage
+Use **Artifacts** to upload an OVA. A sealed transfer is still under validation;
+wait until it becomes available in the artifact library. In **Create challenge**,
+define the machines, networks, flags and progressive hints. Keep the exercise
+inactive while reviewing it, then publish it after import readiness is confirmed.
 
-### Challenge Creation - Manual Creation
+<picture>
+  <source srcset="assets/showcase/create_challenge_dark.png" media="(prefers-color-scheme: dark)" />
+  <img src="assets/showcase/create_challenge_light.png" alt="Structured exercise editor for machines, networks, flags and hints" width="1000" />
+</picture>
 
-1. Login to the web application with the `admin` user and the password you set during the installation process.
-2. In the navigation menu at the top, select *Upload Diskfile*.
-3. Select your previously created `.ova` files, containing the challenge environment, and upload them to the platform.
-   (In order for the platform to correctly process the uploaded files, ensure that `cloud-init` is installed and properly configured.
-   Also, network interfaces need to be automatically set up using DHCP, with the settings to receive DNS entries via DHCP as well.)
-4. After the upload has finished, navigate to *Create CTF* using the navigation menu.
-5. Create virtual machines for the CTF by selecting the uploaded disk files, and configure the name, the number of CPU cores, the amount of RAM, and the domain name under which other virtual machines in the challenge environment can reach this virtual machine.
-6. After creating the virtual machines, create at least one subnet, assigning which virtual machines are part of which subnet. This includes the option whether the subnet should be directly accessible for the users, and whether the virtual machines in the subnet should be able to access the internet. In order for the users to interact with the challenge, at least one subnet needs to be directly accessible.
-7. Create flags for the CTF, these can be static flags, which you already placed in the challenge environment, or dynamic flags, for which a secret must be defined to generate user-specific flags during challenge deployment. For user-specific flags, define to which virtual machine the flag needs to be injected. Each flag can be assigned a point value, which will be awarded to the user upon successful submission of the flag.
-8. (Optional) Create hints for the CTF, which can be unlocked by the users during the challenge by reaching a set number of points.
-9. Create a name and description for the CTF, and assign a category and a difficulty level.
-10. (Optional) Create a general hint (displayed to the users regardless of achieved points) and a solution.
-11. Upload an image for the CTF, which will be displayed as a thumbnail in the CTF overview, and on the CTF details page.
-12. Click on *Create CTF Challenge*, and wait for the platform to process the uploaded files and create templates for the virtual machines, which might take a few minutes.
-13. After the CTF has been created, it can be deployed for the users.
+**Challenges** provides search, category and availability filters, sorting and
+pagination. Retiring an exercise prevents new allocations; restoring it requires
+ready machine templates. Permanent deletion is a separate confirmed action.
+**Lab overview** reports database, service, storage, lifecycle and archive status.
+Production maintenance and rollback remain CLI operations.
 
-<div align="center">
-  <picture>
-    <source
-      srcset="assets/showcase/create_challenge_dark.png"
-      media="(prefers-color-scheme: dark)"
-      width="600"
-      style="border: white solid 1px; border-radius: 8px;"
-    />
-    <img src="assets/showcase/create_challenge_light.png" alt="Automatic Challenge Creation" width="600" />
-  </picture>
-</div>
-
-### Challenge Creation - Automatic Creation
-1. Follow steps 1-4 from the manual creation process.
-2. Create a YAML file according to the [template](tools/challenges/template.yaml) for the automatic challenge creation, defining the same parameters as in the manual creation process.
-3. On the *Create CTF* page, select the *YAML* mode using the toggle at the top right, and upload your YAML file.
-4. Click on *Create CTF Challenge*, and wait for the platform to process the uploaded files and create templates for the virtual machines, which might take a few minutes.
-5. After the CTF has been created, it can be deployed for the users.
-
-<div align="center">
-  <picture>
-    <source
-      srcset="assets/showcase/create_challenge_yaml_dark.png"
-      media="(prefers-color-scheme: dark)"
-      width="600"
-      style="border: white solid 1px; border-radius: 8px;"
-    />
-    <img src="assets/showcase/create_challenge_yaml_light.png" alt="Manual Challenge Creation" width="600" />
-  </picture>
-</div>
-
-### Challenge Deployment
-1. Navigate to the *Challenges* page using the navigation menu, and select the challenge you want to deploy.
-2. Click on *Deploy Challenge* and wait for the platform to deploy the challenge.
-3. After the deployment process has finished, the subnetworks that are accessible for the users will be displayed, and the users can start solving the challenge by interacting with the virtual machines in these subnetworks.
-
-<div align="center">
-  <picture>
-    <source
-      srcset="assets/showcase/deploy_challenge_dark.png"
-      media="(prefers-color-scheme: dark)"
-      width="600"
-      style="border: white solid 1px; border-radius: 8px;"
-    />
-    <img src="assets/showcase/deploy_challenge_light.png" alt="Challenge Deployment" width="600" />
-  </picture>
-</div>
-
-### Challenge Management
-1. Navigate to the *Manage CTFs* page using the navigation menu to see an overview of all created challenges, including some basic information such as the name, category, difficulty level, activity status, and the current and total number of deployments.
-2. Click on the *Edit* icon for a challenge to edit the challenge's basic information, such as the name, description, category, difficulty level, general hint, and solution. Other parameters such as the flags, hints, and virtual machine configurations cannot be edited after the challenge has been created, so in order to change these parameters, the challenge needs to be deleted and re-created with the new parameters.
-3. Click on the *Delete* icon for a challenge to delete the challenge, which will either forcibly stop all active deployments of the challenge, or allow them to finish while preventing new deployments, depending on the selected option. After a challenge has been deleted, it cannot be deployed anymore, and all information related to the challenge will be removed from the platform, so make sure to export all necessary information before deleting a challenge.
-
-<div align="center">
-  <picture>
-    <source
-      srcset="assets/showcase/manage_challenges_dark.png"
-      media="(prefers-color-scheme: dark)"
-      width="600"
-      style="border: white solid 1px; border-radius: 8px;"
-    />
-    <img src="assets/showcase/manage_challenges_light.png" alt="Challenge Management" width="600" />
-  </picture>
-</div>
-
+<picture>
+  <source srcset="assets/showcase/manage_challenges_dark.png" media="(prefers-color-scheme: dark)" />
+  <img src="assets/showcase/manage_challenges_light.png" alt="Administrator exercise table with filters and separate edit, restore, retire and delete actions" width="1000" />
+</picture>
 
 ## Platform Architecture
-<div align="center">
-  <picture>
-    <source
-      srcset="assets/architecture/architecture_dark.svg"
-      media="(prefers-color-scheme: dark)"
-      height="400"
-    />
-    <img
-      src="assets/architecture/architecture_light.svg"
-      alt="heiST Architecture"
-      height="400"
-    />
-  </picture>
-</div>
+The target architecture separates the public browser API from privileged host
+operations. Migration acceptance remains gated as described above.
+
+```mermaid
+flowchart LR
+    Browser[Student / administrator browser] -->|HTTPS| Web[Web VM: Apache + React]
+    Web -->|loopback /api| Flask[Unprivileged Flask / Gunicorn]
+    Flask -->|restricted API role| Database[(Database VM: PostgreSQL)]
+    Flask -->|authenticated TLS| Platform[Proxmox host: privileged Flask API]
+    Platform -->|owner role| Database
+    Platform --> Proxmox[Proxmox VM operations]
+    Proxmox --> Labs[Isolated exercise VMs]
+    Platform -->|verified TLS| Monitoring[Monitoring VM]
+    Admin[Administrator release CLI] -->|maintenance / checkpoints / recovery| Platform
+    Archive[Separate archive VM: systemd timers] -->|verified SSH pull| Web
+    Archive -->|verified SSH pull| Monitoring
+```
 
 The platform consists of four main components, the web application, the API, the database, and the monitoring system.
 - The browser application uses React/TypeScript in [`frontend/`](frontend/), served as static files by Apache. Its browser API is the unprivileged Flask service in [`heist/api/public/`](heist/api/public/); privileged VM operations stay in the separate platform API. Deployment templates live under [`deploy/web/`](deploy/web/). The dedicated web VM receives restricted database credentials and no Proxmox or SSH credentials. See [frontend development](docs/FRONTEND.md) and the current [migration gates](docs/ARCHITECTURE-MIGRATION.md).

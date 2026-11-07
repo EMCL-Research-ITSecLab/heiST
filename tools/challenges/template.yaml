@@ -8,16 +8,18 @@ ctf:
   is_active: <true|false>
 
   vms:
-    <vm_name_1>: # Irrelevant for the platform, just needed in the php backend
+    <vm_name_1>: # Stable name used by attached_vms and flag vm_name references
       ova_name: <OVA_NAME_1>
       ova_path: <OVA_PATH_1>
+      guest_os: linux # linux or windows
+      ad_role: none # none, dc or member
       cores: <NUM_CORES>
       ram_gb: <RAM_GB>
       domain_name: <DOMAIN_NAME_1>
     # ...
 
   subnets:
-    <subnet_name_1>: # Irrelevant for the platform, just needed in the php backend
+    <subnet_name_1>: # Stable name used by attached_vms and flag vm_name references
       dmz: <true|false>
       accessible: <true|false>
       attached_vms: [

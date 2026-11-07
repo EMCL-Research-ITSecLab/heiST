@@ -152,3 +152,20 @@ The current catalogue is the verification plan, not a claim that every case has
 already passed. Existing historical appliance evidence applies only to the
 revisions named in [ROLLOUT-VALIDATION.md](ROLLOUT-VALIDATION.md). Repeat affected
 acceptance after architecture, dependency, schema or deployment changes.
+
+
+## Frontend regression and real database checks
+
+The browser fixture suite now includes populated states at five viewport widths
+in both themes, maximum-length unbroken text, exact restore endpoint selection,
+paging/filter reset, dialog cancellation and focus return, mobile keyboard access,
+theme persistence and primary button contrast. Documentation captures are built
+from the same production UI and synthetic records, then checked against source
+and PNG hashes. See [UI verification](UI-VERIFICATION.md).
+
+A separate HTTPS Chromium suite makes real requests to Flask with a restricted
+PostgreSQL role in a disposable database. It covers cookie-backed login/logout,
+announcement create/edit/delete persistence and role revocation. It cannot call
+the privileged host API. This supplements API/unit contracts; full deployed
+Apache, VM provisioning, exercise solving and target upgrade/failure/rollback
+remain distinct appliance gates.

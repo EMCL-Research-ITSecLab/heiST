@@ -208,8 +208,10 @@ installations and older checkpoints; they are not a fresh installation path.
 behind the persistent web maintenance gate. It creates a dedicated service account,
 preserves original media files, rejects conflicting destination bytes and unsafe
 paths, and starts the API behind maintenance. Artifact writers remain stopped until
-the controller commits. This helper still requires controller/install integration
-and native deployment acceptance; invoking it directly is not an approved rollout.
+the controller commits. The controller now assembles a digest-bound SSH bootstrap, private browser credentials,
+root runtime/service configuration and checkpointed template adoption. Native target
+acceptance and the clean-host installer remain unfinished; invoking these helpers
+directly is not an approved rollout.
 
 Host checkpoints now retain the selected immutable privileged Gunicorn runtime and
 record declared configuration files absent before deployment. Recovery can remove
@@ -220,3 +222,24 @@ Older and newer runtime selections are restored without deleting cached versions
 Protocol 3 admission and the fresh installer remain closed until full installation,
 legacy migration and multi-VM upgrade/rollback acceptance pass. Portable helper
 assertions and the single-template native recovery test do not satisfy those gates.
+
+
+The protocol 3 branch now wires browser staging, a versioned privileged Gunicorn
+runtime, restricted-role migrations, startup cleanup and Flask-aware readiness
+verification. Planned host file hashes are journalled before writes. It selects the
+managed PVE certificate for the new internal API, keeps artifact writers behind
+maintenance, and schedules expiry through the persistent maintenance marker.
+Configure `web_hostname`, `web_certificate_key` and `wazuh_container` explicitly.
+The production admission guard is still closed: these paths have portable helper
+coverage, not complete target upgrade/failure/rollback acceptance. The installer
+continues to refuse execution before host bootstrap.
+
+
+A later protocol 3 release may have no pending SQL. The adapter records the stopped
+browser's current database role before checkpointing. Its replacement receives
+only that role's explicit API function grants; memberships, ownership, table access
+and grant options are not copied. New migrations apply their own additions and
+revocations. Old-role login is closed and browser sessions are cleared in the same
+transaction. The old role is retained for recovery through the full database VM
+checkpoint. A real PostgreSQL regression covers upgrades with no pending DDL,
+including a denied function and session invalidation.

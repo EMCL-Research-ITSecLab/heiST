@@ -188,9 +188,16 @@ def health(config):
             raise RuntimeError('Web TLS certificate differs')
         connection.request('GET', '/login')
         response = connection.getresponse()
-        if response.status != 200 or b'login' not in response.read(2 * 1024**2).lower():
+        marker = b'id="root"' if config.get('browser') else b'login'
+        if response.status != 200 or marker not in response.read(2 * 1024**2).lower():
             raise RuntimeError('Web login health failed')
-        if config.get('frontend'):
+        if config.get('browser'):
+            connection.request('GET', '/api/health/ready')
+            response = connection.getresponse()
+            result = json.loads(response.read(65536))
+            if response.status != 200 or result != {'success': True, 'status': 'ready'}:
+                raise RuntimeError('Flask browser readiness failed')
+        elif config.get('frontend'):
             connection.request('GET', '/backend/session.php')
             response = connection.getresponse()
             result = json.loads(response.read(1024 * 1024))

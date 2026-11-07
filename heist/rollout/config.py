@@ -37,6 +37,9 @@ class Deployment:
     vms: tuple[VM, ...]
     monitoring_checks: tuple[tuple[str, ...], ...]
     timeout: int = 600
+    web_certificate_key: str | None = None
+    web_hostname: str | None = None
+    wazuh_container: str | None = None
 
     def __post_init__(self):
         for name in ('installation','state_directory','backup_directory','backend_env','api_certificate','web_root','web_certificate'):
@@ -49,6 +52,17 @@ class Deployment:
             raise ValueError('Protocol v1 requires root SSH on web/database VMs')
         if not self.api_url.startswith('https://') or not 30<=self.timeout<=3600:
             raise ValueError('HTTPS API URL and bounded timeout required')
+        if self.web_hostname is not None:
+            from heist.security.tls import server_name
+            server_name(self.web_hostname)
+        if self.web_certificate_key is not None:
+            path = Path(self.web_certificate_key)
+            if not path.is_absolute() or '..' in path.parts or str(path) != self.web_certificate_key:
+                raise ValueError('Declare a normalized web certificate key path')
+        if self.wazuh_container is not None:
+            import re
+            if re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,127}', self.wazuh_container) is None:
+                raise ValueError('Declare a valid monitoring container name')
         if not self.monitoring_checks:
             raise ValueError('Declare real monitoring health checks')
 

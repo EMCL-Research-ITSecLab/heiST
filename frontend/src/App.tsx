@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Notice } from './components/ui.tsx';
 import { Profile } from './features/account/ProfilePage.tsx';
 import { ManageAnnouncements } from './features/administration/AnnouncementManagementPage.tsx';
@@ -90,12 +90,25 @@ function Shell({ children }: {
   children: ReactNode;
 }) {
   const session = useSession(), router = useRouter(), action = useAction(), [open, setOpen] = useState(false), [dark, setDark] = useState(() => localStorage.getItem('heist-theme') === 'dark');
+  const menu = useRef<HTMLButtonElement>(null);
+  const [mobile, setMobile] = useState(() => window.matchMedia('(max-width:850px)').matches);
+  useEffect(() => {
+    const query = window.matchMedia('(max-width:850px)');
+    const change = () => { setMobile(query.matches); setOpen(false); };
+    query.addEventListener('change', change);
+    return () => query.removeEventListener('change', change);
+  }, []);
+  useEffect(() => {
+    if (open) document.querySelector<HTMLElement>('#workspace-navigation a')?.focus();
+  }, [open]);
   useEffect(() => { document.documentElement.dataset.theme = dark ? 'dark' : 'light'; localStorage.setItem('heist-theme', dark ? 'dark' : 'light'); }, [dark]);
-  useEffect(() => { setOpen(false); }, [router.location]);
+  useEffect(() => { setOpen(false); document.getElementById('main-content')?.focus({preventScroll: true}); }, [router.location]);
   useEffect(() => {
     const escape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape')
+      if (event.key === 'Escape' && menu.current?.getAttribute('aria-expanded') === 'true') {
         setOpen(false);
+        menu.current?.focus();
+      }
     }; window.addEventListener('keydown', escape); return () => window.removeEventListener('keydown', escape);
   }, []);
   const links = [['/dashboard', 'Overview', '◫'], ['/explore', 'Challenge library', '◇'], ['/activity', 'Activity', '⌁'], ['/badges', 'Achievements', '✦'], ['/announcements', 'Announcements', '◉']];
@@ -112,7 +125,7 @@ function Shell({ children }: {
   </Link>);
   return <div className="app">
     <a href="#main-content" className="skip-link">Skip to content</a>
-    <aside className={'sidebar ' + (open ? 'open' : '')} id="workspace-navigation">
+    <aside className={'sidebar ' + (open ? 'open' : '')} id="workspace-navigation" inert={mobile && !open}>
       <Link href={session.user ? '/dashboard' : '/landing'} className="brand" aria-label="heiST home">hei<span>ST</span>
         <i aria-hidden>_</i>
       </Link>
@@ -136,10 +149,11 @@ function Shell({ children }: {
         <p>Heidelberg Security Training</p>
       </div>
     </aside>
-    {open && <button className="nav-overlay" aria-label="Close navigation" onClick={() => setOpen(false)} />}
+    {open && <button className="nav-overlay" aria-label="Close navigation" onClick={() => { setOpen(false); menu.current?.focus(); }} />}
     <div className="workspace">
       <header className="topbar">
         <button
+          ref={menu}
           className="icon-button menu-button"
           aria-expanded={open}
           aria-controls="workspace-navigation"
@@ -153,7 +167,7 @@ function Shell({ children }: {
           </button>
           {session.user ? <>
             <Link className="user-chip" href="/profile">
-              <img className="avatar" src={image(session.user.avatar)} alt="" />
+              <img className="avatar" src={image(session.user.avatar || '/assets/avatars/default-avatar.png')} alt="" />
               <span>
                 {session.user.username}
                 <small>

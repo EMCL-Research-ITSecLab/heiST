@@ -24,7 +24,7 @@ def owned_template(user, identifier):
 @blueprint.post('/admin/challenges/import-yaml')
 def import_yaml():
     user = require_admin()
-    rate_limit('yaml-preview',user['id'],20,300)
+    rate_limit('yaml-preview',str(user['id']),20,300)
     source = body().get('yaml')
     if not isinstance(source,str) or len(source.encode('utf-8',errors='replace')) > 256*1024:
         raise ApiError('YAML file must be at most 256 KiB')

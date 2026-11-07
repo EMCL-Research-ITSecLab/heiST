@@ -57,6 +57,8 @@ class AuthoringTests(unittest.TestCase):
 
     def test_yaml_preview_validates_owned_artifacts_without_creating_or_importing(self):
         from copy import deepcopy
+        self.assertEqual(self.request('admin/challenges/import-yaml','POST',json={'yaml':'ctf: {}'}).status_code,403)
+        self.bootstrap()
         self.assertEqual(self.request('admin/challenges/import-yaml','POST',json={'yaml':'ctf: {}'}).status_code,401)
         self.login()
         before = self.sql('SELECT count(*) FROM public.challenge_templates')

@@ -103,3 +103,16 @@ includes populated responsive/theme/focus/contrast regressions and actual browse
 login, announcement persistence and role revocation against Flask/PostgreSQL.
 README screenshots are generated from the production UI build with synthetic
 records, with source and image hashes checked in CI.
+
+
+The UI uses the official heiST logo, the familiar dark grey/cyan palette and plain
+page labels. Administrators can import existing `ctf` YAML mappings into the
+challenge form, review the topology and submit through normal creation. Preview
+validates owned artifacts and has no provisioning effect; invalid replacement
+files preserve the draft. The parser uses the existing platform PyYAML dependency.
+Obsolete descriptions for the two earlier feature PRs were removed.
+
+The isolated native web-role rehearsal at `387d2c2` passed Apache SPA/TLS routing,
+Gunicorn liveness, maintenance session rejection, restricted service-UID session
+storage, systemd restart and complete original web-VM recovery. That evidence
+does not approve a complete target platform upgrade or fresh installation.

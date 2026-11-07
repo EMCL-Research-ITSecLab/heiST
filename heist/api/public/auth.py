@@ -1,10 +1,12 @@
 """Browser authentication contracts with revocable sessions and legacy hash upgrades."""
 import re
+import hmac
 from flask import Blueprint, current_app, g, request
 
 from heist.security.passwords import hash_password, needs_rehash, verify_password
 from .context import body, rate_limit, repository, require_user, rotate_session, sessions
 from .errors import ApiError
+from .registration import legal_settings, registration_enabled
 
 blueprint = Blueprint('authentication', __name__)
 
@@ -46,6 +48,12 @@ def user_result():
             'is_admin': g.user.get('is_admin') is True}
 
 
+@blueprint.get('/site')
+def site_settings():
+    return {'success':True,'data':{'registration_enabled':registration_enabled(current_app.config),
+                                  'legal':legal_settings(current_app.config)}}
+
+
 @blueprint.get('/session')
 def bootstrap():
     if not g.web_session:
@@ -54,7 +62,8 @@ def bootstrap():
     return {'success': True, 'data': {'is_logged_in': g.user is not None, 'user': user_result(),
             'requires_password_change': bool(g.user and g.user.get('password_reset')),
             'csrf_token': sessions().csrf(g.raw_session),
-            'registration_enabled': current_app.config['REGISTRATION_ENABLED']}}
+            'registration_enabled': registration_enabled(current_app.config),
+            'legal': legal_settings(current_app.config)}}
 
 
 @blueprint.post('/login')
@@ -84,10 +93,19 @@ def logout():
 
 @blueprint.post('/signup')
 def signup():
-    if not current_app.config['REGISTRATION_ENABLED']:
+    if not registration_enabled(current_app.config):
         raise ApiError('Registration is currently closed', 403)
     rate_limit('signup-ip', request.remote_addr or 'unknown', 5, 3600)
     value = body()
+    supplied = value.get('lecture_token')
+    if not isinstance(supplied,str) or len(supplied)>256 or not hmac.compare_digest(supplied.encode(),current_app.config['LECTURE_SIGNUP_TOKEN'].encode()):
+        raise ApiError('Invalid lecture code',403)
+    legal = legal_settings(current_app.config)
+    accepted = value.get('accept_legal')
+    if accepted is not True and accepted != 'true':
+        raise ApiError('Accept the Impressum and privacy policy to register')
+    if value.get('legal_version') != legal['version']:
+        raise ApiError('The registration policies changed. Reload the page and review them.',409)
     username, password = credentials(value)
     email = value.get('email')
     if not isinstance(email, str) or len(email) > 255 or not re.fullmatch(r'[^@\s]+@[^@\s]+\.[^@\s]+', email):
@@ -97,7 +115,10 @@ def signup():
     encoded = encoded_password(password)
     from psycopg2.errors import UniqueViolation
     try:
-        created = repository().call('create_user', username, email, encoded, '', request.remote_addr, one=True)
+        repo = repository()
+        with repo.transaction():
+            created = repo.call('create_user', username, email, encoded, '', request.remote_addr, one=True)
+            repo.call('web_record_registration',created['id'],legal['version'],legal['imprint_url'],legal['privacy_url'])
     except UniqueViolation:
         raise ApiError('Username or email is unavailable', 409) from None
     record = repository().call('web_user_identity', created['id'], one=True)

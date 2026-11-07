@@ -97,7 +97,7 @@ def initialize_request():
         return
     if not request.is_secure:
         raise ApiError('HTTPS is required', 400)
-    if request.endpoint in ('health.live','health.ready'):
+    if request.endpoint in ('health.live','health.ready','authentication.site_settings'):
         g.raw_session=None
         return
     if Path(current_app.config['MAINTENANCE_FILE']).exists():

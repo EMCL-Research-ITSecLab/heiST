@@ -68,3 +68,43 @@ the machines, network membership, flags, hints and availability. Creation retain
 the normal owner, topology, image-readiness and partial-import checks. The existing
 platform PyYAML dependency parses the file; no parser library was added to the
 frontend or browser-service runtime.
+
+## Registration and legal pages
+
+`/impressum` and `/privacy-policy` serve the copied legal content supplied by the
+operator from `https://emcl-ctf.iwr.uni-heidelberg.de`. Source URLs and response
+hashes are recorded in `assets/legal-sources.json`; executable page scripts and
+the old navigation were excluded. Legal text remains accessible without a working
+session database. The old Font Awesome license link is preserved through a local
+static license copy. Other operators must review and replace these institutional
+texts and links for their own deployment.
+
+Set `LECTURE_SIGNUP_TOKEN` in the private backend environment before deploying the
+web role. The installer wizard generates a private random default and retains an
+existing configured value. The code is masked in the wizard and never returned
+by `/api/site` or `/api/session`. Missing codes and known placeholders keep signup
+closed. `HEIST_REGISTRATION_ENABLED=false` closes signup explicitly. See
+`config/registration.env.example`. Do not commit the real lecture code.
+
+Signup requires the lecture code and an initially unchecked acceptance checkbox
+for the linked Impressum and privacy policy. The API independently checks both,
+including the policy version the user reviewed. Account creation and the
+`registration_acceptances` audit row commit together; an acceptance write failure
+rolls back the account. The audit retains the linked URLs, version and timestamp,
+without retaining the lecture code. It is deleted with the account.
+
+The default revision is bound to the bundled text. Update `HEIST_LEGAL_VERSION`
+when external policy text changes; the browser must reload and review a changed
+version before it can register. Apply release migration `0010` before running the
+new browser service. Token rotation requires updating the private environment and
+restarting/redeploying the web role. Existing users can continue signing in.
+
+The challenge editor includes a live SVG network preview and a textual connection
+list. It updates after YAML import, edits, attachment changes and removals; DMZ
+and student-accessible networks are labelled. No graphing library is required.
+
+To refresh the bundled pages, download verified HTTPS snapshots as `impressum.html`
+and `privacy-policy.html`, then run
+`python tools/maintenance/import_legal_pages.py --source-directory DIRECTORY`.
+Review the text and provenance changes before building. This updates the text-bound
+revision automatically and excludes scripts and the old navigation.

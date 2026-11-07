@@ -11,13 +11,14 @@ import { Challenge } from './features/challenges/ChallengePage.tsx';
 import { Explore } from './features/challenges/ExplorePage.tsx';
 import { Feed } from './features/community/FeedPage.tsx';
 import { Dashboard } from './features/dashboard/DashboardPage.tsx';
+import { LegalPage } from './features/legal/LegalPage.tsx';
 import { Landing } from './features/welcome/LandingPage.tsx';
 import { post } from './lib/api.ts';
 import { image } from './lib/data.ts';
 import { Link, RouterProvider, useRouter } from './lib/router.tsx';
 import { SessionProvider, useAction, useSession } from './lib/state.tsx';
 export const routes = [
-  ['/', 'public'], ['/landing', 'public'], ['/login', 'public'], ['/signup', 'public'],
+  ['/impressum', 'public'], ['/privacy-policy', 'public'], ['/', 'public'], ['/landing', 'public'], ['/login', 'public'], ['/signup', 'public'],
   ['/explore', 'public'], ['/challenge', 'student'], ['/dashboard', 'student'],
   ['/profile', 'student'], ['/profile/:username', 'student'], ['/profile_public', 'student'],
   ['/reset-password', 'student'], ['/activity', 'student'], ['/badges', 'student'],
@@ -36,6 +37,7 @@ function RouteContent() {
     publicProfile = undefined;
   }
   const route = routes.find(([p]) => p === path || p === '/profile/:username' && publicProfile);
+  if (path === '/impressum' || path === '/privacy-policy') return <LegalPage kind={path.slice(1) as 'impressum' | 'privacy-policy'} />;
   if (session.loading)
     return <div className="loading" role="status">
       <span className="spinner" />Loading…</div>;
@@ -180,6 +182,10 @@ function Shell({ children }: {
       </main>
       <footer className="workspace-footer">
         <span>heiST</span>
+        <nav aria-label="Legal">
+          {session.legal.imprint_url && <a href={session.legal.imprint_url} target="_blank" rel="noopener noreferrer">Impressum</a>}
+          {session.legal.privacy_url && <a href={session.legal.privacy_url} target="_blank" rel="noopener noreferrer">Privacy policy</a>}
+        </nav>
       </footer>
     </div>
   </div>;

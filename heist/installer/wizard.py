@@ -236,6 +236,8 @@ class SectionSpec:
     fields: list[FieldSpec]
 
 
+from heist import legal
+
 DEFAULTS = {
     # Core Proxmox / installer values
     "PROXMOX_HOST": "10.0.0.1",
@@ -268,7 +270,10 @@ DEFAULTS = {
     "WEBSITE_ADMIN_USER": "admin",
     "WEBSITE_ADMIN_PASSWORD": "",
     "BACKEND_AUTHENTICATION_TOKEN": "",
-    "LECTURE_SIGNUP_TOKEN": "dummy-token",
+    "LECTURE_SIGNUP_TOKEN": "",
+    "HEIST_IMPRINT_URL": legal.IMPRINT_URL,
+    "HEIST_PRIVACY_URL": legal.PRIVACY_URL,
+    "HEIST_LEGAL_VERSION": legal.LEGAL_VERSION,
 
     # Networking / VPN / VM import
     "OPENVPN_SUBNET": "10.64.0.0/16",
@@ -470,7 +475,10 @@ SectionSpec(
             field("WEBSITE_ADMIN_USER", "Website admin user", description="Admin username created in the challenge database.", example="admin"),
             field("WEBSITE_ADMIN_PASSWORD", "Website admin password", "secret", secret=True, description="Password for the admin account in the challenge website."),
             field("LECTURE_SIGNUP_TOKEN", "Lecture signup token", "secret", secret=True,
-                  description="Optional token used by lecture or signup flows in the web application."),
+                  description="Required lecture code for registration; never exposed to the browser."),
+            field("HEIST_IMPRINT_URL", "Impressum URL", required=False, description="Public HTTPS legal notice URL."),
+            field("HEIST_PRIVACY_URL", "Privacy policy URL", required=False, description="Public HTTPS privacy policy URL."),
+            field("HEIST_LEGAL_VERSION", "Policy revision", required=False, description="Change this revision when the policy text changes. Registration stays closed until configured."),
 
         ],
     ),
@@ -740,6 +748,7 @@ def build_generated_password_defaults() -> dict[str, str]:
     for key in DEFAULTS:
         if key.endswith("_PASSWORD") and key != "PROXMOX_PASSWORD":
             generated[key] = generate_password_without_special()
+    generated["LECTURE_SIGNUP_TOKEN"] = secrets.token_urlsafe(24)
     return generated
 
 
@@ -1201,7 +1210,7 @@ def write_env_file(values: dict[str, str]) -> None:
 
     sections = [
         ("Core Proxmox / Installer", ["PROXMOX_HOST", "PROXMOX_USER", "PROXMOX_PASSWORD", "PROXMOX_PORT", "BACKEND_PORT", "PROXMOX_INTERNAL_IP", "PROXMOX_EXTERNAL_IP", "PROXMOX_HOSTNAME", "UBUNTU_BASE_SERVER_URL"]),
-        ("Backend / Database / Webserver", ["DATABASE_FILES_DIR", "DATABASE_NAME", "DATABASE_USER", "DATABASE_PASSWORD", "DATABASE_PORT", "DATABASE_HOST", "WEB_DEPLOYMENT_FILES_DIR", "WEBSERVER_USER", "WEBSERVER_GROUP", "WEBSERVER_ROOT", "WEBSERVER_HOST", "WEBSERVER_HTTP_PORT", "WEBSERVER_HTTPS_PORT", "BACKEND_FILES_DIR", "WEBSERVER_DATABASE_USER", "WEBSERVER_DATABASE_PASSWORD", "WEBSITE_ADMIN_USER", "WEBSITE_ADMIN_PASSWORD", "BACKEND_AUTHENTICATION_TOKEN", "LECTURE_SIGNUP_TOKEN", "BACKEND_LOGGING_DIR"]),
+        ("Backend / Database / Webserver", ["DATABASE_FILES_DIR", "DATABASE_NAME", "DATABASE_USER", "DATABASE_PASSWORD", "DATABASE_PORT", "DATABASE_HOST", "WEB_DEPLOYMENT_FILES_DIR", "WEBSERVER_USER", "WEBSERVER_GROUP", "WEBSERVER_ROOT", "WEBSERVER_HOST", "WEBSERVER_HTTP_PORT", "WEBSERVER_HTTPS_PORT", "BACKEND_FILES_DIR", "WEBSERVER_DATABASE_USER", "WEBSERVER_DATABASE_PASSWORD", "WEBSITE_ADMIN_USER", "WEBSITE_ADMIN_PASSWORD", "BACKEND_AUTHENTICATION_TOKEN", "LECTURE_SIGNUP_TOKEN", "HEIST_IMPRINT_URL", "HEIST_PRIVACY_URL", "HEIST_LEGAL_VERSION", "BACKEND_LOGGING_DIR"]),
         ("Networking / VPN / VM Import", ["OPENVPN_SUBNET", "OPENVPN_SERVER_IP", "BACKEND_NETWORK_SUBNET", "BACKEND_NETWORK_ROUTER", "BACKEND_NETWORK_DEVICE", "BACKEND_NETWORK_HOST_MIN", "BACKEND_NETWORK_HOST_MAX", "DATABASE_MAC_ADDRESS", "WEBSERVER_MAC_ADDRESS", "CHALLENGES_ROOT_SUBNET", "CHALLENGES_ROOT_SUBNET_MASK"]),
         ("Monitoring VM", ["MONITORING_FILES_DIR", "MONITORING_VPN_INTERFACE", "MONITORING_DMZ_INTERFACE", "MONITORING_HOST", "MONITORING_VM_ID", "MONITORING_VM_NAME", "MONITORING_VM_MAC_ADDRESS", "MONITORING_VM_MEMORY", "MONITORING_VM_CORES", "MONITORING_VM_DISK", "MONITORING_VM_USER", "MONITORING_VM_PASSWORD", "PROXMOX_LVM_STORAGE", "PROXMOX_SSH_KEYFILE", "PROXMOX_EXPORTER_TOKEN_NAME", "WAZUH_NETWORK_DEVICE", "WAZUH_NETWORK_DEVICE_IPV6", "WAZUH_NETWORK_DEVICE_CIDR", "WAZUH_NETWORK_SUBNET", "WAZUH_MANAGER_IPV6", "CLOUD_INIT_NETWORK_DEVICE", "CLOUD_INIT_NETWORK_DEVICE_IP", "CLOUD_INIT_NETWORK_DEVICE_CIDR", "CLOUD_INIT_NETWORK_SUBNET", "MONITORING_DNS"]),
         ("Grafana / Prometheus / Exporters", ["GRAFANA_PORT", "GRAFANA_USER", "GRAFANA_PASSWORD", "GRAFANA_FILES_SETUP_DIR", "GRAFANA_FILES_DIR", "PROMETHEUS_PORT", "POSTGRES_EXPORTER_PORT", "POSTGRES_EXPORTER_PASSWORD", "PROXMOX_EXPORTER_PORT", "MONITORING_VM_EXPORTER_PORT", "DATABASE_VM_EXPORTER_PORT", "WEBSERVER_VM_EXPORTER_PORT", "WEBSERVER_APACHE_EXPORTER_PORT", "PROXMOX_NODE_EXPORTER_PORT"]),

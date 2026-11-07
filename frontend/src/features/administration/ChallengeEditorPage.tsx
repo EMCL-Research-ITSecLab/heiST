@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Area, Card, Empty, Field, Notice, PageTitle, ResourceState, Select, Stat } from '../../components/ui.tsx';
+import { NetworkPreview } from '../../components/NetworkPreview.tsx';
 import { request } from '../../lib/api.ts';
 import { categories, difficulties, number, row, rows, text, truth, type Row } from '../../lib/data.ts';
 import { Link, useRouter } from '../../lib/router.tsx';
@@ -289,6 +290,7 @@ export function CreateChallenge() {
               </Card>
             </div>
             <aside>
+              <NetworkPreview machines={machines} networks={networks} />
               <Card title="Availability">
                 <div className="summary-counts">
                   <Stat label="Machines" value={machines.length} />

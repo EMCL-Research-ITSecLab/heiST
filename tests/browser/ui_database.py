@@ -52,7 +52,9 @@ class BrowserDatabaseTests(unittest.TestCase):
         pin = base64.b64encode(hashlib.sha256(der).digest()).decode()
         def forbid_host_operations():
             raise AssertionError('UI database tests must not contact the privileged host API')
-        cls.app = create_app({'WEB_SESSION_SECRET': secrets.token_hex(32), 'DATA_ROOT': str(root/'data')},
+        cls.app = create_app({'WEB_SESSION_SECRET': secrets.token_hex(32), 'DATA_ROOT': str(root/'data'),
+                             'LECTURE_SIGNUP_TOKEN':'test-lecture-code','IMPRINT_URL':'https://example.invalid/impressum',
+                             'PRIVACY_URL':'https://example.invalid/privacy','LEGAL_VERSION':'test-policy-1'},
                              repository_factory=lambda: Repository(lambda: cls.psycopg2.connect(**cls.api_settings)),
                              internal_client_factory=forbid_host_operations)
         @cls.app.get('/', defaults={'path': ''})
@@ -96,6 +98,31 @@ class BrowserDatabaseTests(unittest.TestCase):
 
     def tearDown(self):
         self.assertEqual(self.errors,[])
+
+    def test_signup_requires_code_and_acceptance_and_persists_the_policy_record(self):
+        self.page.get_by_role('button',name='Sign out',exact=True).click()
+        self.page.wait_for_url('**/login')
+        self.page.goto(self.origin+'/signup')
+        username='new_'+self.username
+        self.page.get_by_label('Username',exact=True).fill(username)
+        self.page.get_by_label('Email address').fill(username+'@example.invalid')
+        self.page.get_by_label('Password',exact=True).fill('strong-test-password')
+        self.page.get_by_label('Confirm password').fill('strong-test-password')
+        self.page.get_by_label('Lecture code').fill('wrong')
+        self.page.locator('input[name=accept_legal]').check()
+        self.page.get_by_role('button',name='Create account',exact=True).click()
+        self.page.get_by_text('Invalid lecture code',exact=True).wait_for()
+        with closing(self.psycopg2.connect(**self.settings)) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT count(*) FROM public.users WHERE username=%s',(username,))
+                self.assertEqual(cursor.fetchone(),(0,))
+        self.page.get_by_label('Lecture code').fill('test-lecture-code')
+        self.page.get_by_role('button',name='Create account',exact=True).click()
+        self.page.wait_for_url('**/dashboard')
+        with closing(self.psycopg2.connect(**self.settings)) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT a.privacy_url,a.imprint_url,a.accepted_at IS NOT NULL FROM public.registration_acceptances a JOIN public.users u ON u.id=a.user_id WHERE u.username=%s',(username,))
+                self.assertEqual(cursor.fetchone(),('https://example.invalid/privacy','https://example.invalid/impressum',True))
 
     def test_login_uses_secure_persistent_session_and_logout_revokes_it(self):
         cookies = self.context.cookies()

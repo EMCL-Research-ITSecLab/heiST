@@ -11,10 +11,10 @@ class ErrorBoundary extends Component<{
   static getDerivedStateFromError() { return { failed: true }; }
   componentDidCatch(_error: Error, _info: ErrorInfo) { }
   render() {
-    return this.state.failed ? <main className="empty">
-      <h1>Something interrupted your workspace.</h1>
-      <p>Reload the page to try again. Your submitted progress is stored on the server.</p>
-      <button onClick={() => window.location.reload()}>Reload workspace</button>
+    return this.state.failed ? <main className="empty" role="alert">
+      <h1>Page failed to load</h1>
+      <p>Reload the page to try again.</p>
+      <button onClick={() => window.location.reload()}>Reload page</button>
     </main> : this.props.children;
   }
 }

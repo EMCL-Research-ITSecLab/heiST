@@ -8,6 +8,7 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from heist.config import DatabaseSettings
+from heist import legal
 from heist.security.passwords import hash_password
 from .errors import ApiError
 from .repository import Repository
@@ -15,7 +16,10 @@ from .repository import Repository
 
 def create_app(config=None, *, repository_factory=None, internal_client_factory=None, clock=None):
     app = Flask(__name__, static_folder=None)
-    app.config.update(WEB_SESSION_SECRET=os.environ.get('WEB_SESSION_SECRET'), REGISTRATION_ENABLED=True,
+    app.config.update(WEB_SESSION_SECRET=os.environ.get('WEB_SESSION_SECRET'), REGISTRATION_ENABLED=os.environ.get('HEIST_REGISTRATION_ENABLED','true')=='true',
+                      LECTURE_SIGNUP_TOKEN=os.environ.get('LECTURE_SIGNUP_TOKEN',''),
+                      IMPRINT_URL=os.environ.get('HEIST_IMPRINT_URL',legal.IMPRINT_URL),PRIVACY_URL=os.environ.get('HEIST_PRIVACY_URL',legal.PRIVACY_URL),
+                      LEGAL_VERSION=os.environ.get('HEIST_LEGAL_VERSION',legal.LEGAL_VERSION),
                       DATA_ROOT=os.environ.get('HEIST_WEB_DATA_ROOT', '/var/lib/heist-web'),
                       MAINTENANCE_FILE=os.environ.get('HEIST_WEB_MAINTENANCE_FILE','/run/heist-web-maintenance'),
                       MAX_CONTENT_LENGTH=1024**3+1024**2, MAX_FORM_MEMORY_SIZE=1024**2, MAX_FORM_PARTS=100)

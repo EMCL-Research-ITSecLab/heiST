@@ -1,0 +1,15 @@
+{
+  "version": "7800b17958fc67113683d936d3a4679c1bdbc18237b215a944f075bff8c4cce9",
+  "sources": {
+    "impressum": {
+      "url": "https://emcl-ctf.iwr.uni-heidelberg.de/impressum",
+      "response_sha256": "cbbdd611ae0402d2b3747c5c8d0e4df45cd12c75b370cfba9229050bd1e9eb17"
+    },
+    "privacy-policy": {
+      "url": "https://emcl-ctf.iwr.uni-heidelberg.de/privacy-policy",
+      "response_sha256": "11b6f6ec53381eb37f743bf82d8d7a796d894bf58d68854600b6aa65c875ff54"
+    }
+  },
+  "imported_at": "2026-11-07",
+  "scope": "main legal content only; scripts and site navigation excluded"
+}

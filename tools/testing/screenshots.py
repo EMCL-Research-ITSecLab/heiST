@@ -18,6 +18,9 @@ PAGES = {
     'deploy_challenge': ('/challenge?id=4', 'student'),
     'operations': ('/operations', 'admin'),
     'login': ('/login', 'guest'),
+    'signup': ('/signup', 'guest'),
+    'impressum': ('/impressum', 'guest'),
+    'privacy': ('/privacy-policy', 'guest'),
     'mobile': ('/dashboard', 'student'),
 }
 
@@ -50,6 +53,12 @@ def capture(output):
                         machine = fixture.page.get_by_role('group', name='Machine 1', exact=True)
                         machine.get_by_label('Machine name').fill('portal')
                         machine.get_by_label('OVA artifact').select_option('identity-portal.ova')
+                        fixture.page.get_by_role('button', name='Add machine').click()
+                        fixture.page.get_by_role('group', name='Machine 2', exact=True).get_by_label('Machine name').fill('directory')
+                        fixture.page.get_by_role('button', name='Add network').click()
+                        fixture.page.get_by_label('Network name',exact=True).fill('Entry')
+                        fixture.page.get_by_role('checkbox',name='portal',exact=True).check()
+                        fixture.page.get_by_role('checkbox',name='directory',exact=True).check()
                     fixture.page.evaluate('() => { document.activeElement?.blur(); window.scrollTo(0, 0); }')
                     fixture.page.evaluate('() => Promise.all([...document.images].filter(image => image.getBoundingClientRect().top < innerHeight).map(image => image.decode()))')
                     fixture.page.screenshot(path=output/f'{name}_{theme}.png', animations='disabled', caret='hide')

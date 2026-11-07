@@ -17,7 +17,8 @@ class PublicAuthenticationTests(unittest.TestCase):
 
     def setUp(self):
         database_tests.WebDatabaseTests.setUp(self)
-        self.app = create_app({'TESTING': True, 'WEB_SESSION_SECRET': 'a'*64},
+        self.app = create_app({'TESTING': True, 'WEB_SESSION_SECRET': 'a'*64, 'LECTURE_SIGNUP_TOKEN':'test-lecture-code',
+                               'IMPRINT_URL':'https://example.invalid/impressum','PRIVACY_URL':'https://example.invalid/privacy','LEGAL_VERSION':'test-policy-1'},
                               repository_factory=lambda: Repository(lambda: self.psycopg2.connect(**self.api_settings)), clock=lambda: self.now)
         self.client = self.app.test_client()
         self.client.environ_base['REMOTE_ADDR'] = '192.0.2.'+str(self.user_id % 250 + 1)
@@ -99,13 +100,51 @@ class PublicAuthenticationTests(unittest.TestCase):
     def test_signup_validates_policy_and_duplicate_accounts_without_partial_success(self):
         self.bootstrap()
         username = 'new_'+self.username[4:]
-        value = {'username': username, 'email': username+'@example.invalid', 'password': 'strong-test-password', 'confirm-password': 'strong-test-password'}
+        value = {'username': username, 'email': username+'@example.invalid', 'password': 'strong-test-password', 'confirm-password': 'strong-test-password',
+                 'lecture_token':'test-lecture-code','accept_legal':True,'legal_version':self.bootstrap().json['data']['legal']['version']}
         result = self.request('signup', 'POST', json={**value, 'password': 'short', 'confirm-password': 'short'})
         self.assertEqual(result.status_code, 400)
         self.assertIsNone(self.repo.call('web_auth_record', username, one=True))
         self.assertEqual(self.request('signup', 'POST', json=value).status_code, 200)
         self.assertEqual(self.bootstrap().json['data']['user']['username'], username)
         self.assertEqual(self.request('signup', 'POST', json=value).status_code, 409)
+
+    def registration_body(self):
+        data = self.bootstrap().json['data']
+        return {'username':'new_'+self.username[4:], 'email':'new_'+self.username+'@example.invalid',
+                'password':'strong-test-password','confirm-password':'strong-test-password',
+                'lecture_token':'test-lecture-code','accept_legal':True,'legal_version':data['legal']['version']}
+
+    def test_registration_secret_consent_and_current_policy_are_server_enforced(self):
+        value = self.registration_body()
+        self.assertNotIn('test-lecture-code',str(self.bootstrap().json))
+        for change,status in (({'lecture_token':'wrong'},403),({'accept_legal':False},400),({'legal_version':'old'},409)):
+            response=self.request('signup','POST',json={**value,**change})
+            self.assertEqual(response.status_code,status,response.json)
+            self.assertIsNone(self.repo.call('web_auth_record',value['username'],one=True))
+        self.assertEqual(self.request('signup','POST',json=value).status_code,200)
+        with self.psycopg2.connect(**self.settings) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT a.policy_version,a.imprint_url,a.privacy_url,a.accepted_at IS NOT NULL FROM public.registration_acceptances a JOIN public.users u ON u.id=a.user_id WHERE u.username=%s',(value['username'],))
+                self.assertEqual(cursor.fetchone(),(value['legal_version'],'https://example.invalid/impressum','https://example.invalid/privacy',True))
+
+    def test_registration_is_closed_without_operator_settings(self):
+        for key in ('LECTURE_SIGNUP_TOKEN','IMPRINT_URL','PRIVACY_URL','LEGAL_VERSION'):
+            old=self.app.config[key];self.app.config[key]=''
+            self.assertFalse(self.bootstrap().json['data']['registration_enabled'])
+            self.assertEqual(self.request('signup','POST',json={}).status_code,403)
+            self.app.config[key]=old
+
+    def test_acceptance_failure_rolls_back_the_new_account(self):
+        from unittest.mock import patch
+        value=self.registration_body()
+        original=Repository.call
+        def fail_acceptance(repo,function,*args,**kwargs):
+            if function=='web_record_registration':raise RuntimeError('fixture acceptance failure')
+            return original(repo,function,*args,**kwargs)
+        with patch.object(Repository,'call',fail_acceptance):
+            self.assertEqual(self.request('signup','POST',json=value).status_code,503)
+        self.assertIsNone(self.repo.call('web_auth_record',value['username'],one=True))
 
     def test_password_change_revokes_old_sessions_and_current_session_is_rotated(self):
         self.login()
@@ -160,3 +199,37 @@ class PublicAuthenticationTests(unittest.TestCase):
         result = self.request('reset-password', 'POST', json={'current_password': 'legacy-password', 'new_password': 'changed-test-password', 'confirm_password': 'changed-test-password'})
         self.assertEqual(result.status_code, 403)
         self.assertTrue(self.repo.call('web_auth_record', self.username, one=True)['password_reset'])
+
+
+class RegistrationSettingsTests(unittest.TestCase):
+    def test_bundled_legal_text_is_bound_to_the_policy_revision(self):
+        import hashlib,json
+        from pathlib import Path
+        from heist import legal
+        root=Path(__file__).resolve().parents[1]
+        documents=json.loads((root/'frontend/src/features/legal/documents.json').read_text())
+        digest=hashlib.sha256(json.dumps(documents,ensure_ascii=False,sort_keys=True).encode()).hexdigest()
+        self.assertEqual(digest,legal.LEGAL_VERSION)
+        self.assertEqual(json.loads((root/'assets/legal-sources.json').read_text())['version'],digest)
+        self.assertEqual(set(documents),{'impressum','privacy-policy'})
+
+    def test_legal_settings_are_available_without_database_or_session_during_maintenance(self):
+        from unittest.mock import Mock
+        factory=Mock(side_effect=AssertionError('Site settings must not access SQL'))
+        app=create_app({'TESTING':True,'WEB_SESSION_SECRET':'a'*64,'MAINTENANCE_FILE':'/proc/self/status',
+                        'IMPRINT_URL':'https://example.invalid/impressum','PRIVACY_URL':'https://example.invalid/privacy'},repository_factory=factory)
+        response=app.test_client().get('/api/site',base_url='https://localhost')
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.json['data']['legal']['imprint_url'],'https://example.invalid/impressum')
+        self.assertNotIn('Set-Cookie',response.headers)
+        factory.assert_not_called()
+
+    def test_only_public_https_links_and_complete_settings_enable_registration(self):
+        from heist.api.public.registration import legal_settings,registration_enabled
+        config={'REGISTRATION_ENABLED':True,'LECTURE_SIGNUP_TOKEN':'test-lecture-code','IMPRINT_URL':'https://example.invalid/impressum','PRIVACY_URL':'https://example.invalid/privacy','LEGAL_VERSION':'one'}
+        self.assertTrue(registration_enabled(config))
+        first=legal_settings(config)['version']
+        self.assertNotEqual(first,legal_settings({**config,'LEGAL_VERSION':'two'})['version'])
+        for url in ('javascript:alert(1)','http://example.invalid','https://user:secret@example.invalid','https://example.invalid:bad','https://example.invalid/\n'):
+            self.assertFalse(registration_enabled({**config,'PRIVACY_URL':url}))
+        for code in ('','secret','dummy-token',None):self.assertFalse(registration_enabled({**config,'LECTURE_SIGNUP_TOKEN':code}))

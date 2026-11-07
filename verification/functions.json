@@ -1340,5 +1340,31 @@
       "tests.test_web_authoring.AuthoringTests.test_yaml_preview_validates_owned_artifacts_without_creating_or_importing"
     ],
     "rationale": "Real restricted PostgreSQL/Flask requests validate owner artifacts, unchanged exercise count and role revocation before platform calls."
+  },
+  "heist/api/public/registration.py::legal_settings": {
+    "tests": [
+      "tests.test_web_auth.RegistrationSettingsTests.test_only_public_https_links_and_complete_settings_enable_registration"
+    ],
+    "rationale": "Checks public HTTPS URL filtering, missing/default tokens and revision changes."
+  },
+  "heist/api/public/registration.py::registration_enabled": {
+    "tests": [
+      "tests.test_web_auth.PublicAuthenticationTests.test_registration_is_closed_without_operator_settings",
+      "tests.test_web_auth.RegistrationSettingsTests.test_only_public_https_links_and_complete_settings_enable_registration"
+    ],
+    "rationale": "Checks server closure for missing policy/token configuration and safe complete settings."
+  },
+  "heist/api/public/auth.py::site_settings": {
+    "tests": [
+      "tests.test_web_auth.RegistrationSettingsTests.test_legal_settings_are_available_without_database_or_session_during_maintenance"
+    ],
+    "rationale": "Real Flask request returns public legal configuration without SQL/session access during maintenance."
+  },
+  "tools/maintenance/import_legal_pages.py::Content.handle_starttag": {
+    "tests": [
+      "tests.test_legal_import.LegalImportTests.test_main_content_keeps_text_and_safe_links_without_site_scripts_or_event_handlers",
+      "tests.test_legal_import.LegalImportTests.test_executable_links_and_unreviewed_main_tags_are_refused"
+    ],
+    "rationale": "Parses actual HTML and checks retained main content, safe attributes and refusal of executable links/unreviewed tags."
   }
 }

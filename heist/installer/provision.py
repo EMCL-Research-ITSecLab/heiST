@@ -1,9 +1,11 @@
 import hashlib
+import json
 import random
 import string
 
 import requests
 from heist.environment import load_installer_env as load_dotenv
+from heist import legal
 import os
 from pathlib import Path
 from proxmoxer import ProxmoxAPI
@@ -263,6 +265,8 @@ def generate_and_distribute_env_files(backend_api_token):
         backend_env_file.write(f"BACKEND_CERTIFICATE_FILE='{BACKEND_CERTIFICATE_FILE}'\n")
         backend_env_file.write(f"BACKEND_CERTIFICATE_KEY_FILE='{BACKEND_CERTIFICATE_KEY_FILE}'\n")
         backend_env_file.write(f"BACKEND_AUTHENTICATION_TOKEN='{BACKEND_AUTHENTICATION_TOKEN}'\n")
+        for name in ('LECTURE_SIGNUP_TOKEN','HEIST_IMPRINT_URL','HEIST_PRIVACY_URL','HEIST_LEGAL_VERSION','HEIST_REGISTRATION_ENABLED'):
+            backend_env_file.write(name+'='+json.dumps(os.getenv(name,{'HEIST_REGISTRATION_ENABLED':'true','HEIST_IMPRINT_URL':legal.IMPRINT_URL,'HEIST_PRIVACY_URL':legal.PRIVACY_URL,'HEIST_LEGAL_VERSION':legal.LEGAL_VERSION}.get(name,'')))+'\n')
 
         backend_env_file.write(f"DB_HOST='{DATABASE_HOST}'\n")
         backend_env_file.write(f"DB_NAME='{DATABASE_NAME}'\n")

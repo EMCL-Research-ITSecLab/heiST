@@ -80,7 +80,7 @@ class BrowserFixture(unittest.TestCase):
                 for challenge in self.responses.get('admin/challenges', {}).get('data', {}).get('challenges', []):
                     if str(challenge['id']) == match[1]:
                         challenge['marked_for_deletion'] = False
-            if endpoint == 'login':
+            if endpoint in ('login','signup'):
                 self.role = 'student'
             if endpoint == 'reset-password':
                 self.password_change = False
@@ -91,8 +91,10 @@ class BrowserFixture(unittest.TestCase):
             if endpoint.endswith('/seal'):
                 return route.fulfill(status=202,json={'success':True,'data':{'state':'SEALED'},'message':'Transfer complete. Validation is pending.'})
             return route.fulfill(json={'success': True, 'message': 'Changes saved.', 'redirect': '/dashboard'})
+        if endpoint == 'site':
+            return route.fulfill(json={'success':True,'data':{'registration_enabled':True,'legal':{'imprint_url':'https://example.invalid/impressum','privacy_url':'https://example.invalid/privacy','version':'fixture-policy-v1'}}})
         if endpoint == 'session':
-            return route.fulfill(json={'success': True, 'data': {'is_logged_in': self.role != 'guest', 'requires_password_change': self.password_change, 'csrf_token': 'a'*64, 'user': {'username': 'investigator', 'is_admin': self.role == 'admin'}}})
+            return route.fulfill(json={'success': True, 'data': {'is_logged_in': self.role != 'guest', 'registration_enabled': True, 'legal': {'imprint_url':'https://example.invalid/impressum','privacy_url':'https://example.invalid/privacy','version':'fixture-policy-v1'}, 'requires_password_change': self.password_change, 'csrf_token': 'a'*64, 'user': {'username': 'investigator', 'is_admin': self.role == 'admin'}}})
         if self.failed:
             return route.fulfill(status=503, json={'success': False, 'message': 'Temporary service failure'})
         if endpoint == 'admin/operations':

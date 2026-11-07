@@ -4,13 +4,15 @@ from pathlib import Path
 import re
 
 from heist.security.tls import server_name
+from heist import legal
 from .browser_role import validate
 
 KEYS = frozenset(('DB_HOST','DB_NAME','DB_PORT','DB_USER','DB_PASSWORD',
                   'WEB_SESSION_SECRET','BACKEND_HOST','BACKEND_PORT',
                   'BACKEND_AUTHENTICATION_TOKEN','HEIST_BACKEND_CA_FILE',
                   'HEIST_BACKEND_SERVER_NAME','HEIST_WEB_DATA_ROOT',
-                  'HEIST_WEB_MAINTENANCE_FILE','HEIST_WEB_PORT'))
+                  'HEIST_WEB_MAINTENANCE_FILE','HEIST_WEB_PORT','LECTURE_SIGNUP_TOKEN',
+                  'HEIST_IMPRINT_URL','HEIST_PRIVACY_URL','HEIST_LEGAL_VERSION','HEIST_REGISTRATION_ENABLED'))
 
 
 def configuration(host, *, role, password, session_secret, backend_server_name,
@@ -29,7 +31,11 @@ def configuration(host, *, role, password, session_secret, backend_server_name,
             'HEIST_BACKEND_SERVER_NAME':server_name(backend_server_name),
             'HEIST_BACKEND_CA_FILE':ca_file,'WEB_SESSION_SECRET':session_secret,
             'HEIST_WEB_DATA_ROOT':'/var/lib/heist-web',
-            'HEIST_WEB_MAINTENANCE_FILE':'/run/heist-web-maintenance','HEIST_WEB_PORT':'8001'}
+            'HEIST_WEB_MAINTENANCE_FILE':'/run/heist-web-maintenance','HEIST_WEB_PORT':'8001',
+            'LECTURE_SIGNUP_TOKEN':host.get('LECTURE_SIGNUP_TOKEN',''),
+            'HEIST_IMPRINT_URL':host.get('HEIST_IMPRINT_URL',legal.IMPRINT_URL), 'HEIST_PRIVACY_URL':host.get('HEIST_PRIVACY_URL',legal.PRIVACY_URL),
+            'HEIST_LEGAL_VERSION':host.get('HEIST_LEGAL_VERSION',legal.LEGAL_VERSION),
+            'HEIST_REGISTRATION_ENABLED':host.get('HEIST_REGISTRATION_ENABLED','true')}
     for key in ('DB_PORT','BACKEND_PORT'):
         port=values[key]
         if not isinstance(port,str) or not port.isascii() or not port.isdigit() or not 1<=int(port)<=65535:

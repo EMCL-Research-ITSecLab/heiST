@@ -20,7 +20,7 @@ frontend testing library is required.
 
 The smoke suite checks public/student/admin routing, CSRF login, password reset,
 role boundaries, safe error recovery, authoring, binary uploads and diagnostics.
-The populated-state suite checks 90 page/size/theme combinations: nine pages at
+The populated-state suite checks 120 page/size/theme combinations: twelve pages at
 320, 390, 768, 1024 and 1440 CSS pixels, in light and dark themes. Assertions cover
 horizontal overflow, one page heading, runtime errors, loaded visible images,
 official branding and plain headings, YAML preview/draft preservation, retired exercise restoration, paging/filter reset, dialog cancellation and focus,
@@ -44,6 +44,9 @@ Regenerate after changing the UI or fixtures; do not manually retouch screenshot
 | Exercise management | [Light](../assets/showcase/manage_challenges_light.png) | [Dark](../assets/showcase/manage_challenges_dark.png) |
 | Exercise editor | [Light](../assets/showcase/create_challenge_light.png) | [Dark](../assets/showcase/create_challenge_dark.png) |
 | Platform diagnostics | [Light](../assets/showcase/operations_light.png) | [Dark](../assets/showcase/operations_dark.png) |
+| Registration | [Light](../assets/showcase/signup_light.png) | [Dark](../assets/showcase/signup_dark.png) |
+| Impressum | [Light](../assets/showcase/impressum_light.png) | [Dark](../assets/showcase/impressum_dark.png) |
+| Privacy policy | [Light](../assets/showcase/privacy_light.png) | [Dark](../assets/showcase/privacy_dark.png) |
 | Sign in | [Light](../assets/showcase/login_light.png) | [Dark](../assets/showcase/login_dark.png) |
 | Mobile overview | [Light](../assets/showcase/mobile_light.png) | [Dark](../assets/showcase/mobile_dark.png) |
 

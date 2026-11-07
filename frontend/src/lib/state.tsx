@@ -7,12 +7,22 @@ export type User = {
   avatar: string;
   passwordChange: boolean;
 };
-const Session = createContext({ user: null as User | null, loading: true, error: '', refresh: async () => { } });
+type Legal = {imprint_url: string; privacy_url: string; version: string};
+const emptyLegal: Legal = {imprint_url: '', privacy_url: '', version: ''};
+const Session = createContext({ registrationEnabled: false, legal: emptyLegal, user: null as User | null, loading: true, error: '', refresh: async () => { } });
 export function SessionProvider({ children }: {
   children: ReactNode;
 }) {
   const [user, setUser] = useState<User | null>(null), [loading, setLoading] = useState(true), [error, setError] = useState('');
+  const [registrationEnabled, setRegistrationEnabled] = useState(false), [legal, setLegal] = useState<Legal>(emptyLegal);
   const refresh = useCallback(async () => {
+    try {
+      const site = payload(await request('/api/site')), links = row(site.legal);
+      setRegistrationEnabled(truth(site.registration_enabled));
+      setLegal({imprint_url: text(links.imprint_url), privacy_url: text(links.privacy_url), version: text(links.version)});
+    } catch {
+      setRegistrationEnabled(false);
+    }
     try {
       const data = payload(await request('/api/session'));
       const record = row(data.user);
@@ -28,7 +38,7 @@ export function SessionProvider({ children }: {
     }
   }, []);
   useEffect(() => { void refresh(); const expired = () => void refresh(); window.addEventListener('heist:session-expired', expired); return () => window.removeEventListener('heist:session-expired', expired); }, [refresh]);
-  return <Session.Provider value={{ user, loading, error, refresh }}>
+  return <Session.Provider value={{ user, loading, error, refresh, registrationEnabled, legal }}>
     {children}
   </Session.Provider>;
 }

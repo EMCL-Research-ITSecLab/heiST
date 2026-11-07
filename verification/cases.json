@@ -1887,6 +1887,36 @@
       "sources": [
         "tools/local/rehearse_browser_guest.py"
       ]
+    },
+    {
+      "id": "AUTO-LEGAL-CONTENT-IMPORT",
+      "area": "registration and legal content",
+      "mode": "automated",
+      "procedure": "Run tests/test_legal_import.py and registration/auth tests through tools/check.py.",
+      "expected": "Copied main content preserves text and safe links; site scripts/event handlers and executable links cannot enter the legal documents; enrollment requires a private lecture code and versioned acceptance.",
+      "evidence": [
+        "source-bound Python results",
+        "real PostgreSQL registration tests"
+      ],
+      "sources": [
+        "tests/test_legal_import.py",
+        "tests/test_web_auth.py"
+      ]
+    },
+    {
+      "id": "PILOT-LEGACY-SQL-FAILURE-RECOVERY",
+      "area": "release recovery",
+      "mode": "appliance",
+      "procedure": "Run tools/local/rehearse_migrations.py on the isolation-verified pilot with the immutable candidate manifest.",
+      "expected": "A scratch copy of the legacy database preserves protected rows across SQL failure and upgrade, enforces restricted-role grants/session invalidation, and restores its complete original schema through database replacement. Canonical data is not migrated.",
+      "evidence": [
+        "private SQL rehearsal receipt",
+        "dump checksum",
+        "schema and protected-row comparisons"
+      ],
+      "sources": [
+        "tools/local/rehearse_migrations.py"
+      ]
     }
   ]
 }

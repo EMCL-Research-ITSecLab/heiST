@@ -116,3 +116,12 @@ The isolated native web-role rehearsal at `387d2c2` passed Apache SPA/TLS routin
 Gunicorn liveness, maintenance session rejection, restricted service-UID session
 storage, systemd restart and complete original web-VM recovery. That evidence
 does not approve a complete target platform upgrade or fresh installation.
+
+
+Registration now restores the lecture code, copies the operator-provided Impressum
+and privacy pages into public React routes, and requires unchecked, version-bound
+acceptance at signup. The server checks all prerequisites and records acceptance
+in the same transaction as account creation. The editor restores the live network
+preview with native SVG and an accessible connection list, including YAML imports.
+The next native release gate rehearses the full immutable SQL migration chain on a
+restored legacy scratch database before full-platform deployment acceptance.

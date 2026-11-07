@@ -64,6 +64,7 @@ class WebDatabaseTests(unittest.TestCase):
                     cursor.execute((root/'releases/migrations/0007_monotonic_resource_ids.sql').read_text())
                     cursor.execute((root/'releases/migrations/0008_instance_activation.sql').read_text())
                     cursor.execute((root/'releases/migrations/0009_artifact_availability.sql').read_text())
+                    cursor.execute((root/'releases/migrations/0010_registration_acceptance.sql').read_text())
                     cursor.execute("INSERT INTO public.vpn_static_ips(vpn_static_ip) SELECT ('10.64.0.'||n)::inet FROM generate_series(2,250) n ON CONFLICT DO NOTHING")
             cls.api_settings = {**cls.settings, 'user': cls.role, 'password': cls.password}
         except BaseException:

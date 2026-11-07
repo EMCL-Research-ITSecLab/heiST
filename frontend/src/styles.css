@@ -1820,3 +1820,22 @@ dialog .button-row {
   }
 
 }
+
+.workspace-footer nav {display:flex;gap:20px;flex-wrap:wrap}
+.legal-acceptance {align-items:flex-start}
+.legal-acceptance span {min-width:0;overflow-wrap:anywhere}
+.topology-scroll {overflow:auto;max-height:360px;border:1px solid var(--line);border-radius:6px;margin-bottom:12px}
+.topology-diagram {display:block;width:100%;min-width:380px;font-size:14px}
+.topology-edge {fill:none;stroke:var(--muted);stroke-width:2}
+.topology-network rect {fill:var(--subtle);stroke:var(--blue);stroke-width:2}
+.topology-network.dmz rect {stroke:var(--amber)}
+.topology-machine rect {fill:var(--surface);stroke:var(--line-strong);stroke-width:2}
+.topology-diagram text {fill:var(--ink)}
+.topology-diagram .topology-detail {font-size:11px;fill:var(--muted)}
+.topology-connections {padding-left:20px;overflow-wrap:anywhere}
+
+.legal-page {max-width:960px;margin:0 auto;overflow-wrap:anywhere}
+.legal-page h1 {font-size:30px}
+.legal-page h2 {font-size:22px;margin-top:28px}
+.legal-page h3 {font-size:17px;margin-top:20px}
+.legal-page p,.legal-page li {line-height:1.7}

@@ -16,6 +16,7 @@ export function AuthPage({ mode }: {
     const body = new FormData(event.currentTarget);
     if (signup && body.get('password') !== body.get('confirm-password') || reset && body.get('new-password') !== body.get('confirm-password'))
       return void action.run(async () => { throw new Error('The passwords do not match.'); });
+    if (signup) body.set('legal_version', session.legal.version);
     if (reset) {
       body.set('current_password', String(body.get('current-password') ?? ''));
       body.set('new_password', String(body.get('new-password') ?? ''));
@@ -28,7 +29,7 @@ export function AuthPage({ mode }: {
       <h1>{title}</h1>
       {reset && <p className="muted">Change your password to continue.</p>}
       <Notice error={action.error} message={action.message} />
-      <form onSubmit={submit}>
+      {signup && !session.registrationEnabled ? <p role="status">Registration is currently closed.</p> : <form onSubmit={submit}>
         {!reset && <Field label="Username" name="username" autoComplete="username" required maxLength={50} />}
         {signup && <Field
           label="Email address"
@@ -56,13 +57,20 @@ export function AuthPage({ mode }: {
           type={visible ? 'text' : 'password'}
           autoComplete="new-password"
           required />}
+        {signup && <>
+          <Field label="Lecture code" name="lecture_token" type="password" autoComplete="off" required maxLength={256} />
+          <label className="check legal-acceptance">
+            <input type="checkbox" name="accept_legal" value="true" required />
+            <span>I accept the <a href={session.legal.imprint_url} target="_blank" rel="noopener noreferrer">Impressum</a> and <a href={session.legal.privacy_url} target="_blank" rel="noopener noreferrer">privacy policy</a>.</span>
+          </label>
+        </>}
         <label className="check">
           <input type="checkbox" checked={visible} onChange={e => setVisible(e.target.checked)} />Show passwords</label>
         <button className="full" disabled={action.busy}>
           {action.busy ? 'Please wait…' : signup ? 'Create account' : reset ? 'Save new password' : 'Sign in'}
           <span aria-hidden>→</span>
         </button>
-      </form>
+      </form>}
       {!reset && <p className="auth-alternative">
         {signup ? 'Have an account?' : 'No account?'} <Link href={signup ? '/login' : '/signup'}>
           {signup ? 'Sign in' : 'Create an account'}

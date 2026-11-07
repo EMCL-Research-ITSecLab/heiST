@@ -1,0 +1,66 @@
+{
+  "schema": 3,
+  "version": "0.4.0-rc.1",
+  "supported_from": [
+    "1bf6c026a9c6ce9ff6e00de9453496779c0e8043"
+  ],
+  "migrations": [
+    {
+      "id": "0001_exclusive_instances",
+      "path": "releases/migrations/0001_exclusive_instances.sql",
+      "sha256": "fe6ac0a2d4c42d53a3b6d46ccae272f96eb5735340376016f25bf011caff8b0d"
+    },
+    {
+      "id": "0002_web_sessions",
+      "path": "releases/migrations/0002_web_sessions.sql",
+      "sha256": "7462519602931166642fd41090f47330be6f3a760e4251b4fdc6fe26397a6ff3"
+    },
+    {
+      "id": "0003_learning_visibility",
+      "path": "releases/migrations/0003_learning_visibility.sql",
+      "sha256": "23804912236243fe3df1517afcd5e8c05a7fa4f7769e79f07dfbf016b9566eee"
+    },
+    {
+      "id": "0004_grading_time",
+      "path": "releases/migrations/0004_grading_time.sql",
+      "sha256": "7453bd3f2e43c485385c75cb1f09e7ed64118125cff058cfbdf88c54cd1cf231"
+    },
+    {
+      "id": "0005_account_deletion",
+      "path": "releases/migrations/0005_account_deletion.sql",
+      "sha256": "4e46341717c65c0f8922bd0c6caf8d44efc68dc804942413cd457de82ea59ce7"
+    },
+    {
+      "id": "0006_authoring_state",
+      "path": "releases/migrations/0006_authoring_state.sql",
+      "sha256": "713488aacfda51a96312afb95506382ca8ad05a31edcf0f70716d3f612f1da12"
+    },
+    {
+      "id": "0007_monotonic_resource_ids",
+      "path": "releases/migrations/0007_monotonic_resource_ids.sql",
+      "sha256": "09916b455ed4085e255e3744fc6a7a603b0c12b3c0e5a7eba89c62cdb675e8f5"
+    },
+    {
+      "id": "0008_instance_activation",
+      "path": "releases/migrations/0008_instance_activation.sql",
+      "sha256": "afa1ca240b3485b8dde05967ff412f889b4d485fb9025b7e4587cab3a70061f6"
+    },
+    {
+      "id": "0009_artifact_availability",
+      "path": "releases/migrations/0009_artifact_availability.sql",
+      "sha256": "846bcc36042ea50836fb42ff4460367b3f4d689ff8189cae3bc278250112cb9b"
+    },
+    {
+      "id": "0010_registration_acceptance",
+      "path": "releases/migrations/0010_registration_acceptance.sql",
+      "sha256": "f851cd90fe6cdcd5eeb94b053d66ba6d684a73afa9a28a479439a16d61be3d04"
+    }
+  ],
+  "protected_tables": [
+    "users",
+    "completed_challenges",
+    "challenge_flags"
+  ],
+  "frontend": true,
+  "web_runtime": true
+}

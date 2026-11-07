@@ -21,13 +21,14 @@ class LayoutTests(BrowserFixture):
         self.page.evaluate('document.fonts.ready')
 
     def test_populated_pages_fit_phone_tablet_desktop_in_both_themes(self):
-        paths = ['/landing', '/dashboard', '/explore', '/challenge?id=4', '/profile', '/manage-ctf', '/create-ctf', '/upload-diskfile', '/operations']
+        paths = ['/landing', '/dashboard', '/explore', '/challenge?id=4', '/profile', '/manage-ctf', '/create-ctf', '/upload-diskfile', '/operations', '/impressum', '/privacy-policy', '/signup']
         for width in (320, 390, 768, 1024, 1440):
             self.page.set_viewport_size({'width': width, 'height': 900})
             for theme in ('light', 'dark'):
                 self.page.evaluate("(theme) => localStorage.setItem('heist-theme', theme)", theme) if self.page.url.startswith(self.origin) else None
                 for path in paths:
                     with self.subTest(width=width, theme=theme, path=path):
+                        self.role='guest' if path=='/signup' else 'admin'
                         self.settled(path)
                         # Theme is applied by the app on a full document load.
                         self.page.evaluate("(theme) => document.documentElement.dataset.theme = theme", theme)
@@ -132,6 +133,60 @@ class LayoutTests(BrowserFixture):
             }""")
             self.assertEqual(failures, [], theme)
 
+    def test_copied_legal_pages_remain_public_when_session_storage_is_unavailable(self):
+        self.role='guest'
+        self.context.route('**/api/session',lambda route:route.fulfill(status=503,json={'success':False,'message':'Unavailable'}))
+        for path,title in (('/impressum','Impressum'),('/privacy-policy','Datenschutzerklärung')):
+            self.visit(path)
+            self.page.get_by_role('heading',name=title,exact=True).wait_for()
+            self.assertGreater(self.page.get_by_role('main').get_by_text('Universität Heidelberg',exact=True).count(),0)
+            self.assertEqual(self.page.locator('main script, main iframe').count(),0)
+
+    def test_closed_registration_has_no_signup_form_but_keeps_legal_links(self):
+        self.role='guest'
+        self.responses['site']={'success':True,'data':{'registration_enabled':False,'legal':{'imprint_url':'https://example.invalid/impressum','privacy_url':'https://example.invalid/privacy','version':'test'}}}
+        self.settled('/signup')
+        self.page.get_by_text('Registration is currently closed.',exact=True).wait_for()
+        self.assertEqual(self.page.locator('input[name=lecture_token]').count(),0)
+        self.assertEqual(self.page.get_by_role('navigation',name='Legal').get_by_role('link').count(),2)
+
+    def test_signup_requires_lecture_code_and_unchecked_policy_acceptance_with_legal_links(self):
+        self.role='guest'
+        self.settled('/signup')
+        legal=self.page.get_by_role('navigation',name='Legal')
+        self.assertEqual(legal.get_by_role('link',name='Impressum').get_attribute('href'),'https://example.invalid/impressum')
+        self.assertEqual(legal.get_by_role('link',name='Privacy policy').get_attribute('href'),'https://example.invalid/privacy')
+        self.page.get_by_label('Username',exact=True).fill('new_student')
+        self.page.get_by_label('Email address').fill('student@example.invalid')
+        self.page.get_by_label('Password',exact=True).fill('test-password-long')
+        self.page.get_by_label('Confirm password').fill('test-password-long')
+        self.page.get_by_label('Lecture code').fill('lecture-fixture')
+        acceptance=self.page.locator('input[name=accept_legal]')
+        self.assertFalse(acceptance.is_checked())
+        self.page.get_by_role('button',name='Create account',exact=True).click()
+        self.assertFalse(any(endpoint=='signup' for endpoint,_,_ in self.mutations))
+        acceptance.check()
+        self.page.get_by_role('button',name='Create account',exact=True).click()
+        self.page.wait_for_url('**/dashboard')
+        body=next(body for endpoint,body,_ in self.mutations if endpoint=='signup')
+        self.assertIn('lecture-fixture',body)
+        self.assertIn('fixture-policy-v1',body)
+
+    def test_network_preview_tracks_editor_connections_removal_and_dmz(self):
+        self.settled('/create-ctf')
+        self.page.get_by_role('button',name='Add machine',exact=False).click()
+        self.page.get_by_label('Machine name',exact=True).fill('Target')
+        self.page.get_by_role('button',name='Add network',exact=False).click()
+        self.page.get_by_label('Network name',exact=True).fill('Entry')
+        self.page.get_by_role('checkbox',name='Target',exact=True).check()
+        diagram=self.page.get_by_role('img',name='Challenge network preview')
+        self.assertEqual(diagram.locator('path.topology-edge').count(),1)
+        self.page.get_by_role('checkbox',name='DMZ',exact=True).check()
+        self.assertEqual(diagram.locator('.topology-network.dmz').count(),1)
+        self.page.get_by_role('button',name='Remove machine',exact=True).click()
+        self.assertEqual(diagram.locator('path.topology-edge').count(),0)
+        self.assertEqual(diagram.locator('.topology-machine').count(),0)
+
     def test_official_branding_and_plain_page_titles(self):
         self.settled('/dashboard')
         logo = self.page.get_by_role('link',name='heiST home').get_by_role('img',name='heiST')
@@ -161,6 +216,7 @@ class LayoutTests(BrowserFixture):
         self.assertEqual(self.page.get_by_label('Challenge name',exact=True).input_value(),'Imported lab')
         self.assertEqual(self.page.get_by_label('Machine name',exact=True).input_value(),'target')
         self.assertEqual(self.page.get_by_label('Hint text',exact=True).input_value(),'Imported hint')
+        self.assertEqual(self.page.get_by_role('img',name='Challenge network preview').locator('path.topology-edge').count(),1)
         self.assertEqual(requests,[{'yaml':'ctf: {name: Imported lab}'}])
         self.assertFalse(any(method=='POST' and endpoint=='admin/challenges' for method,endpoint,_ in self.requests))
         # An invalid replacement must preserve the existing draft.

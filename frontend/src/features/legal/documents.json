@@ -1,0 +1,1304 @@
+{
+  "impressum": [
+    "\n",
+    {
+      "tag": "h1",
+      "attrs": {},
+      "children": [
+        "Impressum"
+      ]
+    },
+    "\n",
+    {
+      "tag": "h2",
+      "attrs": {
+        "id": "m46"
+      },
+      "children": [
+        "Diensteanbieter"
+      ]
+    },
+    "\n",
+    {
+      "tag": "ul",
+      "attrs": {},
+      "children": [
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Universität Heidelberg"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Engineering Mathematics and Computing Lab"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Grabengasse 1"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "69117 Heidelberg"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Germany"
+          ]
+        },
+        "\n"
+      ]
+    },
+    "\n",
+    {
+      "tag": "h2",
+      "attrs": {
+        "id": "m56"
+      },
+      "children": [
+        "Kontaktmöglichkeiten"
+      ]
+    },
+    {
+      "tag": "p",
+      "attrs": {},
+      "children": [
+        "Telefon: +49 6221 5414520"
+      ]
+    },
+    "\n\n",
+    {
+      "tag": "h2",
+      "attrs": {
+        "id": "m5234"
+      },
+      "children": [
+        "Vorbehalt der Nutzung für Text und Data Mining"
+      ]
+    },
+    {
+      "tag": "p",
+      "attrs": {},
+      "children": [
+        "Vorbehalt der Nutzung für Text und Data Mining: Der Inhaber dieser Website gestattet die Nutzung oder das Herunterladen von Inhalten dieser Website durch Dritte für die Entwicklung, das Training oder den Betrieb von künstlicher Intelligenz oder anderen maschinellen Lernsystemen (\"Text und Data Mining\") ausschließlich mit ausdrücklicher schriftlicher Zustimmung des Inhabers. Ohne eine solche Zustimmung ist es untersagt, die Inhalte für Text und Data Mining zu verwenden. Dies gilt auch, wenn auf der Website keine Meta-Angaben vorhanden sind, die entsprechende Verfahren aussperren, und selbst dann, wenn Bots, die den Zweck haben, die Website zu Zwecken des Text und Data Mining auszulesen, nicht ausgesperrt werden."
+      ]
+    },
+    "\n\n",
+    {
+      "tag": "h2",
+      "attrs": {
+        "id": "m65"
+      },
+      "children": [
+        "Haftungs- und Schutzrechtshinweise"
+      ]
+    },
+    {
+      "tag": "p",
+      "attrs": {},
+      "children": [
+        "Haftungsausschluss: Die Inhalte dieses Onlineangebotes wurden sorgfältig und nach unserem aktuellen Kenntnisstand erstellt, dienen jedoch nur der Information und entfalten keine rechtlich bindende Wirkung, sofern es sich nicht um gesetzlich verpflichtende Informationen (z. B. das Impressum, die Datenschutzerklärung, AGB oder verpflichtende Belehrungen von Verbrauchern) handelt. Wir behalten uns vor, die Inhalte vollständig oder teilweise zu ändern oder zu löschen, soweit vertragliche Verpflichtungen unberührt bleiben. Alle Angebote sind freibleibend und unverbindlich."
+      ]
+    },
+    "\n",
+    {
+      "tag": "p",
+      "attrs": {},
+      "children": [
+        "Links auf fremde Webseiten: Die Inhalte fremder Webseiten, auf die wir direkt oder indirekt verweisen, liegen außerhalb unseres Verantwortungsbereiches und wir machen sie uns nicht zu Eigen. Für alle Inhalte und Nachteile, die aus der Nutzung der in den verlinkten Webseiten aufrufbaren Informationen entstehen, übernehmen wir keine Verantwortung."
+      ]
+    },
+    "\n",
+    {
+      "tag": "p",
+      "attrs": {},
+      "children": [
+        "Urheberrechte und Markenrechte: Alle auf dieser Website dargestellten Inhalte, wie Texte, Fotografien, Grafiken, Marken und Warenzeichen sind durch die jeweiligen Schutzrechte (Urheberrechte, Markenrechte) geschützt. Die Verwendung, Vervielfältigung usw. unterliegen unseren Rechten oder den Rechten der jeweiligen Urheber bzw. Rechteinhaber."
+      ]
+    },
+    "\n",
+    {
+      "tag": "p",
+      "attrs": {},
+      "children": [
+        "Hinweise auf Rechtsverstöße: Sollten Sie innerhalb unseres Internetauftritts Rechtsverstöße bemerken, bitten wir Sie uns auf diese hinzuweisen. Wir werden rechtswidrige Inhalte und Links nach Kenntnisnahme unverzüglich entfernen."
+      ]
+    },
+    "\n\n",
+    {
+      "tag": "h2",
+      "attrs": {},
+      "children": [
+        "Quellenhinweise"
+      ]
+    },
+    "\n",
+    {
+      "tag": "ul",
+      "attrs": {},
+      "children": [
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "ChatGPT (gemeinfrei): \"Avatar 1\" - avatar1.png"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "ChatGPT (gemeinfrei): \"Avatar 2\" - avatar2.png"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "ChatGPT (gemeinfrei): \"Avatar 3\" - avatar3.png"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "ChatGPT (gemeinfrei): \"CTF Default Image\" - ctf-default.png"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "SVG Repo (",
+            {
+              "tag": "a",
+              "attrs": {
+                "href": "https://creativecommons.org/public-domain/cc0/"
+              },
+              "children": [
+                "CC0 License"
+              ]
+            },
+            "): \"User Avatar Profile\" - default-avatar.png"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "SVG Repo (",
+            {
+              "tag": "a",
+              "attrs": {
+                "href": "https://creativecommons.org/public-domain/cc0/"
+              },
+              "children": [
+                "CC0 License"
+              ]
+            },
+            "): \"Sun SVG Vector\" - sun.svg"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "SVG Repo (",
+            {
+              "tag": "a",
+              "attrs": {
+                "href": "https://creativecommons.org/public-domain/cc0/"
+              },
+              "children": [
+                "CC0 License"
+              ]
+            },
+            "): \"Crescent Moon SVG\" - moon.svg"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "kudakurage (",
+            {
+              "tag": "a",
+              "attrs": {
+                "href": "https://openfontlicense.org/"
+              },
+              "children": [
+                "OFL License"
+              ]
+            },
+            "): \"Shuffle SVG Vector\" - shuffle-icon.png"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "pigeonfriend (",
+            {
+              "tag": "a",
+              "attrs": {
+                "href": "https://creativecommons.org/public-domain/cc0/"
+              },
+              "children": [
+                "CC0 License"
+              ]
+            },
+            "): \"achievement-sparkle\" - achievement.mp3"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Leszek_Szary (",
+            {
+              "tag": "a",
+              "attrs": {
+                "href": "https://creativecommons.org/public-domain/cc0/"
+              },
+              "children": [
+                "CC0 License"
+              ]
+            },
+            "): \"success 2\" - completion.mp3"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Fonticons, Inc. (see ",
+            {
+              "tag": "a",
+              "attrs": {
+                "href": "/assets/ui/fontawesome-license.txt"
+              },
+              "children": [
+                "LICENSE.txt"
+              ]
+            },
+            "): fontawesome"
+          ]
+        },
+        "\n"
+      ]
+    },
+    "\n"
+  ],
+  "privacy-policy": [
+    "\n",
+    {
+      "tag": "h1",
+      "attrs": {},
+      "children": [
+        {
+          "tag": "strong",
+          "attrs": {},
+          "children": [
+            "Datenschutzerklärung"
+          ]
+        }
+      ]
+    },
+    "\n",
+    {
+      "tag": "p",
+      "attrs": {},
+      "children": [
+        {
+          "tag": "strong",
+          "attrs": {},
+          "children": [
+            "Letzte Aktualisierung:"
+          ]
+        },
+        "15.10.2025"
+      ]
+    },
+    "\n",
+    {
+      "tag": "p",
+      "attrs": {},
+      "children": [
+        {
+          "tag": "strong",
+          "attrs": {},
+          "children": [
+            "Universität Heidelberg"
+          ]
+        },
+        {
+          "tag": "br",
+          "attrs": {},
+          "children": []
+        },
+        "\n",
+        {
+          "tag": "strong",
+          "attrs": {},
+          "children": [
+            "Engineering Mathematics and Computing Lab"
+          ]
+        }
+      ]
+    },
+    "\n\n",
+    {
+      "tag": "h2",
+      "attrs": {},
+      "children": [
+        "Einleitung"
+      ]
+    },
+    "\n",
+    {
+      "tag": "p",
+      "attrs": {},
+      "children": [
+        "\nDiese Datenschutzerklärung erläutert, wie die ",
+        {
+          "tag": "strong",
+          "attrs": {},
+          "children": [
+            "Universität Heidelberg"
+          ]
+        },
+        " und das\n",
+        {
+          "tag": "strong",
+          "attrs": {},
+          "children": [
+            "Engineering Mathematics and Computing Lab"
+          ]
+        },
+        " („wir“, „uns“ oder „unser“)\npersonenbezogene Daten erhebt, verarbeitet und schützt, wenn Sie die Plattform\n",
+        {
+          "tag": "strong",
+          "attrs": {},
+          "children": [
+            "CTF-Challenger"
+          ]
+        },
+        " („die Plattform“) nutzen.\n"
+      ]
+    },
+    "\n\n",
+    {
+      "tag": "p",
+      "attrs": {},
+      "children": [
+        "\nDie Plattform dient der Durchführung von Lehrveranstaltungen, Übungen und Forschungsprojekten\nim Bereich IT-Sicherheit an der ",
+        {
+          "tag": "strong",
+          "attrs": {},
+          "children": [
+            "Universität Heidelberg"
+          ]
+        },
+        ".\n"
+      ]
+    },
+    "\n\n",
+    {
+      "tag": "p",
+      "attrs": {},
+      "children": [
+        "\nDie Verarbeitung personenbezogener Daten erfolgt gemäß der Datenschutz-Grundverordnung (DSGVO)\nund dem Bundesdatenschutzgesetz (BDSG).\n"
+      ]
+    },
+    "\n\n",
+    {
+      "tag": "h2",
+      "attrs": {},
+      "children": [
+        "Verantwortliche Stelle"
+      ]
+    },
+    "\n",
+    {
+      "tag": "p",
+      "attrs": {},
+      "children": [
+        "Verantwortlich für die Datenverarbeitung:"
+      ]
+    },
+    "\n",
+    {
+      "tag": "ul",
+      "attrs": {},
+      "children": [
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            {
+              "tag": "strong",
+              "attrs": {},
+              "children": [
+                "Universität Heidelberg"
+              ]
+            }
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            {
+              "tag": "strong",
+              "attrs": {},
+              "children": [
+                "Engineering Mathematics and Computing Lab"
+              ]
+            }
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Grabengasse 1"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "69117 Heidelberg"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Germany"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Tel.: +49 6221 5414520"
+          ]
+        },
+        "\n"
+      ]
+    },
+    "\n\n",
+    {
+      "tag": "h2",
+      "attrs": {},
+      "children": [
+        "Erhobene Daten"
+      ]
+    },
+    "\n\n",
+    {
+      "tag": "h3",
+      "attrs": {},
+      "children": [
+        "Kontoinformationen"
+      ]
+    },
+    "\n",
+    {
+      "tag": "ul",
+      "attrs": {},
+      "children": [
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Benutzername"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Universitäre E-Mail-Adresse"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Passwort (nur als sicherer Hashwert gespeichert)"
+          ]
+        },
+        "\n"
+      ]
+    },
+    "\n\n",
+    {
+      "tag": "h3",
+      "attrs": {},
+      "children": [
+        "Optionale Profildaten"
+      ]
+    },
+    "\n",
+    {
+      "tag": "ul",
+      "attrs": {},
+      "children": [
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Vollständiger Name (optional)"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Kurzbiografie oder Beschreibung"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Links zu externen Seiten (GitHub, Twitter, persönliche Homepage)"
+          ]
+        },
+        "\n"
+      ]
+    },
+    "\n\n",
+    {
+      "tag": "h3",
+      "attrs": {},
+      "children": [
+        "Aktivitätsdaten"
+      ]
+    },
+    "\n",
+    {
+      "tag": "ul",
+      "attrs": {},
+      "children": [
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Gestartete und abgeschlossene Challenges (mit Zeitstempeln)"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Eingereichte Flags und erworbene Badges"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Interaktionen mit virtuellen Maschinen und Challenges"
+          ]
+        },
+        "\n"
+      ]
+    },
+    "\n\n",
+    {
+      "tag": "h3",
+      "attrs": {},
+      "children": [
+        "Sicherheits- und Netzwerkdaten"
+      ]
+    },
+    "\n",
+    {
+      "tag": "ul",
+      "attrs": {},
+      "children": [
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Netzwerkverkehr innerhalb der Plattforminfrastruktur"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Ausgeführte Befehle innerhalb virtueller Maschinen"
+          ]
+        },
+        "\n"
+      ]
+    },
+    "\n",
+    {
+      "tag": "p",
+      "attrs": {},
+      "children": [
+        "Diese Protokolle werden bis zu 3 Monate gespeichert."
+      ]
+    },
+    "\n\n",
+    {
+      "tag": "h2",
+      "attrs": {},
+      "children": [
+        "Zwecke der Datenverarbeitung"
+      ]
+    },
+    "\n\n",
+    {
+      "tag": "h3",
+      "attrs": {},
+      "children": [
+        "1. Betrieb der Plattform"
+      ]
+    },
+    "\n",
+    {
+      "tag": "ul",
+      "attrs": {},
+      "children": [
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Verwaltung von Benutzerkonten und Authentifizierung"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Durchführung und Bewertung von Challenges"
+          ]
+        },
+        "\n"
+      ]
+    },
+    "\n\n",
+    {
+      "tag": "h3",
+      "attrs": {},
+      "children": [
+        "2. Sicherheit und Missbrauchsprävention"
+      ]
+    },
+    "\n",
+    {
+      "tag": "ul",
+      "attrs": {},
+      "children": [
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Erkennung und Vermeidung unbefugter Zugriffe"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Untersuchung von Sicherheitsvorfällen"
+          ]
+        },
+        "\n"
+      ]
+    },
+    "\n\n",
+    {
+      "tag": "h3",
+      "attrs": {},
+      "children": [
+        "3. Lehre und Bewertung"
+      ]
+    },
+    "\n",
+    {
+      "tag": "ul",
+      "attrs": {},
+      "children": [
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Unterstützung der Lehrenden bei der Leistungsbewertung"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Erstellung von Analysen und Feedback für Lehrzwecke"
+          ]
+        },
+        "\n"
+      ]
+    },
+    "\n\n",
+    {
+      "tag": "h3",
+      "attrs": {},
+      "children": [
+        "4. Forschung und Lehre"
+      ]
+    },
+    "\n",
+    {
+      "tag": "ul",
+      "attrs": {},
+      "children": [
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Nutzung anonymisierter Interaktionsdaten für Forschungsprojekte (z. B. maschinelles Lernen, Datenanalyse)"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Förderung wissenschaftlicher Arbeiten im Bereich IT-Sicherheit"
+          ]
+        },
+        "\n"
+      ]
+    },
+    "\n\n",
+    {
+      "tag": "h2",
+      "attrs": {},
+      "children": [
+        "Rechtsgrundlagen der Verarbeitung"
+      ]
+    },
+    "\n",
+    {
+      "tag": "p",
+      "attrs": {},
+      "children": [
+        "Die Verarbeitung personenbezogener Daten erfolgt auf Grundlage von Artikel 6 DSGVO, insbesondere:"
+      ]
+    },
+    "\n",
+    {
+      "tag": "ul",
+      "attrs": {},
+      "children": [
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Art. 6 Abs. 1 lit. e – Verarbeitung im öffentlichen Interesse (Lehre und Forschung)"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Art. 6 Abs. 1 lit. c – Erfüllung rechtlicher Verpflichtungen (IT-Sicherheit, Protokollierung)"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Art. 6 Abs. 1 lit. a – Einwilligung (bei freiwilligen Profildaten oder Opt-in-Funktionen)"
+          ]
+        },
+        "\n"
+      ]
+    },
+    "\n\n",
+    {
+      "tag": "h2",
+      "attrs": {},
+      "children": [
+        "Speicherdauer und Löschung"
+      ]
+    },
+    "\n",
+    {
+      "tag": "ul",
+      "attrs": {},
+      "children": [
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Daten werden solange gespeichert, wie Ihr Konto aktiv ist."
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Sicherheits- und Netzwerkprotokolle werden maximal 3 Monate aufbewahrt."
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Nach Löschung des Kontos werden personenbezogene Daten nach Ablauf dieser Frist gelöscht oder anonymisiert."
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Vollständig anonymisierte Daten können dauerhaft zu Forschungszwecken gespeichert bleiben."
+          ]
+        },
+        "\n"
+      ]
+    },
+    "\n\n",
+    {
+      "tag": "h2",
+      "attrs": {},
+      "children": [
+        "Weitergabe von Daten"
+      ]
+    },
+    "\n",
+    {
+      "tag": "p",
+      "attrs": {},
+      "children": [
+        "Es erfolgt keine Weitergabe personenbezogener Daten an Dritte."
+      ]
+    },
+    "\n",
+    {
+      "tag": "p",
+      "attrs": {},
+      "children": [
+        "Zugriff erhalten ausschließlich:"
+      ]
+    },
+    "\n",
+    {
+      "tag": "ul",
+      "attrs": {},
+      "children": [
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Administrator*innen und IT-Personal der Universität Heidelberg"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Lehrende, Tutor*innen oder Forschende, die direkt an der Lehrveranstaltung oder Studie beteiligt sind"
+          ]
+        },
+        "\n"
+      ]
+    },
+    "\n",
+    {
+      "tag": "p",
+      "attrs": {},
+      "children": [
+        "Die Plattform wird vollständig im Rechenzentrum der Universität betrieben; es erfolgt keine Übermittlung in Drittländer außerhalb der EU."
+      ]
+    },
+    "\n\n",
+    {
+      "tag": "h2",
+      "attrs": {},
+      "children": [
+        "Nutzung für Forschung und Widerspruchsrecht"
+      ]
+    },
+    "\n",
+    {
+      "tag": "p",
+      "attrs": {},
+      "children": [
+        "\nAnonymisierte Protokolle und Interaktionsdaten dürfen zu Forschungs- und Lehrzwecken genutzt werden.\nAlle hierfür verwendeten Daten werden vorher anonymisiert, sodass keine Rückschlüsse auf einzelne Personen möglich sind.\n"
+      ]
+    },
+    "\n",
+    {
+      "tag": "p",
+      "attrs": {},
+      "children": [
+        "\nDie Teilnahme an dieser anonymisierten Datennutzung erfolgt standardmäßig (Opt-out).\n"
+      ]
+    },
+    "\n",
+    {
+      "tag": "p",
+      "attrs": {},
+      "children": [
+        "\nSie können der Nutzung jederzeit widersprechen, indem Sie uns unter\n",
+        {
+          "tag": "a",
+          "attrs": {
+            "href": "mailto:vincent.heuveline@uni-heidelberg.de"
+          },
+          "children": [
+            "vincent.heuveline@uni-heidelberg.de"
+          ]
+        },
+        " kontaktieren.\nEin Widerspruch hat keine Auswirkungen auf Ihre Teilnahme an Lehrveranstaltungen oder Bewertungen.\n"
+      ]
+    },
+    "\n\n",
+    {
+      "tag": "h2",
+      "attrs": {},
+      "children": [
+        "Ihre Rechte nach DSGVO"
+      ]
+    },
+    "\n",
+    {
+      "tag": "p",
+      "attrs": {},
+      "children": [
+        "Sie haben folgende Rechte:"
+      ]
+    },
+    "\n",
+    {
+      "tag": "ul",
+      "attrs": {},
+      "children": [
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Auskunftsrecht (Art. 15 DSGVO)"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Recht auf Berichtigung (Art. 16 DSGVO)"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Recht auf Löschung (Art. 17 DSGVO)"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Recht auf Einschränkung der Verarbeitung (Art. 18 DSGVO)"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Recht auf Datenübertragbarkeit (Art. 20 DSGVO)"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Widerspruchsrecht (Art. 21 DSGVO)"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Beschwerderecht bei einer Aufsichtsbehörde (Art. 77 DSGVO)"
+          ]
+        },
+        "\n"
+      ]
+    },
+    "\n\n",
+    {
+      "tag": "p",
+      "attrs": {},
+      "children": [
+        "Zuständige Aufsichtsbehörde (Beispiel):"
+      ]
+    },
+    "\n",
+    {
+      "tag": "ul",
+      "attrs": {},
+      "children": [
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Landesbeauftragte*r für den Datenschutz Baden-Württemberg",
+            {
+              "tag": "br",
+              "attrs": {},
+              "children": []
+            },
+            "\n    Website: ",
+            {
+              "tag": "a",
+              "attrs": {
+                "href": "https://www.baden-wuerttemberg.datenschutz.de/"
+              },
+              "children": [
+                "baden-wuerttemberg.datenschutz.de"
+              ]
+            }
+          ]
+        },
+        "\n"
+      ]
+    },
+    "\n\n",
+    {
+      "tag": "h2",
+      "attrs": {},
+      "children": [
+        "Technische und organisatorische Maßnahmen"
+      ]
+    },
+    "\n",
+    {
+      "tag": "p",
+      "attrs": {},
+      "children": [
+        "Wir setzen geeignete technische und organisatorische Maßnahmen zum Schutz Ihrer Daten ein, u. a.:"
+      ]
+    },
+    "\n",
+    {
+      "tag": "ul",
+      "attrs": {},
+      "children": [
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Verschlüsselte Kommunikation (HTTPS, VPN)"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Sichere Passwort-Hashing-Verfahren"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Zugriffsbeschränkung auf autorisierte Personen"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Regelmäßige System- und Sicherheitsprüfungen"
+          ]
+        },
+        "\n"
+      ]
+    },
+    "\n",
+    {
+      "tag": "p",
+      "attrs": {},
+      "children": [
+        "Trotz aller Maßnahmen kann keine vollständige Sicherheit garantiert werden."
+      ]
+    },
+    "\n\n",
+    {
+      "tag": "h2",
+      "attrs": {},
+      "children": [
+        "Änderungen dieser Datenschutzerklärung"
+      ]
+    },
+    "\n",
+    {
+      "tag": "p",
+      "attrs": {},
+      "children": [
+        "\nWir behalten uns vor, diese Datenschutzerklärung zu aktualisieren, um Änderungen gesetzlicher Anforderungen\noder betrieblicher Abläufe zu berücksichtigen. Die jeweils aktuelle Version ist auf der Plattform einsehbar.\n"
+      ]
+    },
+    "\n\n",
+    {
+      "tag": "h2",
+      "attrs": {},
+      "children": [
+        "Kontakt"
+      ]
+    },
+    "\n",
+    {
+      "tag": "p",
+      "attrs": {},
+      "children": [
+        "Für Fragen, Anträge oder Datenschutzanliegen wenden Sie sich bitte an:"
+      ]
+    },
+    "\n",
+    {
+      "tag": "ul",
+      "attrs": {},
+      "children": [
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Prof. Dr. Vincent Heuveline"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Universität Heidelberg"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Engineering Mathematics and Computing Lab"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Grabengasse 1"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "69117 Heidelberg"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Germany"
+          ]
+        },
+        "\n    ",
+        {
+          "tag": "li",
+          "attrs": {},
+          "children": [
+            "Tel.: +49 6221 5414520"
+          ]
+        },
+        "\n"
+      ]
+    },
+    "\n"
+  ]
+}

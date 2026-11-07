@@ -5,11 +5,13 @@ import json
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tarfile
 
-from heist.ui_assets import digest, inspect_bundle, install_bundle
-
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+from heist.ui_assets import digest, inspect_bundle, install_bundle
 
 
 def main(argv=None):

@@ -1292,7 +1292,8 @@
   },
   "heist/rollout/browser_deployment.py::package": {
     "tests": [
-      "tests.test_browser_deployment.BrowserDeploymentTests.test_bootstrap_delivers_private_configuration_and_verified_artifacts_without_shell_evaluation"
+      "tests.test_browser_deployment.BrowserDeploymentTests.test_bootstrap_delivers_private_configuration_and_verified_artifacts_without_shell_evaluation",
+      "tests.test_browser_deployment.BrowserDeploymentTests.test_bootstrap_retains_native_agent_failure_diagnostics_without_configuration"
     ],
     "rationale": "Executes the actual bounded transport bootstrap with harmless source, confirms source delivery, rejects a wrong digest and avoids private stdout."
   },

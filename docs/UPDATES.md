@@ -1,8 +1,13 @@
 # Scheduled maintenance updates
 
-`bin/install` provisions a new Proxmox host. Updating an existing installation
-uses `bin/heist upgrade`; it does not rerun provisioning, networking or database
-initialization. No updater can guarantee recovery from untested storage, missing
+The Flask target is **not yet approved for installation or production updates**.
+`bin/install` refuses before provisioning, and protocol 3 upgrades refuse before
+maintenance. The legacy protocol instructions below remain useful for recovery
+rehearsals; they do not deploy the new Flask UI. The native browser-role rehearsal
+is documented in [UI verification](UI-VERIFICATION.md).
+
+Updating an existing installation uses `bin/heist upgrade`; it does not rerun
+provisioning, networking or database initialization. No updater can guarantee recovery from untested storage, missing
 backups or an unknown production baseline. Rehearse the exact release on an
 isolated restored production clone before its first production rollout.
 

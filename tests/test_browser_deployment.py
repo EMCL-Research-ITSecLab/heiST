@@ -31,6 +31,17 @@ class BrowserDeploymentTests(unittest.TestCase):
         self.assertNotEqual(altered.returncode,0)
         self.assertIn(b'checksum differs',altered.stderr)
 
+    def test_bootstrap_retains_native_agent_failure_diagnostics_without_configuration(self):
+        def source(files):
+            files['source/heist/rollout/browser_guest.py'] = b'import sys; sys.stderr.write("native agent diagnostic\\n"); raise SystemExit(19)\n'
+        config = {'commit': COMMIT, 'password': 'private-value-must-stay-on-stdin'}
+        payload = package(runtime_bundle(source), ui_bundle(standalone=True), config, COMMIT)
+        result = subprocess.run([sys.executable,'-c',BOOTSTRAP,digest(payload)],input=payload,capture_output=True,timeout=30)
+        self.assertEqual(result.returncode,19)
+        self.assertEqual(result.stderr,b'native agent diagnostic\n')
+        self.assertEqual(result.stdout,b'')
+        self.assertNotIn(config['password'].encode(),result.stderr)
+
     def test_bootstrap_refuses_traversal_even_with_a_matching_transport_digest(self):
         stream = io.BytesIO()
         with tarfile.open(fileobj=stream,mode='w') as archive:

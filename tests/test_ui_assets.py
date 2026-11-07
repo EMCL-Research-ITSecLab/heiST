@@ -12,8 +12,8 @@ from heist.ui_assets import digest, inspect_bundle, install_bundle, verify_insta
 COMMIT = 'a' * 40
 
 
-def bundle(revision=COMMIT, asset='assets/ui/index-one.js', body=b'console.log("heiST")', extra=None, standalone=False):
-    files = {asset: body}
+def bundle(revision=COMMIT, asset='assets/ui/index-one.js', body=b'console.log("heiST")', extra=None, standalone=False, static=None):
+    files = {asset: body, **(static or {})}
     if standalone:
         files.update({'index.html': b'<html><body><div id="root"></div></body></html>',
                       'assets/avatars/default_avatar.png': b'fixture static avatar'})
@@ -39,6 +39,18 @@ class UiAssetTests(unittest.TestCase):
                 with self.subTest(mode=mode),self.assertRaisesRegex(RuntimeError,'no infrastructure was changed'):
                     main(mode)
             bootstrap.assert_not_called()
+
+    def test_official_logos_survive_bundle_installation_but_other_svg_paths_are_refused(self):
+        logos = {name:(Path(__file__).resolve().parents[1]/name).read_bytes()
+                 for name in ('assets/logo/logo_dark.svg','assets/logo/logo_light.svg','assets/logo/icon_dark.svg')}
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            install_bundle(bundle(standalone=True,static=logos),root,COMMIT)
+            verify_installation(root,COMMIT)
+            for name,body in logos.items():self.assertEqual((root/name).read_bytes(),body)
+        for name in ('assets/images/untrusted.svg','assets/logo/other.svg','assets/logo/../logo_dark.svg'):
+            with self.subTest(name=name),self.assertRaises(ValueError):
+                inspect_bundle(bundle(standalone=True,static={name:b'<svg/>'}),COMMIT)
 
     def test_standalone_bundle_covers_index_and_presets_and_detects_local_index_edits(self):
         payload = bundle(standalone=True)

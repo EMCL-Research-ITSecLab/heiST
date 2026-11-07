@@ -23,7 +23,7 @@ def asset_path(name):
         raise ValueError('Unsafe frontend asset path')
     path = PurePosixPath(name)
     if (not isinstance(name, str) or str(path) != name or '..' in path.parts or
-            not (name=='index.html' or re.fullmatch(r'assets/ui/[a-zA-Z0-9_./-]+',name) or re.fullmatch(r'assets/(?:avatars|images)/[a-zA-Z0-9_.-]+\.(?:png|jpe?g|gif)',name))):
+            not (name=='index.html' or re.fullmatch(r'assets/logo/(?:logo_dark|logo_light|icon_dark)\.svg',name) or re.fullmatch(r'assets/ui/[a-zA-Z0-9_./-]+',name) or re.fullmatch(r'assets/(?:avatars|images)/[a-zA-Z0-9_.-]+\.(?:png|jpe?g|gif)',name))):
         raise ValueError('Unsafe frontend asset path')
     return name
 

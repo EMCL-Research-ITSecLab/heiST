@@ -132,7 +132,7 @@ class TemplateExportSelectionTests(unittest.TestCase):
         from unittest.mock import patch
         with tempfile.TemporaryDirectory() as temporary:
             root=Path(temporary)
-            transaction=Transaction(root/'journal',{})
+            transaction=Transaction(root/'journal',{});transaction.path.mkdir()
             adapter=PVE.__new__(PVE);adapter.node='pilot';adapter.tasks=Mock()
             adapter.readonly_template_backups={'123':'5898f7b2-d8bd-42e0-a43e-d90f0f7d19b6'}
             adapter._verify_archive=Mock()
@@ -151,7 +151,7 @@ class TemplateExportSelectionTests(unittest.TestCase):
     def test_failed_validation_never_marks_the_export_verified(self):
         from unittest.mock import patch
         with tempfile.TemporaryDirectory() as temporary:
-            root=Path(temporary);transaction=Transaction(root/'journal',{})
+            root=Path(temporary);transaction=Transaction(root/'journal',{});transaction.path.mkdir()
             adapter=PVE.__new__(PVE);adapter.node='pilot';adapter.tasks=Mock()
             adapter.readonly_template_backups={'123':'5898f7b2-d8bd-42e0-a43e-d90f0f7d19b6'}
             adapter._verify_archive=Mock(side_effect=RuntimeError('corrupt archive'))
@@ -163,7 +163,7 @@ class TemplateExportSelectionTests(unittest.TestCase):
 
     def test_core_vm_cannot_be_sent_to_the_readonly_template_exporter(self):
         with tempfile.TemporaryDirectory() as temporary:
-            root=Path(temporary);transaction=Transaction(root/'journal',{})
+            root=Path(temporary);transaction=Transaction(root/'journal',{});transaction.path.mkdir()
             adapter=PVE.__new__(PVE);adapter.readonly_template_backups={'123':'fixture'};adapter.tasks=Mock()
             with self.assertRaisesRegex(RuntimeError,'template identities'):
                 adapter.checkpoint_vm(transaction,SimpleNamespace(vmid=123,role='web'),root)

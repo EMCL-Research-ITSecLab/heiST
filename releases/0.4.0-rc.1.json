@@ -2,7 +2,8 @@
   "schema": 3,
   "version": "0.4.0-rc.1",
   "supported_from": [
-    "1bf6c026a9c6ce9ff6e00de9453496779c0e8043"
+    "1bf6c026a9c6ce9ff6e00de9453496779c0e8043",
+    "e9dc593f71fbcb80e83cbd0cc34493739177ad46"
   ],
   "migrations": [
     {

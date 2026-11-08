@@ -8,6 +8,7 @@ remains closed. Full recovery can take an hour: keep the frozen runner available
 from dataclasses import replace
 import json
 from pathlib import Path
+import re
 import shutil
 import sys
 
@@ -28,14 +29,17 @@ class PlannedVerificationFailure(RuntimeError):
 
 
 class PilotPlatform(PVE):
-    def __init__(self,config,fingerprint,checkpoint):
+    def __init__(self,config,fingerprint,checkpoint,*,baseline_source='1bf6c026a9c6ce9ff6e00de9453496779c0e8043'):
         super().__init__(config,fingerprint)
+        if not re.fullmatch('[a-f0-9]{40}',baseline_source):
+            raise ValueError('Declare the full reviewed baseline commit')
         self.baseline=checkpoint
+        self.baseline_source=baseline_source
 
     def preflight(self,plan):
         require_fixture()
-        if revision(self.installation,'HEAD')!='1bf6c026a9c6ce9ff6e00de9453496779c0e8043':
-            raise RuntimeError('This rehearsal requires the known disposable legacy baseline')
+        if revision(self.installation,'HEAD')!=self.baseline_source or plan.source!=self.baseline_source:
+            raise RuntimeError('This rehearsal requires the explicitly reviewed disposable baseline')
         if plan.schema!=3 or plan.rollback:
             raise RuntimeError('This rehearsal requires a new immutable browser-runtime candidate')
         baseline=self.baseline
@@ -113,6 +117,8 @@ def main(argv=None):
     parser.add_argument('--config',required=True,type=Path)
     parser.add_argument('--checkpoint',required=True,type=Path)
     parser.add_argument('--target',required=True)
+    parser.add_argument('--baseline-source',default='1bf6c026a9c6ce9ff6e00de9453496779c0e8043',
+                        help='Full reviewed source commit of the restored isolated baseline')
     parser.add_argument('--manifest',default='releases/0.4.0-rc.1.json')
     parser.add_argument('--ui-bundle',required=True,type=Path)
     parser.add_argument('--runtime-bundle',required=True,type=Path)
@@ -122,7 +128,7 @@ def main(argv=None):
     if args.output.exists():raise ValueError('Use a new receipt path')
     config=Deployment.load(args.config)
     plan=build_plan(config.installation,args.target,args.manifest,sha256(args.config),args.ui_bundle,args.runtime_bundle)
-    adapter=PilotPlatform(config,sha256(args.config),Transaction.load(args.checkpoint))
+    adapter=PilotPlatform(config,sha256(args.config),Transaction.load(args.checkpoint),baseline_source=args.baseline_source)
     controller=Controller(config.state_directory,adapter)
     prior={p.name for p in (adapter.state/'transactions').iterdir()}
     try:

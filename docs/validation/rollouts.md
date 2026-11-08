@@ -1,5 +1,27 @@
 # Rollout validation
 
+## Current acceptance scope
+
+The operator authorized deployment after the restored production clone passes
+upgrade, injected failure/recovery and rollback acceptance. Clean-host application
+installation is deferred until afterward; its installer remains disabled.
+Production protocol 3 admission remains closed until clone acceptance passes.
+
+The candidate manifest now includes the inspected production source
+`e9dc593f71fbcb80e83cbd0cc34493739177ad46` so the isolated clone can plan its
+upgrade. This records compatibility intent, not a completed production rehearsal.
+`rehearse_platform.py --baseline-source FULL_COMMIT` binds both installed and
+planned source to the explicitly reviewed clone baseline. It retains the
+current-boot isolation guard and requires a complete verified baseline checkpoint.
+
+Independent verification of the resumed `906a00b` rehearsal found original source,
+protected student data and platform health restored, with maintenance cleared.
+Its unexpected transport/signer failures remain in the journal, so it is not a
+clean acceptance pass. The updated template archive helper separately passed
+native file and streaming restores of a synthetic read-only LVM-thin template,
+including matching disk bytes and UUIDs and complete fixture cleanup. Actual
+production template restore acceptance remains separate.
+
 ## Flask candidate rehearsal — 2026-11-08
 
 The original rehearsal did not contact production. The later read-only inspection
@@ -52,9 +74,10 @@ separate checks.
 
 Read-only inspection found a different starting revision from the legacy pilot:
 `lecture_v2` at `e9dc593f71fbcb80e83cbd0cc34493739177ad46`, with ten tracked
-local modifications. This revision is not declared supported by the release.
-Do not discard its customizations or add it to the allowlist on the strength of
-a database-only test. The operator subsequently authorized rollout and both Senior Identity lab bundles.
+local modifications. It was initially absent from the candidate manifest; the
+current compatibility-intent declaration above allows isolated planning while
+production admission remains gated. Preserve its reviewed customizations exactly
+for rollback. A database-only test does not certify this baseline. The operator subsequently authorized rollout and both Senior Identity lab bundles.
 Technical production admission remains closed pending the outstanding acceptance checks.
 
 The operator explicitly approved online, backup-only VM exports and a narrowly

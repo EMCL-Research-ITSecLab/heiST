@@ -59,12 +59,28 @@ class WizardTests(unittest.TestCase):
 
 
 class NativePlatformAdmissionTests(unittest.TestCase):
+    def test_explicit_baseline_must_match_both_installed_and_planned_source(self):
+        from types import SimpleNamespace
+        from tools.local.rehearse_platform import PilotPlatform
+        source='e'*40
+        with patch('tools.local.rehearse_platform.PVE.__init__'), \
+             patch('tools.local.rehearse_platform.require_fixture'), \
+             patch('tools.local.rehearse_platform.revision',return_value=source):
+            adapter=PilotPlatform(None,None,None,baseline_source=source)
+            adapter.installation=Path('/disposable')
+            with self.assertRaisesRegex(RuntimeError,'reviewed disposable baseline'):
+                adapter.preflight(SimpleNamespace(source='a'*40))
+        with patch('tools.local.rehearse_platform.PVE.__init__'):
+            with self.assertRaisesRegex(ValueError,'full reviewed baseline'):
+                PilotPlatform(None,None,None,baseline_source='main')
+
     def test_platform_rehearsal_requires_isolation_optin_before_loading_deployment(self):
         from tools.local.rehearse_platform import main as rehearse
         with patch.dict('os.environ',{'HEIST_PRIVILEGED_TESTS':'0'}),patch('tools.local.rehearse_platform.Deployment.load') as load:
             with self.assertRaisesRegex(RuntimeError,'disposable heist-pilot'):
                 rehearse(['--config','/missing/config','--checkpoint','/missing/checkpoint','--target','candidate',
-                          '--ui-bundle','/missing/ui','--runtime-bundle','/missing/runtime','--output','/missing/receipt'])
+                          '--ui-bundle','/missing/ui','--runtime-bundle','/missing/runtime','--output','/missing/receipt',
+                          '--baseline-source','e9dc593f71fbcb80e83cbd0cc34493739177ad46'])
             load.assert_not_called()
 
 

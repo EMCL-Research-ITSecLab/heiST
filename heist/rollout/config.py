@@ -42,6 +42,8 @@ class Deployment:
     wazuh_container: str | None = None
     reviewed_source_files: dict[str,str] = field(default_factory=dict)
     reviewed_source_commit: str | None = None
+    acceptance_receipt: str | None = None
+    acceptance_sha256: str | None = None
 
     def __post_init__(self):
         from .source_overrides import validate
@@ -50,6 +52,13 @@ class Deployment:
         if bool(self.reviewed_source_files)!=(self.reviewed_source_commit is not None) or (
                 self.reviewed_source_commit is not None and re.fullmatch('[a-f0-9]{40}',self.reviewed_source_commit) is None):
             raise ValueError('Bind reviewed source files to their full original commit')
+        if (self.acceptance_receipt is None)!=(self.acceptance_sha256 is None):
+            raise ValueError('Declare the acceptance receipt and its SHA256 together')
+        if self.acceptance_receipt is not None:
+            path=Path(self.acceptance_receipt)
+            if (not path.is_absolute() or '..' in path.parts or str(path)!=self.acceptance_receipt
+                    or re.fullmatch('[a-f0-9]{64}',self.acceptance_sha256 or '') is None):
+                raise ValueError('Declare a normalized acceptance path and exact SHA256')
         for name in ('installation','state_directory','backup_directory','backend_env','api_certificate','web_root','web_certificate'):
             path=Path(getattr(self,name))
             if not path.is_absolute() or '..' in path.parts or '\n' in str(path):

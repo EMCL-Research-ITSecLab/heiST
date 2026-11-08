@@ -170,8 +170,10 @@ class PVE:
         return result
 
     def preflight(self, plan):
+        acceptance=None
         if plan.schema == 3:
-            raise RuntimeError('Browser runtime deployment/recovery adapter is not yet approved; no maintenance was entered')
+            from .admission import require
+            acceptance=require(self.config,plan)
         if os.geteuid()!=0 or not Path('/etc/pve/local').is_dir():
             raise RuntimeError('Rollouts require root on the declared Proxmox host')
         if sys.version_info<(3,12):raise RuntimeError('Rollout runner requires Python 3.12 or newer')
@@ -180,6 +182,10 @@ class PVE:
             raise RuntimeError('Release protocol v1 supports Proxmox VE 9 only')
         if str(self.installation.resolve())!=plan.installation or revision(self.installation,'HEAD')!=plan.source:
             raise RuntimeError('Installed source changed after planning')
+        if plan.schema==3 and not plan.rollback:
+            from .vpn import inspect
+            inspect()
+            self.legacy_browser_role()
         if not plan.rollback:
             if build_plan(self.installation,plan.target,plan.manifest_path,self.config_sha256,
                           plan.ui_bundle['path'] if plan.ui_bundle else None,
@@ -241,6 +247,8 @@ class PVE:
             declared=re.search(r'(?:^|,)uuid=([^,]+)',config.get('smbios1',''))
             if not declared or str(uuid.UUID(declared[1]))!=str(uuid.UUID(actual)):
                 raise RuntimeError('SSH endpoint does not match the declared VM UUID: '+vm.role)
+            if acceptance and str(uuid.UUID(actual))!=acceptance['vm_uuids'][vm.role]:
+                raise RuntimeError('Infrastructure VM differs from the accepted production clone')
         backup=Path(self.config.backup_directory)
         if not backup.is_dir() or backup.stat().st_dev==self.installation.stat().st_dev:
             raise RuntimeError('Provide a mounted backup filesystem separate from installation source')
@@ -269,12 +277,18 @@ class PVE:
         if shutil.disk_usage(backup).free<capacity+16*1024**3:
             raise RuntimeError('Backup volume needs all infrastructure virtual capacities plus 16 GiB free')
         if self.marker.exists():raise RuntimeError('An existing maintenance transaction must be resumed first')
-        self.config.vm('web').ssh.run(['sh', '-c',
-            'command -v iptables ip6tables iptables-restore ip6tables-restore composer apache2ctl python3 >/dev/null'])
-        before = {name: hashlib.sha256(blob(self.installation, plan.source, 'webserver/html/' + name)).hexdigest()
-                  for name in plan.web_before if name != 'composer.lock'}
-        self.remote(self.config.vm('web'), web.VALIDATE,
-                    {'root': self.config.web_root, 'before': before, 'after': {name: None for name in plan.web_after if name != 'composer.lock'}})
+        browser=self.browser_runtime_active()
+        commands='iptables ip6tables iptables-restore ip6tables-restore apache2ctl python3'
+        if not browser:commands+=' composer'
+        self.config.vm('web').ssh.run(['sh','-c','command -v '+commands+' >/dev/null'])
+        if browser:
+            from .browser_deployment import verify_guest
+            verify_guest(self,plan.source)
+        else:
+            before = {name: hashlib.sha256(blob(self.installation, plan.source, 'webserver/html/' + name)).hexdigest()
+                      for name in plan.web_before if name != 'composer.lock'}
+            self.remote(self.config.vm('web'), web.VALIDATE,
+                        {'root': self.config.web_root, 'before': before, 'after': {name: None for name in plan.web_after if name != 'composer.lock'}})
         # Prove the asynchronous API transport before entering maintenance.
         self.request('GET', '/nodes/' + self.node + '/qemu', None)
         self.assert_idle(allow_ready=True)

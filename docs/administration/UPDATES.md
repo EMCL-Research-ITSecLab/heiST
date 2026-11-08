@@ -1,8 +1,9 @@
 # Scheduled maintenance updates
 
-The Flask target is **not yet approved for installation or production updates**.
-`bin/install` refuses before provisioning, and protocol 3 upgrades refuse before
-maintenance. The legacy protocol instructions below remain useful for recovery
+The Flask target has **not yet completed production acceptance**.
+`bin/install` refuses before provisioning. Protocol 3 requires a private,
+checksum-bound production-clone acceptance report before maintenance; no passing
+production report has been issued. The legacy instructions below remain useful for recovery
 rehearsals; they do not deploy the new Flask UI. The native browser-role rehearsal
 is documented in [UI verification](../testing/UI-VERIFICATION.md).
 
@@ -23,6 +24,20 @@ Use a fetched, reviewed immutable Git revision and its `releases/*.json` manifes
 The manifest declares supported starting commits, migration checksums and protected
 student/grade tables. An update from an undeclared commit is refused. This declaration
 records compatibility intent; the deployment's acceptance report supplies evidence.
+
+For protocol 3, set `acceptance_receipt` and `acceptance_sha256` together in the
+private deployment JSON after the complete isolated rehearsal passes. The receipt
+binds the exact source/target commits, infrastructure VM UUIDs and all semantic
+deployment settings. It references private, individually hashed JSON evidence for
+baseline restoration, injected failure/recovery, committed upgrade, rollback with
+newer data, reboot, exercise lifecycle, VPN/monitoring, legacy credential retirement,
+strict tests with zero skips, and backup-transport recovery. Changed settings,
+failed checks, modified receipts or a different release refuse admission. Recovery
+of an existing journal remains available without issuing a new acceptance report.
+
+`reviewed_source_files` must be paired with `reviewed_source_commit`. The reviewed
+legacy bytes apply only to that starting revision; their checkpointed contents and
+modes remain available when rolling back from the new repository layout.
 
 The host needs its existing Python environment, `git`, `pvesh`, `qm`, `vzdump`,
 `zstd`, `vma`, root access and a private mounted backup filesystem separate from

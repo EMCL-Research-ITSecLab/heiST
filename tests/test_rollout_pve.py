@@ -41,8 +41,9 @@ class RestoreIdentityTests(unittest.TestCase):
                 adapter.restore(transaction)
             adapter._host_guard.assert_not_called();adapter.command.assert_not_called();adapter.tasks.run.assert_not_called()
 
-    def test_unfinished_runtime_adapter_is_refused_before_any_host_mutation(self):
+    def test_missing_native_acceptance_is_refused_before_any_host_mutation(self):
         adapter=PVE.__new__(PVE)
+        adapter.config=SimpleNamespace(acceptance_receipt=None,acceptance_sha256=None)
         adapter.command=Mock();adapter.remote=Mock()
         with self.assertRaisesRegex(RuntimeError,'no maintenance was entered'):
             adapter.preflight(SimpleNamespace(schema=3))

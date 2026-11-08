@@ -12,10 +12,11 @@ def certificate_fingerprint(pem):
     # Apache commonly uses leaf + intermediate certificates in the same file.
     # Base64 decoding the whole chain can accidentally include later blocks
     # when the first DER certificate has no padding.
-    leaf,end,_ = pem.partition('-----END CERTIFICATE-----')
-    if not end:
+    _,begin,body = pem.partition('-----BEGIN CERTIFICATE-----')
+    leaf,end,_ = body.partition('-----END CERTIFICATE-----')
+    if not begin or not end:
         raise ValueError('Trusted certificate has no complete PEM leaf')
-    return hashlib.sha256(ssl.PEM_cert_to_DER_cert(leaf+end)).hexdigest()
+    return hashlib.sha256(ssl.PEM_cert_to_DER_cert(begin+leaf+end)).hexdigest()
 
 
 def probe(url, certificate, *, headers=None, statuses=(200,), expect=None, ready_json=False, timeout=10):

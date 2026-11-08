@@ -15,13 +15,16 @@ class HealthTests(unittest.TestCase):
         leaf=b'abcdef'
         chain=ssl.DER_cert_to_PEM_cert(leaf)+ssl.DER_cert_to_PEM_cert(b'issuer')
         self.assertEqual(certificate_fingerprint(chain),hashlib.sha256(leaf).hexdigest())
+        self.assertEqual(certificate_fingerprint('Bag Attributes\n    friendlyName: web\n'+chain),
+                         hashlib.sha256(leaf).hexdigest())
         with self.assertRaisesRegex(ValueError,'complete PEM leaf'):
             certificate_fingerprint('-----BEGIN CERTIFICATE-----\nYWJj')
 
     def test_remote_web_probe_pins_first_leaf_before_requesting_login(self):
         from heist.rollout import guest_agent
         leaf=b'abcdef'
-        self.certificate.write_text(ssl.DER_cert_to_PEM_cert(leaf)+ssl.DER_cert_to_PEM_cert(b'issuer'))
+        self.certificate.write_text('Bag Attributes\n    friendlyName: web\n'+
+                                    ssl.DER_cert_to_PEM_cert(leaf)+ssl.DER_cert_to_PEM_cert(b'issuer'))
         self.connection.sock.getpeercert.return_value=leaf
         self.connection.getresponse.return_value.read.return_value=b'login'
         with patch.object(guest_agent.http.client,'HTTPSConnection',return_value=self.connection):

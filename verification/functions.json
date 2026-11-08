@@ -1425,5 +1425,17 @@
       "tests.test_platform_administration.PlatformAdministrationTests.test_failed_remove_exposes_its_instance_journal_despite_historical_owner"
     ],
     "rationale": "Checks orphaned failure-journal visibility despite historical user ownership and explicit UNAVAILABLE resource identity for a malformed receipt, without leaking receipt contents."
+  },
+  "heist/platform/challenges/launch.py::resolve_user_specific_flag": {
+    "tests": [
+      "tests.test_web_challenges.ChallengeTests.test_flag_writer_matches_unique_id_and_legacy_email_graders_without_changing_grades"
+    ],
+    "rationale": "Real disposable SQL graders check unique-ID accounts and legacy email accounts with NULL unique IDs; generation must match the exact template/flag/account, incompatible identities are refused, and grade counts stay unchanged."
+  },
+  "heist/platform/challenges/launch.py::fetch_user_unique_id": {
+    "tests": [
+      "tests.test_web_challenges.ChallengeTests.test_flag_writer_matches_unique_id_and_legacy_email_graders_without_changing_grades"
+    ],
+    "rationale": "Real disposable SQL graders check unique-ID accounts and legacy email accounts with NULL unique IDs; generation must match the exact template/flag/account, incompatible identities are refused, and grade counts stay unchanged."
   }
 }

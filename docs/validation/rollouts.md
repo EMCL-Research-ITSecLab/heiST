@@ -81,6 +81,12 @@ installed SQL grader before writing them. It preserves either email or unique-ID
 grading without rewriting existing protected data. Production admission remains
 closed until these changes and the remaining customizations pass clone acceptance.
 
+The follow-up audit at `4b586ee3586b00b4df506073055b7e22ce6dba0e`
+passed the same SQL failure/recovery checks and generated grader-accepted values
+for all 51 personalized flag definitions with an existing legacy account. No
+submission or guest write was made. Its receipt is
+`database-isolated-audit-4b586ee.json` in the private backup directory.
+
 Off-host receipt: `database-isolated-audit-receipt.json`, alongside the private
 backup manifest. Production source/customization review, full VM restore, fresh
 installation and clean complete upgrade/failure/rollback acceptance remain open.

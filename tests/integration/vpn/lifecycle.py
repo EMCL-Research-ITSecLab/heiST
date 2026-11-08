@@ -97,7 +97,17 @@ keepalive 1 10
 verb 3
 '''
             server_config = settings.root/'server.conf'
-            server_config.write_text(configuration)
+            # Start from the legacy production shape, then exercise the actual
+            # migration against this new CA before connecting real VPN clients.
+            from heist.rollout import vpn as rollout_vpn
+            from heist.rollout.controller import Transaction
+            legacy='\n'.join(line for line in configuration.splitlines()
+                             if not line.startswith(('crl-verify ','management ','management-client-user ')))+'\n'
+            server_config.write_text(legacy)
+            journal=root/'rollout';journal.mkdir(mode=0o700)
+            transaction=Transaction(journal,{'vpn_identity':rollout_vpn.inspect(settings)})
+            rollout_vpn.prepare(transaction,settings=settings)
+            self.assertEqual(server_config.read_text(),rollout_vpn.configuration(legacy.encode(),settings).decode())
             def start(config, label):
                 log = resources.enter_context((root/(label+'.log')).open('wb'))
                 process = subprocess.Popen(['openvpn', '--config', str(config)], cwd=root, env=environment, stdout=log, stderr=subprocess.STDOUT)

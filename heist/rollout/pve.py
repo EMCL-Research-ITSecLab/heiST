@@ -319,7 +319,12 @@ class PVE:
     def quiesce(self, transaction):
         if 'host_services' not in transaction.data:
             services={}
-            for unit in self.units:
+            units=self.units
+            if transaction.plan.schema == 3:
+                from . import vpn
+                transaction.save(vpn_identity=vpn.inspect())
+                units=(*units,vpn.UNIT)
+            for unit in units:
                 services[unit]={name:subprocess.run(['systemctl',verb,'--quiet',unit],capture_output=True).returncode==0
                     for name,verb in [('active','is-active'),('enabled','is-enabled')]}
                 services[unit]['installed']=subprocess.run(['systemctl','show','--property=LoadState','--value',unit],capture_output=True,text=True).stdout.strip()!='not-found'
@@ -468,6 +473,7 @@ class PVE:
         paths.extend((Path('/etc/systemd/system/backend.service.d/heist-runtime.conf'),
                       Path('/etc/systemd/system/heist-expiry.service'),
                       Path('/etc/systemd/system/heist-expiry.timer'),self.state/'wazuh-api-leaf.pem'))
+        paths.extend((Path('/etc/openvpn/server.conf'), Path('/etc/openvpn/crl.pem')))
         from .internal_runtime import paths as runtime_paths
         paths.extend(runtime_paths(self.state/'internal-runtime',runtime))
         return paths
@@ -529,6 +535,8 @@ class PVE:
         if plan.schema == 3:
             from .browser_deployment import deploy
             deploy(self, transaction)
+            from .vpn import configure
+            configure(transaction)
             return
         before={name:hashlib.sha256(blob(self.installation,plan.source,'webserver/html/'+name)).hexdigest() for name in plan.web_before}
         after={name:hashlib.sha256(blob(self.installation,plan.target,'webserver/html/'+name)).hexdigest() for name in plan.web_after}
@@ -592,6 +600,10 @@ class PVE:
 
     def verify(self,transaction,*,target):
         self.verify_source(transaction, target=target)
+        if transaction.data.get('vpn_identity'):
+            from . import vpn
+            vpn.verify_identity(transaction.data['vpn_identity'])
+            if target and transaction.data['kind']!='rollback':vpn.ready()
         self.verify_web_runtime(transaction)
         if target and transaction.plan.ui_bundle and transaction.data['kind'] != 'rollback' and transaction.plan.schema != 3:
             program = UI_AGENT + '\nverify_installation(' + repr(self.config.web_root) + ', ' + repr(transaction.plan.target) + ')\n'
@@ -656,6 +668,9 @@ class PVE:
         self._host_guard()
         stop=[unit for unit in self.units if unit in ('backend','cleanup','pool_manager') or Path('/etc/systemd/system',unit).exists()]
         self.command(['systemctl','stop',*stop],timeout=180)
+        if checkpoint.data.get('vpn_identity'):
+            from .vpn import UNIT
+            self.command(['systemctl','stop',UNIT],timeout=60)
         for unit in ('heist-expiry.timer','heist-expiry.service'):
             if not checkpoint.data['host_services'].get(unit,{}).get('installed',False) and Path('/etc/systemd/system',unit).exists():
                 self.command(['systemctl','disable','--now',unit],timeout=60)

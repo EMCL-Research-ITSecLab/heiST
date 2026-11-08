@@ -42,6 +42,8 @@ class PilotPlatform(PVE):
             raise RuntimeError('This rehearsal requires the explicitly reviewed disposable baseline')
         if plan.schema!=3 or plan.rollback:
             raise RuntimeError('This rehearsal requires a new immutable browser-runtime candidate')
+        from heist.rollout import vpn
+        vpn.inspect()
         baseline=self.baseline
         if (baseline.data['phase']!='COMPLETE' or not baseline.data.get('checkpoint_ready') or
                 baseline.data.get('failures') or baseline.plan.source!=plan.source):

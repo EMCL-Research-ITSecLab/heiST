@@ -57,6 +57,15 @@ Run the new release runner from a separate reviewed checkout, using the installe
 Python environment. This keeps the running updater independent of the installation
 whose Git checkout it replaces. It never fetches code itself.
 
+Protocol 3 also migrates the standard `/etc/openvpn/server.conf` installation
+managed by `openvpn@server`. During maintenance it stops that service, checkpoints
+the server configuration and public CRL, refreshes the signed CRL with the existing
+CA, and adds a root-only local management endpoint for account revocation. Existing
+CA/server keys stay in place; only their fingerprints enter the journal. Conflicting
+management directives, inline keys and nested configuration files require review.
+Rollback restores the original server configuration and service policy. The public
+CA CRL counter may advance; existing CA/client private keys are not replaced.
+
 ```sh
 cd /root/heist-release-runner
 /root/heiST/.venv/bin/python -m heist upgrade plan \

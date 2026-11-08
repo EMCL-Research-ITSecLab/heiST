@@ -117,6 +117,12 @@ commit before applying. It refuses non-interactive input; use plan/apply for CI.
 
 ## Transaction and recovery behavior
 
+Browser-runtime upgrades enable Proxmox autostart for the database, monitoring
+and web VMs, in that order, and disable the former `start-vm.service`. The backend
+starts after `pve-guests.service`, which must already be enabled. Original guest
+startup settings remain in the verified VM archives; recovery also restores the
+original legacy service policy. Reboot acceptance must check all three guests.
+
 1. Preflight checks source identity, compatibility, VM identity, backup capacity,
    idle state and baseline health.
 2. Quiescence records service policy, blocks public web ports over IPv4/IPv6,

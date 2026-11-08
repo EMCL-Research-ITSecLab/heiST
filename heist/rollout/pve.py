@@ -33,7 +33,7 @@ from .tasks import Tasks
 UI_AGENT = Path(ui_assets.__file__).read_text().split("if __name__ == '__main__':")[0]
 
 class PVE:
-    units = ('pool_manager','cleanup','backend','heist-expiry.timer','heist-expiry.service')
+    units = ('pool_manager','cleanup','backend','heist-expiry.timer','heist-expiry.service','start-vm.service')
 
     def __init__(self, config, config_sha256):
         self.config, self.config_sha256 = config, config_sha256
@@ -638,6 +638,9 @@ class PVE:
 
     def verify(self,transaction,*,target):
         self.verify_source(transaction, target=target)
+        if target and transaction.plan.schema==3 and transaction.data['kind']!='rollback':
+            from .browser_deployment import verify_autostart
+            verify_autostart(self)
         legacy_role=transaction.data.get('legacy_browser_role')
         if legacy_role:
             retired=bool(target and transaction.data['kind']!='rollback')

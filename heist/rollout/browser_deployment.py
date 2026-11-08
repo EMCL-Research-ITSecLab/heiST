@@ -172,7 +172,8 @@ def stage_host(adapter, transaction):
                    transaction.data['preserved_files']))
     original = Path(adapter.config.backend_env).read_bytes()
     environment = original+b'\n# Managed browser-runtime settings\n'+''.join(key+'='+json.dumps(value)+'\n' for key,value in sorted(overlay.items())).encode()
-    dropin = ('[Service]\nWorkingDirectory='+installation+'\nExecStart=\nExecStart='+installation+'/.venv/bin/python -m heist.api.internal_serve\n'
+    dropin = ('[Unit]\nWants=pve-guests.service\nAfter=pve-guests.service\n\n'
+              '[Service]\nWorkingDirectory='+installation+'\nExecStart=\nExecStart='+installation+'/.venv/bin/python -m heist.api.internal_serve\n'
               'Environment='+json.dumps('HEIST_BACKEND_ENV='+str(adapter.config.backend_env))+'\n'
               'Environment='+json.dumps('HEIST_INTERNAL_RUNTIME='+str(adapter.state/'internal-runtime/current'))+'\n')
     expiry = blob(adapter.installation, transaction.plan.target, 'deploy/platform/systemd/heist-expiry.service').decode()
@@ -231,14 +232,40 @@ def adopt_templates(adapter, transaction):
         adapter.command(['qm', 'set', vmid, '--tags', tags, '--description', description])
 
 
+def configure_autostart(adapter, transaction):
+    """Use Proxmox guest startup, with original settings in whole-VM checkpoints."""
+    adapter.command(['systemctl','is-enabled','--quiet','pve-guests.service'])
+    before={}
+    for vm in adapter.config.vms:
+        values=adapter.configuration(vm)
+        before[vm.role]={key:values.get(key) for key in ('smbios1','onboot','startup')}
+    transaction.save(infrastructure_startup_before=before)
+    for role,order in (('database',10),('monitoring',20),('web',30)):
+        adapter.command(['qm','set',adapter.config.vm(role).vmid,'--onboot','1',
+                         '--startup','order='+str(order)+',up=10,down=180'])
+
+
+def verify_autostart(adapter):
+    adapter.command(['systemctl','is-enabled','--quiet','pve-guests.service'])
+    for role,order in (('database',10),('monitoring',20),('web',30)):
+        values=adapter.configuration(adapter.config.vm(role))
+        try:startup=dict(item.split('=',1) for item in values.get('startup','').split(','))
+        except ValueError:startup={}
+        if values.get('onboot')!='1' or startup!={'order':str(order),'up':'10','down':'180'}:
+            raise RuntimeError('Infrastructure autostart differs from the deployed policy: '+role)
+
+
 def deploy(adapter, transaction):
     if not getattr(adapter.config, 'web_certificate_key', None) or not getattr(adapter.config, 'web_hostname', None):
         raise ValueError('Declare the browser hostname and certificate key before deployment')
     stage_host(adapter, transaction)
+    configure_autostart(adapter, transaction)
     adopt_templates(adapter, transaction)
     receipt = deploy_guest(adapter, transaction)
     adapter.command(['systemctl', 'start', 'backend'])
     host = {key:dict(value) for key,value in transaction.data['host_services'].items()}
+    if 'start-vm.service' in host:
+        host['start-vm.service'].update(enabled=False,active=False)
     host['heist-expiry.timer'] = {'installed': True, 'enabled': True, 'active': True}
     host['heist-expiry.service'] = {'installed': True, 'enabled': False, 'active': False}
     web = {key:dict(value) for key,value in transaction.data['web_services'].items()}

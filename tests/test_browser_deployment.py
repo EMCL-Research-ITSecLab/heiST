@@ -10,7 +10,7 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock
 
-from heist.rollout.browser_deployment import BOOTSTRAP, adopt_templates, credentials, deploy_guest, package
+from heist.rollout.browser_deployment import BOOTSTRAP, adopt_templates, credentials, deploy_guest, package, configure_autostart, verify_autostart
 from heist.rollout.template_checkpoint import identity
 from heist.runtime_bundle import digest
 from tests.test_runtime_bundle import COMMIT, bundle as runtime_bundle
@@ -18,6 +18,33 @@ from tests.test_ui_assets import bundle as ui_bundle
 
 
 class BrowserDeploymentTests(unittest.TestCase):
+    def test_all_core_guests_start_after_reboot_and_original_policy_is_recorded(self):
+        guests={role:SimpleNamespace(role=role,vmid=vmid) for role,vmid in (('web',1000),('database',2000),('monitoring',9000))}
+        configurations={role:{'onboot':'0','smbios1':'uuid='+role} for role in guests}
+        events=[]
+        def command(args):
+            events.append(args)
+            if args[0]=='qm':
+                role=next(role for role,vm in guests.items() if vm.vmid==args[2])
+                configurations[role].update(onboot='1',startup=args[-1])
+        adapter=SimpleNamespace(config=SimpleNamespace(vms=tuple(guests.values()),vm=guests.__getitem__),
+            configuration=lambda vm:configurations[vm.role],command=command)
+        transaction=Mock()
+        configure_autostart(adapter,transaction)
+        original=transaction.save.call_args.kwargs['infrastructure_startup_before']
+        self.assertEqual({role:value['onboot'] for role,value in original.items()},{role:'0' for role in guests})
+        self.assertEqual([args[2] for args in events if args[0]=='qm'],[2000,9000,1000])
+        verify_autostart(adapter)
+        configurations['monitoring']['onboot']='0'
+        with self.assertRaisesRegex(RuntimeError,'monitoring'):verify_autostart(adapter)
+
+    def test_disabled_proxmox_guest_startup_refuses_before_modifying_vm_policy(self):
+        adapter=SimpleNamespace(command=Mock(side_effect=subprocess.CalledProcessError(1,['systemctl'])),config=Mock())
+        transaction=Mock()
+        with self.assertRaises(subprocess.CalledProcessError):configure_autostart(adapter,transaction)
+        transaction.save.assert_not_called()
+        adapter.config.assert_not_called()
+
     def test_bootstrap_delivers_private_configuration_and_verified_artifacts_without_shell_evaluation(self):
         # Harmless source fixture executes in the real isolated bootstrap process.
         def source(files):

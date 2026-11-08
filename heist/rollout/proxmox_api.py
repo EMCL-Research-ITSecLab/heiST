@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 import ssl
 import subprocess
+import time
 from urllib.parse import urlencode
 
 
@@ -18,16 +19,31 @@ class LocalAPI:
     def __init__(self):
         custom = Path('/etc/pve/local/pveproxy-ssl.pem')
         self.certificate = custom if custom.is_file() else Path('/etc/pve/local/pve-ssl.pem')
+        self._credentials = None
+        self._credentials_until = 0
 
     def credentials(self):
+        now = time.monotonic()
+        if self._credentials is not None and now < self._credentials_until:
+            return self._credentials
         program = (
             'PVE::Cluster::cfs_update(); '
             'print encode_json({ticket=>PVE::AccessControl::assemble_ticket(q{root@pam}),'
             'csrf=>PVE::AccessControl::assemble_csrf_prevention_token(q{root@pam})});'
         )
         result = subprocess.run(['perl', '-MPVE::Cluster', '-MPVE::AccessControl', '-MJSON',
-                                 '-e', program], check=True, capture_output=True, timeout=15)
-        return json.loads(result.stdout)
+                                 '-e', program], check=True, capture_output=True, timeout=60)
+        credentials = json.loads(result.stdout)
+        if not isinstance(credentials, dict) or any(
+                not isinstance(credentials.get(key), str) or not credentials[key]
+                for key in ('ticket', 'csrf')):
+            raise RuntimeError('Local Proxmox signer returned invalid credentials')
+        # PVE tickets last two hours. Reuse them briefly in memory instead of
+        # starting a Perl/cluster process for every two-second task-status poll.
+        # A failed refresh propagates before any API request; POST is never replayed.
+        self._credentials = credentials
+        self._credentials_until = now + 300
+        return credentials
 
     def request(self, method, path, arguments):
         if method not in ('GET', 'POST') or not path.startswith('/nodes/'):

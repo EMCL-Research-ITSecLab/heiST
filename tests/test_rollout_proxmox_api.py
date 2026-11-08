@@ -1,5 +1,6 @@
 """The local PVE adapter authenticates only after pinning and never replays POST."""
 import ssl
+import subprocess
 import tempfile
 from pathlib import Path
 import unittest
@@ -37,6 +38,33 @@ class LocalAPITests(unittest.TestCase):
                 self.api.request('POST', '/nodes/pve/vzdump', {'vmid': 1000})
         self.connection.request.assert_not_called()
         self.connection.close.assert_called_once()
+
+    def test_polling_reuses_memory_only_ticket_and_refreshes_before_expiry(self):
+        first = Mock(stdout=b'{"ticket":"first","csrf":"first"}')
+        second = Mock(stdout=b'{"ticket":"second","csrf":"second"}')
+        with patch('heist.rollout.proxmox_api.time.monotonic', side_effect=[100, 399, 400]), \
+             patch('heist.rollout.proxmox_api.subprocess.run', side_effect=[first, second]) as run:
+            self.assertEqual(self.api.credentials()['ticket'], 'first')
+            self.assertEqual(self.api.credentials()['ticket'], 'first')
+            self.assertEqual(self.api.credentials()['ticket'], 'second')
+        self.assertEqual(run.call_count, 2)
+
+    def test_failed_refresh_does_not_reuse_expired_credentials_or_submit_request(self):
+        self.api._credentials = self.credentials
+        self.api._credentials_until = 100
+        with patch('heist.rollout.proxmox_api.time.monotonic', return_value=101), \
+             patch('heist.rollout.proxmox_api.subprocess.run',
+                   side_effect=subprocess.TimeoutExpired('signer', 60)), \
+             patch('heist.rollout.proxmox_api.http.client.HTTPSConnection') as connection:
+            with self.assertRaises(subprocess.TimeoutExpired):
+                self.api.request('POST', '/nodes/pve/vzdump', {'vmid': 1000})
+        connection.assert_not_called()
+
+    def test_invalid_signer_result_is_never_cached(self):
+        with patch('heist.rollout.proxmox_api.subprocess.run', return_value=Mock(stdout=b'{"ticket":""}')):
+            with self.assertRaisesRegex(RuntimeError, 'invalid credentials'):
+                self.api.credentials()
+        self.assertIsNone(self.api._credentials)
 
     def test_uncertain_post_is_never_retried(self):
         self.connection.request.side_effect = TimeoutError('lost response')

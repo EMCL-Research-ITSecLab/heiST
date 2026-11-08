@@ -366,14 +366,17 @@ class GuestAgent:
             try:
                 return self._transport.call(command, arguments, timeout=timeout)
             except (GANotRunningError, GATimeoutError):
-                if self._auto_reconnect:
-                    logger.warning(
-                        "VM %s: connection lost or timed out. Reconnecting...", self.vmid
-                    )
-                    self._transport.close()
-                    self._transport.connect()
-                    return self._transport.call(command, arguments, timeout=timeout)
-                raise
+                self._transport.close()
+                # A lost response does not prove that a command was not executed.
+                # Only observational requests may be replayed after reconnecting.
+                safe = command in {'guest-ping', 'guest-info', 'guest-exec-status',
+                                   'guest-network-get-interfaces', 'guest-get-osinfo'}
+                if not self._auto_reconnect or not safe:
+                    raise
+                logger.warning("VM %s: reconnecting for an observational request", self.vmid)
+                self._transport.connect()
+                return self._transport.call(command, arguments, timeout=timeout)
+
 
     def close(self) -> None:
         with self._lock:
@@ -541,16 +544,21 @@ class GuestAgent:
             "guest-file-open", {"path": guest_path, "mode": mode}
         )
         try:
-            self._call(
+            result = self._call(
                 "guest-file-write",
                 {"handle": handle, "buf-b64": base64.b64encode(raw).decode()},
             )
+            if not isinstance(result, dict) or type(result.get('count')) is not int or result['count'] != len(raw):
+                raise GuestAgentError("Guest file write was incomplete or unconfirmed")
             self._call("guest-file-flush", {"handle": handle})
-        finally:
+        except BaseException:
             try:
                 self._call("guest-file-close", {"handle": handle})
             except GuestAgentError:
                 pass
+            raise
+        else:
+            self._call("guest-file-close", {"handle": handle})
 
         if unix_mode is not None:
             if self.windows:
@@ -559,11 +567,13 @@ class GuestAgent:
                     unix_mode, guest_path, self.vmid,
                 )
             else:
-                self.exec(
+                result = self.exec(
                     ["chmod", format(unix_mode, "o"), guest_path],
                     capture_output=False,
                     timeout=10,
                 )
+                if not result:
+                    raise GuestAgentError("Guest file permission change failed")
 
     def write_local_file(
         self,

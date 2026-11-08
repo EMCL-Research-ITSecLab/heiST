@@ -1437,5 +1437,28 @@
       "tests.test_web_challenges.ChallengeTests.test_flag_writer_matches_unique_id_and_legacy_email_graders_without_changing_grades"
     ],
     "rationale": "Real disposable SQL graders check unique-ID accounts and legacy email accounts with NULL unique IDs; generation must match the exact template/flag/account, incompatible identities are refused, and grade counts stay unchanged."
+  },
+  "heist/infrastructure/proxmox/guest_agent.py::GuestAgent._call": {
+    "tests": [
+      "tests.test_guest_agent_files.GuestFileTests.test_ambiguous_commands_and_file_offsets_are_not_replayed",
+      "tests.test_guest_agent_files.GuestFileTests.test_status_poll_reconnects_without_starting_another_process"
+    ],
+    "rationale": "Lost responses to guest execution and offset-changing file operations are not replayed; reconnecting a status query preserves the original guest PID."
+  },
+  "heist/infrastructure/proxmox/guest_agent.py::GuestAgent.write_file": {
+    "tests": [
+      "tests.test_guest_agent_files.GuestFileTests.test_complete_utf8_write_requires_byte_count_flush_close_and_permissions",
+      "tests.test_guest_agent_files.GuestFileTests.test_short_or_unconfirmed_writes_never_flush_or_report_success",
+      "tests.test_guest_agent_files.GuestFileTests.test_flush_close_and_permission_failures_cannot_report_success",
+      "tests.test_guest_agent_files.GuestFileTests.test_original_write_failure_survives_a_cleanup_failure"
+    ],
+    "rationale": "Checks UTF-8 byte counts, malformed/short writes, durability and close failures, permission errors and preservation of the original write exception."
+  },
+  "heist/rollout/browser_configuration.py::preserved_registration_settings": {
+    "tests": [
+      "tests.test_browser_configuration.BrowserConfigurationTests.test_checkpointed_installer_preserves_registration_settings_without_host_credentials",
+      "tests.test_browser_configuration.BrowserConfigurationTests.test_canonical_settings_do_not_fall_back_to_stale_secrets_or_expand_environment"
+    ],
+    "rationale": "Copies only registration settings from checksum-bound installer bytes, preserves explicit runtime overrides, excludes privileged credentials, rejects changed/symlink sources and avoids environment interpolation."
   }
 }

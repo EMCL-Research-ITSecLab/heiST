@@ -92,6 +92,27 @@ backup manifest. Production source/customization review, full VM restore, fresh
 installation and clean complete upgrade/failure/rollback acceptance remain open.
 No production services or installed application configuration were changed.
 
+The strict Python run at `4b586ee3586b00b4df506073055b7e22ce6dba0e`
+passed 453 tests with zero skips, failures or errors after providing the approved,
+hash-verified Gunicorn wheel to the isolated test interpreter. Initial runs with
+one missing-runtime skip remain in the private evidence; they were not release
+passes. Follow-up configuration work preserves the existing lecture signup token
+from checkpointed installer settings without copying privileged credentials.
+
+Production source review also identified file-staging checks. The shared guest
+agent adapter now rejects short/unconfirmed writes and flush/close/permission
+failures. It does not replay guest execution or offset-changing file requests
+when a response is lost; only observational requests may reconnect and retry.
+These changes require subsequent source-bound and live clone acceptance.
+
+The operator narrowed backup scope to infrastructure, challenge templates and
+original source OVAs. Disposable exercise instances are excluded; students may
+restart them after rollout. The current core export is allowed to finish before
+the local controller changes scope; no completed production backup is replayed.
+The first web archive passed compression and checksum verification after a
+workstation-only verification timeout, which remains recorded. Native VMA
+verification and boot/restore acceptance are distinct remaining checks.
+
 ## Earlier legacy-target validation — 2026-10-30
 
 The local release mechanism passed update and recovery rehearsals. This is not

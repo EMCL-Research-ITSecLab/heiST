@@ -68,6 +68,11 @@ def main():
         with open(device,'r+b',buffering=0) as stream:stream.write(bytes(range(256))*16384)
         expected = digest(device)
         run(['qm','template',str(identifiers[0])])
+        configuration = run(['qm','config',str(identifiers[0])])
+        base = next(line.split(': ',1)[1].split(',')[0] for line in configuration.splitlines() if line.startswith('sata0:'))
+        device = Path(run(['pvesm','path',base]))
+        assert device.parent.name == vg
+        run(['lvchange','-a','y','-K',vg+'/'+device.name])
         template = inspect(identifiers[0],identity)
         stamp = datetime.now(timezone.utc).strftime('%Y_%m_%d-%H_%M_%S')
         archive = root/f'vzdump-qemu-{identifiers[0]}-{stamp}.vma.zst'
@@ -76,6 +81,11 @@ def main():
         run(['zstd','--quiet','--test',str(archive)])
         # qmrestore itself reads/extracts and checks the real compressed VMA.
         run(['qmrestore',str(archive),str(identifiers[1]),'--storage',storage])
+        configuration = run(['qm','config',str(identifiers[1])])
+        base = next(line.split(': ',1)[1].split(',')[0] for line in configuration.splitlines() if line.startswith('sata0:'))
+        device = Path(run(['pvesm','path',base]))
+        assert device.parent.name == vg
+        run(['lvchange','-a','y','-K',vg+'/'+device.name])
         restored = inspect(identifiers[1],identity)
         assert len(restored.disks) == 1 and digest(restored.disks[0][1]) == expected
         assert digest(template.disks[0][1]) == expected

@@ -141,6 +141,8 @@ def stage_host(adapter, transaction):
     """Install the privileged runtime and journal every mutable host file first."""
     if not transaction.data.get('checkpoint_ready') or adapter.marker.is_symlink() or not adapter.marker.is_file():
         raise RuntimeError('Host runtime deployment requires checkpointed maintenance')
+    from heist.artifacts.conversion_account import account
+    account(create=True)
     container = getattr(adapter.config, 'wazuh_container', None)
     if not container:
         raise ValueError('Declare the verified Wazuh manager container before deployment')

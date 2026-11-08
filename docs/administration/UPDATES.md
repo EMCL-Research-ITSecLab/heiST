@@ -122,6 +122,9 @@ and web VMs, in that order, and disable the former `start-vm.service`. The backe
 starts after `pve-guests.service`, which must already be enabled. Original guest
 startup settings remain in the verified VM archives; recovery also restores the
 original legacy service policy. Reboot acceptance must check all three guests.
+The upgrade also provisions a dedicated `heist-image` system account for isolated
+OVA conversion. It has no login or home directory; rollback retains this unused
+account to avoid recycling an identity that may still own conversion files.
 
 1. Preflight checks source identity, compatibility, VM identity, backup capacity,
    idle state and baseline health.

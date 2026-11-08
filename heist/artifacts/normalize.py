@@ -1,7 +1,6 @@
 """Normalize bounded OVA payloads before privileged hypervisor imports."""
 import json
 import os
-import pwd
 from pathlib import Path
 import shutil
 import struct
@@ -51,8 +50,9 @@ def normalize(source, cache, *, limits=Limits(), worker=None):
     if os.geteuid() != 0:
         raise ValueError('Disk normalization requires the privileged isolated worker')
     if worker is None:
-        account = pwd.getpwnam('heist-image')
-        worker = (account.pw_uid, account.pw_gid)
+        from .conversion_account import account
+        user = account()
+        worker = (user.pw_uid, user.pw_gid)
     if len(worker) != 2 or any(type(value) is not int or value < 100 for value in worker):
         raise ValueError('Use a dedicated unprivileged disk worker account')
     source = Path(source)

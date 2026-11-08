@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 import re
 import signal
+import shutil
 import stat
 import subprocess
 import tempfile
@@ -96,6 +97,8 @@ def create(vmid, expected_uuid, destination, *, timeout=7200):
     if any(p.exists() or p.is_symlink() for p in (destination, partial, log)):
         raise RuntimeError('Backup output exists; inspect the prior export before retrying')
     template = inspect(vmid, expected_uuid)
+    if shutil.disk_usage(parent).free < sum(disk[3] for disk in template.disks)+2*1024**3:
+        raise RuntimeError('Reserve all raw template capacities plus 2 GiB before export')
     started = time.monotonic()
     producer = consumer = None
     with tempfile.TemporaryDirectory(prefix='.template-', dir=parent) as temporary:

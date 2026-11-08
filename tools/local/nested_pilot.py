@@ -8,6 +8,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import socket
@@ -129,6 +130,37 @@ def qmp(work, command):
         return reply['return']
 
 
+def supplemental_storage(work, config):
+    """Keep hot VM data on scratch storage and bulk backups on a separate disk."""
+    arguments = []
+    root = work/'disk.qcow2'
+    seen = {(root.stat().st_dev, root.stat().st_ino)} if root.is_file() else set()
+    for name, serial in (('backup','HEIST-ROLLOUT-BACKUP'), ('data','HEIST-PLATFORM-DATA')):
+        enabled = config.get('attach_'+name+'_disk',False)
+        if type(enabled) is not bool:
+            raise ValueError('Disk attachment flags must be booleans')
+        if not enabled:
+            continue
+        value = config.get('backup_disk_path',str(work/'backup.qcow2')) if name=='backup' else str(work/'data.qcow2')
+        if not isinstance(value,str) or not re.fullmatch(r'/[A-Za-z0-9_./-]+',value):
+            raise ValueError('Use a plain absolute QCOW2 path')
+        disk = Path(value)
+        if str(disk)!=value or '..' in disk.parts or disk.is_symlink() or not disk.is_file():
+            raise ValueError('Supply a private standalone '+name+'.qcow2')
+        if any(parent.is_symlink() for parent in disk.parents) or disk.parent.stat().st_mode & 0o077:
+            raise ValueError('Supplemental disks require a private parent directory without symlinks')
+        identity=(disk.stat().st_dev,disk.stat().st_ino)
+        if identity in seen:
+            raise ValueError('Each attached disk must be a distinct file')
+        seen.add(identity)
+        info=json.loads(subprocess.check_output(['qemu-img','info','--output=json',str(disk)]))
+        if info.get('backing-filename') or info.get('format')!='qcow2':
+            raise ValueError('Supplemental disks must be standalone QCOW2')
+        arguments += ['-drive',f'file={disk},format=qcow2,if=none,id=heist{name},cache=none,discard=unmap',
+                      '-device',f'virtio-blk-pci,drive=heist{name},serial={serial}']
+    return arguments
+
+
 def start(work, online=False):
     if (work / 'qmp.sock').exists():
         raise ValueError('QMP socket exists; inspect the existing process before restarting')
@@ -148,15 +180,7 @@ def start(work, online=False):
         storage = ['-device', 'ich9-ahci,id=pilotahci',
                    '-drive', f'file={work}/disk.qcow2,format=qcow2,if=none,id=pilotdisk,cache=none,discard=unmap,detect-zeroes=unmap',
                    '-device', 'ide-hd,drive=pilotdisk,bus=pilotahci.0,bootindex=1']
-    if config.get('attach_backup_disk', False):
-        backup = work / 'backup.qcow2'
-        if backup.is_symlink() or not backup.is_file():
-            raise ValueError('Supply a private standalone backup.qcow2 for the optional backup disk')
-        info = json.loads(subprocess.check_output(['qemu-img', 'info', '--output=json', str(backup)]))
-        if info.get('backing-filename') or info['format'] != 'qcow2':
-            raise ValueError('The backup disk must be standalone QCOW2')
-        storage += ['-drive', f'file={backup},format=qcow2,if=none,id=heistbackup,cache=none,discard=unmap',
-                    '-device', 'virtio-blk-pci,drive=heistbackup,serial=HEIST-ROLLOUT-BACKUP']
+    storage += supplemental_storage(work,config)
     if config.get('attach_seed', True):
         storage += ['-drive', f'file={work}/seed.iso,format=raw,media=cdrom,readonly=on']
     run('qemu-system-x86_64', '-name', 'heist-nested-pilot', '-enable-kvm', '-cpu', 'host',
@@ -191,8 +215,8 @@ def checkpoint(work, output):
     if (work / 'qmp.sock').exists():
         raise ValueError('Wait for clean shutdown and QEMU exit before checkpointing')
     configuration = work / 'pilot.json'
-    if configuration.is_file() and json.loads(configuration.read_text()).get('attach_backup_disk'):
-        raise ValueError('Single-disk checkpoints cannot include the attached backup disk')
+    if configuration.is_file() and any(json.loads(configuration.read_text()).get(name) for name in ('attach_backup_disk','attach_data_disk')):
+        raise ValueError('Single-disk checkpoints cannot include attached backup or data disks')
     info = json.loads(subprocess.check_output(['qemu-img', 'info', '--output=json', str(work / 'disk.qcow2')]))
     if info.get('backing-filename') or info['format'] != 'qcow2':
         raise ValueError('Checkpoint requires a standalone QCOW2')

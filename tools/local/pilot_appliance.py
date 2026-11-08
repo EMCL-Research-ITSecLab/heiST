@@ -126,6 +126,8 @@ def export(work, output):
     config = json.loads((work / 'pilot.json').read_text())
     if config.get('attach_backup_disk'):
         raise ValueError('Single-disk OVA export cannot include the attached backup disk')
+    if config.get('attach_data_disk'):
+        raise ValueError('Single-disk appliance export cannot omit an attached data disk')
     if output.exists():
         raise FileExistsError(output)
     # VMDK plus OVA coexist during packing; reserve room for both and metadata.

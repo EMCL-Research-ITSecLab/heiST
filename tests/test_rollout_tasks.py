@@ -30,6 +30,18 @@ class TaskTests(unittest.TestCase):
             self.tasks.run(self.transaction, 'restore-web', '/nodes/pve/qemu', {'vmid': 1000})
         self.request.assert_not_called()
 
+    def test_status_timeout_resumes_recorded_restore_without_a_second_post(self):
+        self.request.side_effect = [self.upid, TimeoutError('signer unavailable during polling')]
+        with self.assertRaises(TimeoutError):
+            self.tasks.run(self.transaction, 'restore-web', '/nodes/pve/qemu', {'vmid': 1000})
+        restored_journal = Transaction.load(self.transaction.path)
+        self.assertEqual(restored_journal.data['tasks']['restore-web']['upid'], self.upid)
+        resumed_request = Mock(return_value={'status': 'stopped', 'exitstatus': 'OK'})
+        resumed = Tasks('pve', resumed_request)
+        self.assertEqual(resumed.run(restored_journal, 'restore-web', '/nodes/pve/qemu', {'vmid': 1000}), self.upid)
+        self.assertEqual([call.args[0] for call in resumed_request.call_args_list], ['GET'])
+        self.assertTrue(Transaction.load(self.transaction.path).data['tasks']['restore-web']['complete'])
+
     def test_adoption_checks_identity_and_exact_request(self):
         job = self.uncertain()
         self.request.return_value = {'type': 'qmrestore', 'id': '1000', 'starttime': job['submitted_at']}

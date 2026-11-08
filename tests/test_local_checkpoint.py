@@ -45,11 +45,12 @@ class CheckpointTests(TestCase):
             self.assertEqual((restored/'pilot.json').read_bytes(),(work/'pilot.json').read_bytes())
             self.assertEqual((restored/'disk.qcow2').stat().st_mode & 0o777,0o600)
 
-    def test_attached_backup_volume_cannot_be_silently_omitted(self):
-        with tempfile.TemporaryDirectory() as folder:
-            work=Path(folder)/'work';work.mkdir()
-            (work/'pilot.json').write_text('{"attach_backup_disk":true}')
-            output=work.parent/'checkpoint'
-            with self.assertRaisesRegex(ValueError,'attached backup disk'):
-                checkpoint(work,output)
-            self.assertFalse(output.exists())
+    def test_attached_volumes_cannot_be_silently_omitted(self):
+        for name in ('attach_backup_disk', 'attach_data_disk'):
+            with self.subTest(disk=name), tempfile.TemporaryDirectory() as folder:
+                work=Path(folder)/'work';work.mkdir()
+                (work/'pilot.json').write_text(json.dumps({name: True}))
+                output=work.parent/'checkpoint'
+                with self.assertRaisesRegex(ValueError,'attached backup or data disks'):
+                    checkpoint(work,output)
+                self.assertFalse(output.exists())

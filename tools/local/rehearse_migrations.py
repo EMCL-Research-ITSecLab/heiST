@@ -83,12 +83,12 @@ def verify_personalized_flags(settings):
     """
     from heist.platform.challenges.launch import resolve_user_specific_flag
     with closing(settings.connect()) as connection, connection.cursor() as cursor:
-        cursor.execute("SELECT id,email,unique_id FROM public.users WHERE email IS NOT NULL AND unique_id IS NOT NULL ORDER BY id LIMIT 1")
+        cursor.execute("SELECT id,email,unique_id FROM public.users WHERE email IS NOT NULL ORDER BY id LIMIT 1")
         user = cursor.fetchone()
         cursor.execute('SELECT id,challenge_template_id,flag FROM public.challenge_flags WHERE user_specific ORDER BY id')
         flags = cursor.fetchall()
         if not user or not flags:
-            return {'tested': False, 'flags_checked': 0}
+            return {'tested': False, 'flags_checked': 0, 'reason': 'no account' if not user else 'no personalized flags'}
         for identifier, template, secret in flags:
             resolve_user_specific_flag(connection, template_id=template,
                 flag={'id': identifier, 'flag': secret}, user_id=user[0], user_email=user[1], user_unique_id=user[2])

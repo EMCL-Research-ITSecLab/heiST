@@ -653,16 +653,16 @@ def fetch_user_email(user_id, db_conn):
 
 def fetch_user_unique_id(user_id, db_conn):
     """
-    Fetch the unique id for the given user ID.
+    Return the optional unique ID; legacy email-based accounts may have none.
+
+    The flag resolver still requires the installed grader to accept a candidate.
     """
     with db_conn.cursor() as cursor:
         cursor.execute("SELECT unique_id FROM users WHERE id = %s", (user_id,))
-        unique_id = cursor.fetchone()[0]
-
-    if unique_id is None:
-        raise ValueError("User unique id not found")
-
-    return unique_id
+        record = cursor.fetchone()
+    if record is None:
+        raise ValueError("User not found")
+    return record[0]
 
 
 def fetch_challenge_flags(challenge_template, db_conn):

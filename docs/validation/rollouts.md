@@ -72,7 +72,10 @@ recovery. The original application database was not migrated. Its receipt marks
 `whole_platform_upgrade_approved: false`.
 
 Source review also found production fixes for stale pool database connections
-and an email-based personalized flag grader. The candidate now opens and closes
+and an email-based personalized flag grader. Read-only SQL inventory confirmed
+21 existing accounts without unique IDs and 51 personalized flag definitions.
+Requiring a unique ID would block every existing account from launching a lab.
+The candidate now permits those legacy accounts and opens and closes
 connections for each pool cycle and checks personalized flags against the
 installed SQL grader before writing them. It preserves either email or unique-ID
 grading without rewriting existing protected data. Production admission remains

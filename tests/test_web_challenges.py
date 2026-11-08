@@ -100,19 +100,22 @@ class ChallengeTests(unittest.TestCase):
         self.assertEqual(self.action('submit_flag', flag=personal).status_code, 200)
 
     def test_flag_writer_matches_unique_id_and_legacy_email_graders_without_changing_grades(self):
-        from heist.platform.challenges.launch import resolve_user_specific_flag
+        from heist.platform.challenges.launch import resolve_user_specific_flag, fetch_user_unique_id
         self.sql('UPDATE challenge_flags SET user_specific=TRUE WHERE id=%s', (self.flags[1],))
         email, unique = self.sql('SELECT email,unique_id FROM users WHERE id=%s', (self.user_id,))[0]
         original = self.sql("SELECT pg_get_functiondef('api.validate_and_lock_flag(bigint,text,bigint)'::regprocedure)")[0][0]
         grades_before = self.sql('SELECT count(*) FROM completed_challenges WHERE user_id=%s', (self.user_id,))
         try:
             for identity in ('unique_id', 'email'):
+                self.sql('UPDATE users SET unique_id=%s WHERE id=%s', (unique if identity == 'unique_id' else None, self.user_id))
                 definition = original.replace('SELECT u.unique_id INTO', 'SELECT u.' + identity + ' INTO')
                 self.sql(definition)
                 with closing(self.psycopg2.connect(**self.settings)) as connection:
+                    stored_unique = fetch_user_unique_id(self.user_id, connection)
+                    self.assertEqual(stored_unique, unique if identity == 'unique_id' else None)
                     result = resolve_user_specific_flag(connection, template_id=self.identifier,
                         flag={'id': self.flags[1], 'flag': 'another-secret-flag'}, user_id=self.user_id,
-                        user_email=email, user_unique_id=unique)
+                        user_email=email, user_unique_id=stored_unique)
                     expected_identity = unique if identity == 'unique_id' else email
                     expected = 'ITSEC{' + hmac.new(b'another-secret-flag', expected_identity.encode(), hashlib.sha1).hexdigest() + '}'
                     self.assertEqual(result, expected)
@@ -125,6 +128,7 @@ class ChallengeTests(unittest.TestCase):
                             resolve_user_specific_flag(connection, **arguments)
         finally:
             self.sql(original)
+            self.sql('UPDATE users SET unique_id=%s WHERE id=%s', (unique, self.user_id))
         self.assertEqual(self.sql('SELECT count(*) FROM completed_challenges WHERE user_id=%s', (self.user_id,)), grades_before)
 
     def test_deploy_and_cancel_are_bound_to_session_and_never_stop_another_template(self):

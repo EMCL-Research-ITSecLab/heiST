@@ -1,5 +1,6 @@
 """The local PVE adapter authenticates only after pinning and never replays POST."""
 import ssl
+import http.client
 import subprocess
 import tempfile
 from pathlib import Path
@@ -83,3 +84,34 @@ class LocalAPITests(unittest.TestCase):
         args, kwargs = self.connection.request.call_args
         self.assertEqual(args, ('POST', '/api2/json/nodes/pve/vzdump'))
         self.assertEqual(kwargs['body'], 'vmid=1000')
+
+    def test_disconnected_get_retries_only_the_same_observation_on_a_new_connection(self):
+        self.connection.getresponse.side_effect = http.client.RemoteDisconnected('lost response')
+        second = Mock()
+        second.sock.getpeercert.return_value = b'certificate'
+        second.getresponse.return_value.status = 200
+        second.getresponse.return_value.read.return_value = b'{"data":{"status":"running"}}'
+        with patch.object(self.api,'credentials',return_value=self.credentials), \
+             patch('heist.rollout.proxmox_api.ssl.PEM_cert_to_DER_cert',return_value=b'certificate'), \
+             patch('heist.rollout.proxmox_api.http.client.HTTPSConnection',side_effect=[self.connection,second]) as connect, \
+             patch('heist.rollout.proxmox_api.time.sleep') as sleep:
+            self.assertEqual(self.api.request('GET','/nodes/pve/tasks/UPID:fixture/status',None),{'status':'running'})
+        self.assertEqual(connect.call_count,2)
+        self.assertEqual(self.connection.request.call_args.args,second.request.call_args.args)
+        self.assertEqual(second.request.call_args.args,('GET','/api2/json/nodes/pve/tasks/UPID:fixture/status'))
+        self.connection.close.assert_called_once();second.close.assert_called_once()
+        sleep.assert_called_once_with(1)
+
+    def test_disconnected_post_is_never_replayed_and_get_retries_are_bounded(self):
+        for method,count in (('POST',1),('GET',3)):
+            self.connection.reset_mock()
+            self.connection.getresponse.side_effect=http.client.RemoteDisconnected('lost response')
+            with self.subTest(method=method), \
+                 patch.object(self.api,'credentials',return_value=self.credentials), \
+                 patch('heist.rollout.proxmox_api.ssl.PEM_cert_to_DER_cert',return_value=b'certificate'), \
+                 patch('heist.rollout.proxmox_api.http.client.HTTPSConnection',return_value=self.connection), \
+                 patch('heist.rollout.proxmox_api.time.sleep'):
+                with self.assertRaises(http.client.RemoteDisconnected):
+                    self.api.request(method,'/nodes/pve/qemu',{'vmid':1000})
+            self.assertEqual(self.connection.request.call_count,count)
+            self.assertEqual(self.connection.close.call_count,count)

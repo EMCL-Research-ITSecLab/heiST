@@ -49,6 +49,19 @@ class LocalAPI:
         if method not in ('GET', 'POST') or not path.startswith('/nodes/'):
             raise ValueError('Only node-scoped GET/POST operations are supported')
         credentials = self.credentials()
+        # A dropped status response does not change the native task identity.
+        # Retry only observations, on new pinned connections. Submission still
+        # happens exactly once even if its response is lost.
+        for attempt in range(3):
+            try:
+                return self._request_once(method, path, arguments, credentials)
+            except (http.client.RemoteDisconnected, ConnectionResetError,
+                    ConnectionRefusedError, BrokenPipeError, TimeoutError, ssl.SSLEOFError):
+                if method != 'GET' or attempt == 2:
+                    raise
+                time.sleep(attempt+1)
+
+    def _request_once(self, method, path, arguments, credentials):
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE

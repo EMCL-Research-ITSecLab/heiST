@@ -17,7 +17,7 @@
     "frontend/src/features/administration/ArtifactsPage.tsx": "05441570e206dfb6391ba1f7ea9cf86049d854c39840aaa92f8b205d85ce5243",
     "frontend/src/features/administration/ChallengeEditorPage.tsx": "a65c2ef06bc85bc758638d10cb0655fd8204f69cc4c4018a7ec7afcdf64e7545",
     "frontend/src/features/administration/ChallengeManagementPage.tsx": "337164616d7903cf7e119bffb9c691ccb61c52b3a002d136217cfc52c2f03a46",
-    "frontend/src/features/administration/InstanceManagementPage.tsx": "9589cc59e660dad5f69c1bdeb8a525cc1539d38d4244da39ddd38e5322cf2385",
+    "frontend/src/features/administration/InstanceManagementPage.tsx": "5c86f839f7e2da480802ef65ae15f2621dab4c6749a316db8fecf4ebdace5d32",
     "frontend/src/features/administration/OperationJournalPanel.tsx": "83062b8d8dedac3ea31e8ce3541e0048b7a3218699a73db1a48b20429e8befc5",
     "frontend/src/features/administration/OperationsPage.tsx": "b17a0b1f552a0415fed7dbe3475e6bf7e2709f3e4f28841414e13fdadce5d369",
     "frontend/src/features/administration/PlatformStatusPanel.tsx": "13fd55dfb6a4c3e7abc531560da3fceac7a8dc5298064042f70b2119c0463900",
@@ -251,7 +251,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "f184e867cfcf936066d6fb4b7e2f0a27f4607f9b5b9115bf14d41b646f5def42"
+      "sha256": "e267eec9ad033023457608239873008411cfa8c3619aa085bec941d5af47f977"
     },
     {
       "file": "instances_light.png",

@@ -102,8 +102,8 @@ function InstanceDetails({ identifier, onClose }: { identifier: number; onClose:
         VM {number(connection.machine_id)} → Network {number(connection.network_id)} · {text(connection.address)} · {text(connection.mac)}
       </li>)}</ul>
       <h3>Latest operation</h3>
-      {operation.id ? <dl className="diagnostic-grid">
-        <dt>Operation</dt><dd>{text(operation.id)}</dd>
+      {operation.state ? <dl className="diagnostic-grid">
+        <dt>Operation</dt><dd>{text(operation.id,'Unavailable')}</dd>
         <dt>Scope</dt><dd>{text(operation.scope)}</dd>
         <dt>Resource</dt><dd>{number(operation.resource)}</dd>
         <dt>Action</dt><dd>{text(operation.action)}</dd>

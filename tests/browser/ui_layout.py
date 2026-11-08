@@ -281,6 +281,9 @@ class LayoutTests(BrowserFixture):
         details=self.page.locator('.diagnostic-grid')
         self.assertIn('user',details.inner_text())
         self.assertEqual(details.get_by_text('2',exact=True).count(),1)
+        self.responses['admin/instances/101']['data']['operation']={'state':'UNAVAILABLE','scope':'instance','resource':101}
+        self.page.get_by_role('button',name='Refresh details',exact=True).click()
+        details.get_by_text('UNAVAILABLE',exact=True).wait_for()
         active.get_by_role('button',name='Rebuild',exact=True).click()
         self.assertIn('All guest changes are lost',self.page.get_by_role('dialog').inner_text())
         self.page.get_by_role('button',name='Rebuild',exact=True).last.click()

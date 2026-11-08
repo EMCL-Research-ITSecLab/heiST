@@ -12,6 +12,22 @@ from heist.rollout.pve import PVE
 
 
 class RestoreIdentityTests(unittest.TestCase):
+    def test_legacy_role_decodes_remote_json_and_refuses_a_different_deployed_role(self):
+        from unittest.mock import MagicMock,patch
+        adapter=PVE.__new__(PVE)
+        adapter.installation=Path('/unused')
+        adapter.environment={}
+        adapter.config=MagicMock(web_root='/var/www/html')
+        adapter.database=MagicMock()
+        adapter.remote=MagicMock(return_value=b'"api_user"\n')
+        with patch.object(adapter,'browser_runtime_active',return_value=False), \
+                patch('heist.rollout.browser_configuration.legacy_database_role',return_value='api_user'), \
+                patch('heist.rollout.browser_role.inspect_legacy') as inspect:
+            self.assertEqual(adapter.legacy_browser_role(),'api_user')
+            inspect.assert_called_once()
+            adapter.remote.return_value=b'"different_role"\n'
+            with self.assertRaisesRegex(RuntimeError,'differs'):adapter.legacy_browser_role()
+
     def test_legacy_template_capacity_comes_from_authenticated_storage_inventory(self):
         adapter=PVE.__new__(PVE);adapter.node='pve'
         adapter.configuration=Mock(return_value={'sata0':'local:123/base.qcow2'})

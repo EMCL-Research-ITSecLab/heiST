@@ -313,7 +313,7 @@ class PVE:
         from .browser_configuration import legacy_database_role
         from .browser_role import inspect_legacy
         name=legacy_database_role(self.installation,self.environment)
-        if self.remote(self.config.vm('web'),web.LEGACY_ROLE,{'root':self.config.web_root})!=name:
+        if json.loads(self.remote(self.config.vm('web'),web.LEGACY_ROLE,{'root':self.config.web_root}))!=name:
             raise RuntimeError('Deployed legacy PHP database role differs from installer settings')
         with closing(self.database.connect()) as connection:
             connection.set_session(readonly=True)

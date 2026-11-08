@@ -14,7 +14,7 @@ import tarfile
 from heist.files import write_file, write_json
 from heist.runtime_bundle import digest, inspect_bundle
 from heist.ui_assets import inspect_bundle as inspect_ui
-from .browser_configuration import configuration
+from .browser_configuration import configuration, preserved_registration_settings
 from .browser_role import validate
 from .manifest import blob
 
@@ -168,6 +168,8 @@ def stage_host(adapter, transaction):
                'WAZUH_PINNED_CERTIFICATE_FILE': str(adapter.state/'wazuh-api-leaf.pem'),
                'HEIST_INTERNAL_CERTIFICATE': '/etc/pve/local/pve-ssl.pem',
                'HEIST_INTERNAL_KEY': '/etc/pve/local/pve-ssl.key'}
+    overlay.update(preserved_registration_settings(adapter.installation, adapter.environment,
+                   transaction.data['preserved_files']))
     original = Path(adapter.config.backend_env).read_bytes()
     environment = original+b'\n# Managed browser-runtime settings\n'+''.join(key+'='+json.dumps(value)+'\n' for key,value in sorted(overlay.items())).encode()
     dropin = ('[Service]\nWorkingDirectory='+installation+'\nExecStart=\nExecStart='+installation+'/.venv/bin/python -m heist.api.internal_serve\n'

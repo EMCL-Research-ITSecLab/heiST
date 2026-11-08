@@ -55,3 +55,37 @@ def serialize(values):
     # EnvironmentFile double quotes retain literal dollars/backticks. No shell
     # evaluates this file; only quotes/backslashes require escaping here.
     return ''.join(key+'='+json.dumps(values[key],ensure_ascii=False)+'\n' for key in sorted(values))
+
+
+REGISTRATION_KEYS = frozenset(('LECTURE_SIGNUP_TOKEN', 'HEIST_IMPRINT_URL',
+    'HEIST_PRIVACY_URL', 'HEIST_LEGAL_VERSION', 'HEIST_REGISTRATION_ENABLED'))
+
+
+def preserved_registration_settings(installation, host, checkpoint_hashes):
+    """Carry only missing browser registration settings from the saved installer.
+
+    Legacy backend environments omit the lecture token. Explicit backend values,
+    including an empty token or disabled registration, always take precedence.
+    Read only a source whose bytes are already bound to the recovery checkpoint.
+    """
+    from dotenv import dotenv_values
+    from heist.files import sha256
+    missing = REGISTRATION_KEYS - host.keys()
+    if not missing:
+        return {}
+    root = Path(installation)
+    for path in (root/'config/installer.env', root/'setup/.env'):
+        if path.is_symlink() or path.parent.is_symlink():
+            raise RuntimeError('Installer configuration must not use symlinks')
+        if not path.exists():
+            continue
+        if not path.is_file() or checkpoint_hashes.get(str(path)) != sha256(path):
+            raise RuntimeError('Installer configuration differs from the recovery checkpoint')
+        values = dotenv_values(path, interpolate=False)
+        result = {key: values[key] for key in missing if values.get(key) is not None}
+        if any(not isinstance(value, str) or len(value) > 1024 or
+               any(ord(character) < 32 or ord(character) == 127 for character in value)
+               for value in result.values()):
+            raise ValueError('Invalid preserved browser registration setting')
+        return result
+    return {}

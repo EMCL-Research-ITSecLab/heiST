@@ -3,11 +3,26 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from heist.files import sha256
-from heist.rollout.browser_configuration import preserved_registration_settings
+from heist.rollout.browser_configuration import preserved_registration_settings, legacy_database_role
 from heist.rollout.browser_configuration import configuration, serialize
 
 
 class BrowserConfigurationTests(unittest.TestCase):
+    def test_legacy_role_is_dedicated_and_bound_to_checkpointed_installer_bytes(self):
+        with TemporaryDirectory() as directory:
+            root=Path(directory);(root/'setup').mkdir();source=root/'setup/.env'
+            source.write_text('WEBSERVER_DATABASE_USER=api_user\nDB_PASSWORD=never-transfer\n')
+            saved={str(source):sha256(source)}
+            self.assertEqual(legacy_database_role(root,{'DB_USER':'postgres'},saved),'api_user')
+            with self.assertRaisesRegex(RuntimeError,'distinct'):
+                legacy_database_role(root,{'DB_USER':'api_user'},saved)
+            source.write_text('WEBSERVER_DATABASE_USER=other_role\n')
+            with self.assertRaisesRegex(RuntimeError,'checkpoint'):
+                legacy_database_role(root,{},saved)
+            source.unlink();source.symlink_to(root/'missing')
+            with self.assertRaisesRegex(RuntimeError,'symlinks'):
+                legacy_database_role(root,{})
+
     def setUp(self):
         self.host={'DB_HOST':'10.0.0.102','DB_NAME':'heist','DB_USER':'privileged_admin',
                    'DB_PASSWORD':'private-host-password','PROXMOX_API_TOKEN':'private-pve-token',

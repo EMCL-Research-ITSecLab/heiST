@@ -289,6 +289,16 @@ class PVE:
         return bool(root and state and (root/'heist/api/internal_serve.py').is_file()
                     and (state/'internal-runtime/current').is_symlink())
 
+    def legacy_browser_role(self):
+        if self.browser_runtime_active():return None
+        from .browser_configuration import legacy_database_role
+        from .browser_role import inspect_legacy
+        name=legacy_database_role(self.installation,self.environment)
+        with closing(self.database.connect()) as connection:
+            connection.set_session(readonly=True)
+            with connection.cursor() as cursor:inspect_legacy(cursor,name)
+        return name
+
     def _health(self, *, legacy, local_web, frontend=False):
         endpoint=self.config.api_url.rstrip('/')+'/health/ready'
         browser = self.browser_runtime_active()
@@ -334,6 +344,8 @@ class PVE:
                 from .browser_role import validate
                 validate(previous_role,'a'*64)
                 transaction.save(previous_browser_role=previous_role)
+            elif transaction.plan.schema == 3:
+                transaction.save(legacy_browser_role=self.legacy_browser_role())
             web_services=json.loads(self.remote(self.config.vm('web'),web.CAPTURE_SERVICES))
             web_runtime=json.loads(self.remote(self.config.vm('web'),web.CAPTURE_RUNTIME, {'root': self.config.web_root}))
             transaction.save(host_services=services, web_services=web_services, web_runtime=web_runtime,
@@ -565,7 +577,12 @@ class PVE:
         if transaction.plan.schema == 3:
             from .browser_deployment import credentials
             secret = credentials(transaction)
-            migrate(self.database,transaction.plan,web_role=secret['role'],web_password=secret['password'],previous_web_role=transaction.data.get('previous_browser_role'))
+            legacy=transaction.data.get('legacy_browser_role')
+            if legacy is not None:
+                from .browser_configuration import legacy_database_role
+                if legacy_database_role(self.installation,self.environment,transaction.data['preserved_files'])!=legacy:
+                    raise RuntimeError('Legacy PHP database-role settings changed during maintenance')
+            migrate(self.database,transaction.plan,web_role=secret['role'],web_password=secret['password'],previous_web_role=transaction.data.get('previous_browser_role'),legacy_web_role=legacy)
             environment = {**os.environ, 'HEIST_BACKEND_ENV': str(self.config.backend_env), 'HEIST_MAINTENANCE_FILE': str(self.marker)}
             subprocess.run([str(self.installation/'.venv/bin/python'), '-m', 'heist.platform.cleanup'],
                            cwd=self.installation, env=environment, check=True, capture_output=True, timeout=300)
@@ -600,6 +617,16 @@ class PVE:
 
     def verify(self,transaction,*,target):
         self.verify_source(transaction, target=target)
+        legacy_role=transaction.data.get('legacy_browser_role')
+        if legacy_role:
+            retired=bool(target and transaction.data['kind']!='rollback')
+            with closing(self.database.connect()) as connection,connection.cursor() as cursor:
+                cursor.execute('SELECT rolcanlogin FROM pg_roles WHERE rolname=%s',(legacy_role,))
+                if cursor.fetchone()!=(not retired,):
+                    raise RuntimeError('Legacy PHP login policy differs from the recovered/deployed state')
+                if retired:
+                    cursor.execute('SELECT count(*) FROM pg_stat_activity WHERE usename=%s',(legacy_role,))
+                    if cursor.fetchone()[0]:raise RuntimeError('Legacy PHP database sessions remain active')
         if transaction.data.get('vpn_identity'):
             from . import vpn
             vpn.verify_identity(transaction.data['vpn_identity'])

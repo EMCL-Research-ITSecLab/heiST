@@ -90,3 +90,23 @@ def preserved_registration_settings(installation, host, checkpoint_hashes):
             raise ValueError('Invalid preserved browser registration setting')
         return result
     return {}
+
+
+def legacy_database_role(installation, host, checkpoint_hashes=None):
+    """Read only the dedicated role name from the reviewed installer settings."""
+    from dotenv import dotenv_values
+    from heist.files import sha256
+    from .browser_role import validate_legacy
+    root=Path(installation)
+    for path in (root/'config/installer.env',root/'setup/.env'):
+        if path.is_symlink() or any(parent.is_symlink() for parent in path.parents):
+            raise RuntimeError('Legacy installer settings must not use symlinks')
+        if not path.exists():continue
+        if not path.is_file() or (checkpoint_hashes is not None and checkpoint_hashes.get(str(path))!=sha256(path)):
+            raise RuntimeError('Legacy installer settings differ from the checkpoint')
+        name=dotenv_values(path,interpolate=False).get('WEBSERVER_DATABASE_USER')
+        validate_legacy(name)
+        if name==host.get('DB_USER'):
+            raise RuntimeError('Legacy PHP must use a database role distinct from the backend')
+        return name
+    raise RuntimeError('Require reviewed legacy PHP database-role settings before migration')

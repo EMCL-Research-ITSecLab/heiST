@@ -11,6 +11,17 @@ from heist.rollout.migrations import migrate
 
 
 class BrowserRoleValidationTests(unittest.TestCase):
+    def test_privileged_or_unreviewed_legacy_role_is_refused_before_connecting(self):
+        from dataclasses import replace
+        from heist.rollout.browser_role import validate_legacy
+        for name in ('postgres','pg_monitor','heist_web_other','role; DROP ROLE postgres',''):
+            with self.subTest(name=name),self.assertRaises(ValueError):validate_legacy(name)
+        settings=Mock()
+        with self.assertRaises(ValueError):
+            migrate(settings,SimpleNamespace(schema=3),web_role='heist_web_new',web_password='a'*64,
+                    previous_web_role='heist_web_previous',legacy_web_role='api_user')
+        settings.connect.assert_not_called()
+
     def test_migration_requires_an_explicit_browser_binding_before_connecting(self):
         settings=Mock()
         with self.assertRaises(ValueError):
@@ -31,6 +42,81 @@ class BrowserRoleValidationTests(unittest.TestCase):
 
 @unittest.skipUnless(os.environ.get('TEST_DATABASE_URL'), 'disposable PostgreSQL database not configured')
 class MigrationTests(unittest.TestCase):
+    def legacy_role_fixture(self):
+        import secrets
+        from psycopg2 import sql
+        from heist.rollout.browser_role import verifier
+        legacy='legacy_php_'+uuid.uuid4().hex
+        current='heist_web_'+uuid.uuid4().hex
+        password=secrets.token_urlsafe(48)
+        connection=self.settings.connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(sql.SQL('CREATE ROLE {} LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD {}').format(
+                    sql.Identifier(legacy),sql.Literal(verifier(password))))
+            connection.commit()
+        finally:connection.close()
+        def cleanup():
+            connection=self.settings.connect()
+            try:
+                with connection.cursor() as cursor:
+                    for role in (current,legacy):
+                        cursor.execute('SELECT 1 FROM pg_roles WHERE rolname=%s',(role,))
+                        if cursor.fetchone():
+                            cursor.execute(sql.SQL('DROP OWNED BY {}').format(sql.Identifier(role)))
+                            cursor.execute(sql.SQL('DROP ROLE {}').format(sql.Identifier(role)))
+                connection.commit()
+            finally:connection.close()
+        self.addCleanup(cleanup)
+        return legacy,current,password
+
+    def test_php_credential_and_existing_connection_are_retired_after_success(self):
+        import psycopg2
+        from dataclasses import replace
+        from psycopg2.extensions import parse_dsn
+        legacy,current,password=self.legacy_role_fixture()
+        parameters=parse_dsn(os.environ['TEST_DATABASE_URL']);parameters.update(user=legacy,password=password)
+        old=psycopg2.connect(**parameters)
+        try:
+            with old.cursor() as cursor:cursor.execute('SELECT 1')
+            with patch('heist.rollout.migrations.blob',return_value=b'SELECT 1'):
+                migrate(self.settings,replace(self.plan,schema=3),web_role=current,
+                        web_password='a'*64,legacy_web_role=legacy)
+            self.assertEqual(self.query("SELECT rolcanlogin,rolpassword IS NULL FROM pg_authid WHERE rolname='"+legacy+"'"),[(False,True)])
+            with self.assertRaises(psycopg2.OperationalError):
+                with old.cursor() as cursor:cursor.execute('SELECT 1')
+            with self.assertRaises(psycopg2.OperationalError):psycopg2.connect(**parameters)
+        finally:old.close()
+
+    def test_php_retirement_rolls_back_if_the_sql_transaction_fails(self):
+        from dataclasses import replace
+        from heist.rollout.browser_role import retire_legacy
+        legacy,current,password=self.legacy_role_fixture()
+        def fault(cursor,name):
+            retire_legacy(cursor,name)
+            raise RuntimeError('Injected failure after legacy credential retirement')
+        with patch('heist.rollout.browser_role.retire_legacy',side_effect=fault):
+            with self.assertRaisesRegex(RuntimeError,'Injected failure'):
+                migrate(self.settings,replace(self.plan,schema=3),web_role=current,
+                        web_password='a'*64,legacy_web_role=legacy)
+        self.assertEqual(self.query("SELECT rolcanlogin,rolpassword IS NOT NULL FROM pg_authid WHERE rolname='"+legacy+"'"),[(True,True)])
+        self.assertEqual(self.query("SELECT count(*) FROM pg_roles WHERE rolname='"+current+"'"),[(0,)])
+
+    def test_privileged_php_role_refuses_before_disabling_any_login(self):
+        from dataclasses import replace
+        from psycopg2 import sql
+        legacy,current,_=self.legacy_role_fixture()
+        connection=self.settings.connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(sql.SQL('ALTER ROLE {} CREATEDB').format(sql.Identifier(legacy)))
+            connection.commit()
+        finally:connection.close()
+        with self.assertRaisesRegex(RuntimeError,'privileged'):
+            migrate(self.settings,replace(self.plan,schema=3),web_role=current,
+                    web_password='a'*64,legacy_web_role=legacy)
+        self.assertEqual(self.query("SELECT rolcanlogin FROM pg_roles WHERE rolname='"+legacy+"'"),[(True,)])
+
     def setUp(self):
         import psycopg2
         self.settings = SimpleNamespace(connect=lambda: psycopg2.connect(os.environ['TEST_DATABASE_URL']))

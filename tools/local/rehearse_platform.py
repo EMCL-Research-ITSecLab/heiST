@@ -44,6 +44,7 @@ class PilotPlatform(PVE):
             raise RuntimeError('This rehearsal requires a new immutable browser-runtime candidate')
         from heist.rollout import vpn
         vpn.inspect()
+        self.legacy_browser_role()
         baseline=self.baseline
         if (baseline.data['phase']!='COMPLETE' or not baseline.data.get('checkpoint_ready') or
                 baseline.data.get('failures') or baseline.plan.source!=plan.source):

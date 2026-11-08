@@ -262,6 +262,17 @@ from heist.ui_assets import verify_installation
 receipt=json.loads(Path('/var/lib/heist/browser-deployment.json').read_text())
 if receipt['commit']!=commit or receipt['static_root']!='/var/www/heist-releases/'+commit:
     raise RuntimeError('Browser deployment receipt differs')
+retired=receipt.get('retired_legacy_root')
+if retired:
+    import subprocess,os
+    parent=Path('/var/lib/heist-retired-web')
+    if (parent.is_symlink() or parent.stat().st_uid!=0 or parent.stat().st_mode & 0o077
+            or Path(retired)!=parent/'root' or not Path(retired).is_dir()):
+        raise RuntimeError('Legacy PHP files are not confined to private administrator storage')
+    if Path(json.load(open('/var/lib/heist-retired-web/retirement.json'))['source']).exists():
+        raise RuntimeError('Old PHP serving root was recreated during deployment')
+    if subprocess.run(['runuser','-u','heist-web','--','test','-x',str(parent)],capture_output=True).returncode==0:
+        raise RuntimeError('Browser service can access retired PHP credentials')
 verify(current.parent/'versions'/commit,commit,receipt['runtime_sha256'])
 verify_installation(receipt['static_root'],commit)
 for name,expected in (('/etc/heist/web.env',receipt['web_environment_sha256']),('/etc/apache2/sites-available/heist.conf',receipt['apache_sha256'])):

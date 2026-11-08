@@ -71,3 +71,28 @@ def retire_previous(cursor, previous):
     from psycopg2 import sql
     validate(previous,'a'*64)
     cursor.execute(sql.SQL('ALTER ROLE {} NOLOGIN').format(sql.Identifier(previous)))
+
+
+def validate_legacy(name):
+    if (not isinstance(name,str) or re.fullmatch('[a-z_][a-z0-9_]{0,62}',name) is None
+            or name=='postgres' or name.startswith(('pg_','heist_web_'))):
+        raise ValueError('Declare the dedicated legacy PHP database role')
+
+
+def inspect_legacy(cursor, name):
+    """Refuse privileged/shared identities before entering maintenance."""
+    validate_legacy(name)
+    cursor.execute('''SELECT r.oid FROM pg_roles r WHERE r.rolname=%s AND r.rolcanlogin
+        AND r.rolname<>current_user AND r.rolname<>session_user
+        AND NOT (r.rolsuper OR r.rolcreatedb OR r.rolcreaterole OR r.rolreplication OR r.rolbypassrls)
+        AND NOT EXISTS(SELECT 1 FROM pg_auth_members m WHERE m.member=r.oid OR m.roleid=r.oid)
+        AND NOT EXISTS(SELECT 1 FROM pg_database d WHERE d.datdba=r.oid)''',(name,))
+    if cursor.fetchone() is None:
+        raise RuntimeError('Legacy PHP role is absent, shared or privileged; review before retirement')
+
+
+def retire_legacy(cursor, name):
+    """Retire the distinct PHP login without changing function ownership."""
+    from psycopg2 import sql
+    inspect_legacy(cursor,name)
+    cursor.execute(sql.SQL('ALTER ROLE {} NOLOGIN PASSWORD NULL').format(sql.Identifier(name)))

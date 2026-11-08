@@ -66,6 +66,15 @@ management directives, inline keys and nested configuration files require review
 Rollback restores the original server configuration and service policy. The public
 CA CRL counter may advance; existing CA/client private keys are not replaced.
 
+For the first PHP-to-Flask upgrade, the dedicated PHP database login is read
+from the checkpointed installer settings. It must differ from the backend login
+and must not be privileged or shared through role memberships. Migration commits
+`NOLOGIN` and removes its password before terminating remaining PHP connections.
+The new browser login retains only its explicit API function grants. The web agent
+copies supported uploaded media and moves the old PHP tree, including `.env`, to
+root-only `/var/lib/heist-retired-web`; neither serving account can traverse it.
+Full VM rollback restores the original login, files and service configuration.
+
 ```sh
 cd /root/heist-release-runner
 /root/heiST/.venv/bin/python -m heist upgrade plan \

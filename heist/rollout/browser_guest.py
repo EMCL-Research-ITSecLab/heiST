@@ -27,6 +27,7 @@ CONFIG=Path('/etc/heist')
 RUNTIME=Path('/opt/heist-web')
 STATIC=Path('/var/www/heist-releases')
 RECEIPT=Path('/var/lib/heist/browser-deployment.json')
+RETIRED=Path('/var/lib/heist-retired-web')
 
 
 def read_bundle(path,limit):
@@ -69,6 +70,37 @@ def account():
             primary_members!=['heist-web']):
         raise RuntimeError('An unexpected heist-web account already exists')
     return value
+
+
+def retire_legacy_root(legacy_root):
+    """Keep old PHP secrets outside both serving roots and service accounts."""
+    source=Path(legacy_root)
+    target=RETIRED/'root'
+    record=RETIRED/'retirement.json'
+    if (not source.is_absolute() or source==RETIRED or source in RETIRED.parents or RETIRED in source.parents
+            or any(path.is_symlink() for path in (source,*source.parents,RETIRED,*RETIRED.parents,target,record))):
+        raise RuntimeError('Unsafe legacy web retirement path')
+    if RETIRED.exists() and (RETIRED.stat().st_uid!=os.geteuid() or RETIRED.stat().st_mode & 0o077):
+        raise RuntimeError('Retired web files require a private administrator-owned directory')
+    if not source.exists():
+        if target.exists() or record.exists():
+            if not target.is_dir() or not record.is_file() or json.loads(record.read_text())!={'source':str(source),'target':str(target)}:
+                raise RuntimeError('Reconcile the existing retired web root')
+            return str(target)
+        return None
+    if not source.is_dir() or target.exists() or record.exists():
+        raise RuntimeError('Refusing to replace an existing legacy web retirement')
+    RETIRED.mkdir(mode=0o700,exist_ok=True)
+    info=RETIRED.stat()
+    if info.st_uid!=os.geteuid() or info.st_mode & 0o077:
+        raise RuntimeError('Retired web files require a private administrator-owned directory')
+    source.rename(target)
+    for path in (source.parent,RETIRED):
+        descriptor=os.open(path,os.O_RDONLY|os.O_DIRECTORY)
+        try:os.fsync(descriptor)
+        finally:os.close(descriptor)
+    write(record,json.dumps({'source':str(source),'target':str(target)},sort_keys=True)+'\n')
+    return str(target)
 
 
 def migrate_media(legacy_root,data_root,user):
@@ -133,6 +165,7 @@ def install_guest(config):
     STATE.mkdir(mode=0o700,parents=True,exist_ok=True)
     os.chown(STATE,user.pw_uid,user.pw_gid);STATE.chmod(0o700)
     media=migrate_media(config['legacy_root'],STATE,user)
+    retired=retire_legacy_root(config['legacy_root'])
     install(runtime,RUNTIME,commit,config['runtime_sha256'])
     static=assert_directory(STATIC)/commit
     if static.exists():verify_installation(static,commit)
@@ -156,7 +189,7 @@ def install_guest(config):
     subprocess.run(['apache2ctl','configtest'],check=True,capture_output=True,timeout=30)
     activate(RUNTIME,commit,config['runtime_sha256'])
     receipt={'schema':1,'commit':commit,'runtime_sha256':config['runtime_sha256'],
-             'ui_sha256':config['ui_sha256'],'static_root':str(static),'media':media,
+             'ui_sha256':config['ui_sha256'],'static_root':str(static),'media':media,'retired_legacy_root':retired,
              'web_environment_sha256':hashlib.sha256(environment.encode()).hexdigest(),
              'apache_sha256':hashlib.sha256(apache.encode()).hexdigest()}
     write(RECEIPT,json.dumps(receipt,sort_keys=True)+'\n')

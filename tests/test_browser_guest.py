@@ -6,10 +6,37 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
-from heist.rollout.browser_guest import install_guest, migrate_media, read_bundle, account
+from heist.rollout.browser_guest import install_guest, migrate_media, read_bundle, account, retire_legacy_root
 
 
 class BrowserGuestTests(unittest.TestCase):
+    def test_legacy_secrets_leave_the_serving_root_and_remain_private_on_retries(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary);source=root/'html';source.mkdir()
+            (source/'.env').write_bytes(b'private legacy configuration')
+            retired=root/'retired'
+            with patch('heist.rollout.browser_guest.RETIRED',retired):
+                target=Path(retire_legacy_root(source))
+                self.assertFalse(source.exists())
+                self.assertEqual((target/'.env').read_bytes(),b'private legacy configuration')
+                self.assertEqual(retired.stat().st_mode & 0o777,0o700)
+                self.assertEqual(retire_legacy_root(source),str(target))
+                retired.chmod(0o755)
+                with self.assertRaisesRegex(RuntimeError,'private'):
+                    retire_legacy_root(source)
+
+    def test_retirement_refuses_symlinks_and_existing_destinations_without_losing_files(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary);source=root/'html';source.mkdir();(source/'.env').write_text('keep')
+            retired=root/'retired';retired.mkdir(mode=0o700);(retired/'root').mkdir()
+            with patch('heist.rollout.browser_guest.RETIRED',retired):
+                with self.assertRaisesRegex(RuntimeError,'Refusing'):
+                    retire_legacy_root(source)
+                self.assertEqual((source/'.env').read_text(),'keep')
+                link=root/'link';link.symlink_to(source,target_is_directory=True)
+                with self.assertRaisesRegex(RuntimeError,'Unsafe'):
+                    retire_legacy_root(link)
+
     def test_oversized_and_symlinked_artifacts_are_refused(self):
         with tempfile.TemporaryDirectory() as temporary:
             root=Path(temporary);path=root/'bundle';path.write_bytes(b'reviewed')

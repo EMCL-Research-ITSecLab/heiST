@@ -31,7 +31,8 @@ class DatabaseSettings:
     def connect(self, *, autocommit=False):
         import psycopg2
         connection = psycopg2.connect(host=self.host, dbname=self.name, user=self.user,
-            password=self.password, port=self.port, connect_timeout=self.connect_timeout)
+            password=self.password, port=self.port, connect_timeout=self.connect_timeout,
+            keepalives=1, keepalives_idle=30, keepalives_interval=10, keepalives_count=3)
         try:
             connection.autocommit = autocommit
         except BaseException:

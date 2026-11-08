@@ -31,10 +31,11 @@ class ColdLaunchFlagTests(unittest.TestCase):
             return None
 
         processed = Mock()
+        connection = object()
         namespace.update(
             template_guard=lambda *args, **kwargs: nullcontext(),
             os=SimpleNamespace(makedirs=Mock()),
-            db_connection_context=lambda: nullcontext(object()),
+            db_connection_context=lambda: nullcontext(connection),
             time=SimpleNamespace(time=lambda: 0, sleep=lambda seconds: None),
             print=lambda *args, **kwargs: None,
             ChallengeTemplate=ChallengeTemplate,
@@ -50,7 +51,7 @@ class ColdLaunchFlagTests(unittest.TestCase):
             stop_challenge=Mock())
         with patch.dict(launch_module.__dict__, namespace):
             launch_module.launch_challenge(5, 2, 'vpn-sensor', 'dmz-sensor')
-        processed.assert_called_once_with(instance, 'pilot@example.test', 'test-student')
+        processed.assert_called_once_with(instance, 'pilot@example.test', 'test-student', user_id=2, connection=connection)
         self.assertEqual(processed.call_args.args[0].template.flags, flags)
         namespace['stop_challenge'].assert_not_called()
         self.assertEqual(namespace['warmup_challenge'].call_count, 0 if ready else 1)

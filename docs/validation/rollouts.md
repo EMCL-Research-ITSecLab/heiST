@@ -71,6 +71,13 @@ recovery. The original application database was not migrated. Its receipt marks
 `starting_commit_declared_supported: false` and
 `whole_platform_upgrade_approved: false`.
 
+Source review also found production fixes for stale pool database connections
+and an email-based personalized flag grader. The candidate now opens and closes
+connections for each pool cycle and checks personalized flags against the
+installed SQL grader before writing them. It preserves either email or unique-ID
+grading without rewriting existing protected data. Production admission remains
+closed until these changes and the remaining customizations pass clone acceptance.
+
 Off-host receipt: `database-isolated-audit-receipt.json`, alongside the private
 backup manifest. Production source/customization review, full VM restore, fresh
 installation and clean complete upgrade/failure/rollback acceptance remain open.

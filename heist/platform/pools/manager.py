@@ -8,7 +8,7 @@ import time
 import traceback
 import fcntl
 
-from heist.infrastructure.database import get_db_connection
+from heist.infrastructure.database import db_connection_context
 from heist.runtime import cleanup_is_complete
 from heist.platform.images.locking import template_guard
 from heist.platform.challenges.warmup import warmup_challenge as warmup_challenge_backend
@@ -89,8 +89,6 @@ class PoolManager:
         self.minimal_pool_size = minimal_pool_size
         self.maximal_pool_size = maximal_pool_size
         self.check_interval_seconds = check_interval_seconds
-        self.pool_maintenance_db_conn = get_db_connection()
-        self.expired_challenge_teardown_db_conn = get_db_connection()
 
         print(f"[POOL] min={minimal_pool_size} max={maximal_pool_size} interval={check_interval_seconds}s")
 
@@ -150,22 +148,26 @@ class PoolManager:
         """
         Check the current pool sizes and maintain the hot pool.
         """
+        with db_connection_context() as connection:
+            self._check_and_maintain_pool(connection)
+
+    def _check_and_maintain_pool(self, connection):
         print("[POOL] Checking and maintaining pool")
 
-        challenge_template_ids = pool_template_ids(self.pool_maintenance_db_conn)
+        challenge_template_ids = pool_template_ids(connection)
 
         print(f"[POOL] Found {len(challenge_template_ids)} active challenge templates")
 
         for challenge_template_id in challenge_template_ids:
             print(f"[POOL] Evaluating template {challenge_template_id}")
 
-            current_pool_size = self.get_current_pool_size(challenge_template_id)
-            target_pool_size = self.get_target_pool_size(challenge_template_id)
+            current_pool_size = self.get_current_pool_size(connection, challenge_template_id)
+            target_pool_size = self.get_target_pool_size(connection, challenge_template_id)
 
             target_pool_size = max(self.minimal_pool_size, target_pool_size)
             target_pool_size = min(self.maximal_pool_size, target_pool_size)
 
-            running_warmups_count = self.get_current_provisioning_for_pool_count(challenge_template_id)
+            running_warmups_count = self.get_current_provisioning_for_pool_count(connection, challenge_template_id)
             total_effective_pool_size = current_pool_size + running_warmups_count
 
             print(
@@ -190,7 +192,7 @@ class PoolManager:
                 teardowns_needed = current_pool_size - target_pool_size
                 print(f"[POOL] Scheduling {teardowns_needed} teardowns")
 
-                with self.pool_maintenance_db_conn.cursor() as cursor:
+                with connection.cursor() as cursor:
                     cursor.execute("""
                         WITH candidates AS (
                             SELECT id
@@ -258,8 +260,8 @@ class PoolManager:
             self.running_warmups.pop(thread_id, None)
             print(f"[WARMUP][CLEANUP] thread={thread_id}")
 
-    def get_current_provisioning_for_pool_count(self, challenge_template_id):
-        with self.pool_maintenance_db_conn.cursor() as cursor:
+    def get_current_provisioning_for_pool_count(self, connection, challenge_template_id):
+        with connection.cursor() as cursor:
             cursor.execute("""
                 SELECT COUNT(*)
                 FROM challenges
@@ -272,8 +274,8 @@ class PoolManager:
         print(f"[POOL] Current provisioning count for {challenge_template_id}: {count}")
         return count
 
-    def get_current_pool_size(self, challenge_template_id):
-        with self.pool_maintenance_db_conn.cursor() as cursor:
+    def get_current_pool_size(self, connection, challenge_template_id):
+        with connection.cursor() as cursor:
             cursor.execute("""
                 SELECT COUNT(*)
                 FROM challenges
@@ -286,11 +288,11 @@ class PoolManager:
         print(f"[POOL] Current pool size for {challenge_template_id}: {size}")
         return size
 
-    def get_target_pool_size(self, challenge_template_id):
+    def get_target_pool_size(self, connection, challenge_template_id):
         current_time = datetime.datetime.now()
         print(f"[POOL] Calculating target pool size for {challenge_template_id} at {current_time}")
 
-        with self.pool_maintenance_db_conn.cursor() as cursor:
+        with connection.cursor() as cursor:
             cursor.execute("""
                 SELECT effective_time, size
                 FROM pool_sizes
@@ -340,7 +342,7 @@ class PoolManager:
         print("[CLEANUP] Checking for orphaned challenges")
 
         from heist.platform.jobs.journal import RecoveryRequired
-        with get_db_connection() as cleanup_db_conn:
+        with db_connection_context() as cleanup_db_conn:
             with cleanup_db_conn.cursor() as cursor:
                 cursor.execute("SELECT COUNT(*) FROM challenges WHERE lifecycle_state = 'PROVISIONING'")
                 if cursor.fetchone()[0]:
@@ -353,9 +355,13 @@ class PoolManager:
             teardown_challenge_backend(cid)
 
     def teardown_expired_challenges(self):
+        with db_connection_context() as connection:
+            self._teardown_expired_challenges(connection)
+
+    def _teardown_expired_challenges(self, connection):
         print("[EXPIRED] Checking for expired challenges")
 
-        with self.expired_challenge_teardown_db_conn.cursor() as cursor:
+        with connection.cursor() as cursor:
             cursor.execute("""
                 WITH expired AS (
                     SELECT id

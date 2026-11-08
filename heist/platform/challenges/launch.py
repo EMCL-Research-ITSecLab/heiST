@@ -136,7 +136,7 @@ def _launch_challenge(challenge_template_id, user_id, vpn_monitoring_device, dmz
 
                 start_time_user_flags = time.time()
                 print(f"[Info] Starting user-specific flag processing for challenge {challenge.id} and user {user_id}", flush=True)
-                process_all_user_specific_flags(challenge, user_email, user_unique_id)
+                process_all_user_specific_flags(challenge, user_email, user_unique_id, user_id=user_id, connection=db_conn)
                 launch_timing_logger(start_time_user_flags, "[USER FLAGS COMPLETE]", challenge_template_id, user_id)
 
                 start_time_firewall = time.time()
@@ -413,7 +413,25 @@ def generate_user_specific_flag(flag_secret, user_unique_id):
     return f"ITSEC{{{hash_value}}}"
 
 
-def process_all_user_specific_flags(challenge, user_email, user_unique_id):
+def resolve_user_specific_flag(connection, *, template_id, flag, user_id, user_email, user_unique_id):
+    """Write only a flag accepted by this installation's authoritative grader.
+
+    Legacy lecture deployments derive flags from email; upstream uses unique_id.
+    Keep existing grading and submissions intact instead of guessing from source
+    revision or silently changing the stored SQL function during an upgrade.
+    """
+    candidates = dict.fromkeys(generate_user_specific_flag(flag['flag'], identity)
+                               for identity in (user_unique_id, user_email) if identity)
+    with connection.cursor() as cursor:
+        for candidate in candidates:
+            cursor.execute('SELECT id FROM api.validate_and_lock_flag(%s,%s,%s) WHERE id=%s',
+                           (template_id, candidate, user_id, flag['id']))
+            if cursor.fetchone() is not None:
+                return candidate
+    raise RuntimeError('Personalized flag generation does not match the installed grader')
+
+
+def process_all_user_specific_flags(challenge, user_email, user_unique_id, *, user_id, connection):
     """
     Process all user-specific flags for the challenge.
     Generates personalized flags and writes them to the appropriate VMs.
@@ -428,7 +446,7 @@ def process_all_user_specific_flags(challenge, user_email, user_unique_id):
             if flag['user_specific'] and flag['machine_template_id']:
                 machine_template_id = flag['machine_template_id']
 
-                print(f"[Info] Processing flag {flag} for machine template {machine_template_id}", flush=True)
+                print(f"[Info] Processing flag {flag['id']} for machine template {machine_template_id}", flush=True)
 
                 machine = None
                 for m in challenge.machines.values():
@@ -444,10 +462,10 @@ def process_all_user_specific_flags(challenge, user_email, user_unique_id):
                 if machine.id not in flags_by_machine:
                     flags_by_machine[machine.id] = {"guest_os": guest_os, "flags": []}
 
-                print(f"[Info] Processing flag {flag} for machine {machine.id}", flush=True)
+                print(f"[Info] Processing flag {flag['id']} for machine {machine.id}", flush=True)
 
-                user_flag = generate_user_specific_flag(flag['flag'], user_unique_id)
-                print(f"[Info] Generated user-specific flag for {user_unique_id}: {user_flag}", flush=True)
+                user_flag = resolve_user_specific_flag(connection, template_id=challenge.template.id,
+                    flag=flag, user_id=user_id, user_email=user_email, user_unique_id=user_unique_id)
                 flag_path = get_flag_path(guest_os, flag['order_index'])
                 flags_by_machine[machine.id]["flags"].append({
                     'flag': user_flag,

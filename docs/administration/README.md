@@ -173,3 +173,16 @@ AD-topology checks remain mandatory.
 **Toggle navigation** opens the phone drawer or collapses the desktop sidebar.
 The desktop preference persists locally. Hidden navigation is removed from keyboard
 focus, and Escape closes the open navigation and returns focus to the toggle.
+
+
+## Dashboard announcements
+
+Announcements published in **Communications** also appear near the top of the
+dashboard. The dashboard shows the latest three notices, with critical and
+important items placed first and labelled visibly. It refreshes while the page
+is open; the full text and older notices remain on **Announcements**.
+
+Achievement icons use the original badge artwork from the database, with the
+original nine emoji as compatibility fallbacks. The original illustrated avatar
+is used when no personal avatar is selected; selected and uploaded avatars remain
+unchanged. The repository's original `assets/social_preview/` image is retained.

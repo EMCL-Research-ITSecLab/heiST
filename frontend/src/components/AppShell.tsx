@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Notice } from './ui.tsx';
 import { post } from '../lib/api.ts';
-import { image } from '../lib/data.ts';
+import { avatarImage } from '../lib/artwork.ts';
 import { Link, useRouter } from '../lib/router.tsx';
 import { useAction, useSession } from '../lib/state.tsx';
 export function AppShell({ children }: {
@@ -74,7 +74,7 @@ export function AppShell({ children }: {
           </button>
           {session.user ? <>
             <Link className="user-chip" href="/profile">
-              <img className="avatar" src={image(session.user.avatar || '/assets/avatars/default-avatar.png')} alt="" />
+              <img className="avatar" src={avatarImage(session.user.avatar)} alt="" />
               <span>
                 {session.user.username}
                 <small>

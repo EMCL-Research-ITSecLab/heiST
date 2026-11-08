@@ -1,3 +1,4 @@
+import { AchievementIcon } from '../../components/AchievementIcon.tsx';
 import { useState } from 'react';
 import { ActivityList, Badge, Card, Empty, PageTitle, Pager, ResourceState, Select, Stat } from '../../components/ui.tsx';
 import { date, number, payload, row, rows, text, truth } from '../../lib/data.ts';
@@ -30,7 +31,7 @@ export function Feed({ kind }: {
         </div>
         <div className="feature-grid">
           {badges.map((badge, i) => <Card key={text(badge.id, String(i))} className={truth(badge.earned ?? badge.is_earned) ? 'earned' : ''}>
-            <span className="achievement-glyph" aria-hidden>✦</span>
+            <AchievementIcon badge={badge} />
             <h2>
               {text(badge.name)}
             </h2>

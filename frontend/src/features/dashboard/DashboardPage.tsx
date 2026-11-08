@@ -1,3 +1,4 @@
+import { DashboardAnnouncements } from './DashboardAnnouncements.tsx';
 import { ActivityList, Card, ChallengeCard, Empty, PageTitle, ResourceState, Stat } from '../../components/ui.tsx';
 import { number, payload, row, rows, text } from '../../lib/data.ts';
 import { Link } from '../../lib/router.tsx';
@@ -10,6 +11,7 @@ export function Dashboard() {
       title="Dashboard"
       action={<Link className="button" href="/explore">Explore challenges ↗</Link>} />
     <ResourceState {...resource}>
+      <DashboardAnnouncements announcements={rows(data.news)} />
       <div className="stats-grid">
         <Stat label="Total points" value={user.points} />
         <Stat label="Challenges solved" value={progress.solved} />

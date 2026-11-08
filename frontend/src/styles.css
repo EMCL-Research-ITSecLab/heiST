@@ -1831,3 +1831,13 @@ dialog .button-row {
 .account-email {display:block;overflow-wrap:anywhere}
 .diagnostic-grid {display:grid;grid-template-columns:max-content minmax(0,1fr);gap:10px 20px}
 .diagnostic-grid dd {margin:0;overflow-wrap:anywhere}
+
+.achievement-glyph {font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
+.achievement-glyph.compact {font-size:18px;margin:0;line-height:1}
+.dashboard-announcements {margin-bottom:28px}
+.dashboard-announcements .section-heading {margin-bottom:14px;flex-wrap:wrap}
+.dashboard-announcement {border-inline-start:4px solid var(--blue);margin-bottom:12px}
+.dashboard-announcement.important {border-inline-start-color:var(--amber)}
+.dashboard-announcement.critical {border-inline-start-color:var(--red)}
+.dashboard-announcement h3 {font-size:19px;margin:12px 0 6px}
+.dashboard-announcement .prose {margin-bottom:8px}

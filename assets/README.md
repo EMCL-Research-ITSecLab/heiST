@@ -1,6 +1,7 @@
 # Documentation assets
 
 - `screenshots/`: generated full-page UI captures and their source/checksum manifest.
+- `social_preview/`: original sharing preview from `main`; retain this artwork.
 - `legal-sources.json`: provenance for the copied operator legal pages.
 
 Application logos, avatars and default challenge images have one maintained source

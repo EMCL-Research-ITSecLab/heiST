@@ -1,7 +1,9 @@
+import { AchievementIcon } from '../../components/AchievementIcon.tsx';
+import { avatarImage } from '../../lib/artwork.ts';
 import { useState, type FormEvent } from 'react';
 import { ActivityList, Area, Badge, Card, Confirm, Field, Notice, PageTitle, ResourceState, Stat } from '../../components/ui.tsx';
 import { post, request } from '../../lib/api.ts';
-import { external, image, payload, row, rows, text } from '../../lib/data.ts';
+import { external, payload, row, rows, text } from '../../lib/data.ts';
 import { useRouter } from '../../lib/router.tsx';
 import { useAction, useResource, useSession } from '../../lib/state.tsx';
 export function Profile({ username }: {
@@ -20,7 +22,7 @@ export function Profile({ username }: {
     <Notice error={action.error} message={action.message} />
     <ResourceState {...resource}>
       <div className="profile-summary card">
-        <img className="avatar large" src={image(basic.avatar_url || '/assets/avatars/default-avatar.png')} alt="" />
+        <img className="avatar large" src={avatarImage(basic.avatar_url)} alt="" />
         <div>
           <h2>
             {text(basic.username)}
@@ -152,7 +154,7 @@ export function Profile({ username }: {
       {rows(data.badges).length > 0 && <Card title="Achievements">
         <div className="button-row">
           {rows(data.badges).map((badge, i) => <Badge key={i}>
-            {text(badge.name)}
+            <AchievementIcon badge={badge} compact />{text(badge.name)}
           </Badge>)}
         </div>
       </Card>}

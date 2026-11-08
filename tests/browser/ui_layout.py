@@ -298,5 +298,28 @@ class LayoutTests(BrowserFixture):
         self.assertTrue(any('state=NEEDS_REVIEW' in url for method,endpoint,url in self.requests if endpoint=='admin/jobs'))
 
 
+    def test_dashboard_highlights_announcements_and_hides_empty_news(self):
+        self.responses['dashboard']['data']['news']=[
+            {'id':1,'title':'Lecture update','importance':'normal','short_description':'New exercises are available.','created_at':'2026-11-01'},
+            {'id':2,'title':'Scheduled maintenance','importance':'critical','short_description':'<script>window.noticeInjected=true</script>','created_at':'2026-11-01'},
+        ]
+        self.settled('/dashboard')
+        region=self.page.get_by_role('region',name='Dashboard announcements')
+        self.assertEqual(region.locator('h3').all_text_contents(),['Scheduled maintenance','Lecture update'])
+        self.assertEqual(region.locator('.critical').count(),2)
+        self.assertLess(region.bounding_box()['y'],self.page.get_by_text('Total points',exact=True).bounding_box()['y'])
+        self.assertIsNone(self.page.evaluate('window.noticeInjected'))
+        self.assertEqual(region.get_by_role('link',name='View all announcements',exact=False).get_attribute('href'),'/announcements')
+        self.responses['dashboard']['data']['news']=[]
+        self.settled('/dashboard')
+        self.assertEqual(self.page.get_by_role('region',name='Dashboard announcements').count(),0)
+
+    def test_original_badge_artwork_and_illustrated_user_fallback(self):
+        self.settled('/badges')
+        icons=[value.strip() for value in self.page.locator('.achievement-glyph').all_text_contents()]
+        self.assertEqual(icons,['🕸️','🔐','👁️','🕵️','💣','🧩','💉','⚡','👑'])
+        self.assertEqual(self.page.locator('.user-chip img').get_attribute('src'),'/assets/avatars/avatar1.png')
+
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)

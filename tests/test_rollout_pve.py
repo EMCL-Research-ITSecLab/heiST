@@ -125,3 +125,47 @@ class RestoreIdentityTests(unittest.TestCase):
                 adapter._checkout(transaction, 'baseline')
             self.assertEqual(wrapper.read_text(), 'new maintained wrapper')
             adapter.command.assert_called_once()
+
+
+class TemplateExportSelectionTests(unittest.TestCase):
+    def test_readonly_template_export_is_verified_without_starting_a_backup_worker(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary)
+            transaction=Transaction(root/'journal',{})
+            adapter=PVE.__new__(PVE);adapter.node='pilot';adapter.tasks=Mock()
+            adapter.readonly_template_backups={'123':'5898f7b2-d8bd-42e0-a43e-d90f0f7d19b6'}
+            adapter._verify_archive=Mock()
+            def export(identifier,expected,path):
+                self.assertEqual(identifier,123)
+                self.assertEqual(expected,adapter.readonly_template_backups['123'])
+                self.assertEqual(transaction.data['readonly_template_exports']['123']['state'],'EXPORTING')
+                path.write_bytes(b'synthetic archive')
+                return {'file':path.name,'bytes':17}
+            with patch('heist.maintenance.template_archive.create',side_effect=export):
+                archive=adapter.checkpoint_vm(transaction,SimpleNamespace(vmid=123,role='template-123'),root)
+            adapter.tasks.run.assert_not_called()
+            adapter._verify_archive.assert_called_once_with(transaction,archive)
+            self.assertEqual(transaction.data['readonly_template_exports']['123']['state'],'ARCHIVE_VERIFIED')
+
+    def test_failed_validation_never_marks_the_export_verified(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary);transaction=Transaction(root/'journal',{})
+            adapter=PVE.__new__(PVE);adapter.node='pilot';adapter.tasks=Mock()
+            adapter.readonly_template_backups={'123':'5898f7b2-d8bd-42e0-a43e-d90f0f7d19b6'}
+            adapter._verify_archive=Mock(side_effect=RuntimeError('corrupt archive'))
+            def export(identifier,expected,path):path.write_bytes(b'corrupt');return {'file':path.name}
+            with patch('heist.maintenance.template_archive.create',side_effect=export),self.assertRaisesRegex(RuntimeError,'corrupt'):
+                adapter.checkpoint_vm(transaction,SimpleNamespace(vmid=123,role='template-123'),root)
+            adapter.tasks.run.assert_not_called()
+            self.assertEqual(transaction.data['readonly_template_exports']['123']['state'],'EXPORTED_UNVERIFIED')
+
+    def test_core_vm_cannot_be_sent_to_the_readonly_template_exporter(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary);transaction=Transaction(root/'journal',{})
+            adapter=PVE.__new__(PVE);adapter.readonly_template_backups={'123':'fixture'};adapter.tasks=Mock()
+            with self.assertRaisesRegex(RuntimeError,'template identities'):
+                adapter.checkpoint_vm(transaction,SimpleNamespace(vmid=123,role='web'),root)
+            adapter.tasks.run.assert_not_called()
+            self.assertEqual(transaction.data,{})

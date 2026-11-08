@@ -6,12 +6,12 @@ import uuid
 import subprocess
 
 
-def require_backup_support(configurations, version):
-    """Reject Proxmox #6675 before maintenance, without changing template disks."""
+def needs_readonly_export(configuration, version):
+    """Select the raw read-only exporter only for Proxmox #6675 templates."""
     if not any(re.fullmatch(r'(?:ide|sata)\d+', name)
                and 'media=cdrom' not in value and 'cloudinit' not in value
-               for config in configurations for name, value in config.items()):
-        return
+               for name, value in configuration.items()):
+        return False
     if not isinstance(version, str) or not re.fullmatch(r'(?:\d+:)?\d+\.\d+\.\d+(?:[+~.-][A-Za-z0-9.+~:-]+)?', version):
         raise RuntimeError('Cannot confirm qemu-server template backup compatibility')
     # Epochs do not change which upstream code contains the fix. Debian's
@@ -21,7 +21,12 @@ def require_backup_support(configurations, version):
                 subprocess.run(['dpkg', '--compare-versions', upstream_version, 'lt', '9.0.18'], check=False).returncode)
     if any(code not in (0, 1) for code in affected):
         raise RuntimeError('Cannot confirm qemu-server template backup compatibility')
-    if affected == (0, 0):
+    return affected == (0, 0)
+
+
+def require_backup_support(configurations, version):
+    """Check compatibility when the caller only supports native vzdump."""
+    if any(needs_readonly_export(config, version) for config in configurations):
         raise RuntimeError('qemu-server '+version+' cannot safely back up IDE/SATA templates '
                            '(Proxmox #6675). Install a supported version with the 9.0.18 fix '
                            'and verify template backup/restore before maintenance.')

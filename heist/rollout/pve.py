@@ -236,16 +236,25 @@ class PVE:
         if not backup.is_dir() or backup.stat().st_dev==self.installation.stat().st_dev:
             raise RuntimeError('Provide a mounted backup filesystem separate from installation source')
         templates=self.template_catalogue()
-        from .template_checkpoint import disk_capacity, require_backup_support
-        template_configurations=[]
+        from .template_checkpoint import disk_capacity, needs_readonly_export
+        template_configurations={}
+        self.readonly_template_backups={}
         for identifier,item in templates.items():
             if not item.get('absent'):
                 configuration=self.template_configuration(SimpleNamespace(vmid=int(identifier)))
-                template_configurations.append(configuration)
+                template_configurations[identifier]=configuration
                 capacity+=disk_capacity(configuration)
         if template_configurations:
             version=self.command(['dpkg-query','--show','--showformat=${Version}','qemu-server']).decode().strip()
-            require_backup_support(template_configurations,version)
+            from heist.maintenance.template_archive import inspect
+            for identifier,configuration in template_configurations.items():
+                if needs_readonly_export(configuration,version):
+                    # Confirm stopped identity and already-read-only raw block
+                    # storage before entering maintenance. No disk permissions
+                    # or installed Proxmox packages are changed.
+                    expected=templates[identifier]['uuid']
+                    inspect(int(identifier),expected)
+                    self.readonly_template_backups[identifier]=expected
         from .image_checkpoint import inventory
         capacity+=sum(item['bytes'] for item in inventory(self.environment.get('HEIST_ARTIFACT_LIBRARY','/var/lib/vz/import')).values())
         if shutil.disk_usage(backup).free<capacity+16*1024**3:
@@ -350,6 +359,32 @@ class PVE:
             except OSError:
                 continue
 
+    def checkpoint_vm(self,transaction,vm,directory):
+        expected=getattr(self,'readonly_template_backups',{}).get(str(vm.vmid))
+        if expected:
+            if vm.role!='template-'+str(vm.vmid):
+                raise RuntimeError('Read-only export is restricted to checkpointed template identities')
+            from datetime import datetime,timezone
+            from heist.maintenance.template_archive import create
+            stamp=datetime.now(timezone.utc).strftime('%Y_%m_%d-%H_%M_%S')
+            path=directory/('vzdump-qemu-'+str(vm.vmid)+'-'+stamp+'.vma.zst')
+            exports=dict(transaction.data.get('readonly_template_exports',{}))
+            exports[str(vm.vmid)]={'state':'EXPORTING','file':path.name,'uuid':expected}
+            transaction.save(readonly_template_exports=exports)
+            receipt=create(vm.vmid,expected,path)
+            exports[str(vm.vmid)]={**receipt,'state':'EXPORTED_UNVERIFIED'}
+            transaction.save(readonly_template_exports=exports)
+        else:
+            self.tasks.run(transaction,'backup-'+vm.role,'/nodes/'+self.node+'/vzdump',
+                {'vmid':vm.vmid,'mode':'stop','compress':'zstd','dumpdir':str(directory),'remove':0})
+        files=list(directory.glob('vzdump-qemu-'+str(vm.vmid)+'-*.vma.zst'))
+        if len(files)!=1:raise RuntimeError('No unique completed VM archive: '+vm.role)
+        self._verify_archive(transaction,files[0])
+        if expected:
+            exports[str(vm.vmid)]['state']='ARCHIVE_VERIFIED'
+            transaction.save(readonly_template_exports=exports)
+        return files[0]
+
     def checkpoint(self, transaction):
         directory=private_directory(Path(self.config.backup_directory)/transaction.path.name)
         transaction.save(backup_directory=str(directory))
@@ -388,18 +423,14 @@ class PVE:
         template_vms=[SimpleNamespace(role='template-'+identifier,vmid=int(identifier))
                       for identifier,item in templates.items() if not item.get('absent')]
         for vm in (*self.config.vms,*template_vms):
-            self.tasks.run(transaction,'backup-'+vm.role,'/nodes/'+self.node+'/vzdump',
-                {'vmid':vm.vmid,'mode':'stop','compress':'zstd','dumpdir':str(directory),'remove':0})
-            files=list(directory.glob('vzdump-qemu-'+str(vm.vmid)+'-*.vma.zst'))
-            if len(files)!=1:raise RuntimeError('No unique completed VM archive: '+vm.role)
-            self._verify_archive(transaction,files[0])
+            archive=self.checkpoint_vm(transaction,vm,directory)
             if vm.role.startswith('template-'):
                 from .template_checkpoint import identity
                 if identity(self.template_configuration(vm))!=templates[str(vm.vmid)]:
                     raise RuntimeError('Template identity changed during checkpoint')
-            with files[0].open('rb') as stream:
+            with archive.open('rb') as stream:
                 os.fsync(stream.fileno())
-            snapshots[vm.role]={'path':str(files[0]),'sha256':sha256(files[0]),'bytes':files[0].stat().st_size}
+            snapshots[vm.role]={'path':str(archive),'sha256':sha256(archive),'bytes':archive.stat().st_size}
             transaction.save(snapshots=snapshots)
         git(self.installation,'update-ref','refs/heist/releases/'+transaction.plan.target,transaction.plan.target)
         git(self.installation,'bundle','create',str(directory/'source.bundle'),'--all')

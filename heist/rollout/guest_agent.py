@@ -181,8 +181,11 @@ def health(config):
     connection = http.client.HTTPSConnection('127.0.0.1', 443, context=context, timeout=10)
     try:
         connection.connect()
+        leaf,end,_ = Path(config['certificate']).read_text().partition('-----END CERTIFICATE-----')
+        if not end:
+            raise ValueError('Trusted web certificate has no complete PEM leaf')
         expected = hashlib.sha256(ssl.PEM_cert_to_DER_cert(
-            Path(config['certificate']).read_text())).hexdigest()
+            leaf+end)).hexdigest()
         actual = hashlib.sha256(connection.sock.getpeercert(binary_form=True)).hexdigest()
         if not hmac.compare_digest(expected, actual):
             raise RuntimeError('Web TLS certificate differs')

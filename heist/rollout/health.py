@@ -9,7 +9,13 @@ from urllib.parse import urlsplit
 
 
 def certificate_fingerprint(pem):
-    return hashlib.sha256(ssl.PEM_cert_to_DER_cert(pem)).hexdigest()
+    # Apache commonly uses leaf + intermediate certificates in the same file.
+    # Base64 decoding the whole chain can accidentally include later blocks
+    # when the first DER certificate has no padding.
+    leaf,end,_ = pem.partition('-----END CERTIFICATE-----')
+    if not end:
+        raise ValueError('Trusted certificate has no complete PEM leaf')
+    return hashlib.sha256(ssl.PEM_cert_to_DER_cert(leaf+end)).hexdigest()
 
 
 def probe(url, certificate, *, headers=None, statuses=(200,), expect=None, ready_json=False, timeout=10):

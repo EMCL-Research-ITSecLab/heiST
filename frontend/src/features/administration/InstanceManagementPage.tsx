@@ -104,6 +104,8 @@ function InstanceDetails({ identifier, onClose }: { identifier: number; onClose:
       <h3>Latest operation</h3>
       {operation.id ? <dl className="diagnostic-grid">
         <dt>Operation</dt><dd>{text(operation.id)}</dd>
+        <dt>Scope</dt><dd>{text(operation.scope)}</dd>
+        <dt>Resource</dt><dd>{number(operation.resource)}</dd>
         <dt>Action</dt><dd>{text(operation.action)}</dd>
         <dt>State</dt><dd>{text(operation.state)}</dd>
         <dt>Started</dt><dd>{date(operation.started)}</dd>

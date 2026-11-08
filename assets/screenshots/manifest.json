@@ -17,10 +17,10 @@
     "frontend/src/features/administration/ArtifactsPage.tsx": "05441570e206dfb6391ba1f7ea9cf86049d854c39840aaa92f8b205d85ce5243",
     "frontend/src/features/administration/ChallengeEditorPage.tsx": "a65c2ef06bc85bc758638d10cb0655fd8204f69cc4c4018a7ec7afcdf64e7545",
     "frontend/src/features/administration/ChallengeManagementPage.tsx": "337164616d7903cf7e119bffb9c691ccb61c52b3a002d136217cfc52c2f03a46",
-    "frontend/src/features/administration/InstanceManagementPage.tsx": "5925bb673f849feb1aa7935be1d7f2b3045357575af39175b3dde83d8a8cccb5",
+    "frontend/src/features/administration/InstanceManagementPage.tsx": "1efa40349dca84b27e2da2a22c10d0074bacf309319d95541fd74af08ef0146a",
     "frontend/src/features/administration/OperationsPage.tsx": "03b75ba07ca7d581f3a1474d859271cb3561d8265a46ea99c39b1c4fc0ed70a3",
     "frontend/src/features/administration/PlatformStatusPanel.tsx": "13fd55dfb6a4c3e7abc531560da3fceac7a8dc5298064042f70b2119c0463900",
-    "frontend/src/features/administration/UserManagementPage.tsx": "a57ab77ff5fedde81d949444734674a1c2d7513d82c57972ab5417360ac52816",
+    "frontend/src/features/administration/UserManagementPage.tsx": "95d63fc656050032db482598a05ab535f56827c98159f4eeacb36fa5e186d7f2",
     "frontend/src/features/administration/useArtifactUpload.ts": "1f1fff9299ea5309592c27cf9dcca6990a57a8d857ca5ab076b34e6efe3c46e0",
     "frontend/src/features/auth/AuthPage.tsx": "3d633ada4b1b20d302870bc8479d53b49972bd785d511a9d2991628f810b161b",
     "frontend/src/features/challenges/ChallengePage.tsx": "4411e07db1d7bd9630edb4008cb5387f76e23951da467da5e8c0fa5119ea5277",
@@ -53,8 +53,8 @@
     "frontend/package.json": "bf37ec6e8ba27c3bb77e6f2de8363a04172592f641892cad091bd8c0cff70ed6",
     "frontend/package-lock.json": "f20bf26b9bb3073648dca45b3f2190652fc71ebd12958f016440911d634099ff",
     "tests/browser/support.py": "e6a25390a663b108557557b89bc814498c46bac6e1750b09a2773b29b2411661",
-    "tests/browser/showcase_data.py": "c437889672d661c7c97a718225d55f2789bc8399852ce5c8cf5e7427c7a588fb",
-    "tools/testing/screenshots.py": "f27ce4f8aab6d6c81cb69c04a21113b2166ed822c20bf17d79477bc147e6a7c6"
+    "tests/browser/showcase_data.py": "4da0e39806050ff076ccbb60ce817b167742ff69da4095985482d6ea87034552",
+    "tools/testing/screenshots.py": "03f5339cea3c56e5a3bc036bc152756c79de7999704d77aad534264dd4e9e779"
   },
   "captures": [
     {
@@ -197,8 +197,8 @@
         "height": 1000
       },
       "full_page": true,
-      "document_height": 3657,
-      "sha256": "d89dca9508b100dc07a3e0131c015aa698bfdedb4772c94b7dd213938b6b42bb"
+      "document_height": 4181,
+      "sha256": "c0d897887251c3c8dd3edd88af72498faaab724a2af8e02d158445c399d310da"
     },
     {
       "file": "artifacts_light.png",
@@ -250,7 +250,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "2b9d5fddcc64b4cb1d7f2fe6cbd508dca942f49c041311306c14a2f4554b57d8"
+      "sha256": "f184e867cfcf936066d6fb4b7e2f0a27f4607f9b5b9115bf14d41b646f5def42"
     },
     {
       "file": "instances_light.png",
@@ -263,7 +263,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "383482f2225278567ec432f9f7e344f4b53b4829754f8edb37acfba59773f84f"
+      "sha256": "b75498785bdcc001bf8272f0c14308c62929c89d7f1d38061b230e619f2a569d"
     },
     {
       "file": "instance_details_light.png",
@@ -275,8 +275,8 @@
         "height": 1000
       },
       "full_page": true,
-      "document_height": 1504,
-      "sha256": "1ba8635aa086361d1706dd67f407a7e5ea79b6640a926d06cb4928071fb3bd1d"
+      "document_height": 1569,
+      "sha256": "5bf90f3b2c98777cf0f6135905f5daf0ca4db452315cfbda141a03a2344337c1"
     },
     {
       "file": "login_light.png",
@@ -522,8 +522,8 @@
         "height": 1000
       },
       "full_page": true,
-      "document_height": 3657,
-      "sha256": "fb481826c984d42f325ec088d4a25952d8384d9604598fc5e9b8bc268c63f139"
+      "document_height": 4181,
+      "sha256": "1649f06c2bb3a9ea6eb175de084174bfab73d83a7eab0072f2b033a7e43ab0de"
     },
     {
       "file": "artifacts_dark.png",
@@ -575,7 +575,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "3843e41da65a6a43d6fcc2c863f50a19e04c2c15455e7964c1a96a140bedced4"
+      "sha256": "4e27bb3c25ddd7a0f2ec5b492bf538f64abc7030ddfb9ec4f48e0df58a685a22"
     },
     {
       "file": "instances_dark.png",
@@ -588,7 +588,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "b8abfdbf74832ba1e56b305bdf42f2d83c22181300a3ab036501d140f2871bce"
+      "sha256": "ea7683f07f0fc745e2b97207996fb5f9e092b95c207af422f98fb470c15471f9"
     },
     {
       "file": "instance_details_dark.png",
@@ -600,8 +600,8 @@
         "height": 1000
       },
       "full_page": true,
-      "document_height": 1504,
-      "sha256": "b920e8b2385a24fd61f04f095898301ffd94b4af97e3bfbaa57e5dd2443faaeb"
+      "document_height": 1569,
+      "sha256": "248746942b6c13e9c0d22acf3be77032fad3276f19881a924bb58752391edd65"
     },
     {
       "file": "login_dark.png",

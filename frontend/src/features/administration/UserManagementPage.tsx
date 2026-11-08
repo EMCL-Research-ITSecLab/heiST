@@ -63,6 +63,7 @@ export function ManageUsers() {
                   <td>
                     <Link href={'/profile/' + encodeURIComponent(text(user.username))}><strong>{text(user.username)}</strong></Link>
                     <small className="muted account-email">{text(user.email)}</small>
+                    <small className="muted account-email">ID {number(user.id)}{user.vpn_ip ? ` · VPN ${text(user.vpn_ip)}` : ''}</small>
                   </td>
                   <td>
                     <Badge>{truth(user.is_admin) ? 'Administrator' : 'Student'}</Badge>
@@ -72,7 +73,7 @@ export function ManageUsers() {
                     {number(user.sessions)}
                     {Boolean(operation.state) && <details>
                       <summary>Operation: {text(operation.state)}</summary>
-                      <p className="prose">{text(operation.action)} · {text(operation.id)}</p>
+                      <p className="prose">{text(operation.action)} · {text(operation.id)}<br />Scope: {text(operation.scope)} · Resource: {number(operation.resource)}</p>
                     </details>}
                   </td>
                   <td>{user.running_challenge ? number(user.running_challenge) : '—'}</td>

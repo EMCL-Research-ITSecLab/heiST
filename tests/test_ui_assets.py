@@ -52,6 +52,18 @@ class UiAssetTests(unittest.TestCase):
             with self.subTest(name=name),self.assertRaises(ValueError):
                 inspect_bundle(bundle(standalone=True,static={name:b'<svg/>'}),COMMIT)
 
+    def test_configuration_editor_is_explicit_interactive_and_never_bootstraps_packages(self):
+        from unittest.mock import Mock
+        from heist.installer.cli import main
+        wizard=Mock()
+        with patch('heist.installer.cli.sys.stdin.isatty',return_value=False),patch('heist.installer.cli.import_module') as load:
+            with self.assertRaises(SystemExit):main(['configure','--mode','simple'])
+            load.assert_not_called()
+        with patch('heist.installer.cli.sys.stdin.isatty',return_value=True),patch('heist.installer.cli.import_module',return_value=wizard),patch('heist.installer.bootstrap.bootstrap_requirements') as bootstrap:
+            main(['configure','--mode','simple'])
+            wizard.main.assert_called_once_with(['--mode','simple'])
+            bootstrap.assert_not_called()
+
     def test_standalone_bundle_covers_index_and_presets_and_detects_local_index_edits(self):
         payload = bundle(standalone=True)
         metadata, files = inspect_bundle(payload, COMMIT)

@@ -2,8 +2,7 @@
 """Interactive onboarding wizard for heiST setup.
 
 This script guides a user through the required configuration values,
-writes private installer settings into ``config/installer.env``, and can optionally launch
-existing setup scripts after saving the configuration.
+writes private installer settings into ``config/installer.env``, without launching provisioning or changing infrastructure.
 """
 
 from __future__ import annotations
@@ -11,10 +10,7 @@ import argparse
 import ipaddress
 import os
 import secrets
-import shlex
-import shutil
 import string
-import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -60,7 +56,7 @@ def draw_header() -> None:
 ⠀⠀⠀⠀⠈⠛⠷⠶⣤⣤⣤⣤⠶⠞⠛⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 
 
-The interactive heiST installation wizard.
+The heiST configuration editor.
     """
 
     console.print(logo)
@@ -1245,46 +1241,14 @@ def write_env_file(values: dict[str, str]) -> None:
     )
 
 
-def run_command(command: list[str], cwd: Path) -> None:
-    pretty = " ".join(shlex.quote(part) for part in command)
-    console.print(Panel(pretty, title=f"Running in {cwd}", border_style="yellow"))
-
-    # Run the command inheriting the parent's stdout/stderr so the child
-    # process writes directly to the terminal. This avoids invisible/latency
-    # caused by capturing + buffering and makes the output visible in real time.
-    # Use check_call to raise on non-zero exit.
-    try:
-        subprocess.check_call(command, cwd=str(cwd))
-    except subprocess.CalledProcessError:
-        # Re-raise to allow upstream handling and consistent behavior.
-        raise
-
-
 def choose_action(mode: str) -> str:
-    options = [
-        "Save only",
-        "Save and run setup",
-    ]
-
-    selected = arrow_select_menu(
-        "Post-save action",
-        "Choose what should happen after saving the `.env` file.",
-        options,
-    )
-
-    if selected == 0:
-        return "save"
-    return "both"
+    # Deployment admission is separate from editing private configuration.
+    return "save"
 
 
 def run_selected_action(action: str) -> None:
-    if action == "save":
-        return
-
-    console.print(Panel("[bold]Tip:[/bold] the wizard already saved the final `.env` file before running anything.", border_style="blue"))
-
-    run_command([sys.executable, "-m", "heist.installer.provision"], PROJECT_ROOT)
-    run_command([sys.executable, "-m", "heist.installer.monitoring"], PROJECT_ROOT)
+    if action != "save":
+        raise RuntimeError("Provisioning is gated; configuration editing cannot run legacy setup scripts")
 
 
 def main(argv=None) -> None:
@@ -1314,7 +1278,7 @@ def main(argv=None) -> None:
 
         run_selected_action(action)
 
-        console.print(Panel("[bold green]Setup wizard complete.[/bold green]\nYou can re-run this tool any time to update the configuration.", border_style="green"))
+        console.print(Panel("[bold green]Configuration saved.[/bold green]\nYou can re-run this tool any time to update the configuration.", border_style="green"))
 
     except KeyboardInterrupt:
         try:
@@ -1322,11 +1286,8 @@ def main(argv=None) -> None:
         except KeyboardInterrupt:
             console.print("\n[yellow]Setup wizard cancelled by user without saving.[/yellow]")
             raise SystemExit(1)
-    except subprocess.CalledProcessError as exc:
-        console.print(Panel(f"[red]A setup command failed with exit code {exc.returncode}.[/red]\nReview the command output above, fix the issue, and run the wizard again.", title="Setup failed", border_style="red"))
-        raise SystemExit(exc.returncode)
     except Exception as exc:
-        console.print(Panel(f"[red]Unexpected error:[/red] {exc}", title="Setup failed", border_style="red"))
+        console.print(Panel(f"[red]Unexpected error:[/red] {exc}", title="Configuration failed", border_style="red"))
         raise SystemExit(1)
 
 

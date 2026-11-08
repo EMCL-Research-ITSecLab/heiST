@@ -2,7 +2,8 @@
 
 ## Flask candidate rehearsal — 2026-11-08
 
-Production has not been contacted or changed. The fresh installer and production
+The original rehearsal did not contact production. The later read-only inspection
+and explicitly approved backup work are recorded below. The fresh installer and production
 protocol 3 upgrade gates remain closed. The checks in this dated section used code candidate
 `0512fac847489457c81e54839df67aa3791d518c`. Later application changes have separate
 source-bound suite evidence; this record does not certify those later changes.
@@ -46,6 +47,34 @@ faults, VPN/PKI and archive/renewal acceptance remain required. This disposable
 legacy fixture is not a restored clone of the current production installation.
 Only Chromium ran locally; Firefox/WebKit and a full accessibility review remain
 separate checks.
+
+## Production preparation — 2026-11-08
+
+Read-only inspection found a different starting revision from the legacy pilot:
+`lecture_v2` at `e9dc593f71fbcb80e83cbd0cc34493739177ad46`, with ten tracked
+local modifications. This revision is not declared supported by the release.
+Do not discard its customizations or add it to the allowlist on the strength of
+a database-only test. Production deployment remains unapproved.
+
+The operator explicitly approved online, backup-only VM exports and a narrowly
+scoped recovery export of the application's environment and backend TLS files.
+Archives stream to private off-host storage. These online VM backups and the
+separate logical dump are not a coordinated maintenance checkpoint. Compression
+verification alone does not prove a bootable restore.
+
+A PostgreSQL-16-produced logical dump was restored into a new scratch database on
+the isolation-verified pilot. The audit runner at
+`624032aba47a1b051962d8e359196f3eb3f0fed4` passed all ten real migrations,
+injected migration failure, protected row/schema/role preservation, restricted
+browser-role checks, later-release session invalidation and complete scratch
+recovery. The original application database was not migrated. Its receipt marks
+`starting_commit_declared_supported: false` and
+`whole_platform_upgrade_approved: false`.
+
+Off-host receipt: `database-isolated-audit-receipt.json`, alongside the private
+backup manifest. Production source/customization review, full VM restore, fresh
+installation and clean complete upgrade/failure/rollback acceptance remain open.
+No production services or installed application configuration were changed.
 
 ## Earlier legacy-target validation — 2026-10-30
 

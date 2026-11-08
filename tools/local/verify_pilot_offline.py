@@ -7,14 +7,11 @@ import os
 from pathlib import Path
 import subprocess
 
-from nested_pilot import PORTS, qmp, ssh_args
+from nested_pilot import management_network, pilot_configuration, qmp, ssh_args
 
 
 def validate_command(arguments, work):
-    expected = 'user,id=mgmt,restrict=on'
-    for protocol, local, remote in [('tcp', PORTS['ssh'], 22), ('tcp', PORTS['web'], 443),
-                                    ('tcp', PORTS['proxmox'], 8006), ('udp', PORTS['vpn'], 1194)]:
-        expected += f',hostfwd={protocol}:127.0.0.1:{local}-:{remote}'
+    expected = management_network(pilot_configuration(work))
     networks = [arguments[index + 1] for index, arg in enumerate(arguments[:-1]) if arg == '-netdev']
     if networks != [expected] or any(arg in arguments for arg in ('-nic', '-net', '-readconfig')):
         raise RuntimeError('The actual QEMU process is not the restricted single-network pilot')

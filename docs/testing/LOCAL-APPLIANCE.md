@@ -101,3 +101,17 @@ See [rollout validation](../validation/rollouts.md) for the explicit recovery an
 reboot rehearsals. Retain the verified update baseline and newer rollback safety
 checkpoint. A test overlay also depends on its backing image; keep that image
 until the overlay is removed or converted to a stopped standalone disk.
+
+## Separate pilots on one workstation
+
+Use a new private workspace for each pilot. `nested_pilot.py prepare` accepts
+`--port-offset`, `--memory-mib` and `--cpus`; for example, `--port-offset 10000
+--memory-mib 8192 --cpus 4` prepares a small second host for OS provisioning.
+Check workstation RAM and disk capacity before starting it. Infrastructure and
+challenge guests require additional RAM; a small provisioning host is not a
+production capacity test.
+
+All management forwarding remains bound to `127.0.0.1`. Boot, SSH and the
+current-boot isolation verifier read the same validated mapping from `pilot.json`.
+Old workspaces without a mapping retain the original ports. Never enable
+`--online` when running restored production guests or vulnerable challenges.

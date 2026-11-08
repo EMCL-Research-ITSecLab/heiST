@@ -39,7 +39,34 @@ def check_image(image, sums):
     return value.hexdigest()
 
 
-def prepare(work, image, sums):
+def management_ports(config):
+    """Use one validated loopback port mapping for boot, SSH and isolation proof."""
+    ports = config.get('ports', PORTS)
+    if (not isinstance(ports, dict) or set(ports) != set(PORTS)
+            or any(type(port) is not int or not 1024 <= port <= 65535 for port in ports.values())
+            or len(set(ports.values())) != len(PORTS)):
+        raise ValueError('Declare four distinct unprivileged management ports')
+    return dict(ports)
+
+
+def pilot_configuration(work):
+    path = work / 'pilot.json'
+    return json.loads(path.read_text()) if path.exists() else {}
+
+
+def management_network(config, *, online=False):
+    ports = management_ports(config)
+    network = 'user,id=mgmt,restrict=' + ('off' if online else 'on')
+    for protocol, name, remote in [('tcp', 'ssh', 22), ('tcp', 'web', 443),
+                                   ('tcp', 'proxmox', 8006), ('udp', 'vpn', 1194)]:
+        network += f',hostfwd={protocol}:127.0.0.1:{ports[name]}-:{remote}'
+    return network
+
+
+def prepare(work, image, sums, *, port_offset=0, memory_mib=36864, cpus=12):
+    ports = management_ports({'ports': {name: port + port_offset for name, port in PORTS.items()}})
+    if type(memory_mib) is not int or not 2048 <= memory_mib <= 1048576 or type(cpus) is not int or not 1 <= cpus <= 256:
+        raise ValueError('Declare 2048–1048576 MiB memory and 1–256 CPUs')
     if work.exists():
         raise ValueError('Use a new work directory; existing pilots are never overwritten')
     if shutil.disk_usage(work.parent).free < 70 * 1024**3:
@@ -75,7 +102,7 @@ def prepare(work, image, sums):
     shutil.copy2(ROOT / 'tools/local/prepare-proxmox.sh', work / 'prepare-proxmox.sh')
     (work / 'pilot.json').write_text(json.dumps({
         'schema': 1, 'base': image.name, 'base_sha512': image_hash,
-        'memory_mib': 36864, 'cpus': 12, 'ports': PORTS,
+        'memory_mib': memory_mib, 'cpus': cpus, 'ports': ports,
         'production_accepted': False,
     }, indent=2) + '\n')
     for path in work.rglob('*'):
@@ -111,10 +138,7 @@ def start(work, online=False):
     if nested.exists() and nested.read_text().strip() not in ('Y', '1'):
         raise ValueError('Nested Intel KVM is disabled')
     config = json.loads((work / 'pilot.json').read_text())
-    network = 'user,id=mgmt,restrict=' + ('off' if online else 'on')
-    for protocol, local, remote in [('tcp', PORTS['ssh'], 22), ('tcp', PORTS['web'], 443),
-                                    ('tcp', PORTS['proxmox'], 8006), ('udp', PORTS['vpn'], 1194)]:
-        network += f',hostfwd={protocol}:127.0.0.1:{local}-:{remote}'
+    network = management_network(config, online=online)
     nic_model = config.get('nic_model', 'virtio-net-pci')
     disk_bus = config.get('disk_bus', 'virtio')
     if nic_model not in ('virtio-net-pci', 'e1000') or disk_bus not in ('virtio', 'sata'):
@@ -152,7 +176,8 @@ def start(work, online=False):
 
 
 def ssh_args(work):
-    return ['ssh', '-p', str(PORTS['ssh']), '-i', str(work / 'id_ed25519'),
+    ports = management_ports(pilot_configuration(work))
+    return ['ssh', '-p', str(ports['ssh']), '-i', str(work / 'id_ed25519'),
             '-o', 'IdentitiesOnly=yes', '-o', 'StrictHostKeyChecking=accept-new',
             '-o', f'UserKnownHostsFile={work}/known_hosts', '-o', 'ConnectTimeout=10',
             'root@127.0.0.1']
@@ -204,6 +229,9 @@ if __name__ == '__main__':
     prep = sub.add_parser('prepare')
     prep.add_argument('--image', type=Path, required=True)
     prep.add_argument('--sums', type=Path, required=True)
+    prep.add_argument('--port-offset', type=int, default=0, help='Offset all loopback ports for concurrent isolated pilots')
+    prep.add_argument('--memory-mib', type=int, default=36864)
+    prep.add_argument('--cpus', type=int, default=12)
     boot = sub.add_parser('start')
     boot.add_argument('--online', action='store_true', help='Allow outbound NAT for provisioning; never run vulnerable guests in this mode')
     snapshot = sub.add_parser('checkpoint', help='Verified stopped-disk copy for installation/migration rollback')
@@ -221,7 +249,8 @@ if __name__ == '__main__':
         if args.work == ROOT or ROOT in args.work.parents:
             raise ValueError('Use an absolute external private workspace')
         if args.command == 'prepare':
-            prepare(args.work, args.image.resolve(), args.sums.resolve())
+            prepare(args.work, args.image.resolve(), args.sums.resolve(),
+                    port_offset=args.port_offset, memory_mib=args.memory_mib, cpus=args.cpus)
         elif args.command == 'start':
             start(args.work, args.online)
         elif args.command == 'provision-proxmox':

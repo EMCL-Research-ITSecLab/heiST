@@ -83,6 +83,37 @@ def inspect(vmid, expected_uuid, *, run=command, metadata=os.stat):
     return Template(vmid, text, tuple(disks))
 
 
+def export(template, output, diagnostics, *, timeout):
+    """Stream compressed native VMA bytes; no archive is staged on the host."""
+    started = time.monotonic()
+    producer = consumer = None
+    with tempfile.TemporaryDirectory(prefix='heist-template-') as temporary:
+        configuration = Path(temporary)/'qemu-server.conf'
+        configuration.write_text(template.archive_configuration())
+        configuration.chmod(0o600)
+        try:
+            arguments = ['ionice', '-c', '2', '-n', '7', 'nice', '-n', '10',
+                         'vma', 'create', 'exec:cat', '-c', str(configuration)]
+            for name, path, _, _, _ in template.disks:
+                arguments.extend(['-d', 'format=raw:drive-'+name+'='+path])
+            producer = subprocess.Popen(arguments, stdout=subprocess.PIPE, stderr=diagnostics,
+                                        cwd=temporary, start_new_session=True)
+            consumer = subprocess.Popen(['nice', '-n', '10', 'zstd', '-q', '-T1', '-1', '-c'],
+                                        stdin=producer.stdout, stdout=output, stderr=diagnostics,
+                                        start_new_session=True)
+            producer.stdout.close()
+            consumer_exit = consumer.wait(timeout=timeout)
+            producer_exit = producer.wait(timeout=max(1, timeout-(time.monotonic()-started)))
+            if consumer_exit or producer_exit:
+                raise RuntimeError('Template export failed; inspect the private archive log')
+            output.flush()
+        finally:
+            for process in (consumer, producer):
+                if process is not None and process.poll() is None:
+                    os.killpg(process.pid, signal.SIGKILL)
+                    process.wait(timeout=30)
+
+
 def create(vmid, expected_uuid, destination, *, timeout=7200):
     if os.geteuid() != 0 or not Path('/etc/pve/local').is_dir():
         raise RuntimeError('Run on the declared Proxmox host as root')
@@ -99,37 +130,11 @@ def create(vmid, expected_uuid, destination, *, timeout=7200):
     template = inspect(vmid, expected_uuid)
     if shutil.disk_usage(parent).free < sum(disk[3] for disk in template.disks)+2*1024**3:
         raise RuntimeError('Reserve all raw template capacities plus 2 GiB before export')
-    started = time.monotonic()
-    producer = consumer = None
-    with tempfile.TemporaryDirectory(prefix='.template-', dir=parent) as temporary:
-        configuration = Path(temporary)/'qemu-server.conf'
-        configuration.write_text(template.archive_configuration())
-        configuration.chmod(0o600)
-        with partial.open('xb') as output, log.open('xb') as diagnostics:
-            os.fchmod(output.fileno(), 0o600)
-            os.fchmod(diagnostics.fileno(), 0o600)
-            try:
-                arguments = ['ionice', '-c', '2', '-n', '7', 'nice', '-n', '10',
-                             'vma', 'create', 'exec:cat', '-c', str(configuration)]
-                for name, path, _, _, _ in template.disks:
-                    arguments.extend(['-d', 'format=raw:drive-'+name+'='+path])
-                producer = subprocess.Popen(arguments, stdout=subprocess.PIPE, stderr=diagnostics,
-                                            cwd=temporary, start_new_session=True)
-                consumer = subprocess.Popen(['nice', '-n', '10', 'zstd', '-q', '-T1', '-1', '-c'],
-                                            stdin=producer.stdout, stdout=output, stderr=diagnostics,
-                                            start_new_session=True)
-                producer.stdout.close()
-                consumer_exit = consumer.wait(timeout=timeout)
-                producer_exit = producer.wait(timeout=max(1, timeout-(time.monotonic()-started)))
-                if consumer_exit or producer_exit:
-                    raise RuntimeError('Template export failed; inspect the private archive log')
-                output.flush()
-                os.fsync(output.fileno())
-            finally:
-                for process in (consumer, producer):
-                    if process is not None and process.poll() is None:
-                        os.killpg(process.pid, signal.SIGKILL)
-                        process.wait(timeout=30)
+    with partial.open('xb') as output, log.open('xb') as diagnostics:
+        os.fchmod(output.fileno(), 0o600)
+        os.fchmod(diagnostics.fileno(), 0o600)
+        export(template, output, diagnostics, timeout=timeout)
+        os.fsync(output.fileno())
     if inspect(vmid, expected_uuid) != template:
         raise RuntimeError('Template configuration or read-only source changed during backup')
     os.rename(partial, destination)
@@ -139,14 +144,39 @@ def create(vmid, expected_uuid, destination, *, timeout=7200):
             'mode': 'stopped read-only raw template export', 'native_restore_accepted': False}
 
 
+def stream(vmid, expected_uuid, output, *, timeout=7200):
+    """Read-only off-host export; caller discards incomplete streams on failure."""
+    if os.geteuid() != 0 or not Path('/etc/pve/local').is_dir():
+        raise RuntimeError('Run on the declared Proxmox host as root')
+    template = inspect(vmid, expected_uuid)
+    with tempfile.TemporaryFile() as diagnostics:
+        try:
+            export(template, output, diagnostics, timeout=timeout)
+        except BaseException:
+            diagnostics.seek(0)
+            import sys
+            sys.stderr.buffer.write(diagnostics.read(65536))
+            raise
+    if inspect(vmid, expected_uuid) != template:
+        raise RuntimeError('Template configuration or read-only source changed during export')
+    return {'vmid': vmid, 'configuration_sha256': hashlib.sha256(template.configuration.encode()).hexdigest(),
+            'mode': 'streamed stopped read-only raw template export', 'native_restore_accepted': False}
+
+
 def main():
     import argparse
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--vmid', type=int, required=True)
     parser.add_argument('--uuid', required=True)
-    parser.add_argument('--output', type=Path, required=True)
+    outputs=parser.add_mutually_exclusive_group(required=True)
+    outputs.add_argument('--output', type=Path)
+    outputs.add_argument('--stdout', action='store_true')
     args = parser.parse_args()
-    print(json.dumps(create(args.vmid, args.uuid, args.output)))
+    import sys
+    if args.stdout:
+        print(json.dumps(stream(args.vmid,args.uuid,sys.stdout.buffer)),file=sys.stderr)
+    else:
+        print(json.dumps(create(args.vmid, args.uuid, args.output)))
 
 
 if __name__ == '__main__':

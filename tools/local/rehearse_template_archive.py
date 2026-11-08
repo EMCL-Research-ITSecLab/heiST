@@ -30,7 +30,7 @@ def digest(path):
 def main():
     require_fixture()
     root = private_directory(Path('/root')/('heist-template-archive-'+uuid.uuid4().hex[:12]))
-    identifiers = (900000510, 900000511)
+    identifiers = (900000510, 900000511, 900000512)
     if any(Path(f'/etc/pve/qemu-server/{n}.conf').exists() for n in identifiers):
         raise RuntimeError('Fixture VM IDs already exist; reconcile the prior rehearsal')
     identity = str(uuid.uuid4())
@@ -89,6 +89,23 @@ def main():
         restored = inspect(identifiers[1],identity)
         assert len(restored.disks) == 1 and digest(restored.disks[0][1]) == expected
         assert digest(template.disks[0][1]) == expected
+        streamed = root/f'vzdump-qemu-{identifiers[0]}-2026_11_08-00_00_02.vma.zst'
+        with streamed.open('xb') as output:
+            result = subprocess.run([sys.executable,'-m','heist.maintenance.template_archive',
+                '--vmid',str(identifiers[0]),'--uuid',identity,'--stdout'],stdout=output,
+                stderr=subprocess.PIPE,timeout=180,cwd=ROOT)
+        log.write(result.stderr);log.flush()
+        if result.returncode:raise RuntimeError('Streamed archive fixture failed')
+        evidence=json.loads(result.stderr)
+        assert evidence['vmid']==identifiers[0]
+        run(['qmrestore',str(streamed),str(identifiers[2]),'--storage',storage])
+        configuration = run(['qm','config',str(identifiers[2])])
+        base = next(line.split(': ',1)[1].split(',')[0] for line in configuration.splitlines() if line.startswith('sata0:'))
+        device = Path(run(['pvesm','path',base]))
+        assert device.parent.name == vg
+        run(['lvchange','-a','y','-K',vg+'/'+device.name])
+        assert digest(inspect(identifiers[2],identity).disks[0][1])==expected
+        receipt['streamed_archive_restore_matches']=True
         receipt.update(passed=True, source_still_read_only=True, source_hash=expected,
                        restored_disk_hash_matches=True, restored_uuid_matches=True)
     finally:

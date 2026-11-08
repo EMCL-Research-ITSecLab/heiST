@@ -270,7 +270,7 @@ checkpoint integration before the full rollout is approved.
 
 ## Administrator recovery endpoints
 
-The public API adds `GET /api/admin/users`, `POST /api/admin/users/<id>`,
+The public API adds `GET /api/admin/jobs`, `GET /api/admin/users`, `POST /api/admin/users/<id>`,
 `GET /api/admin/instances` and `GET/POST /api/admin/instances/<id>`. These require
 fresh administrator authority, the usual session/CSRF checks and bounded inputs.
 An actor ID supplied by the browser is ignored; the actor comes from its session.

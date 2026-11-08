@@ -5,6 +5,8 @@ unchanged; passwords and raw host commands never enter diagnostics or journals.
 """
 from contextlib import contextmanager
 import subprocess
+import re
+from itertools import islice
 
 from psycopg2.extras import RealDictCursor
 from heist.platform.jobs.journal import RejectedOperation
@@ -27,7 +29,8 @@ class Administration:
     def database(self, actor):
         db = self.connect()
         try:
-            db.autocommit = False
+            # Fresh statements after an authority lock must see role revocations.
+            db.set_session(isolation_level='READ COMMITTED',autocommit=False)
             with db:
                 with db.cursor() as cursor:
                     cursor.execute("SET LOCAL statement_timeout='5s'")
@@ -92,6 +95,24 @@ class Administration:
             return {'user_id':identifier,'action':action,'sessions_revoked':True}
         return self.journal.execute('user',identifier,'admin_'+action,payload,change,request_id=request_id)
 
+    def jobs(self, actor, page=1, state='all'):
+        with self.database(actor):
+            pass
+        records=[]
+        entries=list(islice(self.journal.directory.iterdir(),5001))
+        for path in entries[:5000]:
+            match=re.fullmatch(r'(user|template|pool|artifact|instance)-([1-9][0-9]{0,18})',path.name)
+            if not match or path.is_symlink() or not path.is_dir():continue
+            current=path/'current.json'
+            if not current.is_file() or current.is_symlink():continue
+            scope,resource=match[1],int(match[2])
+            item=self.operation(scope,resource)
+            if item and (state=='all' or item.get('state')==state):
+                records.append({**item,'scope':scope,'resource':resource})
+        records.sort(key=lambda item:item.get('started',''),reverse=True)
+        offset=(page-1)*25
+        return {'jobs':records[offset:offset+25],'page':page,'has_more':len(records)>offset+25,'truncated':len(entries)>5000}
+
     def instances(self, actor, page=1):
         with self.database(actor) as db, db.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute('''SELECT c.id,c.challenge_template_id,t.name,c.lifecycle_state::text AS state,
@@ -126,12 +147,12 @@ class Administration:
             result['connections']=[dict(row) for row in cursor.fetchall()]
         for machine in result['machines']:machine['status']=self.status(machine['id'])
         owner=result['user_id'] or result.get('pre_assigned_user_id')
-        result['operation']=self.operation('user',owner) if owner else self.operation('instance',identifier)
+        result['operation']=self.operation('instance',identifier) or (self.operation('user',owner) if owner else None)
         return result
 
     def operation(self,scope,identifier):
         try:return self.journal.inspect(scope,identifier)
-        except (OSError,ValueError):return {'state':'UNAVAILABLE'}
+        except (OSError,ValueError,KeyError,TypeError):return {'state':'UNAVAILABLE','scope':scope,'resource':identifier}
 
     @staticmethod
     def vm_status(identifier):
@@ -146,7 +167,7 @@ class Administration:
         if action not in ('release','rebuild','remove'):raise AdminError('Unknown instance action',400)
         item=self.instance(actor,identifier)
         if action in ('release','rebuild') and not item['user_id']:raise AdminError('Instance has no assigned student')
-        if action=='remove' and (item['user_id'] or item['pre_assigned_user_id'] or item['state'] not in ('READY','EXPIRED','TERMINATING')):
+        if action=='remove' and (item['user_id'] or item['state'] not in ('READY','EXPIRED','TERMINATING') or (item['state']=='READY' and item['pre_assigned_user_id'])):
             raise AdminError('Release the student assignment before removing this instance')
         def change():
             # Revalidate authority and assignment after obtaining the operation lease.

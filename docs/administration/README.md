@@ -144,6 +144,12 @@ instance identity, and preserve grades. Rebuild is a fresh exercise deployment; 
 is not a restore of a student's VM snapshot. The existing teardown ownership and
 resource guards still apply. A changed assignment cannot stop a different instance.
 
+**Platform status → Recorded operations** lists journal status across users,
+instances, templates, pools and artifacts, including jobs whose instance record
+has already been removed. Filter by operation state and use the displayed scope,
+resource and operation IDs for reconciliation. Results exclude receipt payloads,
+passwords and raw failure output. The bounded scan reports truncation explicitly.
+
 Infrastructure writes use durable operation IDs and leases. An interrupted action
 is not automatically replayed. Inspect `RUNNING`, `NEEDS_REVIEW` or `UNAVAILABLE`
 status before retrying. User rows retain the operation identity even when a failed

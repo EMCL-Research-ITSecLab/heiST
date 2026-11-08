@@ -96,6 +96,47 @@ class PlatformAdministrationTests(unittest.TestCase):
         with self.assertRaises(AdminError):self.service.change_instance(self.admin,self.instance,'remove')
         self.teardown.assert_not_called()
 
+    def test_remove_expired_instance_accepts_its_historical_student_reservation(self):
+        # stop_challenge expires and unassigns, retaining the historical owner.
+        self.sql('UPDATE users SET running_challenge=NULL WHERE id=%s',(self.user_id,))
+        self.sql("UPDATE challenges SET lifecycle_state='EXPIRED' WHERE id=%s",(self.instance,))
+        self.service.change_instance(self.admin,self.instance,'remove')
+        self.teardown.assert_called_once_with(self.instance,expected_template_id=self.template)
+        self.assertEqual(self.sql('SELECT count(*) FROM challenges WHERE id=%s',(self.instance,)),[(0,)])
+        self.assertEqual(self.sql('SELECT count(*) FROM completed_challenges WHERE id=%s',(self.grade,)),[(1,)])
+        self.launch.assert_not_called()
+
+    def test_failed_remove_exposes_its_instance_journal_despite_historical_owner(self):
+        self.sql('UPDATE users SET running_challenge=NULL WHERE id=%s',(self.user_id,))
+        self.sql("UPDATE challenges SET lifecycle_state='EXPIRED' WHERE id=%s",(self.instance,))
+        self.teardown.side_effect=RuntimeError('fixture host cleanup failure')
+        with self.assertRaises(RuntimeError):self.service.change_instance(self.admin,self.instance,'remove')
+        operation=self.service.instance(self.admin,self.instance)['operation']
+        self.assertEqual(operation['scope'],'instance')
+        self.assertEqual(operation['resource'],self.instance)
+        self.assertEqual(operation['state'],'NEEDS_REVIEW')
+        with self.assertRaises(RecoveryRequired):self.service.change_instance(self.admin,self.instance,'remove')
+        self.assertEqual(self.teardown.call_count,1)
+
+    def test_operation_registry_retains_orphans_without_exposing_receipt_results(self):
+        import json
+        self.service.change_user(self.admin,self.user_id,'revoke_sessions',self.username)
+        current=Path(self.temporary.name)/('user-'+str(self.user_id))/'current.json'
+        value=json.loads(current.read_text());value['result']={'password':'must-stay-private'}
+        current.write_text(json.dumps(value))
+        orphan=Path(self.temporary.name)/'instance-999'
+        orphan.mkdir(mode=0o700)
+        (orphan/'current.json').write_text(json.dumps({'scope':'instance','resource':999,'id':'c'*32,'action':'admin_remove','state':'NEEDS_REVIEW','started':'2026-11-08T12:00:00Z'}))
+        result=self.service.jobs(self.admin)
+        self.assertEqual(len(result['jobs']),2)
+        self.assertNotIn('must-stay-private',str(result))
+        self.assertEqual(self.service.jobs(self.admin,state='NEEDS_REVIEW')['jobs'][0]['resource'],999)
+        with self.assertRaises(AdminError):self.service.jobs(self.user_id)
+        current.write_text('{')
+        unavailable=self.service.jobs(self.admin,state='UNAVAILABLE')['jobs']
+        self.assertEqual(len(unavailable),1)
+        self.assertEqual(unavailable[0]['resource'],self.user_id)
+
     def test_rebuild_stops_removes_then_launches_and_keeps_the_user(self):
         self.service.change_instance(self.admin,self.instance,'rebuild')
         self.teardown.assert_called_once_with(self.instance,expected_template_id=self.template)
@@ -126,6 +167,11 @@ class PlatformAdministrationTests(unittest.TestCase):
         from concurrent.futures import ThreadPoolExecutor
         import threading
         self.sql('UPDATE users SET is_admin=TRUE WHERE id=%s',(self.user_id,))
+        def initially_serializable():
+            connection=self.psycopg2.connect(**self.settings)
+            connection.set_session(isolation_level='SERIALIZABLE')
+            return connection
+        self.service.connect=initially_serializable
         barrier=threading.Barrier(2)
         def change(actor,target,name):
             barrier.wait(timeout=5)

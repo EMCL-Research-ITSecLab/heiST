@@ -113,6 +113,11 @@ inactive while reviewing it, then publish it after import readiness is confirmed
 pagination. Retiring an exercise prevents new allocations; restoring it requires
 ready machine templates. Permanent deletion is a separate confirmed action.
 **Lab overview** reports database, service, storage, lifecycle and archive status.
+Administrators can manage user roles, temporary passwords and sessions, inspect
+all running instances, release/rebuild/remove instances, and review the operation
+registry. See the [administrator guide](docs/administration/README.md) for recovery
+semantics and limits.
+
 Production maintenance and rollback remain CLI operations.
 
 <picture>

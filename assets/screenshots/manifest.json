@@ -17,8 +17,9 @@
     "frontend/src/features/administration/ArtifactsPage.tsx": "05441570e206dfb6391ba1f7ea9cf86049d854c39840aaa92f8b205d85ce5243",
     "frontend/src/features/administration/ChallengeEditorPage.tsx": "a65c2ef06bc85bc758638d10cb0655fd8204f69cc4c4018a7ec7afcdf64e7545",
     "frontend/src/features/administration/ChallengeManagementPage.tsx": "337164616d7903cf7e119bffb9c691ccb61c52b3a002d136217cfc52c2f03a46",
-    "frontend/src/features/administration/InstanceManagementPage.tsx": "1efa40349dca84b27e2da2a22c10d0074bacf309319d95541fd74af08ef0146a",
-    "frontend/src/features/administration/OperationsPage.tsx": "03b75ba07ca7d581f3a1474d859271cb3561d8265a46ea99c39b1c4fc0ed70a3",
+    "frontend/src/features/administration/InstanceManagementPage.tsx": "9589cc59e660dad5f69c1bdeb8a525cc1539d38d4244da39ddd38e5322cf2385",
+    "frontend/src/features/administration/OperationJournalPanel.tsx": "83062b8d8dedac3ea31e8ce3541e0048b7a3218699a73db1a48b20429e8befc5",
+    "frontend/src/features/administration/OperationsPage.tsx": "b17a0b1f552a0415fed7dbe3475e6bf7e2709f3e4f28841414e13fdadce5d369",
     "frontend/src/features/administration/PlatformStatusPanel.tsx": "13fd55dfb6a4c3e7abc531560da3fceac7a8dc5298064042f70b2119c0463900",
     "frontend/src/features/administration/UserManagementPage.tsx": "95d63fc656050032db482598a05ab535f56827c98159f4eeacb36fa5e186d7f2",
     "frontend/src/features/administration/useArtifactUpload.ts": "1f1fff9299ea5309592c27cf9dcca6990a57a8d857ca5ab076b34e6efe3c46e0",
@@ -53,7 +54,7 @@
     "frontend/package.json": "bf37ec6e8ba27c3bb77e6f2de8363a04172592f641892cad091bd8c0cff70ed6",
     "frontend/package-lock.json": "f20bf26b9bb3073648dca45b3f2190652fc71ebd12958f016440911d634099ff",
     "tests/browser/support.py": "e6a25390a663b108557557b89bc814498c46bac6e1750b09a2773b29b2411661",
-    "tests/browser/showcase_data.py": "4da0e39806050ff076ccbb60ce817b167742ff69da4095985482d6ea87034552",
+    "tests/browser/showcase_data.py": "0b7bdf77ad99d62a722189058acdd8300cc1d612190fa3bf4abacd973421f8b7",
     "tools/testing/screenshots.py": "03f5339cea3c56e5a3bc036bc152756c79de7999704d77aad534264dd4e9e779"
   },
   "captures": [
@@ -236,8 +237,8 @@
         "height": 1000
       },
       "full_page": true,
-      "document_height": 1597,
-      "sha256": "1df797df753448a93eacade414c87a11e32e358106742c2747409560765b8d73"
+      "document_height": 2035,
+      "sha256": "0259d3452fbcc84cf8fda5594510b190b249ef9739c3331fda15dd8cfda35b89"
     },
     {
       "file": "users_light.png",
@@ -561,8 +562,8 @@
         "height": 1000
       },
       "full_page": true,
-      "document_height": 1597,
-      "sha256": "47ebf8503eac4fbdff6ab7a16c54e9249adf352e7797928a0d7bdb2f284c14f5"
+      "document_height": 2035,
+      "sha256": "4b743f8290a5418943ac24a19a8f4d0741d56ad8ac7913c38f44105aa45d8aaa"
     },
     {
       "file": "users_dark.png",
@@ -588,7 +589,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "ea7683f07f0fc745e2b97207996fb5f9e092b95c207af422f98fb470c15471f9"
+      "sha256": "b8abfdbf74832ba1e56b305bdf42f2d83c22181300a3ab036501d140f2871bce"
     },
     {
       "file": "instance_details_dark.png",

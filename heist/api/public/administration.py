@@ -104,3 +104,11 @@ def manage_instance(identifier):
         rate_limit('admin-instances',str(actor['id']),20)
         payload['action']=choice(body().get('action'),('release','rebuild','remove'),'instance action')
     return internal().request('admin_instance_change' if request.method=='POST' else 'admin_instance',payload)
+
+
+@blueprint.get('/admin/jobs')
+def jobs():
+    actor=require_admin()
+    page,_,_=pagination(25)
+    state=choice(request.args.get('state','all'),('all','RUNNING','NEEDS_REVIEW','SUCCEEDED','REJECTED','RESOLVED','UNAVAILABLE'),'operation state')
+    return internal().request('admin_jobs',{'actor_id':actor['id'],'page':page,'state':state})

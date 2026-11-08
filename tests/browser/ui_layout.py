@@ -274,6 +274,7 @@ class LayoutTests(BrowserFixture):
         self.page.get_by_role('dialog').wait_for(state='hidden')
         self.assertEqual(json.loads(self.mutations[-1][1]),{'action':'revoke_sessions','confirmation':'student01'})
         self.settled('/manage-instances')
+        self.assertTrue(self.page.get_by_role('row').filter(has_text='102').get_by_role('button',name='Remove',exact=True).is_enabled())
         active=self.page.get_by_role('row').filter(has_text='student01')
         active.get_by_role('button',name='Inspect',exact=True).click()
         self.page.get_by_role('heading',name='Latest operation',exact=True).wait_for()
@@ -286,6 +287,12 @@ class LayoutTests(BrowserFixture):
         self.page.get_by_role('dialog').wait_for(state='hidden')
         self.assertEqual(self.mutations[-1][0],'admin/instances/101')
         self.assertEqual(json.loads(self.mutations[-1][1]),{'action':'rebuild'})
+        self.settled('/operations')
+        self.page.get_by_role('heading',name='Recorded operations',exact=True).wait_for()
+        self.assertIn('NEEDS_REVIEW',self.page.locator('main').inner_text())
+        with self.page.expect_response(lambda response: '/api/admin/jobs?' in response.url and 'state=NEEDS_REVIEW' in response.url):
+            self.page.get_by_label('Operation state',exact=True).select_option('NEEDS_REVIEW')
+        self.assertTrue(any('state=NEEDS_REVIEW' in url for method,endpoint,url in self.requests if endpoint=='admin/jobs'))
 
 
 if __name__ == '__main__':

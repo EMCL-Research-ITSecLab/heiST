@@ -1,3 +1,4 @@
+import { OperationJournalPanel } from './OperationJournalPanel.tsx';
 import { PlatformStatusPanel } from './PlatformStatusPanel.tsx';
 import { Badge, Card, Empty, PageTitle, ResourceState, Stat } from '../../components/ui.tsx';
 import { number, payload, row, rows, text, truth } from '../../lib/data.ts';
@@ -12,6 +13,7 @@ export function Operations() {
       description="Availability and deployment activity for the exercises you manage."
       action={<button className="secondary" onClick={resource.reload}>Refresh ↻</button>} />
     <PlatformStatusPanel />
+    <OperationJournalPanel />
     <ResourceState {...resource}>
       <div className="stats-grid">
         <Stat label="Managed challenges" value={stats.total_challenges ?? challenges.length} />

@@ -52,7 +52,7 @@ export function ManageInstances() {
                     <button className="secondary small" onClick={() => choose(instance, 'release')}>Release</button>
                     <button className="secondary small" onClick={() => choose(instance, 'rebuild')}>Rebuild</button>
                   </> : <button className="danger small"
-                    disabled={Boolean(instance.pre_assigned_user_id) || !removableStates.includes(text(instance.state))}
+                    disabled={(instance.state === 'READY' && Boolean(instance.pre_assigned_user_id)) || !removableStates.includes(text(instance.state))}
                     onClick={() => choose(instance, 'remove')}>Remove</button>}
                 </div></td>
               </tr>)}

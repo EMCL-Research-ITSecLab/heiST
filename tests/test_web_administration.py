@@ -81,7 +81,7 @@ class AdministrationTests(unittest.TestCase):
     def test_user_and_instance_management_require_admin_and_ignore_forged_actor(self):
         self.assertEqual(self.request('admin/users').status_code,401)
         self.login()
-        for path in ('admin/users','admin/instances','admin/instances/1'):
+        for path in ('admin/users','admin/jobs','admin/instances','admin/instances/1'):
             self.assertEqual(self.request(path).status_code,403)
         self.platform.request.assert_not_called()
         self.update_user('is_admin=TRUE')
@@ -93,6 +93,8 @@ class AdministrationTests(unittest.TestCase):
         self.assertEqual(self.platform.request.call_args.args,('admin_user_change',{'actor_id':self.user_id,'user_id':2,'action':'role','confirmation':'student','administrator':True}))
         self.assertEqual(self.request('admin/instances/3','POST',json={'action':'rebuild','actor_id':999}).status_code,200)
         self.assertEqual(self.platform.request.call_args.args,('admin_instance_change',{'actor_id':self.user_id,'instance_id':3,'action':'rebuild'}))
+        self.assertEqual(self.request('admin/jobs?state=NEEDS_REVIEW').status_code,200)
+        self.assertEqual(self.platform.request.call_args.args,('admin_jobs',{'actor_id':self.user_id,'page':1,'state':'NEEDS_REVIEW'}))
         self.platform.reset_mock()
         self.assertEqual(self.request('admin/users/2','POST',json={'action':'role','administrator':'true','confirmation':'student'}).status_code,400)
         self.assertEqual(self.request('admin/instances/3','POST',json={'action':'shell'}).status_code,400)

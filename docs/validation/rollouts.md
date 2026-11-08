@@ -3,9 +3,9 @@
 ## Flask candidate rehearsal — 2026-11-08
 
 Production has not been contacted or changed. The fresh installer and production
-protocol 3 upgrade gates remain closed. The current tested code candidate is
-`0512fac847489457c81e54839df67aa3791d518c`; documentation-only follow-up commits
-record these results separately.
+protocol 3 upgrade gates remain closed. The checks in this dated section used code candidate
+`0512fac847489457c81e54839df67aa3791d518c`. Later application changes have separate
+source-bound suite evidence; this record does not certify those later changes.
 
 | Check | Result |
 |---|---|

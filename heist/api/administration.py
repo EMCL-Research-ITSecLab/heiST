@@ -49,6 +49,15 @@ def blueprint(factory):
                 request_id=Journal.request_id(request.headers.get('Idempotency-Key')))
         return run(change)
 
+    @routes.get('/admin/jobs')
+    def jobs():
+        def load(service,data):
+            state=data.get('state','all')
+            if state not in ('all','RUNNING','NEEDS_REVIEW','SUCCEEDED','REJECTED','RESOLVED','UNAVAILABLE'):
+                raise AdminError('Unknown operation state',400)
+            return service.jobs(identifier(data.get('actor_id')),page(data),state)
+        return run(load)
+
     @routes.get('/admin/instances')
     def instances():return run(lambda service,data:service.instances(identifier(data.get('actor_id')),page(data)))
 

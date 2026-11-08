@@ -1400,7 +1400,9 @@
     "tests": [
       "tests.test_platform_administration.PlatformAdministrationTests.test_remove_refuses_assigned_reserved_and_provisioning_instances",
       "tests.test_platform_administration.PlatformAdministrationTests.test_rebuild_stops_removes_then_launches_and_keeps_the_user",
-      "tests.test_platform_administration.PlatformAdministrationTests.test_failed_rebuild_blocks_replay_and_does_not_start_another_instance"
+      "tests.test_platform_administration.PlatformAdministrationTests.test_failed_rebuild_blocks_replay_and_does_not_start_another_instance",
+      "tests.test_platform_administration.PlatformAdministrationTests.test_remove_expired_instance_accepts_its_historical_student_reservation",
+      "tests.test_platform_administration.PlatformAdministrationTests.test_failed_remove_exposes_its_instance_journal_despite_historical_owner"
     ],
     "rationale": "Checks refusal before teardown, exact instance/template arguments, grade retention, old-instance removal before launch and durable interruption blocking. VM effects are injected; native teardown acceptance is separate."
   },
@@ -1410,5 +1412,18 @@
       "tests.test_platform_administration.VMStatusTests.test_vm_status_timeout_is_visible_without_exposing_the_exception"
     ],
     "rationale": "Verifies a fixed argv without shell expansion, a two-second limit and sanitized unavailable state on command failure or timeout."
+  },
+  "heist/platform/administration.py::Administration.jobs": {
+    "tests": [
+      "tests.test_platform_administration.PlatformAdministrationTests.test_operation_registry_retains_orphans_without_exposing_receipt_results"
+    ],
+    "rationale": "Checks safe journal metadata and server-side state filtering, orphaned instance jobs without a database record, omitted receipt results and denial for non-admins."
+  },
+  "heist/platform/administration.py::Administration.operation": {
+    "tests": [
+      "tests.test_platform_administration.PlatformAdministrationTests.test_operation_registry_retains_orphans_without_exposing_receipt_results",
+      "tests.test_platform_administration.PlatformAdministrationTests.test_failed_remove_exposes_its_instance_journal_despite_historical_owner"
+    ],
+    "rationale": "Checks orphaned failure-journal visibility despite historical user ownership and explicit UNAVAILABLE resource identity for a malformed receipt, without leaking receipt contents."
   }
 }

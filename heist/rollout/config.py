@@ -1,5 +1,5 @@
 """A deployment description contains paths and host identities, never credentials."""
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import json
 from pathlib import Path
 
@@ -40,8 +40,11 @@ class Deployment:
     web_certificate_key: str | None = None
     web_hostname: str | None = None
     wazuh_container: str | None = None
+    reviewed_source_files: dict[str,str] = field(default_factory=dict)
 
     def __post_init__(self):
+        from .source_overrides import validate
+        validate(self.reviewed_source_files)
         for name in ('installation','state_directory','backup_directory','backend_env','api_certificate','web_root','web_certificate'):
             path=Path(getattr(self,name))
             if not path.is_absolute() or '..' in path.parts or '\n' in str(path):

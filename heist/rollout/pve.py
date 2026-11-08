@@ -187,11 +187,18 @@ class PVE:
                 raise RuntimeError('Release/configuration changed after planning')
         if self.database.host!=self.config.vm('database').host:
             raise RuntimeError('The configured database is not the checkpointed database VM')
-        # Only known generated installer shims/metadata may differ from Git.
+        # Unknown source changes still fail; operator-reviewed hashes are bound
+        # to the immutable deployment configuration and privately checkpointed.
+        from .source_overrides import capture
+        reviewed,modes=capture(self.installation,getattr(self.config,'reviewed_source_files',{}))
+        self.generated_modes=modes
         dirty=git(self.installation,'diff','--name-only','HEAD').decode().splitlines()
-        generated={}
+        generated=dict(reviewed)
         for name in dirty:
             path=self.installation/name
+            if name in reviewed:
+                generated[name]=reviewed[name]
+                continue
             if name.startswith('heist.egg-info/'):
                 generated[name]=path.read_bytes().hex()
                 continue
@@ -325,7 +332,8 @@ class PVE:
             web_services=json.loads(self.remote(self.config.vm('web'),web.CAPTURE_SERVICES))
             web_runtime=json.loads(self.remote(self.config.vm('web'),web.CAPTURE_RUNTIME, {'root': self.config.web_root}))
             transaction.save(host_services=services, web_services=web_services, web_runtime=web_runtime,
-                generated=getattr(self, 'generated', {}), legacy_shims=getattr(self, 'legacy_shims', {}))
+                generated=getattr(self, 'generated', {}), generated_modes=getattr(self,'generated_modes',{}),
+                legacy_shims=getattr(self, 'legacy_shims', {}))
         self._host_guard()
         self.remote(self.config.vm('web'),web.INSTALL_GUARD,{'program':web.FIREWALL})
         self.remote(self.config.vm('web'),web.QUIESCE)
@@ -475,8 +483,22 @@ class PVE:
                 if producer.poll() is None:producer.kill();producer.wait()
 
     def _checkout(self,transaction,commit):
-        for name in transaction.data.get('generated',{}):
-            if git(self.installation,'ls-tree','HEAD','--',name):git(self.installation,'restore','--source=HEAD','--',name)
+        current=revision(self.installation,'HEAD')
+        if current==transaction.plan.source:
+            known=transaction.data.get('generated',{})
+        elif current==transaction.plan.target:
+            known=transaction.data.get('expected_target_generated',{})
+        else:
+            raise RuntimeError('Cannot switch an unrecognized installed source revision')
+        dirty=git(self.installation,'diff','--name-only','HEAD').decode().splitlines()
+        for name in dirty:
+            path=self.installation/name
+            if name not in known or path.is_symlink() or not path.is_file() or path.read_bytes().hex()!=known[name]:
+                raise RuntimeError('Tracked source changed after checkpoint: '+name)
+        # This also covers returning from an older customized source after a
+        # failed deliberate rollback. Validate every byte before clearing any file.
+        for name in dirty:
+            git(self.installation,'restore','--source=HEAD','--staged','--worktree','--',name)
         tracked = set(git(self.installation, 'ls-files', '-z').decode().split('\0'))
         # Exact legacy wrappers are private checkpoint data, not maintained commands.
         for name, hexadecimal in transaction.data.get('legacy_shims', {}).items():
@@ -556,6 +578,13 @@ class PVE:
         if revision(self.installation, 'HEAD') != expected:
             raise RuntimeError('Installed commit differs from the transaction')
         allowed = transaction.data.get('expected_target_generated', {}) if target else transaction.data.get('generated', {})
+        modes=transaction.data.get('expected_target_generated_modes',{}) if target else transaction.data.get('generated_modes',{})
+        for name,data in allowed.items():
+            path=self.installation/name
+            if not path.is_file() or path.is_symlink() or path.read_bytes().hex()!=data:
+                raise RuntimeError('Checkpointed source differs: '+name)
+            if name in modes and path.stat().st_mode & 0o7777 != modes[name]:
+                raise RuntimeError('Checkpointed source mode differs: '+name)
         for name in git(self.installation, 'diff', '--name-only', 'HEAD').decode().splitlines():
             path = self.installation/name
             if name not in allowed or not path.is_file() or path.read_bytes().hex() != allowed[name]:
@@ -660,9 +689,11 @@ class PVE:
             path=self.installation/name;path.write_bytes(bytes.fromhex(hexadecimal));path.chmod(0o755)
         for name,hexadecimal in checkpoint.data.get('generated',{}).items():
             path=self.installation/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(bytes.fromhex(hexadecimal))
+            if name in checkpoint.data.get('generated_modes',{}):path.chmod(checkpoint.data['generated_modes'][name])
         transaction.save(expected_target_hashes=checkpoint.data['protected_hashes'],
             resume_preserved_files=checkpoint.data.get('preserved_files', {}),
             expected_target_generated=checkpoint.data.get('generated', {}),
+            expected_target_generated_modes=checkpoint.data.get('generated_modes',{}),
             resume_web_runtime=checkpoint.data.get('web_runtime'),
             resume_host_services=checkpoint.data['host_services'],resume_web_services=checkpoint.data['web_services'])
         self.start_vms()

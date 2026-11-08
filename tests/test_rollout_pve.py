@@ -120,8 +120,11 @@ class RestoreIdentityTests(unittest.TestCase):
             root = Path(directory);(root/'bin').mkdir()
             wrapper = root/'bin/api';wrapper.write_text('new maintained wrapper')
             adapter = PVE.__new__(PVE);adapter.installation = root;adapter.command = Mock()
-            transaction = Transaction(root/'state', {'legacy_shims': {'bin/api': b'old generated'.hex()}})
-            with patch('heist.rollout.pve.git', return_value=b'bin/api\0'):
+            transaction = Transaction(root/'state', {'legacy_shims': {'bin/api': b'old generated'.hex()},
+                'plan':Plan(1,str(root),'baseline','target','0.2.0','manifest','sha','config',(),(),()).to_dict()})
+            def git_result(repository,*args):return b'' if args[0]=='diff' else b'bin/api\0'
+            with patch('heist.rollout.pve.revision',return_value='baseline'), \
+                 patch('heist.rollout.pve.git',side_effect=git_result):
                 adapter._checkout(transaction, 'baseline')
             self.assertEqual(wrapper.read_text(), 'new maintained wrapper')
             adapter.command.assert_called_once()

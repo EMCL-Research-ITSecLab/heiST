@@ -1,4 +1,53 @@
-# Rollout validation — 2026-10-30
+# Rollout validation
+
+## Flask candidate rehearsal — 2026-11-08
+
+Production has not been contacted or changed. The fresh installer and production
+protocol 3 upgrade gates remain closed. The current tested code candidate is
+`0512fac847489457c81e54839df67aa3791d518c`; documentation-only follow-up commits
+record these results separately.
+
+| Check | Result |
+|---|---|
+| Clean source-bound Python suite on the isolated pilot | 427 passed, zero skips/failures; real disposable PostgreSQL and privileged namespace prerequisites enabled |
+| TypeScript and frontend unit suite | Passed; 12 unit tests |
+| Chromium fixture browser suite | 23 passed; 120 page/size/theme layout combinations, enrollment, YAML import and live topology |
+| Real browser / HTTPS / Flask / restricted PostgreSQL | 4 passed, including lecture-code refusal and transactional policy acceptance |
+| Documentation | 20 source-bound screenshots; preview now fits narrow cards without clipping machines |
+| Legacy SQL migration rehearsal at `9bf3ac6` | All ten migrations, SQL/role rollback after injected failure, session behavior, role replacement and scratch-database restoration passed |
+| Native whole-platform staging at `65f784b` | Target deployment, all ten migrations and target verification passed before the deliberate precommit failure |
+| Recovery of that staging transaction | Initial recovery interrupted by a signer timeout; explicit journal resume completed all nine VM restores, eight source images and original source/configuration |
+| Independent recovery postcheck | Three running core VM identities, six stopped template identities, original SQL counts and protected student/grade hashes matched; maintenance cleared |
+
+The native staging transaction was `20261107T183530Z-a0f4ae4607df`. It reused the
+explicit complete recovered disposable baseline after verifying protected data,
+host configuration, template identities and every archive. It never committed or
+opened the candidate. Its original frozen runner signed a new PVE ticket for every
+status poll; a 15-second signer timeout interrupted monitoring-VM recovery.
+Maintenance stayed closed. A fresh process resumed the recorded task identities;
+no restore was blindly resubmitted.
+
+This is **a recovered interruption, not a clean whole-platform rehearsal**. The
+journal retains both the planned verification fault and the unexpected timeout.
+The local adapter now reuses tickets in memory for five minutes and bounds signer
+execution to 60 seconds. Regression tests verify refresh expiry/failure and that
+polling recovery uses GET on the original task without another POST. A pinned,
+read-only native PVE inventory check passed with that adapter. The complete native
+staging/fault rehearsal has not yet been rerun with this fix or the compact preview.
+
+The independent postcheck found three users, two challenge templates, six machine
+templates, eight disk-file records and zero allocated challenges, with protected
+student/grade hashes unchanged. Temporary database tests use separate databases
+and roles; they do not migrate the original application database.
+
+A clean full rehearsal of the exact final release, fresh-host Flask provisioning
+and installer recovery, committed upgrade/rollback with newer student data, reboot
+faults, VPN/PKI and archive/renewal acceptance remain required. This disposable
+legacy fixture is not a restored clone of the current production installation.
+Only Chromium ran locally; Firefox/WebKit and a full accessibility review remain
+separate checks.
+
+## Earlier legacy-target validation — 2026-10-30
 
 The local release mechanism passed update and recovery rehearsals. This is not
 production acceptance: production has not been contacted or changed. The fixture

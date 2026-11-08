@@ -123,5 +123,9 @@ and privacy pages into public React routes, and requires unchecked, version-boun
 acceptance at signup. The server checks all prerequisites and records acceptance
 in the same transaction as account creation. The editor restores the live network
 preview with native SVG and an accessible connection list, including YAML imports.
-The next native release gate rehearses the full immutable SQL migration chain on a
-restored legacy scratch database before full-platform deployment acceptance.
+The full immutable SQL migration chain passed against a restored legacy scratch
+database. Native platform staging at `65f784b` passed target verification, then
+recovered the original nine VMs and source images after the deliberate precommit
+failure and an unexpected signer timeout. Explicit journal resume and an independent
+baseline postcheck succeeded. This was not a clean acceptance run; the signer fix
+and final UI need a complete native rerun. See [current validation](ROLLOUT-VALIDATION.md).

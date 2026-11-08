@@ -269,7 +269,8 @@ if retired:
     if (parent.is_symlink() or parent.stat().st_uid!=0 or parent.stat().st_mode & 0o077
             or Path(retired)!=parent/'root' or not Path(retired).is_dir()):
         raise RuntimeError('Legacy PHP files are not confined to private administrator storage')
-    if Path(json.load(open('/var/lib/heist-retired-web/retirement.json'))['source']).exists():
+    record=json.loads((parent/'retirement.json').read_text())
+    if Path(record['source']).exists() or Path(record['environment_source']).exists():
         raise RuntimeError('Old PHP serving root was recreated during deployment')
     if subprocess.run(['runuser','-u','heist-web','--','test','-x',str(parent)],capture_output=True).returncode==0:
         raise RuntimeError('Browser service can access retired PHP credentials')

@@ -287,6 +287,9 @@ class PVE:
         else:
             before = {name: hashlib.sha256(blob(self.installation, plan.source, 'webserver/html/' + name)).hexdigest()
                       for name in plan.web_before if name != 'composer.lock'}
+            if getattr(self.config,'reviewed_source_commit',None)==plan.source:
+                from .source_overrides import web_before
+                before=web_before(before,getattr(self.config,'reviewed_web_files',{}))
             self.remote(self.config.vm('web'), web.VALIDATE,
                         {'root': self.config.web_root, 'before': before, 'after': {name: None for name in plan.web_after if name != 'composer.lock'}})
         # Prove the asynchronous API transport before entering maintenance.
@@ -310,6 +313,8 @@ class PVE:
         from .browser_configuration import legacy_database_role
         from .browser_role import inspect_legacy
         name=legacy_database_role(self.installation,self.environment)
+        if self.remote(self.config.vm('web'),web.LEGACY_ROLE,{'root':self.config.web_root})!=name:
+            raise RuntimeError('Deployed legacy PHP database role differs from installer settings')
         with closing(self.database.connect()) as connection:
             connection.set_session(readonly=True)
             with connection.cursor() as cursor:inspect_legacy(cursor,name)

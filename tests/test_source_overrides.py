@@ -4,10 +4,18 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
-from heist.rollout.source_overrides import capture, validate, for_source
+from heist.rollout.source_overrides import capture, validate, for_source, validate_web, web_before
 
 
 class SourceOverrideTests(unittest.TestCase):
+    def test_only_reviewed_existing_web_release_paths_can_override_legacy_hashes(self):
+        before={'partials/footer.html':'a'*64}
+        self.assertEqual(web_before(before,{'partials/footer.html':'b'*64}),{'partials/footer.html':'b'*64})
+        self.assertEqual(before,{'partials/footer.html':'a'*64})
+        with self.assertRaisesRegex(RuntimeError,'not tracked'):
+            web_before(before,{'unmanaged.php':'b'*64})
+        for name in ('.','../escape.php','/etc/shadow','.env','vendor/private.php','uploads/user.php'):
+            with self.subTest(name=name),self.assertRaises(ValueError):validate_web({name:'a'*64})
     def test_legacy_review_does_not_require_removed_paths_on_the_newer_source(self):
         old='a'*40;new='b'*40
         self.path.unlink()

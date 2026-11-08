@@ -19,4 +19,5 @@ FINISH = _action('finish')
 
 VALIDATE = _action('validate')
 CAPTURE_RUNTIME = _action('runtime')
+LEGACY_ROLE = _action('legacy-role')
 VERIFY_RUNTIME = _action('verify-runtime')

@@ -76,30 +76,40 @@ def retire_legacy_root(legacy_root):
     """Keep old PHP secrets outside both serving roots and service accounts."""
     source=Path(legacy_root)
     target=RETIRED/'root'
+    environment=source.parent/'.env'
+    retired_environment=RETIRED/'environment'
     record=RETIRED/'retirement.json'
     if (not source.is_absolute() or source==RETIRED or source in RETIRED.parents or RETIRED in source.parents
-            or any(path.is_symlink() for path in (source,*source.parents,RETIRED,*RETIRED.parents,target,record))):
+            or any(path.is_symlink() for path in (source,*source.parents,RETIRED,*RETIRED.parents,
+                                                  target,record,environment,retired_environment))):
         raise RuntimeError('Unsafe legacy web retirement path')
     if RETIRED.exists() and (RETIRED.stat().st_uid!=os.geteuid() or RETIRED.stat().st_mode & 0o077):
         raise RuntimeError('Retired web files require a private administrator-owned directory')
     if not source.exists():
         if target.exists() or record.exists():
-            if not target.is_dir() or not record.is_file() or json.loads(record.read_text())!={'source':str(source),'target':str(target)}:
+            expected={'source':str(source),'target':str(target),'environment_source':str(environment),
+                      'environment_target':str(retired_environment) if retired_environment.is_file() else None}
+            if (not target.is_dir() or not record.is_file() or environment.exists()
+                    or json.loads(record.read_text())!=expected):
                 raise RuntimeError('Reconcile the existing retired web root')
             return str(target)
         return None
-    if not source.is_dir() or target.exists() or record.exists():
+    if (not source.is_dir() or target.exists() or record.exists() or retired_environment.exists()
+            or (environment.exists() and not environment.is_file())):
         raise RuntimeError('Refusing to replace an existing legacy web retirement')
     RETIRED.mkdir(mode=0o700,exist_ok=True)
     info=RETIRED.stat()
     if info.st_uid!=os.geteuid() or info.st_mode & 0o077:
         raise RuntimeError('Retired web files require a private administrator-owned directory')
     source.rename(target)
+    had_environment=environment.exists()
+    if had_environment:environment.rename(retired_environment)
     for path in (source.parent,RETIRED):
         descriptor=os.open(path,os.O_RDONLY|os.O_DIRECTORY)
         try:os.fsync(descriptor)
         finally:os.close(descriptor)
-    write(record,json.dumps({'source':str(source),'target':str(target)},sort_keys=True)+'\n')
+    write(record,json.dumps({'source':str(source),'target':str(target),'environment_source':str(environment),
+                             'environment_target':str(retired_environment) if had_environment else None},sort_keys=True)+'\n')
     return str(target)
 
 

@@ -42,14 +42,16 @@ class Deployment:
     wazuh_container: str | None = None
     reviewed_source_files: dict[str,str] = field(default_factory=dict)
     reviewed_source_commit: str | None = None
+    reviewed_web_files: dict[str,str] = field(default_factory=dict)
     acceptance_receipt: str | None = None
     acceptance_sha256: str | None = None
 
     def __post_init__(self):
-        from .source_overrides import validate
+        from .source_overrides import validate,validate_web
         validate(self.reviewed_source_files)
+        validate_web(self.reviewed_web_files)
         import re
-        if bool(self.reviewed_source_files)!=(self.reviewed_source_commit is not None) or (
+        if bool(self.reviewed_source_files or self.reviewed_web_files)!=(self.reviewed_source_commit is not None) or (
                 self.reviewed_source_commit is not None and re.fullmatch('[a-f0-9]{40}',self.reviewed_source_commit) is None):
             raise ValueError('Bind reviewed source files to their full original commit')
         if (self.acceptance_receipt is None)!=(self.acceptance_sha256 is None):

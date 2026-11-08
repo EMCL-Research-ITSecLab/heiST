@@ -8,6 +8,16 @@ from heist.rollout import guest_agent, guest_firewall
 
 
 class WebMaintenanceTests(unittest.TestCase):
+    def test_legacy_role_inspection_returns_only_one_deployed_role(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);environment=root/'.env';config={'root':str(root/'html')}
+            environment.write_text('DB_PASSWORD=never-return-this\nDB_USER="api_user" # deployed\n')
+            self.assertEqual(guest_agent.legacy_database_user(config),'api_user')
+            environment.write_text('DB_USER=api_user\nDB_USER=another\n')
+            with self.assertRaisesRegex(RuntimeError,'exactly one'):guest_agent.legacy_database_user(config)
+            environment.unlink();environment.symlink_to(root/'missing')
+            with self.assertRaisesRegex(RuntimeError,'regular'):guest_agent.legacy_database_user(config)
+
     def test_runtime_marker_is_visible_without_access_to_private_state(self):
         with tempfile.TemporaryDirectory() as directory:
             marker = Path(directory)/'public-marker'

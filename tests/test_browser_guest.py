@@ -14,11 +14,14 @@ class BrowserGuestTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root=Path(temporary);source=root/'html';source.mkdir()
             (source/'.env').write_bytes(b'private legacy configuration')
+            (root/'.env').write_bytes(b'private legacy parent environment')
             retired=root/'retired'
             with patch('heist.rollout.browser_guest.RETIRED',retired):
                 target=Path(retire_legacy_root(source))
                 self.assertFalse(source.exists())
                 self.assertEqual((target/'.env').read_bytes(),b'private legacy configuration')
+                self.assertFalse((root/'.env').exists())
+                self.assertEqual((retired/'environment').read_bytes(),b'private legacy parent environment')
                 self.assertEqual(retired.stat().st_mode & 0o777,0o700)
                 self.assertEqual(retire_legacy_root(source),str(target))
                 retired.chmod(0o755)

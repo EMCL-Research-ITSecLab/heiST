@@ -12,7 +12,7 @@ def validate(values):
         raise ValueError('Reviewed source files must map tracked paths to SHA256')
     for name, digest in values.items():
         path=PurePosixPath(name) if isinstance(name,str) else None
-        if (path is None or path.is_absolute() or '..' in path.parts or str(path)!=name
+        if (path is None or not path.parts or path.is_absolute() or '..' in path.parts or str(path)!=name
                 or not (name=='bin/install' or (path.parts[0] in ('backend','monitoring','setup','heist')
                          and path.suffix in ('.py','.ps1','.sh')))
                 or not isinstance(digest,str) or re.fullmatch('[a-f0-9]{64}',digest) is None):
@@ -48,3 +48,20 @@ def for_source(values, reviewed_commit, current_commit):
     if values and (not isinstance(reviewed_commit,str) or re.fullmatch('[a-f0-9]{40}',reviewed_commit) is None):
         raise ValueError('Bind reviewed source files to their original commit')
     return values if current_commit==reviewed_commit else {}
+
+
+def validate_web(values):
+    if not isinstance(values,dict):raise ValueError('Reviewed web files must map paths to SHA256')
+    for name,digest in values.items():
+        path=PurePosixPath(name) if isinstance(name,str) else None
+        if (path is None or not path.parts or path.is_absolute() or '..' in path.parts or str(path)!=name
+                or '.env' in path.parts or path.parts[0] in ('vendor','uploads')
+                or not isinstance(digest,str) or re.fullmatch('[a-f0-9]{64}',digest) is None):
+            raise ValueError('Declare reviewed managed web source paths and SHA256 values')
+
+
+def web_before(before,values):
+    validate_web(values)
+    if not set(values).issubset(before):
+        raise RuntimeError('Reviewed web source is not tracked in the legacy release')
+    return {**before,**values}

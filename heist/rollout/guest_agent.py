@@ -7,6 +7,7 @@ import hmac
 import http.client
 import json
 import os
+import shlex
 from pathlib import Path, PurePosixPath
 import shutil
 import ssl
@@ -22,6 +23,22 @@ UNIT = Path('/etc/systemd/system/heist-web-maintenance.service')
 CRON_GUARD = Path('/etc/systemd/system/cron.service.d/heist-maintenance.conf')
 APACHE_GUARD = Path('/etc/systemd/system/apache2.service.d/heist-maintenance.conf')
 PREVIOUS_FIREWALL_SHA256 = '823bf1bb0458c42f1ad7999a9ce370f4c4e22926ab2e367da80b22437146b23a'
+
+
+def legacy_database_user(config):
+    """Return only the deployed PHP role, never its password or other settings."""
+    path=Path(config['root']).parent/'.env'
+    if path.is_symlink() or any(parent.is_symlink() for parent in path.parents) or not path.is_file():
+        raise RuntimeError('Require a regular legacy PHP environment')
+    names=[]
+    for line in path.read_text().splitlines():
+        key,separator,value=line.partition('=')
+        if separator and key.strip()=='DB_USER':
+            tokens=shlex.split(value,comments=True)
+            if len(tokens)!=1:raise RuntimeError('Invalid legacy PHP database role')
+            names.append(tokens[0])
+    if len(names)!=1:raise RuntimeError('Require exactly one legacy PHP database role')
+    return names[0]
 
 
 def atomic_write(path, text, mode=0o644):
@@ -234,6 +251,8 @@ def main(action):
         quiesce()
     elif action == 'runtime':
         print(json.dumps(runtime_hashes(json.load(sys.stdin))))
+    elif action == 'legacy-role':
+        print(json.dumps(legacy_database_user(json.load(sys.stdin))))
     elif action == 'deploy':
         deploy()
     else:

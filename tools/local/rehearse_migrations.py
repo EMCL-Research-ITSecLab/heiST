@@ -11,6 +11,8 @@ import hashlib
 import json
 from pathlib import Path
 import secrets
+import re
+import shutil
 import sys
 import uuid
 
@@ -28,6 +30,18 @@ from heist.rollout.migrations import migrate
 
 class InjectedMigrationFailure(RuntimeError):
     pass
+
+
+def external_baseline_source(path, digest, source):
+    """Bind a private external dump to its reviewed bytes and source identity."""
+    if (path.is_symlink() or not path.is_file() or path.stat().st_uid != 0 or path.stat().st_mode & 0o077 or
+            not re.fullmatch('[a-f0-9]{64}', digest or '') or sha256(path) != digest or
+            not re.fullmatch('[a-f0-9]{40}', source or '')):
+        raise RuntimeError('Require a private root-owned dump, exact reviewed checksum and original source commit')
+    with path.open('rb') as stream:
+        if stream.read(5) != b'PGDMP':
+            raise RuntimeError('External baseline is not a PostgreSQL custom archive')
+    return source
 
 
 class FaultCursor:
@@ -71,14 +85,23 @@ def main(argv=None):
     parser.add_argument('--config',required=True,type=Path)
     parser.add_argument('--manifest',default='releases/0.4.0-rc.1.json')
     parser.add_argument('--output',required=True,type=Path)
+    parser.add_argument('--baseline-dump',type=Path,help='Private external PG dump; restored only into a new scratch database')
+    parser.add_argument('--baseline-sha256',help='Reviewed digest of the external archive')
+    parser.add_argument('--baseline-source',help='Original installation commit for the external archive')
+    parser.add_argument('--audit-unsupported-source',action='store_true',help='Scratch SQL compatibility audit only; never approves platform admission')
     args=parser.parse_args(argv)
     require_fixture()
     if args.output.exists():raise ValueError('Use a new evidence directory')
     config=Deployment.load(args.config)
     adapter=PVE(config,sha256(args.config))
     source,target=revision(adapter.installation,'HEAD'),revision(ROOT,'HEAD')
+    if args.baseline_dump:
+        source=external_baseline_source(args.baseline_dump,args.baseline_sha256,args.baseline_source)
+    elif args.baseline_sha256 or args.baseline_source or args.audit_unsupported_source:
+        raise RuntimeError('External baseline options require --baseline-dump')
     release=json.loads(blob(ROOT,target,args.manifest))
-    if release.get('schema')!=3 or source not in release['supported_from']:
+    supported=source in release['supported_from']
+    if release.get('schema')!=3 or (not supported and not (args.baseline_dump and args.audit_unsupported_source)):
         raise RuntimeError('The candidate must explicitly declare this legacy source')
     migrations=tuple(Migration(item['id'],item['path'],item['sha256']) for item in release['migrations'])
     for item in migrations:
@@ -98,12 +121,17 @@ def main(argv=None):
         adapter.assert_idle(allow_ready=True)
         output=private_directory(args.output)
         receipt={'source_commit':target,'baseline_source':source,'manifest_sha256':plan.manifest_sha256,
+                 'starting_commit_declared_supported':supported,
+                 'external_baseline':bool(args.baseline_dump),
                  'whole_platform_upgrade_approved':False,'checks':{}}
         write_json(output/'receipt.json',receipt)
         try:
             original=PostgreSQL(adapter.database,config.vm('database').ssh)
             archive=output/'baseline.dump'
-            with archive.open('xb') as stream:original.dump(stream)
+            if args.baseline_dump:
+                shutil.copyfile(args.baseline_dump,archive)
+            else:
+                with archive.open('xb') as stream:original.dump(stream)
             archive.chmod(0o600);original.validate(archive)
             receipt['dump_sha256']=sha256(archive)
             with owner.cursor() as cursor:cursor.execute(sql.SQL('CREATE DATABASE {}').format(sql.Identifier(name)))

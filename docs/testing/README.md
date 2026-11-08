@@ -54,3 +54,23 @@ cold import. Mocked API services, successful HTTP health checks and compilation
 alone do not prove those behaviors. Retain failure logs as well as final results.
 
 Recorded local results and remaining gaps: [LOCAL-VALIDATION.md](../validation/legacy-appliance.md).
+
+## Audit an external production database dump
+
+`tools/local/rehearse_migrations.py` can restore a private external custom-format
+PostgreSQL dump into a new scratch database on the isolation-verified disposable
+pilot. Use the source server's PostgreSQL major version to create and read the
+dump. The runner requires a root-owned mode-0600 input, the reviewed SHA256 and
+original source commit. It never migrates the installed or production database.
+
+Supply `--baseline-dump`, `--baseline-sha256` and `--baseline-source` together with
+the ordinary private fixture `--config` and new `--output` directory. A source
+not declared by the release manifest additionally requires the explicit
+`--audit-unsupported-source` flag. That flag permits only this scratch SQL audit:
+it does not change the manifest or bypass installation/rollout admission.
+
+The audit tests actual migration-body failure rollback, protected row/schema
+preservation, restricted-role access, session invalidation and scratch database
+restoration. Its receipt records whether the starting commit was declared
+supported. Complete VM/host acceptance and review of local source changes remain
+separate requirements.

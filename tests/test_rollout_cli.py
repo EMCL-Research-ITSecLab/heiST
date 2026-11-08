@@ -66,3 +66,32 @@ class NativePlatformAdmissionTests(unittest.TestCase):
                 rehearse(['--config','/missing/config','--checkpoint','/missing/checkpoint','--target','candidate',
                           '--ui-bundle','/missing/ui','--runtime-bundle','/missing/runtime','--output','/missing/receipt'])
             load.assert_not_called()
+
+
+class ExternalBaselineAuditTests(unittest.TestCase):
+    def test_external_dump_and_unsupported_source_flag_never_bypass_isolation(self):
+        from tools.local.rehearse_migrations import main as rehearse
+        with patch.dict('os.environ',{'HEIST_PRIVILEGED_TESTS':'0'}),patch('tools.local.rehearse_migrations.Deployment.load') as load:
+            with self.assertRaisesRegex(RuntimeError,'disposable heist-pilot'):
+                rehearse(['--config','/missing','--output','/missing','--baseline-dump','/private/database.backup',
+                    '--baseline-source','e'*40,'--baseline-sha256','a'*64,'--audit-unsupported-source'])
+            load.assert_not_called()
+
+    def test_external_dump_requires_private_ownership_exact_digest_and_archive_header(self):
+        from tools.local.rehearse_migrations import external_baseline_source
+        from types import SimpleNamespace
+        with tempfile.TemporaryDirectory() as directory:
+            path=Path(directory)/'database.backup';path.write_bytes(b'PGDMP-reviewed-fixture');path.chmod(0o600)
+            digest=sha256(path)
+            with patch.object(Path,'stat',return_value=SimpleNamespace(st_uid=0,st_mode=0o100600)):
+                self.assertEqual(external_baseline_source(path,digest,'e'*40),'e'*40)
+                with self.assertRaisesRegex(RuntimeError,'reviewed checksum'):
+                    external_baseline_source(path,'b'*64,'e'*40)
+            for owner,mode in ((1000,0o100600),(0,0o100644)):
+                with patch.object(Path,'stat',return_value=SimpleNamespace(st_uid=owner,st_mode=mode)):
+                    with self.assertRaisesRegex(RuntimeError,'private root-owned'):
+                        external_baseline_source(path,digest,'e'*40)
+            path.write_bytes(b'invalid dump')
+            with patch.object(Path,'stat',return_value=SimpleNamespace(st_uid=0,st_mode=0o100600)):
+                with self.assertRaisesRegex(RuntimeError,'custom archive'):
+                    external_baseline_source(path,sha256(path),'e'*40)

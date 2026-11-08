@@ -87,15 +87,17 @@ closed. `HEIST_REGISTRATION_ENABLED=false` closes signup explicitly. See
 `config/registration.env.example`. Do not commit the real lecture code.
 
 Signup requires the lecture code and an initially unchecked acceptance checkbox
-for the linked Impressum and privacy policy. The API independently checks both,
+for the linked Terms of Service and privacy policy. The API independently checks both,
 including the policy version the user reviewed. Account creation and the
 `registration_acceptances` audit row commit together; an acceptance write failure
 rolls back the account. The audit retains the linked URLs, version and timestamp,
-without retaining the lecture code. It is deleted with the account.
+without retaining the lecture code. It is deleted with the account. Historical
+records retain a NULL terms URL; they are not treated as prior acceptance of
+Terms of Service. The Impressum remains an informational footer link.
 
 The default revision is bound to the bundled text. Update `HEIST_LEGAL_VERSION`
 when external policy text changes; the browser must reload and review a changed
-version before it can register. Apply release migration `0010` before running the
+version before it can register. Apply release migrations through `0011` before running the
 new browser service. Token rotation requires updating the private environment and
 restarting/redeploying the web role. Existing users can continue signing in.
 
@@ -104,7 +106,7 @@ list. It updates after YAML import, edits, attachment changes and removals; DMZ
 and student-accessible networks are labelled. No graphing library is required.
 
 To refresh the bundled pages, download verified HTTPS snapshots as `impressum.html`
-and `privacy-policy.html`, then run
+and `privacy-policy.html` and `terms-of-service.html`, then run
 `python tools/maintenance/import_legal_pages.py --source-directory DIRECTORY`.
 Review the text and provenance changes before building. This updates the text-bound
 revision automatically and excludes scripts and the old navigation.

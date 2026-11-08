@@ -1300,5 +1300,805 @@
       ]
     },
     "\n"
+  ],
+  "terms-of-service": [
+    "\n    ",
+    {
+      "tag": "h1",
+      "attrs": {},
+      "children": [
+        "Nutzungsbedingungen"
+      ]
+    },
+    "\n    ",
+    {
+      "tag": "p",
+      "attrs": {},
+      "children": [
+        "Letzte Aktualisierung: ",
+        {
+          "tag": "span",
+          "attrs": {},
+          "children": [
+            "20.10.2025"
+          ]
+        }
+      ]
+    },
+    "\n    ",
+    {
+      "tag": "section",
+      "attrs": {
+        "id": "einleitung"
+      },
+      "children": [
+        "\n      ",
+        {
+          "tag": "h2",
+          "attrs": {},
+          "children": [
+            "1. Einleitung"
+          ]
+        },
+        "\n      ",
+        {
+          "tag": "p",
+          "attrs": {},
+          "children": [
+            "\n        Diese Nutzungsbedingungen (nachfolgend: „Bedingungen“) regeln die Nutzung der Plattform\n        ",
+            {
+              "tag": "strong",
+              "attrs": {},
+              "children": [
+                "CTF-Challenger"
+              ]
+            },
+            " (nachfolgend: „die Plattform“), betrieben von der\n        ",
+            {
+              "tag": "strong",
+              "attrs": {},
+              "children": [
+                "Universität Heidelberg"
+              ]
+            },
+            ", ",
+            {
+              "tag": "strong",
+              "attrs": {},
+              "children": [
+                "Engineering Mathematics and Computing Lab"
+              ]
+            },
+            "\n        (nachfolgend: „wir“, „uns“ oder „unser“).\n      "
+          ]
+        },
+        "\n      ",
+        {
+          "tag": "p",
+          "attrs": {},
+          "children": [
+            "\n        Durch die Erstellung eines Kontos und/oder die Nutzung der Plattform erklären Sie sich mit diesen Bedingungen einverstanden.\n        Sollten Sie nicht zustimmen, ist die Nutzung der Plattform untersagt.\n      "
+          ]
+        },
+        "\n      ",
+        {
+          "tag": "p",
+          "attrs": {},
+          "children": [
+            "\n        Die Plattform wird ausschließlich Angehörigen der ",
+            {
+              "tag": "strong",
+              "attrs": {},
+              "children": [
+                "Universität Heidelberg"
+              ]
+            },
+            " (z. B. Studierende,\n        Lehrende, autorisiertes Personal) für Lehr-, Übungs- und Forschungszwecke im Bereich IT-Sicherheit bereitgestellt.\n      "
+          ]
+        },
+        "\n    "
+      ]
+    },
+    "\n\n    ",
+    {
+      "tag": "section",
+      "attrs": {
+        "id": "zugang"
+      },
+      "children": [
+        "\n      ",
+        {
+          "tag": "h2",
+          "attrs": {},
+          "children": [
+            "2. Zugangsberechtigung und Registrierung"
+          ]
+        },
+        "\n      ",
+        {
+          "tag": "p",
+          "attrs": {},
+          "children": [
+            "\n        Der Zugang zur Plattform ist beschränkt auf berechtigte Angehörige der\n        ",
+            {
+              "tag": "strong",
+              "attrs": {},
+              "children": [
+                "Universität Heidelberg"
+              ]
+            },
+            " mit gültigen Hochschulzugangsdaten.\n      "
+          ]
+        },
+        "\n      ",
+        {
+          "tag": "ul",
+          "attrs": {},
+          "children": [
+            "\n        ",
+            {
+              "tag": "li",
+              "attrs": {},
+              "children": [
+                "\n          Eine Registrierung ist erforderlich. Bei der Registrierung sind korrekte und vollständige Angaben zu machen,\n          insbesondere Benutzername, universitäre E-Mail-Adresse sowie ein Passwort (Passwörter werden ausschließlich als sicherer Hash gespeichert).\n        "
+              ]
+            },
+            "\n        ",
+            {
+              "tag": "li",
+              "attrs": {},
+              "children": [
+                "\n          Optionale Profildaten (z. B. Name, Kurzbiografie, Links zu externen Profilen wie GitHub oder persönliche Webseite)\n          können freiwillig angegeben werden.\n        "
+              ]
+            },
+            "\n        ",
+            {
+              "tag": "li",
+              "attrs": {},
+              "children": [
+                "\n          Sie sind verpflichtet, Ihre Zugangsdaten vertraulich zu behandeln und uns unverzüglich über jeden unautorisierten Zugriff\n          oder den Verdacht eines Missbrauchs zu informieren.\n        "
+              ]
+            },
+            "\n      "
+          ]
+        },
+        "\n    "
+      ]
+    },
+    "\n\n    ",
+    {
+      "tag": "section",
+      "attrs": {
+        "id": "datenverarbeitung"
+      },
+      "children": [
+        "\n      ",
+        {
+          "tag": "h2",
+          "attrs": {},
+          "children": [
+            "3. Erhebung und Verarbeitung personenbezogener Daten"
+          ]
+        },
+        "\n      ",
+        {
+          "tag": "p",
+          "attrs": {},
+          "children": [
+            "\n        Wir verarbeiten personenbezogene Daten im Einklang mit der Datenschutz-Grundverordnung (DSGVO) und dem Bundesdatenschutzgesetz (BDSG).\n      "
+          ]
+        },
+        "\n\n      ",
+        {
+          "tag": "h3",
+          "attrs": {},
+          "children": [
+            "3.1 Kategorien verarbeiteter Daten"
+          ]
+        },
+        "\n      ",
+        {
+          "tag": "ul",
+          "attrs": {},
+          "children": [
+            "\n        ",
+            {
+              "tag": "li",
+              "attrs": {},
+              "children": [
+                {
+                  "tag": "strong",
+                  "attrs": {},
+                  "children": [
+                    "Erforderliche Daten:"
+                  ]
+                },
+                " Benutzername, universitäre E-Mail-Adresse, gehashte Passwörter."
+              ]
+            },
+            "\n        ",
+            {
+              "tag": "li",
+              "attrs": {},
+              "children": [
+                {
+                  "tag": "strong",
+                  "attrs": {},
+                  "children": [
+                    "Optionale Profildaten:"
+                  ]
+                },
+                " Name, Biografie, Links zu externen Webseiten (z. B. GitHub, Twitter)."
+              ]
+            },
+            "\n        ",
+            {
+              "tag": "li",
+              "attrs": {},
+              "children": [
+                {
+                  "tag": "strong",
+                  "attrs": {},
+                  "children": [
+                    "Aktivitätsdaten:"
+                  ]
+                },
+                " Gestartete und abgeschlossene Challenges mit Zeitstempeln, eingereichte Flags, erworbene Badges."
+              ]
+            },
+            "\n        ",
+            {
+              "tag": "li",
+              "attrs": {},
+              "children": [
+                {
+                  "tag": "strong",
+                  "attrs": {},
+                  "children": [
+                    "Sicherheits- und Systemprotokolle:"
+                  ]
+                },
+                " Aufzeichnungen über Netzwerkverkehr innerhalb der Plattform sowie Aktionen in bereitgestellten virtuellen Maschinen\n            (Aufbewahrung bis zu drei Monate, siehe Abschnitt 4 und 5)."
+              ]
+            },
+            "\n      "
+          ]
+        },
+        "\n\n      ",
+        {
+          "tag": "h3",
+          "attrs": {},
+          "children": [
+            "3.2 Zweck der Verarbeitung"
+          ]
+        },
+        "\n      ",
+        {
+          "tag": "ul",
+          "attrs": {},
+          "children": [
+            "\n        ",
+            {
+              "tag": "li",
+              "attrs": {},
+              "children": [
+                "Betrieb, Wartung und Qualitäts-/Leistungsüberwachung der Plattform;"
+              ]
+            },
+            "\n        ",
+            {
+              "tag": "li",
+              "attrs": {},
+              "children": [
+                "Sicherstellung der Systemsicherheit, Erkennung und Verhinderung von Missbrauch;"
+              ]
+            },
+            "\n        ",
+            {
+              "tag": "li",
+              "attrs": {},
+              "children": [
+                "Unterstützung von Lehr- und Prüfungsabläufen;"
+              ]
+            },
+            "\n        ",
+            {
+              "tag": "li",
+              "attrs": {},
+              "children": [
+                "Nutzung anonymisierter Daten für Forschungs- und Lehrzwecke."
+              ]
+            },
+            "\n      "
+          ]
+        },
+        "\n\n      ",
+        {
+          "tag": "h3",
+          "attrs": {},
+          "children": [
+            "3.3 Forschung und Lehre — Anonymisierte Datennutzung"
+          ]
+        },
+        "\n      ",
+        {
+          "tag": "p",
+          "attrs": {},
+          "children": [
+            "\n        Anonymisierte Protokolle und Interaktionsdaten können für Forschungs- und Lehrprojekte verwendet werden. Die Teilnahme an dieser anonymisierten Nutzung erfolgt standardmäßig.\n        Betroffene Personen können der Nutzung anonymisierter Daten jederzeit formlos per E-Mail an\n        ",
+            {
+              "tag": "strong",
+              "attrs": {},
+              "children": [
+                "vincent.heuveline@uni-heidelberg.de"
+              ]
+            },
+            " widersprechen (Opt-out).\n      "
+          ]
+        },
+        "\n    "
+      ]
+    },
+    "\n\n    ",
+    {
+      "tag": "section",
+      "attrs": {
+        "id": "aufbewahrung"
+      },
+      "children": [
+        "\n      ",
+        {
+          "tag": "h2",
+          "attrs": {},
+          "children": [
+            "4. Aufbewahrung und Löschung von Daten"
+          ]
+        },
+        "\n      ",
+        {
+          "tag": "ul",
+          "attrs": {},
+          "children": [
+            "\n        ",
+            {
+              "tag": "li",
+              "attrs": {},
+              "children": [
+                "Personenbezogene Daten werden so lange gespeichert, wie das Nutzerkonto aktiv ist oder gesetzliche Aufbewahrungspflichten bestehen."
+              ]
+            },
+            "\n        ",
+            {
+              "tag": "li",
+              "attrs": {},
+              "children": [
+                "Nach einer Löschanfrage werden personenbezogene Daten nach Ablauf einer für Sicherheitszwecke gebotenen Aufbewahrungsfrist (bis zu drei Monate)\n            gelöscht oder irreversibel anonymisiert, soweit wir nicht aufgrund gesetzlicher Verpflichtungen zur weiteren Speicherung verpflichtet sind."
+              ]
+            },
+            "\n        ",
+            {
+              "tag": "li",
+              "attrs": {},
+              "children": [
+                "Anonymisierte Daten, die keine Personenbeziehbarkeit mehr aufweisen, können unbegrenzt für Forschungs- und Lehrzwecke genutzt werden."
+              ]
+            },
+            "\n      "
+          ]
+        },
+        "\n    "
+      ]
+    },
+    "\n\n    ",
+    {
+      "tag": "section",
+      "attrs": {
+        "id": "sicherheitsueberwachung"
+      },
+      "children": [
+        "\n      ",
+        {
+          "tag": "h2",
+          "attrs": {},
+          "children": [
+            "5. Sicherheitsüberwachung"
+          ]
+        },
+        "\n      ",
+        {
+          "tag": "p",
+          "attrs": {},
+          "children": [
+            "\n        Zur Gewährleistung der Integrität und Sicherheit der Plattform werden Netzwerkverkehr und systemrelevante Protokolle innerhalb der universitätseigenen Infrastruktur überwacht und protokolliert.\n      "
+          ]
+        },
+        "\n      ",
+        {
+          "tag": "ul",
+          "attrs": {},
+          "children": [
+            "\n        ",
+            {
+              "tag": "li",
+              "attrs": {},
+              "children": [
+                "Protokolldaten werden in der Regel maximal drei Monate gespeichert; eine längere Speicherung erfolgt nur zur Aufklärung sicherheitsrelevanter Vorfälle oder wenn gesetzliche Vorgaben dies erfordern."
+              ]
+            },
+            "\n        ",
+            {
+              "tag": "li",
+              "attrs": {},
+              "children": [
+                "Die Überwachung beschränkt sich ausdrücklich auf Systeme und Netze, die zur Plattform und zur universitären Infrastruktur gehören. Eine gezielte Aufzeichnung externer Netzwerke erfolgt nicht."
+              ]
+            },
+            "\n      "
+          ]
+        },
+        "\n    "
+      ]
+    },
+    "\n\n    ",
+    {
+      "tag": "section",
+      "attrs": {
+        "id": "zulaessige-nutzung"
+      },
+      "children": [
+        "\n      ",
+        {
+          "tag": "h2",
+          "attrs": {},
+          "children": [
+            "6. Zulässige Nutzung"
+          ]
+        },
+        "\n      ",
+        {
+          "tag": "p",
+          "attrs": {},
+          "children": [
+            "Die Nutzung der Plattform ist ausschließlich für legitime Lehr-, Übungs- und Forschungszwecke zulässig. Insbesondere ist untersagt:"
+          ]
+        },
+        "\n      ",
+        {
+          "tag": "ul",
+          "attrs": {},
+          "children": [
+            "\n        ",
+            {
+              "tag": "li",
+              "attrs": {},
+              "children": [
+                "Angriffe, Störungen oder sonstige Beeinträchtigungen von Systemen außerhalb des kontrollierten Plattformnetzwerks;"
+              ]
+            },
+            "\n        ",
+            {
+              "tag": "li",
+              "attrs": {},
+              "children": [
+                "die Weitergabe, Veröffentlichung oder das Teilen von Challenge-Flags, Lösungen oder sicherheitsrelevanten Informationen ohne ausdrückliche Genehmigung;"
+              ]
+            },
+            "\n        ",
+            {
+              "tag": "li",
+              "attrs": {},
+              "children": [
+                "missbräuchliche Nutzung von Ressourcen oder bewusste Störung des Betriebs anderer Nutzerinnen und Nutzer."
+              ]
+            },
+            "\n      "
+          ]
+        },
+        "\n      ",
+        {
+          "tag": "p",
+          "attrs": {},
+          "children": [
+            "\n        Verstöße gegen diese Bestimmungen können zur sofortigen Sperrung oder Löschung des Nutzerkontos sowie zu weiteren dienst- oder arbeitsrechtlichen\n        sowie zivil- oder strafrechtlichen Maßnahmen führen.\n      "
+          ]
+        },
+        "\n    "
+      ]
+    },
+    "\n\n    ",
+    {
+      "tag": "section",
+      "attrs": {
+        "id": "haftungsausschluss"
+      },
+      "children": [
+        "\n      ",
+        {
+          "tag": "h2",
+          "attrs": {},
+          "children": [
+            "7. Haftungsausschluss"
+          ]
+        },
+        "\n      ",
+        {
+          "tag": "p",
+          "attrs": {},
+          "children": [
+            "\n        Die Plattform wird „wie besehen“ und ohne ausdrückliche oder stillschweigende Garantien hinsichtlich Verfügbarkeit, Eignung für einen bestimmten Zweck,\n        Fehlerfreiheit oder Sicherheitsniveau bereitgestellt. Soweit gesetzlich zulässig, übernehmen wir keine Gewährleistung.\n      "
+          ]
+        },
+        "\n\n      ",
+        {
+          "tag": "p",
+          "attrs": {},
+          "children": [
+            "Die ",
+            {
+              "tag": "strong",
+              "attrs": {},
+              "children": [
+                "Universität Heidelberg"
+              ]
+            },
+            " sowie deren Mitarbeitende haften nicht für:"
+          ]
+        },
+        "\n      ",
+        {
+          "tag": "ul",
+          "attrs": {},
+          "children": [
+            "\n        ",
+            {
+              "tag": "li",
+              "attrs": {},
+              "children": [
+                "Schäden oder Verluste, die durch zeitweilige oder dauerhafte Nichtverfügbarkeit der Plattform entstehen;"
+              ]
+            },
+            "\n\n        ",
+            {
+              "tag": "li",
+              "attrs": {},
+              "children": [
+                "\n          Schäden, die aus unsachgemäßer, nicht autorisierter oder fahrlässiger Nutzung der Plattform resultieren. Dies umfasst insbesondere\n          Schäden, die dadurch entstehen, dass Teilnehmende ohne eine aktive, korrekt konfigurierte oder vorgeschriebene VPN-Verbindung Angriffe\n          durchführen und infolge dessen unbeabsichtigt externe, nicht zur CTF- oder Übungsumgebung gehörende Systeme erreichen, beeinträchtigen\n          oder schädigen — selbst wenn IP-Adressen Dritter in einer Challenge als Zielpunkte („Entry Points“) genannt sind.\n          ",
+                {
+                  "tag": "br",
+                  "attrs": {},
+                  "children": []
+                },
+                "\n          ",
+                {
+                  "tag": "span",
+                  "attrs": {},
+                  "children": [
+                    "\n            Nutzerinnen und Nutzer sind verpflichtet, die für die sichere Nutzung der Plattform vorgeschriebenen technischen Voraussetzungen (z. B. Universitäts-VPN,\n            Zugangsbeschränkungen) einzuhalten. Kommt es infolge fehlender oder fehlerhafter Einhaltung dieser Voraussetzungen zu Zugriffen auf externe Systeme,\n            entfällt unsere Haftung für daraus resultierende Schäden.\n          "
+                  ]
+                },
+                "\n        "
+              ]
+            },
+            "\n\n        ",
+            {
+              "tag": "li",
+              "attrs": {},
+              "children": [
+                "indirekte Schäden, Folgeschäden, entgangenen Gewinn oder sonstige mittelbare Schäden, soweit dies gesetzlich zulässig ist."
+              ]
+            },
+            "\n      "
+          ]
+        },
+        "\n\n      ",
+        {
+          "tag": "p",
+          "attrs": {},
+          "children": [
+            "\n        Soweit zwingende gesetzliche Haftungsbestimmungen gelten (z. B. Haftung für vorsätzliches oder grob fahrlässiges Verhalten, für Schäden aus der Verletzung von Leben, Körper oder Gesundheit oder nach dem Produkthaftungsgesetz),\n        bleiben diese unberührt.\n      "
+          ]
+        },
+        "\n    "
+      ]
+    },
+    "\n\n    ",
+    {
+      "tag": "section",
+      "attrs": {
+        "id": "urheberrecht"
+      },
+      "children": [
+        "\n      ",
+        {
+          "tag": "h2",
+          "attrs": {},
+          "children": [
+            "8. Urheberrecht und geistiges Eigentum"
+          ]
+        },
+        "\n      ",
+        {
+          "tag": "p",
+          "attrs": {},
+          "children": [
+            "\n        Alle auf der Plattform bereitgestellten Challenges, Inhalte, Materialien und Softwarekomponenten sind geistiges Eigentum der\n        ",
+            {
+              "tag": "strong",
+              "attrs": {},
+              "children": [
+                "Universität Heidelberg"
+              ]
+            },
+            " oder der jeweiligen Rechteinhaberinnen und -inhaber und sind urheberrechtlich geschützt.\n      "
+          ]
+        },
+        "\n      ",
+        {
+          "tag": "p",
+          "attrs": {},
+          "children": [
+            "\n        Die Vervielfältigung, öffentliche Zugänglichmachung, Weitergabe oder sonstige Verwertung bedarf der vorherigen ausdrücklichen schriftlichen Genehmigung,\n        sofern nicht eine anderweitige, ausdrücklich eingeräumte Nutzung (z. B. für Lehrzwecke) vorliegt.\n      "
+          ]
+        },
+        "\n    "
+      ]
+    },
+    "\n\n    ",
+    {
+      "tag": "section",
+      "attrs": {
+        "id": "recht"
+      },
+      "children": [
+        "\n      ",
+        {
+          "tag": "h2",
+          "attrs": {},
+          "children": [
+            "9. Anwendbares Recht und Gerichtsstand"
+          ]
+        },
+        "\n      ",
+        {
+          "tag": "p",
+          "attrs": {},
+          "children": [
+            "\n        Auf diese Bedingungen findet das Recht der Bundesrepublik Deutschland Anwendung. Ausschließlicher Gerichtsstand für alle Streitigkeiten aus oder\n        im Zusammenhang mit diesen Bedingungen ist — soweit gesetzlich zulässig —\n        ",
+            {
+              "tag": "strong",
+              "attrs": {},
+              "children": [
+                "Heidelberg, Baden-Württemberg"
+              ]
+            },
+            ".\n      "
+          ]
+        },
+        "\n    "
+      ]
+    },
+    "\n\n    ",
+    {
+      "tag": "section",
+      "attrs": {
+        "id": "aenderungen"
+      },
+      "children": [
+        "\n      ",
+        {
+          "tag": "h2",
+          "attrs": {},
+          "children": [
+            "10. Änderungen der Nutzungsbedingungen"
+          ]
+        },
+        "\n      ",
+        {
+          "tag": "p",
+          "attrs": {},
+          "children": [
+            "\n        Wir behalten uns das Recht vor, diese Bedingungen jederzeit zu ändern oder zu aktualisieren. Wesentliche Änderungen werden auf der Plattform\n        und/oder per E-Mail bekanntgegeben. Die fortgesetzte Nutzung der Plattform nach Bekanntgabe einer Änderung gilt als Zustimmung zur aktualisierten Fassung.\n      "
+          ]
+        },
+        "\n    "
+      ]
+    },
+    "\n\n    ",
+    {
+      "tag": "section",
+      "attrs": {
+        "id": "kontakt"
+      },
+      "children": [
+        "\n      ",
+        {
+          "tag": "h2",
+          "attrs": {},
+          "children": [
+            "11. Kontakt"
+          ]
+        },
+        "\n      ",
+        {
+          "tag": "p",
+          "attrs": {},
+          "children": [
+            "\n        Bei Fragen zu diesen Bedingungen, zur Verarbeitung personenbezogener Daten oder zur Ausübung Ihrer Rechte wenden Sie sich bitte an:\n      "
+          ]
+        },
+        "\n      ",
+        {
+          "tag": "address",
+          "attrs": {},
+          "children": [
+            "\n        ",
+            {
+              "tag": "strong",
+              "attrs": {},
+              "children": [
+                "Prof. Dr. Vincent Heuveline"
+              ]
+            },
+            {
+              "tag": "br",
+              "attrs": {},
+              "children": []
+            },
+            "\n        ",
+            {
+              "tag": "strong",
+              "attrs": {},
+              "children": [
+                "Universität Heidelberg"
+              ]
+            },
+            {
+              "tag": "br",
+              "attrs": {},
+              "children": []
+            },
+            "\n        ",
+            {
+              "tag": "strong",
+              "attrs": {},
+              "children": [
+                "Engineering Mathematics and Computing Lab"
+              ]
+            },
+            {
+              "tag": "br",
+              "attrs": {},
+              "children": []
+            },
+            "\n        ",
+            {
+              "tag": "span",
+              "attrs": {},
+              "children": [
+                "Grabengasse 1, 69117 Heidelberg"
+              ]
+            },
+            {
+              "tag": "br",
+              "attrs": {},
+              "children": []
+            },
+            "\n        E-Mail: ",
+            {
+              "tag": "a",
+              "attrs": {
+                "href": "mailto:vincent.heuveline@uni-heidelberg.de"
+              },
+              "children": [
+                "vincent.heuveline@uni-heidelberg.de"
+              ]
+            },
+            "\n      "
+          ]
+        },
+        "\n    "
+      ]
+    },
+    "\n  "
   ]
 }

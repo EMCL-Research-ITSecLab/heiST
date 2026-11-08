@@ -18,7 +18,7 @@ import { Landing } from './features/welcome/LandingPage.tsx';
 import { Link, RouterProvider, useRouter } from './lib/router.tsx';
 import { SessionProvider, useSession } from './lib/state.tsx';
 export const routes = [
-  ['/impressum', 'public'], ['/privacy-policy', 'public'], ['/', 'public'], ['/landing', 'public'], ['/login', 'public'], ['/signup', 'public'],
+  ['/terms-of-service', 'public'], ['/impressum', 'public'], ['/privacy-policy', 'public'], ['/', 'public'], ['/landing', 'public'], ['/login', 'public'], ['/signup', 'public'],
   ['/explore', 'public'], ['/challenge', 'student'], ['/dashboard', 'student'],
   ['/profile', 'student'], ['/profile/:username', 'student'], ['/profile_public', 'student'],
   ['/reset-password', 'student'], ['/activity', 'student'], ['/badges', 'student'],
@@ -37,7 +37,7 @@ function RouteContent() {
     publicProfile = undefined;
   }
   const route = routes.find(([p]) => p === path || p === '/profile/:username' && publicProfile);
-  if (path === '/impressum' || path === '/privacy-policy') return <LegalPage kind={path.slice(1) as 'impressum' | 'privacy-policy'} />;
+  if (path === '/impressum' || path === '/privacy-policy' || path === '/terms-of-service') return <LegalPage kind={path.slice(1) as 'impressum' | 'privacy-policy' | 'terms-of-service'} />;
   if (session.loading)
     return <div className="loading" role="status">
       <span className="spinner" />Loading…</div>;

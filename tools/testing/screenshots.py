@@ -36,6 +36,7 @@ PAGES = {
     'reset_password': ('/reset-password','student'),
     'impressum': ('/impressum', 'guest'),
     'privacy': ('/privacy-policy', 'guest'),
+    'terms': ('/terms-of-service', 'guest'),
     'not_found': ('/404','guest'),
     'mobile': ('/dashboard', 'student'),
     'collapsed_navigation': ('/dashboard','admin'),

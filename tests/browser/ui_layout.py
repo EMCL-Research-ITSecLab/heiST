@@ -21,7 +21,7 @@ class LayoutTests(BrowserFixture):
         self.page.evaluate('document.fonts.ready')
 
     def test_populated_pages_fit_phone_tablet_desktop_in_both_themes(self):
-        paths = ['/landing', '/dashboard', '/explore', '/challenge?id=4', '/profile', '/manage-ctf', '/create-ctf', '/upload-diskfile', '/operations', '/impressum', '/privacy-policy', '/signup', '/login', '/activity', '/badges', '/announcements', '/manage-announcements', '/manage-users', '/manage-instances', '/profile/investigator', '/404', '/reset-password']
+        paths = ['/landing', '/dashboard', '/explore', '/challenge?id=4', '/profile', '/manage-ctf', '/create-ctf', '/upload-diskfile', '/operations', '/impressum', '/privacy-policy', '/terms-of-service', '/signup', '/login', '/activity', '/badges', '/announcements', '/manage-announcements', '/manage-users', '/manage-instances', '/profile/investigator', '/404', '/reset-password']
         for width in (320, 390, 768, 1024, 1440):
             self.page.set_viewport_size({'width': width, 'height': 900})
             for theme in ('light', 'dark'):
@@ -137,7 +137,7 @@ class LayoutTests(BrowserFixture):
     def test_copied_legal_pages_remain_public_when_session_storage_is_unavailable(self):
         self.role='guest'
         self.context.route('**/api/session',lambda route:route.fulfill(status=503,json={'success':False,'message':'Unavailable'}))
-        for path,title in (('/impressum','Impressum'),('/privacy-policy','Datenschutzerklärung')):
+        for path,title in (('/impressum','Impressum'),('/privacy-policy','Datenschutzerklärung'),('/terms-of-service','Nutzungsbedingungen')):
             self.visit(path)
             self.page.get_by_role('heading',name=title,exact=True).wait_for()
             self.assertGreater(self.page.get_by_role('main').get_by_text('Universität Heidelberg',exact=True).count(),0)
@@ -145,11 +145,11 @@ class LayoutTests(BrowserFixture):
 
     def test_closed_registration_has_no_signup_form_but_keeps_legal_links(self):
         self.role='guest'
-        self.responses['site']={'success':True,'data':{'registration_enabled':False,'legal':{'imprint_url':'https://example.invalid/impressum','privacy_url':'https://example.invalid/privacy','version':'test'}}}
+        self.responses['site']={'success':True,'data':{'registration_enabled':False,'legal':{'imprint_url':'https://example.invalid/impressum','privacy_url':'https://example.invalid/privacy','terms_url':'https://example.invalid/terms','version':'test'}}}
         self.settled('/signup')
         self.page.get_by_text('Registration is currently closed.',exact=True).wait_for()
         self.assertEqual(self.page.locator('input[name=lecture_token]').count(),0)
-        self.assertEqual(self.page.get_by_role('navigation',name='Legal').get_by_role('link').count(),2)
+        self.assertEqual(self.page.get_by_role('navigation',name='Legal').get_by_role('link').count(),3)
 
     def test_signup_requires_lecture_code_and_unchecked_policy_acceptance_with_legal_links(self):
         self.role='guest'
@@ -157,6 +157,9 @@ class LayoutTests(BrowserFixture):
         legal=self.page.get_by_role('navigation',name='Legal')
         self.assertEqual(legal.get_by_role('link',name='Impressum').get_attribute('href'),'https://example.invalid/impressum')
         self.assertEqual(legal.get_by_role('link',name='Privacy policy').get_attribute('href'),'https://example.invalid/privacy')
+        consent=self.page.locator('.legal-acceptance')
+        self.assertEqual(consent.get_by_role('link',name='Terms of Service').get_attribute('href'),'https://example.invalid/terms')
+        self.assertEqual(consent.get_by_role('link',name='Impressum').count(),0)
         self.page.get_by_label('Username',exact=True).fill('new_student')
         self.page.get_by_label('Email address').fill('student@example.invalid')
         self.page.get_by_label('Password',exact=True).fill('test-password-long')

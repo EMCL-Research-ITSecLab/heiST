@@ -19,6 +19,7 @@ def create_app(config=None, *, repository_factory=None, internal_client_factory=
     app.config.update(WEB_SESSION_SECRET=os.environ.get('WEB_SESSION_SECRET'), REGISTRATION_ENABLED=os.environ.get('HEIST_REGISTRATION_ENABLED','true')=='true',
                       LECTURE_SIGNUP_TOKEN=os.environ.get('LECTURE_SIGNUP_TOKEN',''),
                       IMPRINT_URL=os.environ.get('HEIST_IMPRINT_URL',legal.IMPRINT_URL),PRIVACY_URL=os.environ.get('HEIST_PRIVACY_URL',legal.PRIVACY_URL),
+                      TERMS_URL=os.environ.get('HEIST_TERMS_URL',legal.TERMS_URL),
                       LEGAL_VERSION=os.environ.get('HEIST_LEGAL_VERSION',legal.LEGAL_VERSION),
                       DATA_ROOT=os.environ.get('HEIST_WEB_DATA_ROOT', '/var/lib/heist-web'),
                       MAINTENANCE_FILE=os.environ.get('HEIST_WEB_MAINTENANCE_FILE','/run/heist-web-maintenance'),

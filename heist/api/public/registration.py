@@ -17,11 +17,11 @@ def legal_settings(config):
         except ValueError:
             return ''
         return value
-    imprint,privacy=url('IMPRINT_URL'),url('PRIVACY_URL')
+    imprint,privacy,terms=url('IMPRINT_URL'),url('PRIVACY_URL'),url('TERMS_URL')
     revision=config.get('LEGAL_VERSION','')
     revision=revision if isinstance(revision,str) and 0<len(revision)<=128 else ''
-    version=hashlib.sha256(json.dumps([revision,imprint,privacy],ensure_ascii=True).encode()).hexdigest() if revision and imprint and privacy else ''
-    return {'imprint_url':imprint,'privacy_url':privacy,'version':version}
+    version=hashlib.sha256(json.dumps([revision,terms,privacy],ensure_ascii=True).encode()).hexdigest() if revision and terms and privacy else ''
+    return {'imprint_url':imprint,'privacy_url':privacy,'terms_url':terms,'version':version}
 
 
 def registration_enabled(config):

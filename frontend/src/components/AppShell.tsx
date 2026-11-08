@@ -97,6 +97,7 @@ export function AppShell({ children }: {
         <span>heiST</span>
         <nav aria-label="Legal">
           {session.legal.imprint_url && <a href={session.legal.imprint_url} target="_blank" rel="noopener noreferrer">Impressum</a>}
+          {session.legal.terms_url && <a href={session.legal.terms_url} target="_blank" rel="noopener noreferrer">Terms of Service</a>}
           {session.legal.privacy_url && <a href={session.legal.privacy_url} target="_blank" rel="noopener noreferrer">Privacy policy</a>}
         </nav>
       </footer>

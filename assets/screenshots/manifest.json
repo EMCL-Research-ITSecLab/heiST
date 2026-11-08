@@ -7,9 +7,9 @@
   },
   "browser": "156.0.8078.4",
   "sources": {
-    "frontend/src/App.tsx": "4db9b2d641dd0167a8d8c232eff6fca44bc41b9af266287ece01fefb3ab42c0d",
+    "frontend/src/App.tsx": "c7ddf83ed11fca5a88077c682a1d6e89cd31aeb81a8e6e2cd8b746ab2e41e768",
     "frontend/src/components/AchievementIcon.tsx": "2467aad743689df5087b6211c4a305e7a6c0913f2b7196f8eb56450a545d4c90",
-    "frontend/src/components/AppShell.tsx": "deb1b306480239f7d4ce21021deeb657c42f70b9a0573f6c3d47643c535d5e2f",
+    "frontend/src/components/AppShell.tsx": "46bbdbb7ea580c1462a01515e20af6d9b4d7721d890f6d61a9dc9d2fbceff317",
     "frontend/src/components/NetworkPreview.tsx": "6b7d823726fe5be2f230f826f91792bcd1a11e4f3b9dc44ee36d531a4db45600",
     "frontend/src/components/ui.tsx": "6bd7e951f18365b93c5d0b79386c4d6672bfbe97414a89e992b0b14ee968c728",
     "frontend/src/env.d.ts": "65996936fbb042915f7b74a200fcdde7e410f32a669b1ab9597cfaa4b0faddb5",
@@ -24,20 +24,20 @@
     "frontend/src/features/administration/PlatformStatusPanel.tsx": "13fd55dfb6a4c3e7abc531560da3fceac7a8dc5298064042f70b2119c0463900",
     "frontend/src/features/administration/UserManagementPage.tsx": "95d63fc656050032db482598a05ab535f56827c98159f4eeacb36fa5e186d7f2",
     "frontend/src/features/administration/useArtifactUpload.ts": "1f1fff9299ea5309592c27cf9dcca6990a57a8d857ca5ab076b34e6efe3c46e0",
-    "frontend/src/features/auth/AuthPage.tsx": "3d633ada4b1b20d302870bc8479d53b49972bd785d511a9d2991628f810b161b",
+    "frontend/src/features/auth/AuthPage.tsx": "9e4f90a6b5b86ae88d3bd23f405689ec6950f45f15af90da5faca55d589cf3b0",
     "frontend/src/features/challenges/ChallengePage.tsx": "4411e07db1d7bd9630edb4008cb5387f76e23951da467da5e8c0fa5119ea5277",
     "frontend/src/features/challenges/ExplorePage.tsx": "01914bf9cfe49679b662d9138ae80b171bfe5edf80f06aa553e838a2150746bc",
     "frontend/src/features/community/FeedPage.tsx": "63f4eba5001ae14a718ea876031c4147cd6f5bb5eb3fe30e5480e4a255d9642d",
     "frontend/src/features/dashboard/DashboardAnnouncements.tsx": "70b7df109616ba04a97bb529c79b454791525dbaef689b72fef9e2e2b65a028f",
     "frontend/src/features/dashboard/DashboardPage.tsx": "8da70eebaa9ea807f8b4786d05f3c0e08fce15985253526b045afcc4005e3b51",
-    "frontend/src/features/legal/LegalPage.tsx": "f003bd9f4f46f0502f3598d083175705f372e77d610b09f6eac0c0688aa2b672",
-    "frontend/src/features/legal/documents.json": "a0c1fa20e7f9bed8eaffb4282715ce36d3e66fa369a9b13efa6fa55b0efd287e",
+    "frontend/src/features/legal/LegalPage.tsx": "80557c89f33cbf5b715b367bbedb93555417ff1bc5240ee26ec2a3df0ea6e75c",
+    "frontend/src/features/legal/documents.json": "dad527c20d120b945228b17c531bd43dd5e0ec4e5b6b7ccaeb6a9dbf5d698711",
     "frontend/src/features/welcome/LandingPage.tsx": "9cd429678ee22bbe373b0d918ab3c62308dbbad367fe1942417270c1c0188749",
     "frontend/src/lib/api.ts": "2a99e5d25d67916fbdea5c6829b5ce43b2a14016039055b18659c4f4113253c4",
     "frontend/src/lib/artwork.ts": "873f487133ca9a890160d2ca1fc62c24792786a6589a2701b9443edccad43639",
     "frontend/src/lib/data.ts": "0499d40a4e64b78020c1a040630c1b4b24b4a2f3355277fb4d307c436c3305f0",
     "frontend/src/lib/router.tsx": "80bd96cf8ccdc18de7da5959083eeb4fcfe3c781170143ac212100278e3719c9",
-    "frontend/src/lib/state.tsx": "b89a91ce9396292d770aa374e973436218bb030bb4f818b5b05c387a8dcad729",
+    "frontend/src/lib/state.tsx": "6d9b1c819d9950a8a0be823c02b743bd01f1ccb11e8b220e60cc4ea6ca98d685",
     "frontend/src/lib/topology.ts": "ad63f9949027d4766e40f7f0f8cb787300559a32b45e2b6144dd2c239ed5515f",
     "frontend/src/main.tsx": "21ab4d87f72005a7d9f181be87f86c2d43afe1204f828e4fa81404b68a374d6d",
     "frontend/src/styles.css": "0362c99887b463ca494861a1f975c5d13e3838da49e148302046802d70011d20",
@@ -56,9 +56,9 @@
     "frontend/index.html": "8ab10020ce2673bb682d5de7e75ba55b46bb8ae197d025720c0ae33a9ced77b7",
     "frontend/package.json": "bf37ec6e8ba27c3bb77e6f2de8363a04172592f641892cad091bd8c0cff70ed6",
     "frontend/package-lock.json": "f20bf26b9bb3073648dca45b3f2190652fc71ebd12958f016440911d634099ff",
-    "tests/browser/support.py": "e6a25390a663b108557557b89bc814498c46bac6e1750b09a2773b29b2411661",
+    "tests/browser/support.py": "71745aee80877c538a805b2c9b486cc2097f7dfd0923c515dbb1231551e742d8",
     "tests/browser/showcase_data.py": "355c4bdeeb2a071ab6bf9355ef832728d5056fbff2e74038cec9422652167b39",
-    "tools/testing/screenshots.py": "03f5339cea3c56e5a3bc036bc152756c79de7999704d77aad534264dd4e9e779"
+    "tools/testing/screenshots.py": "dcdeee3297ea6fbd98f3e8bc3e6976a88f63d8909db0b390c99ef5ff57f91c3b"
   },
   "captures": [
     {
@@ -72,7 +72,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "f1d0acd8e66636ab6df3251fba649fb8696dc16da519cc5bd3140229245f3921"
+      "sha256": "84c171e8bb07f609cc208dadcc673ddb4c2235ccd74db1c2fa9ac286efdb7e6f"
     },
     {
       "file": "dashboard_light.png",
@@ -85,7 +85,7 @@
       },
       "full_page": true,
       "document_height": 1515,
-      "sha256": "df5dda08006d59109055cb8bf398c85392ba6f6eb971fb2ccdbe6c690b25836d"
+      "sha256": "dd31a451465a21a788e12dd02b03ae48f32186c084a9a184c9b5b942b8c926af"
     },
     {
       "file": "explore_light.png",
@@ -98,7 +98,7 @@
       },
       "full_page": true,
       "document_height": 1024,
-      "sha256": "6ffc4f774d6af942dc615eeb736083b2412dfb20777ba7704dd5a29c47b33640"
+      "sha256": "cabb7fff80c25dc4d572288fb34a6b1f02424a155f7b42ee1c303137c70394e2"
     },
     {
       "file": "deploy_challenge_light.png",
@@ -111,7 +111,7 @@
       },
       "full_page": true,
       "document_height": 1300,
-      "sha256": "d990ac28b877f8ee874441d62383dfd59ce0844ddebac5c0e48237687bb5a6f2"
+      "sha256": "1bb0993b8e0b93f692c323b6d50eccc4478e8304270630e2c06b1c96eea1fb74"
     },
     {
       "file": "profile_light.png",
@@ -124,7 +124,7 @@
       },
       "full_page": true,
       "document_height": 2164,
-      "sha256": "6b969fede9307bab138ab5b0ce58899604ebeede29c89b0c465834bc33574927"
+      "sha256": "1dcb8f3e64da2dc20057e79dc960ad7a515d831a2aea6697ca57f20f891893c7"
     },
     {
       "file": "public_profile_light.png",
@@ -137,7 +137,7 @@
       },
       "full_page": true,
       "document_height": 1024,
-      "sha256": "84d0697fac995f53cce1db62146a04fd19e7190041d850c64126f8b745ab23b4"
+      "sha256": "03b1a13d38af6dd6219ac86f1939384e54775d2124677dd3a6cd794c8eface46"
     },
     {
       "file": "activity_light.png",
@@ -150,7 +150,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "1d599b859bbab60f08a271246e7da6f42ceddfc5a03ed86d1e4268e02d9532b3"
+      "sha256": "106238c27916315e7f56f79618586105ddec22bafd3bea01075cea358a374f64"
     },
     {
       "file": "achievements_light.png",
@@ -163,7 +163,7 @@
       },
       "full_page": true,
       "document_height": 1294,
-      "sha256": "5bde04bf686579b0069482a1d04a11d7c3618db2ca9688ec3c50a87d9f968fd8"
+      "sha256": "f4ce35c25742b3410a222f6827263c36ffc0ec3a18f0d0dc71749f157bd2339c"
     },
     {
       "file": "announcements_light.png",
@@ -176,7 +176,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "cb4b0a479ddb94e97d26773dfa3a34915bd5998c7dbfe8ca6cb355ce2874a118"
+      "sha256": "984b278bad9819e0abf7228733e5a37b23efd6e82a5378f6dbee49d1b00eaa82"
     },
     {
       "file": "manage_challenges_light.png",
@@ -189,7 +189,7 @@
       },
       "full_page": true,
       "document_height": 1067,
-      "sha256": "5d69bceb5a552ce1a1e6d9aaa85b631f9671510805ba54db9fdd11bd5d2cd938"
+      "sha256": "9e62ddf90aa2c42014cb1a42e4d81ed5ae8e65a8a4083793d2c85a3e8e3430e4"
     },
     {
       "file": "create_challenge_light.png",
@@ -202,7 +202,7 @@
       },
       "full_page": true,
       "document_height": 4181,
-      "sha256": "876dac1c79f4ba5ccf680a675176721b85304856e4a0eddc7ab2ce368414c6c8"
+      "sha256": "eb146996e2b723bd261b702a2591e54924fcb19000880c3b0b9e33315e11b7d4"
     },
     {
       "file": "artifacts_light.png",
@@ -215,7 +215,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "f3aa7174061f88c7f34e29ffceeb681c653a838759ed474d79a87496e41f6bf7"
+      "sha256": "9068a22df4a878a832d407038936a2d385f5093475b326932d8ca3872301d700"
     },
     {
       "file": "manage_announcements_light.png",
@@ -228,7 +228,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "ff4553aab89f28fd77dc21650ea6487bff8fdb87986ea16360dbaf80d4a48f03"
+      "sha256": "0c95ea0f5d11b91955714353e5bf7df3b91e6cfcadcd3cc180a2db474cfc54db"
     },
     {
       "file": "operations_light.png",
@@ -241,7 +241,7 @@
       },
       "full_page": true,
       "document_height": 2035,
-      "sha256": "bcf1f186cf651fd538b48a7d99cb1f18906bbb3c9edb60d48e905b2e4428fa7c"
+      "sha256": "780a702b9490b313891a33326e1b32b8f2c3e69a7a1263a2cb53d356a8b9fd94"
     },
     {
       "file": "users_light.png",
@@ -254,7 +254,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "51cfed7b3737485a10ecdc4409d9e618ff11a882dfc610633f56bff933522de8"
+      "sha256": "de25e2632f655f74d97bb10a22528ff4e134b11d252f963fa3e868b8bb67184c"
     },
     {
       "file": "instances_light.png",
@@ -267,7 +267,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "7ae2815a746f092203b12277810e6eef180a72cb7326fc354fd91d60076223c2"
+      "sha256": "5c9943cc8bbaafd0a1d3f7bf640f201c54cfc14aa74c68055a4b4299d24695bc"
     },
     {
       "file": "instance_details_light.png",
@@ -280,7 +280,7 @@
       },
       "full_page": true,
       "document_height": 1569,
-      "sha256": "dee9839bc408f6357550810e5982f515be05f2283ac27f0d976304f9d7cc235c"
+      "sha256": "86d866b3e469ca5a9382c56af7c0911aab9521fdda23fa8f91d42ae032b759b8"
     },
     {
       "file": "login_light.png",
@@ -293,7 +293,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "2ed0d863aec13ebdeca642cd47c510dfea4fed5e33a87c767cefd1a855169a84"
+      "sha256": "a70189a094e5be90e86c0ddeff5536e05bf380f5299d650ba6ef779e28f2f047"
     },
     {
       "file": "signup_light.png",
@@ -306,7 +306,7 @@
       },
       "full_page": true,
       "document_height": 1060,
-      "sha256": "cfd56db843379b9596c1fba600f1607214d768061f4a6aedb9a99499c3d5f00a"
+      "sha256": "30f5c4623e89bfb6dc1aff1154ee78b44d8e964cfc5aa55ab4c13d7e6e74a520"
     },
     {
       "file": "reset_password_light.png",
@@ -319,7 +319,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "407d33a0268770a0b8848529e254bba5a76013ab51457161c68c88c54a0d1415"
+      "sha256": "57bccfe32de8ed2b27f1b002e00617ed750f33eb71b36b2ef0a5fa51e5888039"
     },
     {
       "file": "impressum_light.png",
@@ -332,7 +332,7 @@
       },
       "full_page": true,
       "document_height": 1622,
-      "sha256": "afe6d8b59d65de08a34d1f28f20ed741ce0d35e650c8fdadd7194745f33984b0"
+      "sha256": "5c55501b0f5ae7ff0308f2f56035570ea3211d6298c006530b2fd6dcbfbb78e8"
     },
     {
       "file": "privacy_light.png",
@@ -345,7 +345,20 @@
       },
       "full_page": true,
       "document_height": 3883,
-      "sha256": "3ef282ef33b139b07bf9643e487544a273998317c0e0dfd7a80b6ba82cc92193"
+      "sha256": "6a46740d435edf96d195a673e150b490011595473326bf904418cba28150ff61"
+    },
+    {
+      "file": "terms_light.png",
+      "route": "/terms-of-service",
+      "role": "guest",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": true,
+      "document_height": 3316,
+      "sha256": "ed83549e5c036075e14f0a9fce0a5beae48fb64ee7404f42904fce5845b4a0e6"
     },
     {
       "file": "not_found_light.png",
@@ -358,7 +371,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "9c91e5d7df5af54004d6ddf29cc3a0d9c86babbf717bc3fcd00e3661cf7a519a"
+      "sha256": "e6fab6c328b89589b1986392cbce4dd87c02d6105d4cbc271f0e0e97b6e60916"
     },
     {
       "file": "mobile_light.png",
@@ -371,7 +384,7 @@
       },
       "full_page": true,
       "document_height": 2202,
-      "sha256": "764469d255499dd12fe22e8e9363faad98e01661657ac580f5734b754e12b987"
+      "sha256": "c1375fdf892da82dc96a0485364777d5a5b1584ce41e9d7298ef5e1cb7f98b6f"
     },
     {
       "file": "collapsed_navigation_light.png",
@@ -384,7 +397,7 @@
       },
       "full_page": true,
       "document_height": 1515,
-      "sha256": "90a3a0e87438561db32182c30f204dab9dfe424808abf1af8c0d4d08177e71f3"
+      "sha256": "46612113f9788325c6686dbe27c5b4e5960530d713c079efd1b8eddaa3804998"
     },
     {
       "file": "landing_dark.png",
@@ -397,7 +410,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "31e738683df63a7298c9d58e9087e01d2cd5d77cb06cd1a41b779f8d4750db07"
+      "sha256": "67f91edd6617df2223317a80d48997617546b8e675ca839dc128afd501d25b45"
     },
     {
       "file": "dashboard_dark.png",
@@ -410,7 +423,7 @@
       },
       "full_page": true,
       "document_height": 1515,
-      "sha256": "c9d91f78e01c35fce8c711d031d22e4dc1299eda4541cc5c734cfcfb4090b8dc"
+      "sha256": "cc6ada421ab66a0475703bb06a50704acd0fc99f04734a7c8f6cf3449f4ee373"
     },
     {
       "file": "explore_dark.png",
@@ -423,7 +436,7 @@
       },
       "full_page": true,
       "document_height": 1024,
-      "sha256": "498f5a2b054e309e40b7df7fd8ead618515c43076c724ec5b254470aa2ad7fc5"
+      "sha256": "e794d90c402991fe68b8e369ffee0dca44e7faa2d1dc6ad51185541bab5d299c"
     },
     {
       "file": "deploy_challenge_dark.png",
@@ -436,7 +449,7 @@
       },
       "full_page": true,
       "document_height": 1300,
-      "sha256": "ad31a1c30023f63b4f65749c6e442f8918773a3f42428319c72f6b3c5bc4856c"
+      "sha256": "d9145220fc26142f3a495182b743e6b64556d9602792bc970ec8a7d091670105"
     },
     {
       "file": "profile_dark.png",
@@ -449,7 +462,7 @@
       },
       "full_page": true,
       "document_height": 2164,
-      "sha256": "c17d5a52579314edde07386c13664bb19b3e149bec54defd3c42fa7b4d33f187"
+      "sha256": "2901084cd5c7ad136e579784d16831847d2589097bc1cb7444a1c0f56d6aae3c"
     },
     {
       "file": "public_profile_dark.png",
@@ -462,7 +475,7 @@
       },
       "full_page": true,
       "document_height": 1024,
-      "sha256": "c4c63a38a0752c6eb62c084f3722010bdbc03f3b5541d88405b67f3bb85dfba8"
+      "sha256": "f0e055be912e1e087c55db3b9184c0d370c00dbed02f0b754fa52f76d2fde1a8"
     },
     {
       "file": "activity_dark.png",
@@ -475,7 +488,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "cddd01c955f840938625839972f9c3a7f2e2fab81282a9577f0ead69b664d1d4"
+      "sha256": "dc793e927685def8a59000be62376997548493a7d3197b693775a0caa5c9ea61"
     },
     {
       "file": "achievements_dark.png",
@@ -488,7 +501,7 @@
       },
       "full_page": true,
       "document_height": 1294,
-      "sha256": "792f2a9e921a3058e0ca313027a499924537c05be674adffc84fc445ff1bd253"
+      "sha256": "f23466caf1bd369cba881ec469c542b2b00f9d68d52f36ae74b5289c716846d9"
     },
     {
       "file": "announcements_dark.png",
@@ -501,7 +514,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "192586084073a09c87c5ba8bbff7d9034930e11867011e98b883b7a6053619e6"
+      "sha256": "9c11d107316b7cd46b78e377113eba2985e65631b600882eaf007091ee4ac239"
     },
     {
       "file": "manage_challenges_dark.png",
@@ -514,7 +527,7 @@
       },
       "full_page": true,
       "document_height": 1067,
-      "sha256": "102cb1a29d16fb503c296d393c1fb1a49135431cec13cb4558bf0e88d49847c4"
+      "sha256": "5300d6bb7c8bf1ed53096ed0037074dd581baf57b2d0e9e026bc0d2a4fb4195c"
     },
     {
       "file": "create_challenge_dark.png",
@@ -527,7 +540,7 @@
       },
       "full_page": true,
       "document_height": 4181,
-      "sha256": "e92e014decf912ebe4b4cd30f505ea9003fd3564c845263a85cb5c82b7317078"
+      "sha256": "0de76e3b5bbf2fdb98eed927b54627fa0fd4572fda1ab929881a9d6b76e110cd"
     },
     {
       "file": "artifacts_dark.png",
@@ -540,7 +553,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "80fa08a353091e31180a6f8411ee43ee5de1b2fd35849f62d9a3ff950ae0cf70"
+      "sha256": "006e9d1ae995b216417091ca3c445b02e1271db5c24a5bb2c694bd8927de7855"
     },
     {
       "file": "manage_announcements_dark.png",
@@ -553,7 +566,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "bc2401d4db223b12ec35837aa83f0050db2cd5f8cfd284f41f15d94f1a2c7f9b"
+      "sha256": "d8d50be22ac248d4ac667458dbc266bd78c9b174c131016a87c2acc703b911ff"
     },
     {
       "file": "operations_dark.png",
@@ -566,7 +579,7 @@
       },
       "full_page": true,
       "document_height": 2035,
-      "sha256": "eea8c1ba77f3c99ada7d6e4a33dbc03cde4ed34c02b99d9bfdaca4b7d706f1ac"
+      "sha256": "6fa1d7ea95c1cb66b98f0c4bb575f0458b3df53095a7aba208c7cd09bb05241f"
     },
     {
       "file": "users_dark.png",
@@ -579,7 +592,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "de7ee6b9c8c7005d93fbf72451843c38c9a18cddb66c9762a4f046b8485bf4f5"
+      "sha256": "af928bdff3e4e3cac03fd94319857b4d155f7038ab38ad9bf74446c640e1b0ee"
     },
     {
       "file": "instances_dark.png",
@@ -592,7 +605,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "e7722fe5da21e148c6e7fd6278afce01df1df44bcfb973d2750b940c3793ff0a"
+      "sha256": "1539bdbc734c28ec2f2ca3e5babc670975a0dc0d337c17ce9733a85d77c60023"
     },
     {
       "file": "instance_details_dark.png",
@@ -605,7 +618,7 @@
       },
       "full_page": true,
       "document_height": 1569,
-      "sha256": "6959923418299b373a494472166ba62c140e36babfa62a07dd23d6b12f0aca7c"
+      "sha256": "ff27f0fd704e58cea50e8fddba08c62048dc6c3c629f762deb00d532273849c9"
     },
     {
       "file": "login_dark.png",
@@ -618,7 +631,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "22e6193001562f794882352d21dd7728a9b3d7479697e82a2a1734d1b31ffa63"
+      "sha256": "a875f92fc2bfbb4a95eef24585f4ce0b9c373fcdae64f6404165aa5b4013af8c"
     },
     {
       "file": "signup_dark.png",
@@ -631,7 +644,7 @@
       },
       "full_page": true,
       "document_height": 1060,
-      "sha256": "05fde4aa3fde491ae4cc9bd4f664d4a39f506cb0331302a1ddf72924b8ed1003"
+      "sha256": "11235875cae45d3abcc3022246764156f24682415f9de3e413ec25b360f56f57"
     },
     {
       "file": "reset_password_dark.png",
@@ -644,7 +657,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "971bdd05bc23bd9c60cf77bc3ead5b62e9219ad855b6a4db13a79acb55e8c1aa"
+      "sha256": "7dcb0750b4a88c31fe19e42dd6ed5bd00883706b58a645adfd098fc1558ea087"
     },
     {
       "file": "impressum_dark.png",
@@ -657,7 +670,7 @@
       },
       "full_page": true,
       "document_height": 1622,
-      "sha256": "f23a29abba5e93e93523bbe6ea6919fb81a20edbd6aea0aef4e72572cfff1939"
+      "sha256": "fbfc8b789718140819e98a10633b80b76e8ac9744fd5e283c7394fff7e2738c9"
     },
     {
       "file": "privacy_dark.png",
@@ -670,7 +683,20 @@
       },
       "full_page": true,
       "document_height": 3883,
-      "sha256": "9cf6e8b58dec16c86d3adbc9ea83b2602891d7bf8aa5ce16474913d5b66dc448"
+      "sha256": "c95f58a9e1fbad7f261c045f6142621584014658870804b2110fc9b487b546c0"
+    },
+    {
+      "file": "terms_dark.png",
+      "route": "/terms-of-service",
+      "role": "guest",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": true,
+      "document_height": 3316,
+      "sha256": "10a576cfe6d1b5729d75acc9c0a427b727da337231aec424c11204f1b564f95f"
     },
     {
       "file": "not_found_dark.png",
@@ -683,7 +709,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "23f58de20d022df54e1758b1b13568b887cf69a0b9dfafd35eca7318207bfe63"
+      "sha256": "42030723f7dd0bee4b9997dc5e7e115bf95b5701dafc484fd5f8f886cacebef5"
     },
     {
       "file": "mobile_dark.png",
@@ -696,7 +722,7 @@
       },
       "full_page": true,
       "document_height": 2202,
-      "sha256": "ecadc1bd5b1668b4f40f641427cbb3159ff11820fe3d35630a0bb58fe938fac5"
+      "sha256": "13922d659378cf27a2ced8944640914b698591ba56c5908667abf992967c0fd7"
     },
     {
       "file": "collapsed_navigation_dark.png",
@@ -709,7 +735,7 @@
       },
       "full_page": true,
       "document_height": 1515,
-      "sha256": "634e383882eb523279c05cbc461743dee7b2c2fb6e6cfcf8bd4d80a92f0ad7bf"
+      "sha256": "d464ae5a96adeec4afa35fa80b4f347e9c536d2d2c4ef2d3deb8f01e3d067a45"
     }
   ]
 }

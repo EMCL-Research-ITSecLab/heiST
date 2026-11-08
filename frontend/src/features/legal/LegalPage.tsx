@@ -7,6 +7,6 @@ function render(node: Node, key: number): ReactNode {
   if (node.tag === 'br') return createElement('br',{key});
   return createElement(node.tag,{...attrs,key},node.children.map(render));
 }
-export function LegalPage({kind}: {kind: 'impressum' | 'privacy-policy'}) {
+export function LegalPage({kind}: {kind: 'impressum' | 'privacy-policy' | 'terms-of-service'}) {
   return <article className="legal-page card" lang="de">{(documents[kind] as Node[]).map(render)}</article>;
 }

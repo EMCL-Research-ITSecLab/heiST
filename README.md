@@ -73,7 +73,7 @@ migration or a production rollout.
 
 ## Using the new workspace
 
-[Browse all 50 full-page screenshots](assets/screenshots/README.md), including achievements, account pages and administrator controls. [Documentation index](docs/README.md).
+[Browse all 52 full-page screenshots](assets/screenshots/README.md), including achievements, account pages and administrator controls. [Documentation index](docs/README.md).
 
 The screenshots below show the actual production UI build with deterministic,
 synthetic demonstration records. They are not screenshots of production data.

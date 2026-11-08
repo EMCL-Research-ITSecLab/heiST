@@ -54,7 +54,8 @@ Read-only inspection found a different starting revision from the legacy pilot:
 `lecture_v2` at `e9dc593f71fbcb80e83cbd0cc34493739177ad46`, with ten tracked
 local modifications. This revision is not declared supported by the release.
 Do not discard its customizations or add it to the allowlist on the strength of
-a database-only test. Production deployment remains unapproved.
+a database-only test. The operator subsequently authorized rollout and both Senior Identity lab bundles.
+Technical production admission remains closed pending the outstanding acceptance checks.
 
 The operator explicitly approved online, backup-only VM exports and a narrowly
 scoped recovery export of the application's environment and backend TLS files.
@@ -107,8 +108,14 @@ These changes require subsequent source-bound and live clone acceptance.
 
 The operator narrowed backup scope to infrastructure, challenge templates and
 original source OVAs. Disposable exercise instances are excluded; students may
-restart them after rollout. The current core export is allowed to finish before
-the local controller changes scope; no completed production backup is replayed.
+restart them after rollout. All three core exports completed compression and checksum verification. No
+completed production backup was replayed. The first stopped template export
+failed before producing archive bytes: Proxmox opened its read-only base disk
+for writing. Its task ended and the template has no remaining backup lock.
+The export controller remains in review; template disks were not made writable.
+All sixteen template configurations were exported read-only, and the sixteen
+registered source OVAs are being copied with source/destination checksums.
+These source files do not replace a tested template restore checkpoint.
 The first web archive passed compression and checksum verification after a
 workstation-only verification timeout, which remains recorded. Native VMA
 verification and boot/restore acceptance are distinct remaining checks.
@@ -212,3 +219,13 @@ also needs its own reviewed release; this change introduces no new dependencies.
 
 The older results in `LOCAL-VALIDATION.md` belong to the parent branch and the
 sealed upload appliance. They do not certify this release for production.
+
+## Terms of Service update
+
+Registration now requires acceptance of the operator's Terms of Service and
+privacy policy. Impressum remains an informational footer link. Migration 0011
+adds explicit Terms evidence; historical acceptance rows retain a NULL Terms
+URL rather than inventing consent. The bundled German Terms page is copied
+from the supplied operator URL, with its source hash recorded in
+`assets/legal-sources.json`. All 52 fixture screenshots were refreshed. These
+checks do not open the installer or production upgrade gates.

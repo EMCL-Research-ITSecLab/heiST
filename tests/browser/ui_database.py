@@ -54,7 +54,7 @@ class BrowserDatabaseTests(unittest.TestCase):
             raise AssertionError('UI database tests must not contact the privileged host API')
         cls.app = create_app({'WEB_SESSION_SECRET': secrets.token_hex(32), 'DATA_ROOT': str(root/'data'),
                              'LECTURE_SIGNUP_TOKEN':'test-lecture-code','IMPRINT_URL':'https://example.invalid/impressum',
-                             'PRIVACY_URL':'https://example.invalid/privacy','LEGAL_VERSION':'test-policy-1'},
+                             'PRIVACY_URL':'https://example.invalid/privacy','TERMS_URL':'https://example.invalid/terms','LEGAL_VERSION':'test-policy-1'},
                              repository_factory=lambda: Repository(lambda: cls.psycopg2.connect(**cls.api_settings)),
                              internal_client_factory=forbid_host_operations)
         @cls.app.get('/', defaults={'path': ''})
@@ -121,8 +121,8 @@ class BrowserDatabaseTests(unittest.TestCase):
         self.page.wait_for_url('**/dashboard')
         with closing(self.psycopg2.connect(**self.settings)) as connection:
             with connection.cursor() as cursor:
-                cursor.execute('SELECT a.privacy_url,a.imprint_url,a.accepted_at IS NOT NULL FROM public.registration_acceptances a JOIN public.users u ON u.id=a.user_id WHERE u.username=%s',(username,))
-                self.assertEqual(cursor.fetchone(),('https://example.invalid/privacy','https://example.invalid/impressum',True))
+                cursor.execute('SELECT a.privacy_url,a.imprint_url,a.terms_url,a.accepted_at IS NOT NULL FROM public.registration_acceptances a JOIN public.users u ON u.id=a.user_id WHERE u.username=%s',(username,))
+                self.assertEqual(cursor.fetchone(),('https://example.invalid/privacy','https://example.invalid/impressum','https://example.invalid/terms',True))
 
     def test_login_uses_secure_persistent_session_and_logout_revokes_it(self):
         cookies = self.context.cookies()

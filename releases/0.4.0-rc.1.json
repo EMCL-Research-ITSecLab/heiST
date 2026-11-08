@@ -54,6 +54,11 @@
       "id": "0010_registration_acceptance",
       "path": "releases/migrations/0010_registration_acceptance.sql",
       "sha256": "f851cd90fe6cdcd5eeb94b053d66ba6d684a73afa9a28a479439a16d61be3d04"
+    },
+    {
+      "id": "0011_terms_acceptance",
+      "path": "releases/migrations/0011_terms_acceptance.sql",
+      "sha256": "d1d2020b6340351c28128734f3b4dee2dcf22f3e6383271fb0a3d49ca4a3c961"
     }
   ],
   "protected_tables": [

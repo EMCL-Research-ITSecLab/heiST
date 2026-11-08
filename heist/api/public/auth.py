@@ -103,7 +103,7 @@ def signup():
     legal = legal_settings(current_app.config)
     accepted = value.get('accept_legal')
     if accepted is not True and accepted != 'true':
-        raise ApiError('Accept the Impressum and privacy policy to register')
+        raise ApiError('Accept the Terms of Service and privacy policy to register')
     if value.get('legal_version') != legal['version']:
         raise ApiError('The registration policies changed. Reload the page and review them.',409)
     username, password = credentials(value)
@@ -118,7 +118,7 @@ def signup():
         repo = repository()
         with repo.transaction():
             created = repo.call('create_user', username, email, encoded, '', request.remote_addr, one=True)
-            repo.call('web_record_registration',created['id'],legal['version'],legal['imprint_url'],legal['privacy_url'])
+            repo.call('web_record_registration',created['id'],legal['version'],legal['imprint_url'],legal['privacy_url'],legal['terms_url'])
     except UniqueViolation:
         raise ApiError('Username or email is unavailable', 409) from None
     record = repository().call('web_user_identity', created['id'], one=True)

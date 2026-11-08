@@ -7,8 +7,8 @@ export type User = {
   avatar: string;
   passwordChange: boolean;
 };
-type Legal = {imprint_url: string; privacy_url: string; version: string};
-const emptyLegal: Legal = {imprint_url: '', privacy_url: '', version: ''};
+type Legal = {imprint_url: string; privacy_url: string; terms_url: string; version: string};
+const emptyLegal: Legal = {imprint_url: '', privacy_url: '', terms_url: '', version: ''};
 const Session = createContext({ registrationEnabled: false, legal: emptyLegal, user: null as User | null, loading: true, error: '', refresh: async () => { } });
 export function SessionProvider({ children }: {
   children: ReactNode;
@@ -19,7 +19,7 @@ export function SessionProvider({ children }: {
     try {
       const site = payload(await request('/api/site')), links = row(site.legal);
       setRegistrationEnabled(truth(site.registration_enabled));
-      setLegal({imprint_url: text(links.imprint_url), privacy_url: text(links.privacy_url), version: text(links.version)});
+      setLegal({imprint_url: text(links.imprint_url), privacy_url: text(links.privacy_url), terms_url: text(links.terms_url), version: text(links.version)});
     } catch {
       setRegistrationEnabled(false);
     }

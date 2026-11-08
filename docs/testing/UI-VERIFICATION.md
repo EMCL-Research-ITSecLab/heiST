@@ -32,7 +32,7 @@ size, including long text, empty, loading, error and destructive-confirmation st
 
 ## Screenshot gallery
 
-[Open the complete gallery](../../assets/screenshots/README.md): 50 full-page
+[Open the complete gallery](../../assets/screenshots/README.md): 52 full-page
 captures cover every canonical view in both themes, plus phone navigation,
 collapsed desktop navigation and expanded instance diagnostics. Achievements shows
 all nine synthetic badges. Editor captures contain multiple networks and include

@@ -26,6 +26,7 @@ Full-page captures in both themes, using synthetic records. Click a file to insp
 | Reset Password | [Light](reset_password_light.png) | [Dark](reset_password_dark.png) |
 | Impressum | [Light](impressum_light.png) | [Dark](impressum_dark.png) |
 | Privacy | [Light](privacy_light.png) | [Dark](privacy_dark.png) |
+| Terms | [Light](terms_light.png) | [Dark](terms_dark.png) |
 | Not Found | [Light](not_found_light.png) | [Dark](not_found_dark.png) |
 | Mobile | [Light](mobile_light.png) | [Dark](mobile_dark.png) |
 | Collapsed Navigation | [Light](collapsed_navigation_light.png) | [Dark](collapsed_navigation_dark.png) |

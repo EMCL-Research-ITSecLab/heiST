@@ -61,7 +61,7 @@ export function AuthPage({ mode }: {
           <Field label="Lecture code" name="lecture_token" type="password" autoComplete="off" required maxLength={256} />
           <label className="check legal-acceptance">
             <input type="checkbox" name="accept_legal" value="true" required />
-            <span>I accept the <a href={session.legal.imprint_url} target="_blank" rel="noopener noreferrer">Impressum</a> and <a href={session.legal.privacy_url} target="_blank" rel="noopener noreferrer">privacy policy</a>.</span>
+            <span>I accept the <a href={session.legal.terms_url} target="_blank" rel="noopener noreferrer">Terms of Service</a> and <a href={session.legal.privacy_url} target="_blank" rel="noopener noreferrer">privacy policy</a>.</span>
           </label>
         </>}
         <label className="check">

@@ -9,7 +9,7 @@ from pathlib import Path
 from urllib.parse import urljoin,urlsplit
 import argparse,hashlib,json
 from datetime import datetime,timezone
-allowed={'h1','h2','h3','p','ul','ol','li','a','strong','em','b','i','br','div','span','section'}
+allowed={'h1','h2','h3','p','ul','ol','li','a','strong','em','b','i','br','div','span','section','address'}
 class Content(HTMLParser):
  def __init__(self):super().__init__(convert_charrefs=True);self.active=False;self.nodes=[];self.stack=[];self.skip=0
  def handle_starttag(self,tag,attrs):
@@ -44,15 +44,15 @@ def main(argv=None):
     parser.add_argument('--source-directory',required=True,type=Path)
     args=parser.parse_args(argv)
     root=Path(__file__).resolve().parents[2];docs={};sources={}
-    for name in ('impressum','privacy-policy'):
+    for name in ('impressum','privacy-policy','terms-of-service'):
      body=(args.source_directory/(name+'.html')).read_bytes();p=Content();p.feed(body.decode())
      if p.stack:raise ValueError('Incomplete legal content')
      docs[name]=p.nodes;sources[name]={'url':'https://emcl-ctf.iwr.uni-heidelberg.de/'+name,'response_sha256':hashlib.sha256(body).hexdigest()}
-    version=hashlib.sha256(json.dumps(docs,ensure_ascii=False,sort_keys=True).encode()).hexdigest()
+    version=hashlib.sha256(json.dumps({name:docs[name] for name in ('privacy-policy','terms-of-service')},ensure_ascii=False,sort_keys=True).encode()).hexdigest()
     folder=root/'frontend/src/features/legal';folder.mkdir(exist_ok=True)
     (folder/'documents.json').write_text(json.dumps(docs,ensure_ascii=False,indent=2)+'\n')
     (root/'assets/legal-sources.json').write_text(json.dumps({'version':version,'sources':sources,'imported_at':datetime.now(timezone.utc).date().isoformat(),'scope':'main legal content only; scripts and site navigation excluded'},indent=2)+'\n')
-    (root/'heist/legal.py').write_text('''"""Bundled operator legal pages; bump the revision when their contents change."""\nIMPRINT_URL = "https://emcl-ctf.iwr.uni-heidelberg.de/impressum"\nPRIVACY_URL = "https://emcl-ctf.iwr.uni-heidelberg.de/privacy-policy"\nLEGAL_VERSION = "'''+version+'"\n')
+    (root/'heist/legal.py').write_text('''"""Bundled operator legal pages; bump the revision when their contents change."""\nIMPRINT_URL = "https://emcl-ctf.iwr.uni-heidelberg.de/impressum"\nPRIVACY_URL = "https://emcl-ctf.iwr.uni-heidelberg.de/privacy-policy"\nTERMS_URL = "https://emcl-ctf.iwr.uni-heidelberg.de/terms-of-service"\nLEGAL_VERSION = "'''+version+'"\n')
     print(json.dumps({'pages':list(docs),'version':version,'source_bytes':sum((args.source_directory/(n+'.html')).stat().st_size for n in docs)}))
     return 0
 

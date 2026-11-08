@@ -4,7 +4,7 @@
   "browser": "156.0.8078.4",
   "sources": {
     "frontend/src/App.tsx": "c4190a9745e10f309c5834cecd2b894ea88cb0bf20d47ed93d56861a67c4a2cc",
-    "frontend/src/components/NetworkPreview.tsx": "d75023aa14fc782dbe1e089af4c6943918dbbc7e05d7255ce32c109d5ca40483",
+    "frontend/src/components/NetworkPreview.tsx": "6b7d823726fe5be2f230f826f91792bcd1a11e4f3b9dc44ee36d531a4db45600",
     "frontend/src/components/ui.tsx": "6bd7e951f18365b93c5d0b79386c4d6672bfbe97414a89e992b0b14ee968c728",
     "frontend/src/env.d.ts": "65996936fbb042915f7b74a200fcdde7e410f32a669b1ab9597cfaa4b0faddb5",
     "frontend/src/features/account/ProfilePage.tsx": "ba2225abf19b352a889b36199d81f70c04bf5af09728674617be1921c74de8c0",
@@ -27,9 +27,9 @@
     "frontend/src/lib/data.ts": "0499d40a4e64b78020c1a040630c1b4b24b4a2f3355277fb4d307c436c3305f0",
     "frontend/src/lib/router.tsx": "80bd96cf8ccdc18de7da5959083eeb4fcfe3c781170143ac212100278e3719c9",
     "frontend/src/lib/state.tsx": "b89a91ce9396292d770aa374e973436218bb030bb4f818b5b05c387a8dcad729",
-    "frontend/src/lib/topology.ts": "e421fed39e7975c470e5dfb5c41e787cffff3d8a057189330ed4262523cf556a",
+    "frontend/src/lib/topology.ts": "ad63f9949027d4766e40f7f0f8cb787300559a32b45e2b6144dd2c239ed5515f",
     "frontend/src/main.tsx": "21ab4d87f72005a7d9f181be87f86c2d43afe1204f828e4fa81404b68a374d6d",
-    "frontend/src/styles.css": "81d30c58faa92f5d9ae85b488392e74bcf8f0657c6653895cfe731bbd9855373",
+    "frontend/src/styles.css": "61fc65f190def946e583ad5faa59c98d21df7097684180038fad43eeae65e4e3",
     "frontend/src/tokens.css": "1cdfa89e43d01db471d5a2cec396fce5eab023fe5d54124ba115462221a64ad2",
     "frontend/public/assets/avatars/avatar1.png": "717f6f904ed6a511681bd8f7f011699197d911b3119da3886c4baec251c8df2a",
     "frontend/public/assets/avatars/avatar2.png": "97c6ce9676506ada7ad86e1eab731c881798fa2732d526563246c37eb02c0b25",
@@ -78,7 +78,7 @@
         "width": 1440,
         "height": 1000
       },
-      "sha256": "f4c58edbce1a82d136ae6bbbbc988096023caf8987b7335a8c473739aeee5e5e"
+      "sha256": "5ba0c97345da6d24d485c0a8ddc1d12caa1faf16100bf53b7c0b0ae65a6b871a"
     },
     {
       "file": "deploy_challenge_light.png",
@@ -188,7 +188,7 @@
         "width": 1440,
         "height": 1000
       },
-      "sha256": "e257c72fa7e4a20d28781f3890e9e5c141daa4c8d58e908d3f693baab0954efe"
+      "sha256": "e9a9189ef050dd17923c1ebb2cd591a67f24ae18bc69846176959044f955833d"
     },
     {
       "file": "deploy_challenge_dark.png",

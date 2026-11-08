@@ -181,6 +181,17 @@ class LayoutTests(BrowserFixture):
         self.page.get_by_role('checkbox',name='Target',exact=True).check()
         diagram=self.page.get_by_role('img',name='Challenge network preview')
         self.assertEqual(diagram.locator('path.topology-edge').count(),1)
+        for width in (320, 390, 768, 1440):
+            self.page.set_viewport_size({'width':width,'height':1000})
+            self.assertTrue(diagram.evaluate('''svg => {
+                const region = svg.parentElement;
+                const bounds = region.getBoundingClientRect();
+                return region.scrollWidth <= region.clientWidth + 1 &&
+                    [...svg.querySelectorAll('rect')].every(node => {
+                        const box = node.getBoundingClientRect();
+                        return box.left >= bounds.left && box.right <= bounds.right;
+                    });
+            }'''),f'Network or machine clipped at width {width}')
         self.page.get_by_role('checkbox',name='DMZ',exact=True).check()
         self.assertEqual(diagram.locator('.topology-network.dmz').count(),1)
         self.page.get_by_role('button',name='Remove machine',exact=True).click()

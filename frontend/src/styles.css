@@ -1825,7 +1825,7 @@ dialog .button-row {
 .legal-acceptance {align-items:flex-start}
 .legal-acceptance span {min-width:0;overflow-wrap:anywhere}
 .topology-scroll {overflow:auto;max-height:360px;border:1px solid var(--line);border-radius:6px;margin-bottom:12px}
-.topology-diagram {display:block;width:100%;min-width:380px;font-size:14px}
+.topology-diagram {display:block;width:100%;font-size:14px}
 .topology-edge {fill:none;stroke:var(--muted);stroke-width:2}
 .topology-network rect {fill:var(--subtle);stroke:var(--blue);stroke-width:2}
 .topology-network.dmz rect {stroke:var(--amber)}

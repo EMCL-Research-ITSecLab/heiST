@@ -42,13 +42,37 @@ class LocalAPITests(unittest.TestCase):
 
     def test_polling_reuses_memory_only_ticket_and_refreshes_before_expiry(self):
         first = Mock(stdout=b'{"ticket":"first","csrf":"first"}')
-        second = Mock(stdout=b'{"ticket":"second","csrf":"second"}')
         with patch('heist.rollout.proxmox_api.time.monotonic', side_effect=[100, 399, 400]), \
-             patch('heist.rollout.proxmox_api.subprocess.run', side_effect=[first, second]) as run:
+             patch('heist.rollout.proxmox_api.subprocess.run', return_value=first) as run, \
+             patch.object(self.api,'_request_once',return_value={'username':'root@pam','ticket':'second','CSRFPreventionToken':'second'}) as renew:
             self.assertEqual(self.api.credentials()['ticket'], 'first')
             self.assertEqual(self.api.credentials()['ticket'], 'first')
             self.assertEqual(self.api.credentials()['ticket'], 'second')
-        self.assertEqual(run.call_count, 2)
+        self.assertEqual(run.call_count, 1)
+        renew.assert_called_once_with('POST','/access/ticket',{'username':'root@pam','password':'first'}, {'ticket':'first','csrf':'first'})
+
+    def test_lost_renewal_keeps_only_the_still_valid_ticket_without_extending_its_deadline(self):
+        self.api._credentials=self.credentials
+        self.api._credentials_until=100
+        self.api._ticket_valid_until=1000
+        with patch('heist.rollout.proxmox_api.time.monotonic',return_value=101), \
+             patch.object(self.api,'_request_once',side_effect=http.client.RemoteDisconnected('lost renewal')), \
+             patch('heist.rollout.proxmox_api.subprocess.run') as signer:
+            self.assertEqual(self.api.credentials(),self.credentials)
+        signer.assert_not_called()
+        self.assertEqual(self.api._ticket_valid_until,1000)
+        self.assertEqual(self.api._credentials_until,131)
+
+    def test_invalid_renewal_or_certificate_failure_never_falls_back_to_old_authentication(self):
+        for result in ({'ticket':'other','CSRFPreventionToken':'csrf','username':'other@pam'},
+                       {'username':'root@pam','ticket':'t','CSRFPreventionToken':'c','NeedTFA':1}):
+            self.api._credentials=self.credentials;self.api._credentials_until=100;self.api._ticket_valid_until=1000
+            with patch('heist.rollout.proxmox_api.time.monotonic',return_value=101), \
+                 patch.object(self.api,'_request_once',return_value=result),self.assertRaisesRegex(RuntimeError,'invalid'):
+                self.api.credentials()
+        with patch('heist.rollout.proxmox_api.time.monotonic',return_value=101), \
+             patch.object(self.api,'_request_once',side_effect=ssl.SSLError('wrong certificate')),self.assertRaises(ssl.SSLError):
+            self.api.credentials()
 
     def test_failed_refresh_does_not_reuse_expired_credentials_or_submit_request(self):
         self.api._credentials = self.credentials

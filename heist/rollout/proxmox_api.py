@@ -21,10 +21,32 @@ class LocalAPI:
         self.certificate = custom if custom.is_file() else Path('/etc/pve/local/pve-ssl.pem')
         self._credentials = None
         self._credentials_until = 0
+        self._ticket_valid_until = 0
 
     def credentials(self):
         now = time.monotonic()
         if self._credentials is not None and now < self._credentials_until:
+            return self._credentials
+        if self._credentials is not None and now < self._ticket_valid_until:
+            try:
+                result = self._request_once('POST', '/access/ticket',
+                    {'username': 'root@pam', 'password': self._credentials['ticket']}, self._credentials)
+            except (http.client.RemoteDisconnected, ConnectionResetError,
+                    ConnectionRefusedError, BrokenPipeError, TimeoutError, ssl.SSLEOFError):
+                # Renewal changes no VM state. A lost renewal response must not
+                # interrupt a restore while the original ticket is still valid.
+                # Never extend that ticket's conservative original deadline.
+                if time.monotonic() >= self._ticket_valid_until:
+                    raise
+                self._credentials_until = min(now+30, self._ticket_valid_until)
+                return self._credentials
+            if (not isinstance(result, dict) or result.get('username') != 'root@pam'
+                    or any(not isinstance(result.get(key), str) or not result[key]
+                           for key in ('ticket', 'CSRFPreventionToken')) or result.get('NeedTFA')):
+                raise RuntimeError('Local Proxmox renewal returned invalid credentials')
+            self._credentials = {'ticket': result['ticket'], 'csrf': result['CSRFPreventionToken']}
+            self._credentials_until = now+300
+            self._ticket_valid_until = now+6900
             return self._credentials
         program = (
             'PVE::Cluster::cfs_update(); '
@@ -32,17 +54,18 @@ class LocalAPI:
             'csrf=>PVE::AccessControl::assemble_csrf_prevention_token(q{root@pam})});'
         )
         result = subprocess.run(['perl', '-MPVE::Cluster', '-MPVE::AccessControl', '-MJSON',
-                                 '-e', program], check=True, capture_output=True, timeout=60)
+                                 '-e', program], check=True, capture_output=True, timeout=180)
         credentials = json.loads(result.stdout)
         if not isinstance(credentials, dict) or any(
                 not isinstance(credentials.get(key), str) or not credentials[key]
                 for key in ('ticket', 'csrf')):
             raise RuntimeError('Local Proxmox signer returned invalid credentials')
-        # PVE tickets last two hours. Reuse them briefly in memory instead of
-        # starting a Perl/cluster process for every two-second task-status poll.
-        # A failed refresh propagates before any API request; POST is never replayed.
+        # PVE tickets last two hours. Bootstrap with the installed local signer,
+        # then renew through pinned HTTPS using the old ticket as password. This
+        # avoids loading Perl/cluster modules during disk-intensive VM recovery.
         self._credentials = credentials
         self._credentials_until = now + 300
+        self._ticket_valid_until = now + 6900
         return credentials
 
     def request(self, method, path, arguments):

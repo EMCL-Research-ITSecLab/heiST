@@ -16,12 +16,12 @@
 <div align="center">
   <picture>
     <source
-      srcset="assets/logo/logo_dark.svg"
+      srcset="frontend/public/assets/logo/logo_dark.svg"
       media="(prefers-color-scheme: dark)"
       height="200"
     />
     <img
-      src="assets/logo/logo_light.svg"
+      src="frontend/public/assets/logo/logo_light.svg"
       alt="heiST Logo"
       height="200"
     />
@@ -49,12 +49,12 @@
 
 Use `bin/heist --help` for the explicit administrator and service commands.
 
-- [Code layout and release maintenance](docs/MAINTAINING.md)
-- [Local full-appliance testing](docs/LOCAL-APPLIANCE.md)
-- [Backend, API and web tests](docs/TESTING.md)
-- [React UI development and static releases](docs/FRONTEND.md)
+- [Code layout and release maintenance](docs/development/README.md)
+- [Local full-appliance testing](docs/testing/LOCAL-APPLIANCE.md)
+- [Backend, API and web tests](docs/testing/README.md)
+- [React UI development and static releases](docs/development/FRONTEND.md)
 - [Operator helpers](docs/operator-tools/README.md)
-- [Update wizard, migration and recovery](docs/UPDATES.md)
+- [Update wizard, migration and recovery](docs/administration/UPDATES.md)
 
 ## Getting Started
 
@@ -63,8 +63,8 @@ Use `bin/heist --help` for the explicit administrator and service commands.
 This development branch replaces the PHP application with React and Flask. The
 fresh installer and production upgrade adapter remain gated until their complete
 migration and recovery acceptance passes. Do not run the historical PHP installer
-over a production system. See [installation and update status](docs/UPDATES.md)
-and use the [isolated appliance workflow](docs/LOCAL-APPLIANCE.md) for testing.
+over a production system. See [installation and update status](docs/administration/UPDATES.md)
+and use the [isolated appliance workflow](docs/testing/LOCAL-APPLIANCE.md) for testing.
 
 The existing legacy baseline has been checkpointed and restored on the disposable
 nested Proxmox appliance, including three service VMs, six templates and eight
@@ -73,9 +73,11 @@ migration or a production rollout.
 
 ## Using the new workspace
 
+[Browse all 50 full-page screenshots](assets/screenshots/README.md), including achievements, account pages and administrator controls. [Documentation index](docs/README.md).
+
 The screenshots below show the actual production UI build with deterministic,
 synthetic demonstration records. They are not screenshots of production data.
-See [UI verification and screenshots](docs/UI-VERIFICATION.md) for the test matrix,
+See [UI verification and screenshots](docs/testing/UI-VERIFICATION.md) for the test matrix,
 full gallery and regeneration command.
 
 ### Student workspace
@@ -86,13 +88,13 @@ The investigation page shows the remaining time, connection details, flag progre
 and available hints. Stopping an instance requires confirmation.
 
 <picture>
-  <source srcset="assets/showcase/dashboard_dark.png" media="(prefers-color-scheme: dark)" />
-  <img src="assets/showcase/dashboard_light.png" alt="React student overview with challenge cards and learning progress" width="1000" />
+  <source srcset="assets/screenshots/dashboard_dark.png" media="(prefers-color-scheme: dark)" />
+  <img src="assets/screenshots/dashboard_light.png" alt="React student overview with challenge cards and learning progress" width="1000" />
 </picture>
 
 <picture>
-  <source srcset="assets/showcase/deploy_challenge_dark.png" media="(prefers-color-scheme: dark)" />
-  <img src="assets/showcase/deploy_challenge_light.png" alt="Investigation with flag submission, VPN connection details and running instance controls" width="1000" />
+  <source srcset="assets/screenshots/deploy_challenge_dark.png" media="(prefers-color-scheme: dark)" />
+  <img src="assets/screenshots/deploy_challenge_light.png" alt="Investigation with flag submission, VPN connection details and running instance controls" width="1000" />
 </picture>
 
 ### Administrator console
@@ -103,8 +105,8 @@ define the machines, networks, flags and progressive hints. Keep the exercise
 inactive while reviewing it, then publish it after import readiness is confirmed.
 
 <picture>
-  <source srcset="assets/showcase/create_challenge_dark.png" media="(prefers-color-scheme: dark)" />
-  <img src="assets/showcase/create_challenge_light.png" alt="Structured exercise editor for machines, networks, flags and hints" width="1000" />
+  <source srcset="assets/screenshots/create_challenge_dark.png" media="(prefers-color-scheme: dark)" />
+  <img src="assets/screenshots/create_challenge_light.png" alt="Structured exercise editor for machines, networks, flags and hints" width="1000" />
 </picture>
 
 **Challenges** provides search, category and availability filters, sorting and
@@ -114,8 +116,8 @@ ready machine templates. Permanent deletion is a separate confirmed action.
 Production maintenance and rollback remain CLI operations.
 
 <picture>
-  <source srcset="assets/showcase/manage_challenges_dark.png" media="(prefers-color-scheme: dark)" />
-  <img src="assets/showcase/manage_challenges_light.png" alt="Administrator exercise table with filters and separate edit, restore, retire and delete actions" width="1000" />
+  <source srcset="assets/screenshots/manage_challenges_dark.png" media="(prefers-color-scheme: dark)" />
+  <img src="assets/screenshots/manage_challenges_light.png" alt="Administrator exercise table with filters and separate edit, restore, retire and delete actions" width="1000" />
 </picture>
 
 ## Platform Architecture
@@ -138,11 +140,11 @@ flowchart LR
 ```
 
 The platform consists of four main components, the web application, the API, the database, and the monitoring system.
-- The browser application uses React/TypeScript in [`frontend/`](frontend/), served as static files by Apache. Its browser API is the unprivileged Flask service in [`heist/api/public/`](heist/api/public/); privileged VM operations stay in the separate platform API. Deployment templates live under [`deploy/web/`](deploy/web/). The dedicated web VM receives restricted database credentials and no Proxmox or SSH credentials. See [frontend development](docs/FRONTEND.md) and the current [migration gates](docs/ARCHITECTURE-MIGRATION.md).
-- The API is built using Python and the Flask framework, and is responsible for handling the core logic of the application, such as creating and managing virtual machines, and processing the uploaded files for challenge creation. The API interfaces with the Proxmox VE host using the Proxmox API, and with the database to store and retrieve information about the challenges, users, and other relevant data. The full implementation of the API can be found in the [`heist/api/`](heist/api/) directory.
-- The database is built using PostgreSQL, and is responsible for storing all the relevant data for the application, such as user information, challenge information, and other necessary data for the application to function properly. The database, including the schema and the necessary queries, is set up during the installation process, and can be found in the [`database/`](database/) directory. For the same reasons as the web application, the database is also set up on a dedicated virtual machine to ensure isolation and security, and to allow for better resource management and scalability.
+- The browser application uses React/TypeScript in [`frontend/`](frontend), served as static files by Apache. Its browser API is the unprivileged Flask service in [`heist/api/public/`](heist/api/public); privileged VM operations stay in the separate platform API. Deployment templates live under [`deploy/web/`](deploy/web). The dedicated web VM receives restricted database credentials and no Proxmox or SSH credentials. See [frontend development](docs/development/FRONTEND.md) and the current [migration gates](docs/development/ARCHITECTURE.md).
+- The API is built using Python and the Flask framework, and is responsible for handling the core logic of the application, such as creating and managing virtual machines, and processing the uploaded files for challenge creation. The API interfaces with the Proxmox VE host using the Proxmox API, and with the database to store and retrieve information about the challenges, users, and other relevant data. The full implementation of the API can be found in the [`heist/api/`](heist/api) directory.
+- The database is built using PostgreSQL, and is responsible for storing all the relevant data for the application, such as user information, challenge information, and other necessary data for the application to function properly. The database, including the schema and the necessary queries, is set up during the installation process, and can be found in the [`database/`](database) directory. For the same reasons as the web application, the database is also set up on a dedicated virtual machine to ensure isolation and security, and to allow for better resource management and scalability.
 - The monitoring system is built using onto Grafana, bundling information gathered from various sources to monitor the health of the platform, and to provide insights into the usage of the platform. This includes monitoring the other components of the platform, such as the web application, the database, and the Proxmox VE host, as well as monitoring the deployed challenges, such as the status of the virtual machines and the commands executed by the users.
-  In addition, the monitoring system also captures network traffic to allow for network forensics and analysis. The files needed to set up the monitoring system, including the configuration files for the various components, can be found in the [`heist/monitoring/`](heist/monitoring/) directory. While the monitoring system is distributed across the Proxmox VE host, the other components of the platform, and the deployed challenges, there is a dedicated virtual machine that hosts the Grafana dashboard, and the wazuh manager, which collects the data from the other components and provides a central point for monitoring and analysis.
+  In addition, the monitoring system also captures network traffic to allow for network forensics and analysis. The files needed to set up the monitoring system, including the configuration files for the various components, can be found in the [`heist/monitoring/`](heist/monitoring) directory. While the monitoring system is distributed across the Proxmox VE host, the other components of the platform, and the deployed challenges, there is a dedicated virtual machine that hosts the Grafana dashboard, and the wazuh manager, which collects the data from the other components and provides a central point for monitoring and analysis.
 
 ## Monitoring System Architecture
 

@@ -169,5 +169,61 @@ class BrowserDatabaseTests(unittest.TestCase):
         self.assertEqual(self.page.get_by_role('button',name='Delete',exact=True).count(),0)
 
 
+    def test_user_role_and_password_management_persist_through_both_flask_boundaries(self):
+        from heist.api.internal import create_app as internal_app
+        from heist.security.passwords import verify_password
+        from heist.api.public.internal_client import OPERATIONS
+        import uuid
+        temporary=tempfile.TemporaryDirectory(prefix='heist-admin-ui-')
+        self.addCleanup(temporary.cleanup)
+        platform=internal_app({'BACKEND_AUTHENTICATION_TOKEN':'fixture-internal-token',
+            'OPERATION_DIRECTORY':temporary.name,'MAINTENANCE_FILE':temporary.name+'/absent'},
+            services={'get_db_connection':lambda:self.psycopg2.connect(**self.settings)})
+        class Bridge:
+            # In-process WSGI for the internal boundary, real SQL and real web HTTPS.
+            # Production TLS transport is verified separately; no VM calls are allowed.
+            def request(bridge,operation,payload=None):
+                if operation not in ('admin_users','admin_user_change'):raise AssertionError('Unexpected privileged operation')
+                method,path,_=OPERATIONS[operation]
+                with platform.test_client() as client:
+                    response=client.open(path,method=method,base_url='https://localhost',json=payload,
+                        headers={'Authentication-Token':'fixture-internal-token','Idempotency-Key':uuid.uuid4().hex})
+                if response.status_code!=200:raise AssertionError(response.json)
+                return response.json
+            def close(bridge):pass
+        previous=self.app.extensions['internal_client_factory']
+        self.app.extensions['internal_client_factory']=Bridge
+        self.addCleanup(lambda:self.app.extensions.update(internal_client_factory=previous))
+        name=self.username+'b'
+        with closing(self.psycopg2.connect(**self.settings)) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT id FROM api.create_user(%s,%s,%s,%s,'127.0.0.1')",(name,name+'@example.invalid',self.old_hash,self.legacy_salt))
+                target=cursor.fetchone()[0]
+                cursor.execute("INSERT INTO web_sessions(token_hash,user_id,auth_version,created_at,last_seen,expires_at,absolute_expires_at) VALUES (%s,%s,0,NOW(),NOW(),NOW()+INTERVAL '1 hour',NOW()+INTERVAL '1 day')",('f'*64,target))
+            connection.commit()
+        self.page.goto(self.origin+'/manage-users')
+        self.page.get_by_label('Find a user',exact=True).fill(name)
+        account=self.page.get_by_role('row').filter(has_text=name+'@example.invalid')
+        account.get_by_role('button',name='Change role',exact=True).click()
+        self.page.get_by_label('Type '+name+' to confirm',exact=True).fill(name)
+        self.page.get_by_role('button',name='Apply',exact=True).click()
+        self.page.get_by_role('dialog').wait_for(state='hidden')
+        account.get_by_text('Administrator',exact=True).wait_for()
+        account.get_by_role('button',name='Reset password',exact=True).click()
+        self.page.get_by_label('Temporary password',exact=True).fill('temporary-browser-password')
+        self.page.get_by_label('Type '+name+' to confirm',exact=True).fill(name)
+        self.page.get_by_role('button',name='Apply',exact=True).click()
+        self.page.get_by_role('dialog').wait_for(state='hidden')
+        with closing(self.psycopg2.connect(**self.settings)) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT is_admin,password_hash,password_salt,password_reset FROM users WHERE id=%s',(target,))
+                admin,encoded,salt,reset=cursor.fetchone()
+                self.assertTrue(admin);self.assertTrue(reset)
+                self.assertTrue(verify_password(encoded,'temporary-browser-password',salt))
+                cursor.execute('SELECT count(*) FROM web_sessions WHERE user_id=%s',(target,))
+                self.assertEqual(cursor.fetchone(),(0,))
+        self.assertEqual(self.errors,[])
+
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)

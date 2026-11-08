@@ -77,3 +77,23 @@ class AdministrationTests(unittest.TestCase):
         self.assertEqual(result.status_code, 200, result.json)
         rows = self.request('admin/announcements').json['data']['announcements']
         self.assertEqual(next(item for item in rows if item['id'] == identifier)['author'], updated)
+
+    def test_user_and_instance_management_require_admin_and_ignore_forged_actor(self):
+        self.assertEqual(self.request('admin/users').status_code,401)
+        self.login()
+        for path in ('admin/users','admin/instances','admin/instances/1'):
+            self.assertEqual(self.request(path).status_code,403)
+        self.platform.request.assert_not_called()
+        self.update_user('is_admin=TRUE')
+        self.platform.request.return_value={'success':True,'data':{'users':[]}}
+        self.assertEqual(self.request('admin/users?search=student').status_code,200)
+        self.assertEqual(self.platform.request.call_args.args[1],{'actor_id':self.user_id,'page':1,'search':'student'})
+        response=self.request('admin/users/2','POST',json={'actor_id':999,'action':'role','administrator':True,'confirmation':'student'})
+        self.assertEqual(response.status_code,200,response.json)
+        self.assertEqual(self.platform.request.call_args.args,('admin_user_change',{'actor_id':self.user_id,'user_id':2,'action':'role','confirmation':'student','administrator':True}))
+        self.assertEqual(self.request('admin/instances/3','POST',json={'action':'rebuild','actor_id':999}).status_code,200)
+        self.assertEqual(self.platform.request.call_args.args,('admin_instance_change',{'actor_id':self.user_id,'instance_id':3,'action':'rebuild'}))
+        self.platform.reset_mock()
+        self.assertEqual(self.request('admin/users/2','POST',json={'action':'role','administrator':'true','confirmation':'student'}).status_code,400)
+        self.assertEqual(self.request('admin/instances/3','POST',json={'action':'shell'}).status_code,400)
+        self.platform.request.assert_not_called()

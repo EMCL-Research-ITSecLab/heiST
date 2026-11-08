@@ -11,6 +11,11 @@ import requests
 from .errors import ApiError
 
 OPERATIONS = {
+    'admin_users':('GET','/admin/users',15),
+    'admin_user_change':('POST','/admin/users/manage',30),
+    'admin_instances':('GET','/admin/instances',15),
+    'admin_instance':('GET','/admin/instances/details',60),
+    'admin_instance_change':('POST','/admin/instances/manage',1200),
     'parse_challenge_yaml': ('POST','/admin/challenges/parse-yaml',15),
     'health': ('GET','/health/ready',10),
     'delete_artifact': ('POST', '/artifacts/retire', 120),
@@ -79,6 +84,10 @@ class InternalClient:
                         headers={'Authentication-Token': self.token, 'Accept': 'application/json', 'Idempotency-Key': operation_id},
                         verify=self.certificate, timeout=(3, timeout), allow_redirects=False, stream=True)
             try:
+                if operation.startswith('admin_') and response.status_code in (400,403,404,409,503):
+                    rejected=json.loads(response_bytes(response))
+                    message=rejected.get('message') if isinstance(rejected,dict) else None
+                    raise ApiError(message if isinstance(message,str) and len(message)<=500 else 'Administrator request rejected',response.status_code)
                 if operation=='delete_artifact' and response.status_code==409:
                     rejected=json.loads(response_bytes(response))
                     if rejected.get('code')=='image_conflict' and isinstance(rejected.get('message'),str) and len(rejected['message'])<=500:

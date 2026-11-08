@@ -21,14 +21,15 @@ class LayoutTests(BrowserFixture):
         self.page.evaluate('document.fonts.ready')
 
     def test_populated_pages_fit_phone_tablet_desktop_in_both_themes(self):
-        paths = ['/landing', '/dashboard', '/explore', '/challenge?id=4', '/profile', '/manage-ctf', '/create-ctf', '/upload-diskfile', '/operations', '/impressum', '/privacy-policy', '/signup']
+        paths = ['/landing', '/dashboard', '/explore', '/challenge?id=4', '/profile', '/manage-ctf', '/create-ctf', '/upload-diskfile', '/operations', '/impressum', '/privacy-policy', '/signup', '/login', '/activity', '/badges', '/announcements', '/manage-announcements', '/manage-users', '/manage-instances', '/profile/investigator', '/404', '/reset-password']
         for width in (320, 390, 768, 1024, 1440):
             self.page.set_viewport_size({'width': width, 'height': 900})
             for theme in ('light', 'dark'):
                 self.page.evaluate("(theme) => localStorage.setItem('heist-theme', theme)", theme) if self.page.url.startswith(self.origin) else None
                 for path in paths:
                     with self.subTest(width=width, theme=theme, path=path):
-                        self.role='guest' if path=='/signup' else 'admin'
+                        self.role='guest' if path in ('/signup','/login','/landing','/404') else 'admin'
+                        self.password_change=path=='/reset-password'
                         self.settled(path)
                         # Theme is applied by the app on a full document load.
                         self.page.evaluate("(theme) => document.documentElement.dataset.theme = theme", theme)
@@ -246,6 +247,42 @@ class LayoutTests(BrowserFixture):
         self.page.reload()
         self.page.wait_for_function("document.documentElement.dataset.theme === 'dark'")
         self.assertEqual(self.page.evaluate("localStorage.getItem('heist-theme')"), 'dark')
+
+    def test_desktop_navigation_toggle_persists_and_removed_branding_stays_absent(self):
+        self.settled('/dashboard')
+        button=self.page.get_by_role('button',name='Toggle navigation')
+        self.assertEqual(button.get_attribute('aria-expanded'),'true')
+        button.click()
+        self.assertEqual(button.get_attribute('aria-expanded'),'false')
+        self.assertTrue(self.page.locator('#workspace-navigation').evaluate('(el)=>el.inert'))
+        self.page.reload()
+        self.assertEqual(button.get_attribute('aria-expanded'),'false')
+        button.click()
+        self.assertFalse(self.page.locator('#workspace-navigation').evaluate('(el)=>el.inert'))
+        self.assertEqual(self.page.locator('.sidebar').get_by_text('SECURITY TRAINING',exact=True).count(),0)
+        self.assertEqual(self.page.get_by_text('Heidelberg Security Training',exact=True).count(),0)
+
+    def test_administrator_user_and_instance_actions_require_confirmation(self):
+        self.settled('/manage-users')
+        target=self.page.get_by_role('row').filter(has_text='student01@example.invalid')
+        target.get_by_role('button',name='Change role',exact=True).click()
+        self.page.get_by_role('button',name='Cancel',exact=True).click()
+        self.assertEqual(self.mutations,[])
+        target.get_by_role('button',name='Sign out sessions',exact=True).click()
+        self.page.get_by_label('Type student01 to confirm',exact=True).fill('student01')
+        self.page.get_by_role('button',name='Apply',exact=True).click()
+        self.page.get_by_role('dialog').wait_for(state='hidden')
+        self.assertEqual(json.loads(self.mutations[-1][1]),{'action':'revoke_sessions','confirmation':'student01'})
+        self.settled('/manage-instances')
+        active=self.page.get_by_role('row').filter(has_text='student01')
+        active.get_by_role('button',name='Inspect',exact=True).click()
+        self.page.get_by_role('heading',name='Latest operation',exact=True).wait_for()
+        active.get_by_role('button',name='Rebuild',exact=True).click()
+        self.assertIn('All guest changes are lost',self.page.get_by_role('dialog').inner_text())
+        self.page.get_by_role('button',name='Rebuild',exact=True).last.click()
+        self.page.get_by_role('dialog').wait_for(state='hidden')
+        self.assertEqual(self.mutations[-1][0],'admin/instances/101')
+        self.assertEqual(json.loads(self.mutations[-1][1]),{'action':'rebuild'})
 
 
 if __name__ == '__main__':

@@ -10,7 +10,7 @@ importing an application package never starts them.
 | Convert an existing VM to OVA | [Conversion guide](ova-conversion.md) |
 | Copy closed log archives | `python3 -m tools.maintenance.archive_logs --help` |
 | Build a frontend release artifact | `python3 -m tools.frontend --help` |
-| Run an isolated heiST appliance | [Local appliance guide](../LOCAL-APPLIANCE.md) |
+| Run an isolated heiST appliance | [Local appliance guide](../testing/LOCAL-APPLIANCE.md) |
 
 Challenge imports use the public HTTPS web origin, trusted CA verification and a
 normal administrator session. Supply `--url`, `--username`, and `--ca-file` when

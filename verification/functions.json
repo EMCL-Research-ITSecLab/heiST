@@ -1366,5 +1366,49 @@
       "tests.test_legal_import.LegalImportTests.test_executable_links_and_unreviewed_main_tags_are_refused"
     ],
     "rationale": "Parses actual HTML and checks retained main content, safe attributes and refusal of executable links/unreviewed tags."
+  },
+  "heist/platform/administration.py::Administration.users": {
+    "tests": [
+      "tests.test_platform_administration.PlatformAdministrationTests.test_users_are_admin_only_search_is_literal_and_secrets_are_excluded"
+    ],
+    "rationale": "Checks live role denial, literal wildcard search and exclusion of password material from real PostgreSQL results."
+  },
+  "heist/platform/administration.py::Administration.database": {
+    "tests": [
+      "tests.test_platform_administration.PlatformAdministrationTests.test_users_are_admin_only_search_is_literal_and_secrets_are_excluded",
+      "tests.test_platform_administration.PlatformAdministrationTests.test_concurrent_cross_demotion_cannot_use_revoked_administrator_authority"
+    ],
+    "rationale": "Real SQL actor checks reject non-admin and revoked authority; cross-demotion serializes without losing both administrators."
+  },
+  "heist/platform/administration.py::Administration.change_user": {
+    "tests": [
+      "tests.test_platform_administration.PlatformAdministrationTests.test_role_changes_revoke_sessions_are_idempotent_and_cannot_change_self",
+      "tests.test_platform_administration.PlatformAdministrationTests.test_password_reset_sets_required_change_and_never_journals_secrets",
+      "tests.test_platform_administration.PlatformAdministrationTests.test_wrong_confirmation_and_invalid_action_have_no_account_effects",
+      "tests.test_platform_administration.PlatformAdministrationTests.test_concurrent_cross_demotion_cannot_use_revoked_administrator_authority"
+    ],
+    "rationale": "Checks persisted roles/auth versions, idempotent replay, required password replacement, secret-free journals, precondition rollback and concurrent revoked-actor refusal."
+  },
+  "heist/platform/administration.py::Administration.instance": {
+    "tests": [
+      "tests.test_platform_administration.PlatformAdministrationTests.test_network_inspection_retains_prefixes_and_multihomed_connections",
+      "tests.test_platform_administration.PlatformAdministrationTests.test_inspection_and_release_use_exact_assignment_and_keep_grades"
+    ],
+    "rationale": "Checks actual SQL machine/network relationships and prefixes, multiple NIC memberships, assigned identity and injected bounded VM state."
+  },
+  "heist/platform/administration.py::Administration.change_instance": {
+    "tests": [
+      "tests.test_platform_administration.PlatformAdministrationTests.test_remove_refuses_assigned_reserved_and_provisioning_instances",
+      "tests.test_platform_administration.PlatformAdministrationTests.test_rebuild_stops_removes_then_launches_and_keeps_the_user",
+      "tests.test_platform_administration.PlatformAdministrationTests.test_failed_rebuild_blocks_replay_and_does_not_start_another_instance"
+    ],
+    "rationale": "Checks refusal before teardown, exact instance/template arguments, grade retention, old-instance removal before launch and durable interruption blocking. VM effects are injected; native teardown acceptance is separate."
+  },
+  "heist/platform/administration.py::Administration.vm_status": {
+    "tests": [
+      "tests.test_platform_administration.VMStatusTests.test_vm_inspection_is_bounded_and_does_not_return_raw_host_output",
+      "tests.test_platform_administration.VMStatusTests.test_vm_status_timeout_is_visible_without_exposing_the_exception"
+    ],
+    "rationale": "Verifies a fixed argv without shell expansion, a two-second limit and sanitized unavailable state on command failure or timeout."
   }
 }

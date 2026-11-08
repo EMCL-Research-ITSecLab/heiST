@@ -64,3 +64,43 @@ def change_announcement(identifier):
                 raise ApiError('Title and announcement are required')
             repo.call('update_announcement', identifier, *arguments)
     return {'success': True, 'message': 'Announcement deleted' if request.method == 'DELETE' else 'Announcement updated'}
+
+
+@blueprint.get('/admin/users')
+def users():
+    actor=require_admin()
+    page,_,_=pagination(25)
+    search=text(request.args.get('search',''),name='Search',maximum=100)
+    return internal().request('admin_users',{'actor_id':actor['id'],'page':page,'search':search})
+
+
+@blueprint.post('/admin/users/<identifier>')
+def manage_user(identifier):
+    actor=require_admin()
+    rate_limit('admin-users',str(actor['id']),20)
+    data=body()
+    action=choice(data.get('action'),('role','password','revoke_sessions'),'user action')
+    confirmation=text(data.get('confirmation'),name='Confirmation',minimum=3,maximum=20)
+    payload={'actor_id':actor['id'],'user_id':positive_id(identifier,'user identifier'),'action':action,'confirmation':confirmation}
+    if action=='role':
+        if type(data.get('administrator')) is not bool:raise ApiError('Choose an administrator role')
+        payload['administrator']=data['administrator']
+    if action=='password':payload['password']=text(data.get('password'),name='Password',minimum=8,maximum=72)
+    return internal().request('admin_user_change',payload)
+
+
+@blueprint.get('/admin/instances')
+def instances():
+    actor=require_admin()
+    page,_,_=pagination(25)
+    return internal().request('admin_instances',{'actor_id':actor['id'],'page':page})
+
+
+@blueprint.route('/admin/instances/<identifier>',methods=['GET','POST'])
+def manage_instance(identifier):
+    actor=require_admin()
+    payload={'actor_id':actor['id'],'instance_id':positive_id(identifier,'instance identifier')}
+    if request.method=='POST':
+        rate_limit('admin-instances',str(actor['id']),20)
+        payload['action']=choice(body().get('action'),('release','rebuild','remove'),'instance action')
+    return internal().request('admin_instance_change' if request.method=='POST' else 'admin_instance',payload)

@@ -3,7 +3,7 @@ PYTHON ?= python3
 help:
 	@echo 'make test: portable Python/API tests; TEST_DATABASE_URL enables PostgreSQL regressions'
 	@echo 'make test-frontend: React/TypeScript and browser transport tests'
-	@echo 'Local OVA runner: docs/LOCAL-APPLIANCE.md; update workflow: docs/UPDATES.md'
+	@echo 'Local OVA runner: docs/testing/LOCAL-APPLIANCE.md; update workflow: docs/administration/UPDATES.md'
 test:
 	$(PYTHON) tools/check.py
 test-frontend: test-ui

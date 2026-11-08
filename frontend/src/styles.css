@@ -176,6 +176,7 @@ small {
 
 .app {
   display:flex;
+  background:var(--nav);
   min-height:100vh
 }
 
@@ -212,16 +213,6 @@ small {
   max-width:100%
 }
 
-.workspace-label {
-  display:flex;
-  align-items:center;
-  gap:9px;
-  font:9px var(--mono);
-  letter-spacing:1.5px;
-  color:#a6b6ca;
-  padding-bottom:25px;
-  border-bottom:1px solid #283344
-}
 
 .status-dot {
   width:7px;
@@ -273,10 +264,6 @@ small {
   color:#87e0d2
 }
 
-.sidebar-bottom {
-  margin-top:auto;
-  padding-top:35px
-}
 
 .learning-note {
   display:flex;
@@ -302,13 +289,9 @@ small {
   font-weight:450
 }
 
-.sidebar-bottom>p {
-  font-size:9px;
-  color:#61738a;
-  margin:22px 0 0
-}
 
 .workspace {
+  background:var(--canvas);
   margin-left:238px;
   width:calc(100% - 238px);
   display:flex;
@@ -379,7 +362,7 @@ small {
 }
 
 .menu-button {
-  display:none
+  display:block
 }
 
 main {
@@ -1839,3 +1822,12 @@ dialog .button-row {
 .legal-page h2 {font-size:22px;margin-top:28px}
 .legal-page h3 {font-size:17px;margin-top:20px}
 .legal-page p,.legal-page li {line-height:1.7}
+
+/* Desktop navigation can be collapsed independently of the mobile drawer. */
+.navigation-collapsed .sidebar {transform:translateX(-100%)}
+.navigation-collapsed .workspace {margin-left:0;width:100%}
+.sidebar {overflow-y:auto}
+
+.account-email {display:block;overflow-wrap:anywhere}
+.diagnostic-grid {display:grid;grid-template-columns:max-content minmax(0,1fr);gap:10px 20px}
+.diagnostic-grid dd {margin:0;overflow-wrap:anywhere}

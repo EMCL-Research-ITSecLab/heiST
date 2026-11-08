@@ -27,7 +27,7 @@ class Journal:
         self.directory = private_directory(directory)
 
     def resource(self, scope, identifier):
-        if scope not in ('user', 'template', 'pool', 'artifact') or type(identifier) is not int or identifier <= 0:
+        if scope not in ('user', 'template', 'pool', 'artifact', 'instance') or type(identifier) is not int or identifier <= 0:
             raise ValueError('Invalid operation resource')
         return private_directory(self.directory/f'{scope}-{identifier}')
 

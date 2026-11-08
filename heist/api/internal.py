@@ -24,7 +24,7 @@ def create_app(config=None, services=None):
     application.config.update(config or {})
     services = services or {}
 
-    service_modules = {'launch_challenge': 'heist.platform.challenges.launch', 'stop_challenge': 'heist.platform.challenges.stop', 'import_machine_templates': 'heist.platform.images.import_templates', 'delete_machine_templates': 'heist.platform.images.delete_templates', 'get_user_config': 'heist.platform.users.vpn_config', 'delete_user_config': 'heist.platform.users.delete_vpn'}
+    service_modules = {'launch_challenge': 'heist.platform.challenges.launch', 'stop_challenge': 'heist.platform.challenges.stop', 'import_machine_templates': 'heist.platform.images.import_templates', 'delete_machine_templates': 'heist.platform.images.delete_templates', 'get_user_config': 'heist.platform.users.vpn_config', 'delete_user_config': 'heist.platform.users.delete_vpn', 'teardown_challenge':'heist.platform.challenges.teardown'}
 
     def service(name):
         return services[name] if name in services else getattr(importlib.import_module(service_modules[name]), name)
@@ -131,6 +131,16 @@ def create_app(config=None, services=None):
         finally:
             if db is not None:
                 db.close()
+
+    def administrator_service():
+        from heist.platform.administration import Administration
+        return Administration(connection,Journal(application.config['OPERATION_DIRECTORY']),
+            stop=lambda *args,**kwargs:service('stop_challenge')(*args,**kwargs),
+            teardown=lambda *args,**kwargs:service('teardown_challenge')(*args,**kwargs),
+            launch=lambda template,user:service('launch_challenge')(template,user,
+                os.getenv('MONITORING_VPN_INTERFACE','ctf_monitoring'),os.getenv('MONITORING_DMZ_INTERFACE','dmz_monitoring')))
+    from heist.api.administration import blueprint as administrator_routes
+    application.register_blueprint(administrator_routes(administrator_service))
 
     @application.get('/admin/operations')
     def operations():

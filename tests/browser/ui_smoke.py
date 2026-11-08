@@ -15,7 +15,7 @@ class BrowserTests(BrowserFixture):
             with self.subTest(path=path):
                 self.visit(path)
         self.role = 'admin'
-        for path in ['/dashboard', '/profile', '/activity', '/announcements', '/badges', '/manage-ctf', '/create-ctf', '/upload-diskfile', '/manage-announcements', '/operations']:
+        for path in ['/dashboard', '/profile', '/activity', '/announcements', '/badges', '/manage-ctf', '/create-ctf', '/upload-diskfile', '/manage-announcements', '/operations', '/manage-users', '/manage-instances']:
             with self.subTest(path=path):
                 self.visit(path)
                 self.assertNotIn('Something went wrong', self.page.locator('main').inner_text())
@@ -78,6 +78,13 @@ class BrowserTests(BrowserFixture):
         network = self.page.get_by_role('group', name='Network 1', exact=True)
         network.get_by_label('Network name').fill('students')
         network.get_by_label('gateway', exact=True).check()
+        self.page.get_by_role('button',name='Add network').click()
+        internal=self.page.get_by_role('group',name='Network 2',exact=True)
+        internal.get_by_label('Network name').fill('internal')
+        internal.get_by_label('Student accessible',exact=True).uncheck()
+        internal.get_by_label('DMZ',exact=True).check()
+        internal.get_by_label('gateway',exact=True).check()
+        self.assertEqual(self.page.get_by_role('img',name='Challenge network preview').locator('path.topology-edge').count(),2)
         self.page.get_by_role('button', name='Add flag', exact=False).click()
         flag = self.page.get_by_role('group', name='Flag 1', exact=True)
         flag.get_by_label('Flag value').fill('fixture-discovery')
@@ -90,6 +97,10 @@ class BrowserTests(BrowserFixture):
         self.assertIn('gateway', body)
         self.assertIn('fixture.ova', body)
         self.assertIn('attached_vms', body)
+        self.assertIn('internal',body)
+        self.assertIn('students',body)
+        self.assertIn('\"dmz\":true',body)
+        self.assertIn('\"accessible\":false',body)
         self.assertEqual(headers['x-csrf-token'], 'a'*64)
 
     def test_chunked_artifact_upload_finalizes_after_all_chunks(self):

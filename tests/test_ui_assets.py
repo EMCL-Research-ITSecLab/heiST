@@ -41,8 +41,8 @@ class UiAssetTests(unittest.TestCase):
             bootstrap.assert_not_called()
 
     def test_official_logos_survive_bundle_installation_but_other_svg_paths_are_refused(self):
-        logos = {name:(Path(__file__).resolve().parents[1]/name).read_bytes()
-                 for name in ('assets/logo/logo_dark.svg','assets/logo/logo_light.svg','assets/logo/icon_dark.svg')}
+        logos = {name:(Path(__file__).resolve().parents[1]/'frontend/public'/name).read_bytes()
+                 for name in ('assets/logo/logo_dark.svg','assets/logo/logo_light.svg','assets/logo/icon_dark.svg','assets/logo/icon_light.svg')}
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             install_bundle(bundle(standalone=True,static=logos),root,COMMIT)

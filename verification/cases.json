@@ -1640,7 +1640,7 @@
       ],
       "sources": [
         "tests/integration/vpn/lifecycle.py",
-        "docs/WEB-API.md"
+        "docs/development/WEB-API.md"
       ]
     },
     {
@@ -1656,7 +1656,7 @@
       ],
       "sources": [
         "tests/integration/proxmox/resources.py",
-        "docs/WEB-API.md"
+        "docs/development/WEB-API.md"
       ]
     },
     {
@@ -1931,6 +1931,21 @@
       ],
       "sources": [
         "tools/local/rehearse_platform.py"
+      ]
+    },
+    {
+      "id": "AUTO-PLATFORM-ADMINISTRATION",
+      "area": "administration",
+      "mode": "automated",
+      "procedure": "Run tests/test_platform_administration.py with the disposable PostgreSQL fixture.",
+      "expected": "Authority, literal search, secret exclusion, role/password/session changes, stale assignment refusal, guarded remove/rebuild and interrupted-operation blocking pass without touching host VMs.",
+      "evidence": [
+        "source-bound SQL test results"
+      ],
+      "sources": [
+        "tests/test_platform_administration.py",
+        "heist/platform/administration.py",
+        "heist/api/administration.py"
       ]
     }
   ]

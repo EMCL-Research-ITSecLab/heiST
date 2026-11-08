@@ -3,11 +3,11 @@ import sys
 
 
 def uninstall():
-    raise RuntimeError('The legacy uninstaller is retired. Preserve backups and use the recovery procedure in docs/UPDATES.md; do not flush shared host configuration.')
+    raise RuntimeError('The legacy uninstaller is retired. Preserve backups and use the recovery procedure in docs/administration/UPDATES.md; do not flush shared host configuration.')
 
 
 def main():
-    print('Automated uninstall is unavailable. See docs/UPDATES.md for recovery and clean-host reprovisioning.', file=sys.stderr)
+    print('Automated uninstall is unavailable. See docs/administration/UPDATES.md for recovery and clean-host reprovisioning.', file=sys.stderr)
     return 2
 
 

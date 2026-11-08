@@ -3,6 +3,28 @@ import hashlib
 import json
 import re
 import uuid
+import subprocess
+
+
+def require_backup_support(configurations, version):
+    """Reject Proxmox #6675 before maintenance, without changing template disks."""
+    if not any(re.fullmatch(r'(?:ide|sata)\d+', name)
+               and 'media=cdrom' not in value and 'cloudinit' not in value
+               for config in configurations for name, value in config.items()):
+        return
+    if not isinstance(version, str) or not re.fullmatch(r'(?:\d+:)?\d+\.\d+\.\d+(?:[+~.-][A-Za-z0-9.+~:-]+)?', version):
+        raise RuntimeError('Cannot confirm qemu-server template backup compatibility')
+    # Epochs do not change which upstream code contains the fix. Debian's
+    # ordering still handles package revisions and prereleases correctly.
+    upstream_version=version.split(':',1)[-1]
+    affected = (subprocess.run(['dpkg', '--compare-versions', upstream_version, 'ge', '9.0.0'], check=False).returncode,
+                subprocess.run(['dpkg', '--compare-versions', upstream_version, 'lt', '9.0.18'], check=False).returncode)
+    if any(code not in (0, 1) for code in affected):
+        raise RuntimeError('Cannot confirm qemu-server template backup compatibility')
+    if affected == (0, 0):
+        raise RuntimeError('qemu-server '+version+' cannot safely back up IDE/SATA templates '
+                           '(Proxmox #6675). Install a supported version with the 9.0.18 fix '
+                           'and verify template backup/restore before maintenance.')
 
 
 def disk_capacity(configuration):

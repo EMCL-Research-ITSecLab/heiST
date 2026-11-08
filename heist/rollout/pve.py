@@ -236,10 +236,16 @@ class PVE:
         if not backup.is_dir() or backup.stat().st_dev==self.installation.stat().st_dev:
             raise RuntimeError('Provide a mounted backup filesystem separate from installation source')
         templates=self.template_catalogue()
-        from .template_checkpoint import disk_capacity
+        from .template_checkpoint import disk_capacity, require_backup_support
+        template_configurations=[]
         for identifier,item in templates.items():
             if not item.get('absent'):
-                capacity+=disk_capacity(self.template_configuration(SimpleNamespace(vmid=int(identifier))))
+                configuration=self.template_configuration(SimpleNamespace(vmid=int(identifier)))
+                template_configurations.append(configuration)
+                capacity+=disk_capacity(configuration)
+        if template_configurations:
+            version=self.command(['dpkg-query','--show','--showformat=${Version}','qemu-server']).decode().strip()
+            require_backup_support(template_configurations,version)
         from .image_checkpoint import inventory
         capacity+=sum(item['bytes'] for item in inventory(self.environment.get('HEIST_ARTIFACT_LIBRARY','/var/lib/vz/import')).values())
         if shutil.disk_usage(backup).free<capacity+16*1024**3:

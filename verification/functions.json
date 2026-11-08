@@ -1460,5 +1460,12 @@
       "tests.test_browser_configuration.BrowserConfigurationTests.test_canonical_settings_do_not_fall_back_to_stale_secrets_or_expand_environment"
     ],
     "rationale": "Copies only registration settings from checksum-bound installer bytes, preserves explicit runtime overrides, excludes privileged credentials, rejects changed/symlink sources and avoids environment interpolation."
+  },
+  "heist/rollout/template_checkpoint.py::require_backup_support": {
+    "tests": [
+      "tests.test_template_checkpoint.TemplateCheckpointTests.test_production_template_backup_regression_is_refused_without_disk_changes",
+      "tests.test_template_checkpoint.TemplateCheckpointTests.test_scsi_and_empty_templates_are_unaffected_and_unknown_versions_fail_closed"
+    ],
+    "rationale": "Uses real Debian version comparisons for production qemu-server 9.0.16, the 9.0.18 fix, epochs and prereleases; rejects unconfirmed versions without changing template configuration. Native backup/restore remains separate acceptance."
   }
 }

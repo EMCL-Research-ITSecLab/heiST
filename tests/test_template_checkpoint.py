@@ -1,6 +1,6 @@
 """VM snapshots require stable ownership identity and complete disk coverage."""
 import unittest
-from heist.rollout.template_checkpoint import identity, require_same_vm, disk_capacity
+from heist.rollout.template_checkpoint import identity, require_same_vm, disk_capacity, require_backup_support
 
 
 class TemplateCheckpointTests(unittest.TestCase):
@@ -23,3 +23,20 @@ class TemplateCheckpointTests(unittest.TestCase):
                       {'sata0':'local:disk,size=10G,backup=0'},{'sata0':'local:disk,size=10G,shared=1'},
                       {'sata0':'/dev/foreign,size=10G'},{'sata0':'local:disk'},{'smbios1':''}):
             with self.subTest(extra=extra),self.assertRaises(RuntimeError):identity({**self.value,**extra})
+
+    def test_production_template_backup_regression_is_refused_without_disk_changes(self):
+        original=dict(self.value)
+        for version in ('9.0.0','9.0.6','9.0.16','9.0.17','9.0.18~rc1','1:9.0.16'):
+            with self.subTest(version=version),self.assertRaisesRegex(RuntimeError,'#6675'):
+                require_backup_support([self.value],version)
+        for version in ('8.4.4','9.0.18','9.0.18-1','9.2.15','1:9.0.18'):
+            with self.subTest(version=version):require_backup_support([self.value],version)
+        self.assertEqual(self.value,original)
+
+    def test_scsi_and_empty_templates_are_unaffected_and_unknown_versions_fail_closed(self):
+        require_backup_support([{'scsi0':'local:base,size=10G'}],'9.0.16')
+        require_backup_support([{'ide2':'local:installer.iso,media=cdrom'}],'9.0.16')
+        require_backup_support([],None)
+        for version in (None,'','unknown','9.0.16\n','9.0.18; echo unsafe'):
+            with self.subTest(version=version),self.assertRaisesRegex(RuntimeError,'confirm'):
+                require_backup_support([self.value],version)

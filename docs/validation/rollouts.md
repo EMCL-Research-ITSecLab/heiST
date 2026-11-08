@@ -229,3 +229,13 @@ URL rather than inventing consent. The bundled German Terms page is copied
 from the supplied operator URL, with its source hash recorded in
 `assets/legal-sources.json`. All 52 fixture screenshots were refreshed. These
 checks do not open the installer or production upgrade gates.
+
+### Native template backup prerequisite
+
+Production has `qemu-server 9.0.16` and IDE/SATA template disks. Its first template
+export reproduced [Proxmox bug 6675](https://github.com/proxmox/qemu-server/blob/master/debian/changelog),
+fixed in `9.0.18`. Rollout preflight now rejects affected package versions before
+maintenance, without making read-only base volumes writable. Updating the host
+package and proving template backup/restore remain pending; no Proxmox package
+was changed during this investigation. All sixteen original source OVAs were
+backed up with matching source/destination SHA256, totaling 21,166,366,720 bytes.

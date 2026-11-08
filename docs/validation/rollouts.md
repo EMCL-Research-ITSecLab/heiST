@@ -239,3 +239,34 @@ maintenance, without making read-only base volumes writable. Updating the host
 package and proving template backup/restore remain pending; no Proxmox package
 was changed during this investigation. All sixteen original source OVAs were
 backed up with matching source/destination SHA256, totaling 21,166,366,720 bytes.
+
+### Candidate 906a00b follow-up
+
+The clean candidate passed 464 Python tests with zero skips, failures or errors.
+The Terms UI passed 32 Chromium checks, including real HTTPS/Flask/restricted
+PostgreSQL registration; all 52 screenshot source/checksum checks passed. Both
+Senior Identity bundles passed their complete 58-file transfer manifest and
+local definition validation: each has three machines, two networks and twelve
+flags. Their private import definitions remain inactive; production import has
+not happened.
+
+The production-dump audit at `906a00b5870ada9925bd33b88e7cd25c0ca5cf4e`
+passed all eleven migrations, SQL failure/recovery, restricted-role/session
+checks and all 51 personalized flag definitions. The private receipt is
+`database-isolated-audit-906a00b.json`. This does not certify the current dirty
+production source or a whole-platform upgrade.
+
+The first native attempt stopped in baseline preflight, before maintenance or
+any target deployment: the legacy pilot's Wazuh API failed during cold startup.
+The manager container remained running while its required daemons were down.
+One explicit pilot-only manager restart recovered the required daemon health.
+The initial failure is retained; it is not clean cold-boot acceptance. A second
+frozen native staging/precommit-failure/recovery run uses unit
+`heist-native-platform-906a00b-r2.service`. A running unit is not a passing result.
+
+An independent eight-MiB read-only block fixture passed native VMA creation,
+verification and `qmrestore`, with source/restored disk hashes and template UUID
+matching. Initial exploratory failures are retained. A recoverable native archive
+needs the Proxmox disk mapping hints as well as a canonical `vzdump-qemu-...`
+filename. This fixture does not certify production template backups, bootability,
+fresh application installation or production rollout.

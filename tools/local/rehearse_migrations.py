@@ -74,6 +74,27 @@ def schema_fingerprint(settings):
     return hashlib.sha256(json.dumps(values,default=str,sort_keys=True).encode()).hexdigest()
 
 
+def verify_personalized_flags(settings):
+    """Exercise existing personalized flags against the restored SQL grader.
+
+    Use one existing account and every personalized flag. No flag, secret or
+    account identity is included in the receipt; locking SELECTs are rolled back.
+    An empty fixture is recorded as untested rather than a compatibility pass.
+    """
+    from heist.platform.challenges.launch import resolve_user_specific_flag
+    with closing(settings.connect()) as connection, connection.cursor() as cursor:
+        cursor.execute("SELECT id,email,unique_id FROM public.users WHERE email IS NOT NULL AND unique_id IS NOT NULL ORDER BY id LIMIT 1")
+        user = cursor.fetchone()
+        cursor.execute('SELECT id,challenge_template_id,flag FROM public.challenge_flags WHERE user_specific ORDER BY id')
+        flags = cursor.fetchall()
+        if not user or not flags:
+            return {'tested': False, 'flags_checked': 0}
+        for identifier, template, secret in flags:
+            resolve_user_specific_flag(connection, template_id=template,
+                flag={'id': identifier, 'flag': secret}, user_id=user[0], user_email=user[1], user_unique_id=user[2])
+        return {'tested': True, 'flags_checked': len(flags)}
+
+
 def main(argv=None):
     import argparse
     from psycopg2 import sql
@@ -165,6 +186,8 @@ def main(argv=None):
                 sessions=Sessions(repo,'a'*64);token=sessions.rotate();assert sessions.load(token)
             finally:repo.close()
             receipt['checks']['legacy_migrations_and_restricted_role']=True
+            receipt['personalized_flags']=verify_personalized_flags(settings)
+            assert adapter.protected_hashes(plan.protected_tables)==protected
             migrate(settings,plan,web_role=roles[1],web_password=passwords[1],previous_web_role=roles[0])
             with closing(settings.connect()) as connection,connection.cursor() as cursor:
                 cursor.execute('SELECT count(*) FROM public.web_sessions');assert cursor.fetchone()==(0,)

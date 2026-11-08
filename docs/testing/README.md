@@ -70,7 +70,14 @@ not declared by the release manifest additionally requires the explicit
 it does not change the manifest or bypass installation/rollout admission.
 
 The audit tests actual migration-body failure rollback, protected row/schema
-preservation, restricted-role access, session invalidation and scratch database
+preservation, restricted-role access, session invalidation, personalized flag generation against
+the restored grader, and scratch database
 restoration. Its receipt records whether the starting commit was declared
 supported. Complete VM/host acceptance and review of local source changes remain
 separate requirements.
+
+The personalized-flag receipt records `tested` and `flags_checked`; an empty
+fixture is explicitly untested. It checks one existing account and all stored
+personalized flag definitions, without writing to guests, accepting a submission
+or printing flag secrets. Cross-account denial and both legacy email and upstream
+unique-ID graders also have disposable database integration tests.

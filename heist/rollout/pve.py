@@ -189,8 +189,10 @@ class PVE:
             raise RuntimeError('The configured database is not the checkpointed database VM')
         # Unknown source changes still fail; operator-reviewed hashes are bound
         # to the immutable deployment configuration and privately checkpointed.
-        from .source_overrides import capture
-        reviewed,modes=capture(self.installation,getattr(self.config,'reviewed_source_files',{}))
+        from .source_overrides import capture, for_source
+        values=for_source(getattr(self.config,'reviewed_source_files',{}),
+                          getattr(self.config,'reviewed_source_commit',None),plan.source)
+        reviewed,modes=capture(self.installation,values)
         self.generated_modes=modes
         dirty=git(self.installation,'diff','--name-only','HEAD').decode().splitlines()
         generated=dict(reviewed)

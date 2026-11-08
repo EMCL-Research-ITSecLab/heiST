@@ -41,10 +41,15 @@ class Deployment:
     web_hostname: str | None = None
     wazuh_container: str | None = None
     reviewed_source_files: dict[str,str] = field(default_factory=dict)
+    reviewed_source_commit: str | None = None
 
     def __post_init__(self):
         from .source_overrides import validate
         validate(self.reviewed_source_files)
+        import re
+        if bool(self.reviewed_source_files)!=(self.reviewed_source_commit is not None) or (
+                self.reviewed_source_commit is not None and re.fullmatch('[a-f0-9]{40}',self.reviewed_source_commit) is None):
+            raise ValueError('Bind reviewed source files to their full original commit')
         for name in ('installation','state_directory','backup_directory','backend_env','api_certificate','web_root','web_certificate'):
             path=Path(getattr(self,name))
             if not path.is_absolute() or '..' in path.parts or '\n' in str(path):

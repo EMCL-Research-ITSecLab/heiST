@@ -4,10 +4,19 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
-from heist.rollout.source_overrides import capture, validate
+from heist.rollout.source_overrides import capture, validate, for_source
 
 
 class SourceOverrideTests(unittest.TestCase):
+    def test_legacy_review_does_not_require_removed_paths_on_the_newer_source(self):
+        old='a'*40;new='b'*40
+        self.path.unlink()
+        values,modes=capture(self.root,for_source(self.expected,old,new))
+        self.assertEqual((values,modes),({},{}))
+        with self.assertRaisesRegex(RuntimeError,'regular'):
+            capture(self.root,for_source(self.expected,old,old))
+        with self.assertRaisesRegex(ValueError,'original commit'):
+            for_source(self.expected,None,new)
     def setUp(self):
         temporary=tempfile.TemporaryDirectory();self.addCleanup(temporary.cleanup)
         self.root=Path(temporary.name)

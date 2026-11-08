@@ -40,3 +40,11 @@ def capture(root, values):
             raise RuntimeError('Reviewed source changed or exceeds its limit: '+name)
         result[name]=data.hex();modes[name]=mode
     return result,modes
+
+
+def for_source(values, reviewed_commit, current_commit):
+    """Legacy paths disappear after migration; keep their review for rollback."""
+    validate(values)
+    if values and (not isinstance(reviewed_commit,str) or re.fullmatch('[a-f0-9]{40}',reviewed_commit) is None):
+        raise ValueError('Bind reviewed source files to their original commit')
+    return values if current_commit==reviewed_commit else {}

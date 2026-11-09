@@ -382,14 +382,20 @@ class PVE:
             with connection.cursor() as cursor:
                 cursor.execute("SELECT id FROM challenges WHERE lifecycle_state='READY'")
                 ready=[row[0] for row in cursor.fetchall()]
-        if ready:
-            prefix = 'heist.platform.challenges' if (self.installation/'heist/platform/challenges/teardown.py').exists() else ('heist.backend' if (self.installation/'heist/backend/teardown_challenge.py').exists() else 'backend')
-            module = prefix + ('.teardown' if prefix == 'heist.platform.challenges' else '.teardown_challenge')
-            script=f'from {module} import teardown_challenge\nimport json,sys\nfor identifier in json.load(sys.stdin):teardown_challenge(identifier)\n'
-            subprocess.run([str(self.installation/'.venv/bin/python'),'-c',script],cwd=self.installation,
-                input=json.dumps(ready).encode(),check=True,timeout=self.config.timeout)
+        self._teardown_ready(ready)
         self.assert_idle(allow_ready=False)
         transaction.save(protected_hashes=self.protected_hashes(transaction.plan.protected_tables))
+
+    def _teardown_ready(self, ready):
+        if not ready:
+            return
+        prefix = 'heist.platform.challenges' if (self.installation/'heist/platform/challenges/teardown.py').exists() else ('heist.backend' if (self.installation/'heist/backend/teardown_challenge.py').exists() else 'backend')
+        module = prefix + ('.teardown' if prefix == 'heist.platform.challenges' else '.teardown_challenge')
+        script=f'from {module} import teardown_challenge\nimport json,sys\nfor identifier in json.load(sys.stdin):teardown_challenge(identifier)\n'
+        environment = dict(os.environ)
+        environment.update({key:value for key,value in self.environment.items() if isinstance(value,str)})
+        subprocess.run([str(self.installation/'.venv/bin/python'),'-c',script],cwd=self.installation,
+            env=environment,input=json.dumps(ready).encode(),check=True,timeout=self.config.timeout)
 
     def _prediction_processes(self):
         for process in Path('/proc').glob('[0-9]*'):
@@ -789,10 +795,7 @@ class PVE:
         self.verify_web_runtime(transaction)
         self.marker.unlink(missing_ok=True)
         fsync_directory(self.state)
-        if not transaction.data.get('writers_may_have_resumed'):
-            self.assert_idle(allow_ready=False)
-            self.command(['systemctl','start','backend','cleanup'],timeout=180)
-            transaction.save(writers_may_have_resumed=True)
+        self._resume_writers(transaction)
         for unit,state in services.items():
             if not state.get('installed',True):continue
             self.command(['systemctl','enable' if state['enabled'] else 'disable',unit])
@@ -800,3 +803,12 @@ class PVE:
         self.remote(self.config.vm('web'),web.FINISH,{'services':web_services,'open':False})
         self.wait(lambda:self._health(legacy=True,local_web=True),'post-start health')
         self.remote(self.config.vm('web'),web.FINISH,{'services':web_services,'open':True})
+
+    def _resume_writers(self, transaction):
+        if transaction.data.get('writers_may_have_resumed'):
+            return
+        before_checkpoint = not transaction.data.get('checkpoint_ready') and not transaction.data.get('committed')
+        self.assert_idle(allow_ready=before_checkpoint)
+        services = ['backend'] if before_checkpoint else ['backend','cleanup']
+        self.command(['systemctl','start',*services],timeout=180)
+        transaction.save(writers_may_have_resumed=True)

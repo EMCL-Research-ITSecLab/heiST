@@ -53,10 +53,18 @@ def rewrite(content, installation, marker, state):
     return ''.join(lines)
 
 
+def capture(transaction):
+    if 'backup_cron' not in transaction.data:
+        content = read()
+        transaction.save(backup_cron={'before': content, 'after': content})
+
+
 def migrate(adapter, transaction):
     if not transaction.data.get('checkpoint_ready'):
         raise RuntimeError('Backup schedule migration requires a verified checkpoint')
     before = read()
+    if 'backup_cron' in transaction.data and before != transaction.data['backup_cron']['before']:
+        raise RuntimeError('Root backup schedule changed during checkpoint; preserve the operator edit')
     after = rewrite(before, adapter.installation, adapter.marker, adapter.state)
     receipt = {'before': before, 'after': after}
     write_json(Path(transaction.data['backup_directory'])/'root-crontab.json', receipt)
@@ -72,11 +80,14 @@ def restore(transaction, checkpoint):
     desired = saved['before']
     current = read()
     own = transaction.data.get('backup_cron', saved)
-    if current not in (own['before'], own['after'], desired):
+    allowed = (own['before'], own['after'], desired)
+    if 'resume_backup_cron' in transaction.data:
+        allowed += (transaction.data['resume_backup_cron'],)
+    if current not in allowed:
         raise RuntimeError('Root backup schedule changed; preserve the operator edit')
+    transaction.save(resume_backup_cron=desired)
     if current != desired:
         install(desired)
-    transaction.save(resume_backup_cron=desired)
 
 
 def verify(transaction, *, target):

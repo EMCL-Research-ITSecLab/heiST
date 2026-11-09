@@ -369,6 +369,9 @@ class PVE:
             transaction.save(host_services=services, web_services=web_services, web_runtime=web_runtime,
                 generated=getattr(self, 'generated', {}), generated_modes=getattr(self,'generated_modes',{}),
                 legacy_shims=getattr(self, 'legacy_shims', {}))
+        if transaction.plan.schema == 3:
+            from . import backup_cron
+            backup_cron.capture(transaction)
         self._host_guard()
         self.remote(self.config.vm('web'),web.INSTALL_GUARD,{'program':web.FIREWALL})
         self.remote(self.config.vm('web'),web.QUIESCE)
@@ -437,6 +440,8 @@ class PVE:
     def checkpoint(self, transaction):
         directory=private_directory(Path(self.config.backup_directory)/transaction.path.name)
         transaction.save(backup_directory=str(directory))
+        if 'backup_cron' in transaction.data:
+            write_json(directory/'root-crontab.json', transaction.data['backup_cron'])
         from .identifiers import preserve
         transaction.save(id_watermarks=preserve(self.database,self.state/'id-watermarks.json'))
         templates=self.template_catalogue()

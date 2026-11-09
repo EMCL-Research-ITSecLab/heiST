@@ -124,3 +124,33 @@ print('All six platform entry points resolve safely')
         with patch.object(backup_cron,'read',return_value=before):backup_cron.verify(transaction,target=False)
         with patch.object(backup_cron,'read',return_value=after):
             with self.assertRaisesRegex(RuntimeError,'differs'):backup_cron.verify(transaction,target=False)
+
+    def test_backup_cron_capture_is_idempotent_and_refuses_changes_during_checkpoint(self):
+        from heist.rollout import backup_cron
+        from types import SimpleNamespace
+        transaction=SimpleNamespace(data={'checkpoint_ready':True,'backup_directory':'/backups'})
+        transaction.save=lambda **values:transaction.data.update(values)
+        with patch.object(backup_cron,'read',return_value='original\n') as read:
+            backup_cron.capture(transaction);backup_cron.capture(transaction)
+            read.assert_called_once()
+        adapter=SimpleNamespace(installation=Path('/root/heiST'),marker=Path('/marker'),state=Path('/state'))
+        with patch.object(backup_cron,'read',return_value='operator edit\n'),patch.object(backup_cron,'install') as install:
+            with self.assertRaisesRegex(RuntimeError,'operator edit'):backup_cron.migrate(adapter,transaction)
+            install.assert_not_called()
+
+    def test_failed_rollback_restores_the_newer_safety_checkpoint_schedule(self):
+        from heist.rollout import backup_cron
+        from types import SimpleNamespace
+        older=SimpleNamespace(data={'backup_cron':{'before':'legacy\n','after':'current\n'}})
+        safety=SimpleNamespace(data={})
+        safety.save=lambda **values:safety.data.update(values)
+        with patch.object(backup_cron,'read',return_value='current\n'):backup_cron.capture(safety)
+        def ambiguous_install(value):
+            self.assertEqual(safety.data['resume_backup_cron'],value)
+            raise RuntimeError('Connection lost after cron write')
+        with patch.object(backup_cron,'read',return_value='current\n'),patch.object(backup_cron,'install',side_effect=ambiguous_install):
+            with self.assertRaisesRegex(RuntimeError,'Connection lost'):backup_cron.restore(safety,older)
+        with patch.object(backup_cron,'read',return_value='legacy\n'),patch.object(backup_cron,'install') as install:
+            backup_cron.restore(safety,safety)
+            install.assert_called_once_with('current\n')
+        with patch.object(backup_cron,'read',return_value='current\n'):backup_cron.verify(safety,target=False)

@@ -11,7 +11,7 @@ from backend.proxmox_api_calls import (
     add_network_device_api_call,
     initial_configuration_api_call,
     launch_vm_api_call,
-    shutdown_vm_api_call,
+    graceful_shutdown_vm_api_call,
     vm_is_stopped_api_call,
     detach_network_device_api_call,
     convert_vm_to_template_api_call,
@@ -350,6 +350,32 @@ def _copy_agent_files_windows(ga, config_dir, remote_base, vmid):
     print(f"[Info] Agent files staged on Windows VM {vmid}", flush=True)
 
 
+def _verify_copied_files(ga, config_dir, remote_base, vmid, windows=False):
+    """
+    Fail the import if any staged agent file is missing or has the wrong size in the guest.
+    """
+    sep = "\\" if windows else "/"
+    for abs_path, rel_path in _collect_agent_files(config_dir):
+        expected = os.path.getsize(abs_path)
+        remote = remote_base + sep + rel_path.replace("\\", sep).replace("/", sep)
+        if windows:
+            r = ga.exec(
+                ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command",
+                 f'(Get-Item -LiteralPath "{remote}").Length'],
+                capture_output=True,
+                timeout=90,
+            )
+        else:
+            r = ga.exec(["stat", "-c", "%s", remote], capture_output=True, timeout=15)
+        got = r.stdout.strip()
+        if r.exit_code != 0 or got != str(expected):
+            raise RuntimeError(
+                f"Copy verification failed on VM {vmid}: {remote} "
+                f"expected {expected} bytes, got {got!r} (exit={r.exit_code})"
+            )
+    print(f"[Info] Verified all staged agent files on VM {vmid}", flush=True)
+
+
 def _wait_for_ga(ga, vmid, ping_timeout, poll_interval=2):
     ping_deadline = time.monotonic() + ping_timeout
     while not ga.ping():
@@ -405,8 +431,8 @@ def configure_vms(challenge_template, ip_pool):
             else:
                 install_wazuh_linux(machine_template=machine_template, allocated_ip=allocated_ip)
 
-            print(f"[Info] Setup complete on VM {machine_template.id}, shutting down", flush=True)
-            shutdown_vm_api_call(machine_template)
+            print(f"[Info] Setup complete on VM {machine_template.id}, shutting down gracefully", flush=True)
+            graceful_shutdown_vm_api_call(machine_template, timeout=300)
 
             max_wait = 900
             start_time = time.time()
@@ -464,6 +490,8 @@ def install_wazuh_linux(machine_template, allocated_ip,timeout=600):
             print(f"[Warning] NIC setup non-zero on VM {machine_template.id}: {result.stderr.strip()!r}", flush=True)
 
         _copy_agent_files_linux(ga, _LINUX_AGENT_CONFIG_DIR, _LINUX_REMOTE_BASE, machine_template.id)
+        ga.exec(["sync"], capture_output=False, timeout=60)
+        _verify_copied_files(ga, _LINUX_AGENT_CONFIG_DIR, _LINUX_REMOTE_BASE, machine_template.id)
 
         install_cmd = (
             f"{_LINUX_REMOTE_BASE}/setup_wazuh.sh --install --yes"
@@ -492,6 +520,7 @@ def install_wazuh_linux(machine_template, allocated_ip,timeout=600):
                 )
                 if flag_result.exit_code == 0 and timer_result.stdout.strip() == "active":
                     time.sleep(15)  # stability buffer
+                    ga.exec(["sync"], capture_output=False, timeout=60)
                     print(f"[Info] Linux setup complete on VM {machine_template.id}", flush=True)
                     return
                 print(
@@ -541,6 +570,7 @@ def install_wazuh_windows(machine_template, allocated_ip, timeout=900):
             print(f"[Warning] NIC setup non-zero on Windows VM {machine_template.id}: {result.stderr.strip()!r}", flush=True)
 
         _copy_agent_files_windows(ga, _WINDOWS_AGENT_CONFIG_DIR, _WINDOWS_REMOTE_BASE, machine_template.id)
+        _verify_copied_files(ga, _WINDOWS_AGENT_CONFIG_DIR, _WINDOWS_REMOTE_BASE, machine_template.id, windows=True)
 
         ps1_remote = _WINDOWS_REMOTE_BASE + "\\setup_wazuh.ps1"
         print(f"[Info] Running setup_wazuh.ps1 --install on VM {machine_template.id}", flush=True)

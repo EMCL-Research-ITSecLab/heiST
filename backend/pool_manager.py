@@ -8,7 +8,7 @@ import time
 import traceback
 import fcntl
 
-from backend.get_db_connection import get_db_connection
+from backend.get_db_connection import get_db_connection, db_connection_context
 from backend.warmup_challenge import warmup_challenge as warmup_challenge_backend
 from backend.teardown_challenge import teardown_challenge as teardown_challenge_backend
 
@@ -20,6 +20,10 @@ MONITORING_VPN_INTERFACE = os.getenv("MONITORING_VPN_INTERFACE", "ctf_monitoring
 MONITORING_DMZ_INTERFACE = os.getenv("MONITORING_DMZ_INTERFACE", "dmz_monitoring")
 MONITORING_VM_ID = int(os.getenv("MONITORING_VM_ID", "9000"))
 WAZUH_NETWORK_DEVICE = os.getenv("WAZUH_NETWORK_DEVICE", "vrtmon")
+
+POOL_MINIMAL_SIZE = int(os.getenv("POOL_MINIMAL_SIZE", "1"))
+POOL_MAXIMAL_SIZE = int(os.getenv("POOL_MAXIMAL_SIZE", "10"))
+WATCHDOG_MAX_FAILURES = int(os.getenv("POOL_WATCHDOG_MAX_FAILURES", "12"))
 
 CLEANUP_COMPLETE_FILE_PATH = "/var/lock/cleanup_complete.lock"
 if not os.path.exists(CLEANUP_COMPLETE_FILE_PATH):
@@ -95,8 +99,7 @@ class PoolManager:
         self.minimal_pool_size = minimal_pool_size
         self.maximal_pool_size = maximal_pool_size
         self.check_interval_seconds = check_interval_seconds
-        self.pool_maintenance_db_conn = get_db_connection()
-        self.expired_challenge_teardown_db_conn = get_db_connection()
+        self.fail_count = {}          # task name -> consecutive failures
 
         print(f"[POOL] min={minimal_pool_size} max={maximal_pool_size} interval={check_interval_seconds}s")
 
@@ -126,12 +129,14 @@ class PoolManager:
 
                 threads = [
                     threading.Thread(
-                        target=self.check_and_maintain_pool,
+                        target=self._guard,
+                        args=(self.check_and_maintain_pool, "check-and-maintain"),
                         daemon=True,
                         name="check-and-maintain"
                     ),
                     threading.Thread(
-                        target=self.teardown_expired_challenges,
+                        target=self._guard,
+                        args=(self.teardown_expired_challenges, "teardown-expired"),
                         daemon=True,
                         name="teardown-expired"
                     )
@@ -152,13 +157,35 @@ class PoolManager:
                 print(f"[LOOP] Sleeping {self.check_interval_seconds}s")
                 time.sleep(self.check_interval_seconds)
 
+    def _guard(self, fn, name):
+        """
+        Run a maintenance task. Log failures, and if the task keeps failing
+        exit the process so systemd restarts it with fresh state.
+        """
+        try:
+            fn()
+            self.fail_count[name] = 0
+        except Exception:
+            self.fail_count[name] = self.fail_count.get(name, 0) + 1
+            n = self.fail_count[name]
+            print(f"[WATCHDOG] {name} failed ({n}/{WATCHDOG_MAX_FAILURES})", flush=True)
+            traceback.print_exc()
+            if n >= WATCHDOG_MAX_FAILURES:
+                print(f"[WATCHDOG] {name} failed {n} times in a row, exiting for restart", flush=True)
+                os._exit(1)
+
     def check_and_maintain_pool(self):
+        """Open a fresh DB connection per cycle so a dead connection can never wedge the manager."""
+        with db_connection_context() as conn:
+            self._check_and_maintain_pool(conn)
+
+    def _check_and_maintain_pool(self, conn):
         """
         Check the current pool sizes and maintain the hot pool.
         """
         print("[POOL] Checking and maintaining pool")
 
-        with self.pool_maintenance_db_conn.cursor() as cursor:
+        with conn.cursor() as cursor:
             cursor.execute("SELECT id FROM challenge_templates WHERE ready_to_launch = TRUE")
             challenge_template_ids = [row[0] for row in cursor.fetchall()]
 
@@ -167,13 +194,13 @@ class PoolManager:
         for challenge_template_id in challenge_template_ids:
             print(f"[POOL] Evaluating template {challenge_template_id}")
 
-            current_pool_size = self.get_current_pool_size(challenge_template_id)
-            target_pool_size = self.get_target_pool_size(challenge_template_id)
+            current_pool_size = self.get_current_pool_size(conn, challenge_template_id)
+            target_pool_size = self.get_target_pool_size(conn, challenge_template_id)
 
             target_pool_size = max(self.minimal_pool_size, target_pool_size)
             target_pool_size = min(self.maximal_pool_size, target_pool_size)
 
-            running_warmups_count = self.get_current_provisioning_for_pool_count(challenge_template_id)
+            running_warmups_count = self.get_current_provisioning_for_pool_count(conn, challenge_template_id)
             total_effective_pool_size = current_pool_size + running_warmups_count
 
             print(
@@ -198,7 +225,7 @@ class PoolManager:
                 teardowns_needed = current_pool_size - target_pool_size
                 print(f"[POOL] Scheduling {teardowns_needed} teardowns")
 
-                with self.pool_maintenance_db_conn.cursor() as cursor:
+                with conn.cursor() as cursor:
                     cursor.execute("""
                         WITH candidates AS (
                             SELECT id
@@ -264,8 +291,8 @@ class PoolManager:
             self.running_warmups.pop(thread_id, None)
             print(f"[WARMUP][CLEANUP] thread={thread_id}")
 
-    def get_current_provisioning_for_pool_count(self, challenge_template_id):
-        with self.pool_maintenance_db_conn.cursor() as cursor:
+    def get_current_provisioning_for_pool_count(self, conn, challenge_template_id):
+        with conn.cursor() as cursor:
             cursor.execute("""
                 SELECT COUNT(*)
                 FROM challenges
@@ -278,8 +305,8 @@ class PoolManager:
         print(f"[POOL] Current provisioning count for {challenge_template_id}: {count}")
         return count
 
-    def get_current_pool_size(self, challenge_template_id):
-        with self.pool_maintenance_db_conn.cursor() as cursor:
+    def get_current_pool_size(self, conn, challenge_template_id):
+        with conn.cursor() as cursor:
             cursor.execute("""
                 SELECT COUNT(*)
                 FROM challenges
@@ -292,11 +319,11 @@ class PoolManager:
         print(f"[POOL] Current pool size for {challenge_template_id}: {size}")
         return size
 
-    def get_target_pool_size(self, challenge_template_id):
+    def get_target_pool_size(self, conn, challenge_template_id):
         current_time = datetime.datetime.now()
         print(f"[POOL] Calculating target pool size for {challenge_template_id} at {current_time}")
 
-        with self.pool_maintenance_db_conn.cursor() as cursor:
+        with conn.cursor() as cursor:
             cursor.execute("""
                 SELECT effective_time, size
                 FROM pool_sizes
@@ -345,9 +372,8 @@ class PoolManager:
     def cleanup_leftover_from_crashed_processes(self):
         print("[CLEANUP] Checking for orphaned challenges")
 
-        cleanup_db_conn = get_db_connection()
         ids = []
-        with cleanup_db_conn.cursor() as cursor:
+        with db_connection_context() as cleanup_db_conn, cleanup_db_conn.cursor() as cursor:
             cursor.execute("""
                 UPDATE challenges
                 SET lifecycle_state = 'TERMINATING'
@@ -367,9 +393,13 @@ class PoolManager:
             ).start()
 
     def teardown_expired_challenges(self):
+        with db_connection_context() as conn:
+            self._teardown_expired_challenges(conn)
+
+    def _teardown_expired_challenges(self, conn):
         print("[EXPIRED] Checking for expired challenges")
 
-        with self.expired_challenge_teardown_db_conn.cursor() as cursor:
+        with conn.cursor() as cursor:
             cursor.execute("""
                 WITH expired AS (
                     SELECT id
@@ -405,7 +435,7 @@ if __name__ == "__main__":
 
     print("[MAIN] Monitoring machine ready, starting PoolManager")
 
-    pool_manager = PoolManager(minimal_pool_size=1, maximal_pool_size=10, check_interval_seconds=5)
+    pool_manager = PoolManager(minimal_pool_size=POOL_MINIMAL_SIZE, maximal_pool_size=POOL_MAXIMAL_SIZE, check_interval_seconds=5)
     pool_manager.start()
 
     print("[MAIN] PoolManager started, entering idle loop")

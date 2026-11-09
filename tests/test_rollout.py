@@ -102,6 +102,25 @@ class RolloutTests(unittest.TestCase):
             self.controller.rollback(original.path.name,confirm_version='0.2.0')
         self.assertEqual(self.operations.restore.call_count,2)
         self.assertIsNone(self.operations.restore.call_args.kwargs.get('checkpoint'))
+        self.assertEqual(json.loads((self.state/'installed.json').read_text())['transaction'],original.path.name)
+        self.operations.restore.side_effect=None
+        retried=self.controller.rollback(original.path.name,confirm_version='0.2.0')
+        self.assertEqual(retried.data['phase'],'COMPLETE')
+
+    def test_failed_rollback_resume_keeps_the_original_release_available_for_retry(self):
+        original=self.controller.apply(self.plan)
+        self.operations.restore.side_effect=[RuntimeError('old snapshot read failed'),None]
+        self.operations.finish.side_effect=RuntimeError('recovery finish interrupted')
+        with self.assertRaisesRegex(RuntimeError,'recovery finish interrupted'):
+            self.controller.rollback(original.path.name,confirm_version='0.2.0')
+        self.operations.reset_mock()
+        self.operations.finish.side_effect=None
+        self.operations.restore.side_effect=None
+        recovered=self.controller.resume()
+        self.assertEqual(recovered.data['phase'],'ROLLED_BACK')
+        self.operations.restore.assert_not_called()
+        self.assertEqual(json.loads((self.state/'installed.json').read_text())['transaction'],original.path.name)
+        self.assertEqual(self.controller.rollback(original.path.name,confirm_version='0.2.0').data['phase'],'COMPLETE')
 
     def test_recovery_finish_failure_never_restores_again_after_writers_resume(self):
         self.operations.migrate.side_effect = RuntimeError('bad migration')

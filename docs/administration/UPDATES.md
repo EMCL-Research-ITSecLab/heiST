@@ -125,6 +125,9 @@ original legacy service policy. Reboot acceptance must check all three guests.
 The upgrade also provisions a dedicated `heist-image` system account for isolated
 OVA conversion. It has no login or home directory; rollback retains this unused
 account to avoid recycling an identity that may still own conversion files.
+If a deliberate rollback fails before commit, recovery restores its newer safety
+checkpoint and retains the original installed release identity. Administrators can
+retry that rollback after resolving the failure, including after a recovery resume.
 
 1. Preflight checks source identity, compatibility, VM identity, backup capacity,
    idle state and baseline health.

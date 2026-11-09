@@ -80,6 +80,20 @@ class Controller:
             'version': transaction.plan.version, 'transaction': transaction.path.name})
         (self.directory / 'active.json').unlink(missing_ok=True)
 
+    def _record_recovered_installation(self, transaction):
+        name=transaction.path.name
+        if transaction.data.get('kind')=='rollback':
+            name=transaction.data.get('restore_from')
+            if not isinstance(name,str) or name in ('.','..') or Path(name).name!=name:
+                raise RuntimeError('Rollback recovery has no valid original release identity')
+            original=Transaction.load(self.directory/'transactions'/name)
+            if (original.data['phase']!='COMPLETE' or original.plan.target!=transaction.plan.source
+                    or original.plan.source!=transaction.plan.target
+                    or original.plan.version!=transaction.plan.source_version):
+                raise RuntimeError('Rollback recovery does not match its original release')
+        write_json(self.directory/'installed.json',{'commit':transaction.plan.source,
+            'version':transaction.plan.source_version,'transaction':name})
+
     def _recover(self, transaction):
         try:
             transaction.save('RECOVERING')
@@ -91,8 +105,7 @@ class Controller:
             transaction.save('RECOVERY_VERIFIED', recovery_committed=True)
             self.operations.finish(transaction)
             transaction.save('ROLLED_BACK')
-            write_json(self.directory / 'installed.json', {'commit': transaction.plan.source,
-                'version': transaction.plan.source_version, 'transaction': transaction.path.name})
+            self._record_recovered_installation(transaction)
             (self.directory / 'active.json').unlink(missing_ok=True)
         except Exception as error:
             transaction.failure(error)
@@ -142,8 +155,7 @@ class Controller:
             if transaction.data.get('recovery_committed'):
                 self.operations.finish(transaction)
                 transaction.save('ROLLED_BACK')
-                write_json(self.directory / 'installed.json', {'commit': transaction.plan.source,
-                    'version': transaction.plan.source_version, 'transaction': transaction.path.name})
+                self._record_recovered_installation(transaction)
                 (self.directory / 'active.json').unlink(missing_ok=True)
             elif transaction.data.get('committed'):
                 # Never restore a pre-upgrade DB after the write boundary.

@@ -3,7 +3,6 @@ import time
 import datetime
 from tools.challenges.upload_ova_file import upload_all_ova_files
 from .client import request
-from tools.challenges.yaml_parser import yaml_to_create_challenge_form_data
 
 YAML_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -23,7 +22,14 @@ def setup_challenge(admin_session, path_to_yaml, upload_ovas=True, prints=False)
 
     if prints:
         print("\nPreparing form data from YAML")
-    form_data = yaml_to_create_challenge_form_data(path_to_yaml)
+    with open(path_to_yaml, encoding='utf-8') as source:
+        yaml_source = source.read(256*1024+1)
+    if len(yaml_source.encode('utf-8')) > 256*1024:
+        raise ValueError('YAML file must be at most 256 KiB')
+    # Use the browser's parser and owned-image lookup. Upload filenames and
+    # registered display names deliberately have different suffix conventions.
+    form_data = request(admin_session, 'POST', '/api/admin/challenges/import-yaml',
+                        json={'yaml': yaml_source})['data']
 
     if prints:
         print("\nCreating challenge on the server")

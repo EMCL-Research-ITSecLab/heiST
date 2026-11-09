@@ -103,6 +103,60 @@ class ImagePipelineTests(unittest.TestCase):
         self.assertFalse((self.root/'artifact-uploads'/str(self.user_id)/identifier/'payload.ova').exists())
         self.assertEqual(len(list((self.root/'library').glob('*.ova'))),1)
 
+    def test_operator_yaml_import_binds_the_actual_published_image_through_both_apis(self):
+        from tools.challenges.setup_challenge import setup_challenge
+        identifier = self.stage()
+        self.assertTrue(process(self.store, self.transport, self.user_id, identifier))
+        artifact = self.repo.call('get_user_available_disk_files', self.user_id)[0]
+        self.assertEqual(artifact['display_name'], 'pipeline')
+        imports = []
+
+        def import_templates(template, connection, _pool):
+            # Only the hypervisor boundary is replaced. Auth, YAML parsing,
+            # image ownership, definition writes and readiness use real APIs/SQL.
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT disk_file_id FROM machine_templates WHERE challenge_template_id=%s', (template,))
+                self.assertEqual(cursor.fetchall(), [(artifact['id'],)])
+                cursor.execute('UPDATE challenge_templates SET ready_to_launch=TRUE WHERE id=%s', (template,))
+            imports.append(template)
+
+        self.host = create_app({**self.host.config, 'TEMPLATE_LOCK_DIRECTORY': str(self.root/'template-locks')},
+                               {'get_db_connection': self.connect, 'import_machine_templates': import_templates})
+        path = self.root/'exercise.yaml'
+        path.write_text('''ctf:
+  name: Published image import
+  description: Exercise created through the operator helper
+  category: misc
+  difficulty: easy
+  is_active: false
+  vms:
+    gateway:
+      ova_name: pipeline
+      cores: 1
+      ram_gb: 1
+      domain_name: gateway.lab
+  subnets:
+    students:
+      accessible: true
+      attached_vms: [gateway]
+  flags:
+    checkpoint:
+      flag: fixture-owned-flag
+      points: 1
+''')
+        def transport(_session, method, endpoint, **arguments):
+            response = self.request(endpoint.removeprefix('/api/'), method, json=arguments.get('json'))
+            if response.status_code >= 400:
+                raise RuntimeError(str(response.json))
+            return response.json
+
+        with patch('tools.challenges.setup_challenge.request', side_effect=transport):
+            template = setup_challenge(object(), path, upload_ovas=False)
+        self.assertEqual(imports, [template])
+        self.assertEqual(self.sql('SELECT is_active,ready_to_launch FROM challenge_templates WHERE id=%s', (template,)),
+                         [(False, True)])
+        self.assertEqual(self.sql('SELECT count(*) FROM network_templates WHERE challenge_template_id=%s', (template,)), [(1,)])
+
     def test_response_loss_after_database_commit_resumes_same_identity_without_duplicate_image(self):
         identifier=self.stage()
         original=write_json

@@ -24,7 +24,7 @@ from heist.maintenance.database import Backups, PostgreSQL
 from .health import probe
 from .manifest import blob, build_plan, git, revision
 from .migrations import migrate
-from .legacy import module_for
+from .legacy import checkpoint_wrappers, module_for
 from .host import prediction_cron
 from . import web
 from .tasks import Tasks
@@ -218,14 +218,7 @@ class PVE:
         tracked = set(git(self.installation, 'ls-files', '-z').decode().split('\0'))
         source_files = set(git(self.installation, 'ls-tree', '-r', '--name-only', plan.source).decode().splitlines())
         target_files = set(git(self.installation, 'ls-tree', '-r', '--name-only', plan.target).decode().splitlines())
-        self.legacy_shims = {}
-        for path in (self.installation/'bin').iterdir():
-            name = str(path.relative_to(self.installation))
-            if name in tracked:
-                continue
-            module = module_for(path, self.installation)
-            if module and module.replace('.', '/') + '.py' in source_files | target_files:
-                self.legacy_shims[name] = path.read_bytes().hex()
+        self.legacy_shims = checkpoint_wrappers(self.installation, tracked, source_files | target_files)
         for name in target_files:
             path = self.installation/name
             if name not in tracked and (path.exists() or path.is_symlink()) and name not in self.legacy_shims:

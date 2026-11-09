@@ -26,3 +26,23 @@ cd "{installation}" || {{
 exec "{installation}/.venv/bin/python" -m {module} "$@"
 '''
     return module if text == expected else None
+
+
+def checkpoint_wrappers(installation, tracked, source_files):
+    """Preserve exact installer wrappers before replacing conflicting commands.
+
+    The former installer also put Suricata's update command in bin/update.
+    Capture that exact wrapper in the normal transaction; leave its bytes in
+    place until the verified checkpoint permits checkout, and restore on failure.
+    """
+    installation = Path(installation)
+    external = {'bin/update': 'suricata.update.data.update'}
+    result = {}
+    for path in (installation/'bin').iterdir():
+        name = str(path.relative_to(installation))
+        if name in tracked:
+            continue
+        module = module_for(path, installation)
+        if module and (module.replace('.', '/')+'.py' in source_files or external.get(name) == module):
+            result[name] = path.read_bytes().hex()
+    return result

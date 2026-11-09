@@ -27,3 +27,11 @@ class ProxyConfigurationTests(unittest.TestCase):
                 render(self.template, **{**self.settings,key:value})
         with self.assertRaises(ValueError):
             render(self.template+'\n@UNKNOWN@', **self.settings)
+
+    def test_existing_certificate_chain_filename_can_contain_plus(self):
+        certificate = '/etc/ssl/certs/emcl-ctf.iwr.uni-heidelberg.de+Chain.pem'
+        result = render(self.template, **{**self.settings, 'certificate': certificate})
+        self.assertIn('SSLCertificateFile "'+certificate+'"', result)
+        for suffix in ('"', '\nInclude /private', '${SECRET}', '|command', '/../key.pem'):
+            with self.subTest(suffix=suffix), self.assertRaises(ValueError):
+                render(self.template, **{**self.settings, 'certificate': certificate+suffix})

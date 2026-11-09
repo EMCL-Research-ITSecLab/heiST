@@ -10,7 +10,7 @@ def render(template, *, web_root, certificate, certificate_key, hostname, api_po
     for name, value in values.items():
         path = Path(value)
         if (not path.is_absolute() or '..' in path.parts or str(path) != value or
-                re.fullmatch(r'/[A-Za-z0-9_./-]+', value) is None):
+                re.fullmatch(r'/[A-Za-z0-9_./+-]+', value) is None):
             raise ValueError('Use a normalized Apache filesystem path: '+name)
     if type(api_port) is not int or not 1024 <= api_port <= 65535:
         raise ValueError('Use an unprivileged loopback API port')

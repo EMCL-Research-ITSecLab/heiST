@@ -87,7 +87,7 @@ def reload_network_api_call():
     Reload a network in Proxmox.
     """
     directory = os.getenv('HEIST_NETWORK_LOCK_DIRECTORY', '/run/heist-network-operations')
-    with operation_guard(directory, 1):
+    with operation_guard(directory, 1, timeout=300):
         response = make_api_call('PUT', f'api2/json/nodes/{node}/network', {})
         wait_for_task(make_api_call, node, response, timeout=90)
 

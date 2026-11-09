@@ -40,3 +40,11 @@ class PoolConnectionRecoveryTests(unittest.TestCase):
         self.assertEqual({key: settings[key] for key in ('keepalives', 'keepalives_idle', 'keepalives_interval', 'keepalives_count')},
                          {'keepalives': 1, 'keepalives_idle': 30, 'keepalives_interval': 10, 'keepalives_count': 3})
         self.assertTrue(connection.autocommit)
+
+    def test_warmup_does_not_replay_a_failed_infrastructure_operation(self):
+        from contextlib import nullcontext
+        from heist.platform.challenges import warmup
+        with patch.object(warmup,'template_guard',return_value=nullcontext()),patch.object(warmup,'_warmup_challenge',side_effect=RuntimeError('native outcome unknown')) as provision:
+            with self.assertRaisesRegex(RuntimeError,'native outcome unknown'):
+                warmup.warmup_challenge(None,8,'monitor','dmz')
+            provision.assert_called_once()

@@ -51,3 +51,29 @@ class TemplateLockTests(unittest.TestCase):
                 with operation_guard(directory, 12):
                     pass
             self.assertEqual(external.read_text(), 'preserve')
+
+    def test_bounded_wait_acquires_only_after_the_original_holder_releases(self):
+        import threading
+        entered=threading.Event();started=threading.Event();errors=[]
+        with tempfile.TemporaryDirectory() as root:
+            def waiter():
+                started.set()
+                try:
+                    with operation_guard(Path(root),1,timeout=2):entered.set()
+                except BaseException as error:errors.append(error)
+            with operation_guard(Path(root),1):
+                thread=threading.Thread(target=waiter);thread.start()
+                self.assertTrue(started.wait(1));self.assertFalse(entered.wait(.05))
+            thread.join(3)
+            self.assertTrue(entered.is_set());self.assertEqual(errors,[])
+
+    def test_wait_timeout_and_invalid_bounds_never_enter_the_operation(self):
+        with tempfile.TemporaryDirectory() as root:
+            directory=Path(root)
+            for value in (-1, True, float('inf'), float('nan'), 3601):
+                with self.assertRaises(ValueError):
+                    with operation_guard(directory,1,timeout=value):self.fail('Invalid wait was accepted')
+            with operation_guard(directory,1):
+                with self.assertRaises(OperationBusy):
+                    with operation_guard(directory,1,timeout=.05):self.fail('Conflicting operation ran')
+            with operation_guard(directory,1,timeout=.1):pass

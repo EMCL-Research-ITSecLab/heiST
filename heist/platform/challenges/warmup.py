@@ -1,7 +1,6 @@
 import random
 import socket
 import threading
-from tenacity import retry, stop_after_attempt, wait_exponential_jitter
 import time
 from dotenv import find_dotenv
 from heist.environment import load_backend_env as load_dotenv
@@ -38,7 +37,6 @@ from heist.infrastructure.proxmox.client import (
     delete_network_api_call
 )
 from heist.infrastructure.network.addressing import nth_network_subnet, nth_machine_ip
-from heist.platform.challenges.teardown import remove_database_entries, stop_dnsmasq_instances,remove_challenge_from_wazuh
 from heist.platform.challenges.timing import launch_timing_logger
 from heist.infrastructure.database import db_connection_context
 from heist.infrastructure.proxmox.guest_agent import GuestAgent, GuestAgentError
@@ -51,8 +49,6 @@ WAZUH_ENROLLMENT_PASSWORD = os.getenv("WAZUH_ENROLLMENT_PASSWORD")
 DNSMASQ_INSTANCES_DIR = "/etc/dnsmasq-instances/"
 
 
-@retry(stop=stop_after_attempt(10), wait=wait_exponential_jitter(initial=1, max=5, exp_base=1.1, jitter=1),
-       reraise=True)
 def warmup_challenge(pre_assigned_user_id, challenge_template_id, vpn_monitoring_device, dmz_monitoring_device):
     with template_guard(challenge_template_id, shared=True):
         return _warmup_challenge(pre_assigned_user_id, challenge_template_id, vpn_monitoring_device, dmz_monitoring_device)
@@ -977,78 +973,30 @@ def set_challenge_ready(challenge, db_conn):
     print(f"[Info] Challenge {challenge.id} lifecycle state set to READY", flush=True)
 
 
+def claim_failed_provisioning(challenge, db_conn):
+    """Commit a cleanup claim without touching a live student assignment."""
+    from heist.platform.jobs.journal import RecoveryRequired
+    with db_conn:
+        with db_conn.cursor() as cursor:
+            cursor.execute("""
+                UPDATE challenges SET lifecycle_state='TERMINATING'
+                WHERE id=%s AND challenge_template_id=%s
+                  AND lifecycle_state IN ('PROVISIONING','TERMINATING')
+                  AND NOT EXISTS(SELECT 1 FROM users WHERE running_challenge=challenges.id)
+                RETURNING id
+            """, (challenge.id, challenge.template.id))
+            if cursor.fetchone():
+                return True
+            cursor.execute('SELECT 1 FROM challenges WHERE id=%s',(challenge.id,))
+            if cursor.fetchone():
+                raise RecoveryRequired('Failed provisioning changed identity or has an active student; preserve it')
+            return False
+
+
 def undo_launch_challenge(challenge, db_conn):
-    """
-    Undo the launch of a challenge by stopping and deleting the machines and networks.
-    """
-
+    """Use ownership-checked, resumable teardown; never force native locks."""
     if challenge is None:
-        print(f"[Warning] Cannot undo launch: challenge is None", flush=True)
         return
-
-    print(f"[Error] Undoing launch for challenge {challenge.id}", flush=True)
-
-    print(f"[Info] Stopping and deleting machines", flush=True)
-    stop_and_delete_machines(challenge)
-
-    print(f"[Info] Deleting network devices", flush=True)
-    delete_network_devices(challenge)
-
-    print(f"[Info] Stopping dnsmasq instances", flush=True)
-    stop_dnsmasq_instances(challenge)
-
-    print(f"[Info] Removing database entries", flush=True)
-    remove_database_entries(challenge, db_conn)
-
-    print(f"[Info] Removing challenge from Wazuh", flush=True)
-    remove_challenge_from_wazuh(challenge)
-
-    print(f"[Info] Challenge {challenge.id} cleanup completed", flush=True)
-
-
-def stop_and_delete_machines(challenge):
-    """
-    Stop and delete the machines for a challenge.
-    """
-    print(f"[Info] Stopping and deleting {len(challenge.machines)} VMs for challenge {challenge.id}", flush=True)
-
-    for machine in challenge.machines.values():
-        try:
-            print(f"[Debug] Stopping VM {machine.id}", flush=True)
-            out = subprocess.run(["qm", "stop", str(machine.id), "--skiplock"], check=True, capture_output=True)
-            print(f"[Info] VM {machine.id} stopped successfully", flush=True)
-        except Exception as e:
-            print(f"[Warning] Failed to stop VM {machine.id}: {e}", flush=True)
-            try:
-                print(out.stdout.decode(), flush=True)
-                print(out.stderr.decode(), flush=True)
-            except Exception:
-                pass
-
-        try:
-            print(f"[Debug] Destroying VM {machine.id}", flush=True)
-            out = subprocess.run(["qm", "destroy", str(machine.id), "--skiplock"], check=True, capture_output=True)
-            print(f"[Info] VM {machine.id} destroyed successfully", flush=True)
-        except Exception as e:
-            print(f"[Warning] Failed to destroy VM {machine.id}: {e}", flush=True)
-            try:
-                print(out.stdout.decode(), flush=True)
-                print(out.stderr.decode(), flush=True)
-            except Exception:
-                pass
-
-
-def delete_network_devices(challenge):
-    """
-    Delete network devices for the given challenge.
-    """
-    print(f"[Info] Deleting {len(challenge.networks)} network devices for challenge {challenge.id}", flush=True)
-
-    for network in challenge.networks.values():
-        try:
-            print(f"[Debug] Deleting network device {network.host_device}", flush=True)
-            delete_network_api_call(network)
-            remove_network_input_filter(network.host_device)
-            print(f"[Info] Network device {network.host_device} deleted successfully", flush=True)
-        except Exception as e:
-            print(f"[Warning] Failed to delete network device {network.host_device}: {e}", flush=True)
+    if claim_failed_provisioning(challenge, db_conn):
+        from heist.platform.challenges.teardown import teardown_challenge
+        teardown_challenge(challenge.id, expected_template_id=challenge.template.id)

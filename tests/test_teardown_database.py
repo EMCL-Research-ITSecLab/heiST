@@ -84,3 +84,22 @@ class TeardownDatabaseTests(unittest.TestCase):
             teardown.remove_database_entries(challenge, connection)
         self.assertFalse(self.sql('SELECT id FROM challenges WHERE id=%s', (self.instance,)))
         self.assertTrue(self.sql('SELECT available FROM challenge_subnets WHERE subnet=%s', (self.subnet,))[0][0])
+
+    def test_failed_provisioning_preserves_assignment_and_keeps_a_failed_cleanup_resumable(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        from heist.platform.challenges import warmup
+        from heist.platform.jobs.journal import RecoveryRequired
+        item=SimpleNamespace(id=self.instance,template=SimpleNamespace(id=self.template))
+        self.sql("UPDATE challenges SET lifecycle_state='PROVISIONING' WHERE id=%s",(self.instance,))
+        self.sql('UPDATE users SET running_challenge=%s WHERE id=%s',(self.instance,self.user_id))
+        with closing(self.psycopg2.connect(**self.settings)) as connection:
+            with patch.object(teardown,'teardown_challenge') as remove:
+                with self.assertRaises(RecoveryRequired):warmup.undo_launch_challenge(item,connection)
+                remove.assert_not_called()
+            self.assertEqual(self.sql('SELECT lifecycle_state FROM challenges WHERE id=%s',(self.instance,)),[('PROVISIONING',)])
+            self.sql('UPDATE users SET running_challenge=NULL WHERE id=%s',(self.user_id,))
+            with patch.object(teardown,'teardown_challenge',side_effect=RuntimeError('native task pending')) as remove:
+                with self.assertRaisesRegex(RuntimeError,'native task pending'):warmup.undo_launch_challenge(item,connection)
+                remove.assert_called_once_with(self.instance,expected_template_id=self.template)
+            self.assertEqual(self.sql('SELECT lifecycle_state FROM challenges WHERE id=%s',(self.instance,)),[('TERMINATING',)])

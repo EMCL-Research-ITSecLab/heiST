@@ -103,3 +103,24 @@ class ResourceRemovalTests(unittest.TestCase):
              patch.object(client, 'wait_for_task', side_effect=TimeoutError('reload pending')):
             with self.assertRaises(TimeoutError):
                 client.reload_network_api_call()
+
+    def test_parallel_network_reload_waits_for_the_previous_native_task_without_replaying(self):
+        from concurrent.futures import ThreadPoolExecutor
+        import tempfile,time,threading,os
+        from unittest.mock import patch
+        from heist.infrastructure.proxmox import client
+        running=0;peak=0;calls=0;lock=threading.Lock()
+        def submit(*args):
+            nonlocal running,peak,calls
+            with lock:
+                running+=1;peak=max(peak,running);calls+=1
+                return {'data':'UPID:'+str(calls)}
+        def settle(*args,**kwargs):
+            nonlocal running
+            time.sleep(.05)
+            with lock:running-=1
+        with tempfile.TemporaryDirectory() as root,patch.dict(os.environ,{'HEIST_NETWORK_LOCK_DIRECTORY':root}),patch.object(client,'make_api_call',side_effect=submit),patch.object(client,'wait_for_task',side_effect=settle):
+            with ThreadPoolExecutor(max_workers=2) as workers:
+                futures=[workers.submit(client.reload_network_api_call) for _ in range(2)]
+                for future in futures:future.result(timeout=3)
+        self.assertEqual((calls,peak,running),(2,1,0))

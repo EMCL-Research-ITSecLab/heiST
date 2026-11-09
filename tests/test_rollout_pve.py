@@ -12,6 +12,18 @@ from heist.rollout.pve import PVE
 
 
 class RestoreIdentityTests(unittest.TestCase):
+    def test_infrastructure_capacity_is_resolved_without_changing_vm_configuration(self):
+        adapter=PVE.__new__(PVE);adapter.node='pve'
+        original={'name':'WebServer','sata0':'local-lvm:vm-1000-disk-0'}
+        adapter.configuration=Mock(return_value=original)
+        adapter.request=Mock(return_value=[{'volid':'local-lvm:vm-1000-disk-0','size':64*1024**3}])
+        adapter.command=Mock()
+        value=adapter.configuration_with_capacity(SimpleNamespace(vmid=1000,role='web'))
+        self.assertEqual(value['sata0'],'local-lvm:vm-1000-disk-0,size=67108864K')
+        self.assertEqual(original['sata0'],'local-lvm:vm-1000-disk-0')
+        adapter.request.assert_called_once_with('GET','/nodes/pve/storage/local-lvm/content',{'vmid':1000})
+        adapter.command.assert_not_called()
+
     def test_legacy_role_decodes_remote_json_and_refuses_a_different_deployed_role(self):
         from unittest.mock import MagicMock,patch
         adapter=PVE.__new__(PVE)

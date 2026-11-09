@@ -72,7 +72,8 @@ class PVE:
     def is_running(self, vm):
         return self.command(['qm','status',vm.vmid]).decode().strip()=='status: running'
 
-    def template_configuration(self,vm):
+    def configuration_with_capacity(self,vm):
+        """Resolve legacy disk capacities through authenticated storage metadata."""
         values=dict(self.configuration(vm))
         stores={}
         for name,value in tuple(values.items()):
@@ -91,6 +92,9 @@ class PVE:
             # storage inventory; never inspect untrusted guest disks as root.
             values[name]=value+',size='+str((size+1023)//1024)+'K'
         return values
+
+    def template_configuration(self,vm):
+        return self.configuration_with_capacity(vm)
 
     def wait(self, operation, description):
         deadline=time.monotonic()+self.config.timeout
@@ -225,7 +229,7 @@ class PVE:
                 raise RuntimeError('Target source collides with an untracked local file: ' + name)
         capacity=0
         for vm in self.config.vms:
-            config=self.configuration(vm)
+            config=self.configuration_with_capacity(vm)
             if config.get('name')!=vm.name or config.get('template')=='1':raise RuntimeError('VM identity differs: '+vm.role)
             if any(key.startswith(('hostpci','virtiofs','usb')) or key=='args' for key in config):
                 raise RuntimeError('Checkpoint cannot cover passthrough/external state: '+vm.role)

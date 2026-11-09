@@ -640,6 +640,8 @@ class PVE:
                 raise RuntimeError('Installed tracked source differs: ' + name)
 
     def verify(self,transaction,*,target):
+        from . import backup_cron
+        backup_cron.verify(transaction, target=target)
         self.verify_source(transaction, target=target)
         if target and transaction.plan.schema==3 and transaction.data['kind']!='rollback':
             from .browser_deployment import verify_autostart
@@ -741,6 +743,8 @@ class PVE:
                 self.state/'image-recovery'/transaction.path.name)
             transaction.save(image_recovery=receipt)
         self._checkout(transaction,checkpoint.plan.source)
+        from . import backup_cron
+        backup_cron.restore(transaction, checkpoint)
         remove_created_files(created)
         if configuration is not None:
             if checkpoint.data.get('internal_runtime'):

@@ -317,3 +317,17 @@ offers configuration saving only; it cannot dispatch the retired setup scripts.
 `install apply` and the default `bin/install` remain closed pending complete
 clean-host deployment/recovery acceptance. Configuration editing is not a claim
 that the fresh installer is ready.
+
+
+Legacy scheduled database backups are migrated during the checkpointed browser
+upgrade. The known root cron entry for `setup/backup_db.py` keeps its schedule
+and runs `python -m heist.maintenance.database backup` with the preserved
+installer configuration. The job pauses while the maintenance marker exists;
+verified custom-format archives and checksums go to
+`/var/backups/heist/database`. Root's complete original schedule is saved in the
+private transaction and `root-crontab.json` beside the release backups. Recovery
+restores that schedule and refuses to overwrite subsequent operator edits.
+Unknown custom commands referring to the old backup script stop migration for
+review. Other cron jobs remain unchanged. These local periodic database backups
+supplement the separate full-platform checkpoints; copy them to the operator's
+backup storage under the site's retention policy.

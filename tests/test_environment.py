@@ -85,3 +85,42 @@ print('All six platform entry points resolve safely')
                         continue  # Supported source namespaces during rollback of older installations.
                     path = root.joinpath(*module.split('.'))
                     self.assertTrue(path.with_suffix('.py').is_file() or (path/'__init__.py').is_file(), f'{source}: unresolved internal module {module}')
+
+    def test_legacy_database_backup_schedule_preserves_other_jobs_and_uses_current_cli(self):
+        from heist.rollout.backup_cron import rewrite
+        original="MAILTO=operator@example.test\n# keep\n*/15 * * * * /usr/bin/echo -e '\\n' | /root/heiST/.venv/bin/python3 /root/heiST/setup/backup_db.py > /dev/null\n0 1 * * * /usr/local/bin/other-backup\n"
+        actual=rewrite(original,Path('/root/heiST'),Path('/var/lib/heist/maintenance'),Path('/var/lib/heist'))
+        self.assertIn('MAILTO=operator@example.test\n# keep\n',actual)
+        self.assertIn('0 1 * * * /usr/local/bin/other-backup\n',actual)
+        command=actual.splitlines()[2].split(None,5)[5]
+        self.assertIn('test ! -e /var/lib/heist/maintenance && cd /root/heiST &&',command)
+        self.assertIn('-m heist.maintenance.database backup --config /root/heiST/setup/.env',command)
+        self.assertNotIn('setup/backup_db.py',actual)
+        self.assertEqual(rewrite(actual,Path('/root/heiST'),Path('/var/lib/heist/maintenance'),Path('/var/lib/heist')),actual)
+        with self.assertRaisesRegex(RuntimeError,'preserve it for review'):
+            rewrite('*/15 * * * * custom /root/heiST/setup/backup_db.py --custom\n',Path('/root/heiST'),Path('/marker'),Path('/state'))
+
+    def test_backup_schedule_receipt_precedes_write_and_recovery_preserves_operator_edits(self):
+        from heist.rollout import backup_cron
+        from types import SimpleNamespace
+        before='*/15 * * * * /root/heiST/.venv/bin/python3 /root/heiST/setup/backup_db.py > /dev/null\n'
+        adapter=SimpleNamespace(installation=Path('/root/heiST'),marker=Path('/marker'),state=Path('/state'))
+        transaction=SimpleNamespace(data={'checkpoint_ready':True,'backup_directory':'/backups'})
+        transaction.save=lambda **values:transaction.data.update(values)
+        def write(content):
+            self.assertEqual(transaction.data['backup_cron']['before'],before)
+            self.assertEqual(transaction.data['backup_cron']['after'],content)
+        with patch.object(backup_cron,'read',return_value=before),patch.object(backup_cron,'write_json') as receipt,patch.object(backup_cron,'install',side_effect=write) as install:
+            backup_cron.migrate(adapter,transaction)
+            install.assert_called_once()
+            receipt.assert_called_once_with(Path('/backups/root-crontab.json'),transaction.data['backup_cron'])
+        after=transaction.data['backup_cron']['after']
+        with patch.object(backup_cron,'read',return_value=after),patch.object(backup_cron,'install') as install:
+            backup_cron.restore(transaction,transaction)
+            install.assert_called_once_with(before)
+        with patch.object(backup_cron,'read',return_value=after+'# local edit\n'),patch.object(backup_cron,'install') as install:
+            with self.assertRaisesRegex(RuntimeError,'operator edit'):backup_cron.restore(transaction,transaction)
+            install.assert_not_called()
+        with patch.object(backup_cron,'read',return_value=before):backup_cron.verify(transaction,target=False)
+        with patch.object(backup_cron,'read',return_value=after):
+            with self.assertRaisesRegex(RuntimeError,'differs'):backup_cron.verify(transaction,target=False)

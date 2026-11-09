@@ -261,6 +261,8 @@ def deploy(adapter, transaction):
     if not getattr(adapter.config, 'web_certificate_key', None) or not getattr(adapter.config, 'web_hostname', None):
         raise ValueError('Declare the browser hostname and certificate key before deployment')
     stage_host(adapter, transaction)
+    from . import backup_cron
+    backup_cron.migrate(adapter, transaction)
     configure_autostart(adapter, transaction)
     adopt_templates(adapter, transaction)
     receipt = deploy_guest(adapter, transaction)

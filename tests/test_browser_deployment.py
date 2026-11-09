@@ -106,13 +106,31 @@ class BrowserDeploymentTests(unittest.TestCase):
     def test_all_template_identities_are_checked_before_any_ownership_label_is_written(self):
         saved={'template':'1','name':'owned','smbios1':'uuid=5898f7b2-d8bd-42e0-a43e-d90f0f7d19b6'}
         checkpoint=identity(saved)
-        adapter=SimpleNamespace(configuration=Mock(side_effect=[saved,{**saved,'name':'foreign'}]),is_running=Mock(return_value=False),command=Mock())
+        adapter=SimpleNamespace(template_configuration=Mock(side_effect=[saved,{**saved,'name':'foreign'}]),is_running=Mock(return_value=False),command=Mock())
         transaction=SimpleNamespace(data={'template_catalogue':{'123':checkpoint,'124':checkpoint}})
         with self.assertRaisesRegex(RuntimeError,'foreign template'):adopt_templates(adapter,transaction)
         adapter.command.assert_not_called()
-        adapter.configuration=Mock(return_value={**saved,'tags':'teaching'})
+        adapter.template_configuration=Mock(return_value={**saved,'tags':'teaching'})
         transaction.data['template_catalogue']={'123':checkpoint}
         adopt_templates(adapter,transaction)
         args=adapter.command.call_args.args[0]
         self.assertIn('heist-managed;heist-vm-123;teaching',args)
         self.assertIn('Managed by heiST; machine-template=123',args)
+
+    def test_template_adoption_resolves_legacy_disk_capacity_before_identity_validation(self):
+        from heist.rollout.pve import PVE
+        raw={'template':'1','name':'legacy','smbios1':'uuid=5898f7b2-d8bd-42e0-a43e-d90f0f7d19b6',
+             'sata0':'local-lvm:base-123-disk-0'}
+        adapter=PVE.__new__(PVE)
+        adapter.node='test-node'
+        adapter.configuration=Mock(return_value=raw)
+        adapter.request=Mock(return_value=[{'volid':'local-lvm:base-123-disk-0','size':10*1024**3}])
+        adapter.command=Mock()
+        adapter.is_running=Mock(return_value=False)
+        saved=identity({**raw,'sata0':raw['sata0']+',size=10485760K'})
+        transaction=SimpleNamespace(data={'template_catalogue':{'123':saved}})
+        adopt_templates(adapter,transaction)
+        adapter.request.assert_called_once_with('GET','/nodes/test-node/storage/local-lvm/content',{'vmid':123})
+        adapter.command.assert_called_once()
+        self.assertEqual(adapter.command.call_args.args[0][:3],['qm','set',123])
+        self.assertEqual(raw['sata0'],'local-lvm:base-123-disk-0')

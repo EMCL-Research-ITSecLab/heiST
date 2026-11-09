@@ -217,7 +217,7 @@ def adopt_templates(adapter, transaction):
         if saved.get('absent'):
             continue
         vm = SimpleNamespace(vmid=int(identifier))
-        config = adapter.configuration(vm)
+        config = adapter.template_configuration(vm)
         require_same_vm(config, saved)
         if adapter.is_running(vm):
             raise RuntimeError('Cannot adopt a running template')

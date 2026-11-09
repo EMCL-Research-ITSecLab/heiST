@@ -331,3 +331,12 @@ Unknown custom commands referring to the old backup script stop migration for
 review. Other cron jobs remain unchanged. These local periodic database backups
 supplement the separate full-platform checkpoints; copy them to the operator's
 backup storage under the site's retention policy.
+
+
+RC2 (`releases/0.4.0-rc.2.json`) declares the forward path from the deployed
+Flask/React RC1 commit `2dc7a76`, alongside the original legacy baselines. It keeps
+all published migration IDs and checksums, preserving the existing schema history.
+The corrective release serializes network-reload lock acquisition with a bounded
+wait. It submits each native task once, removes whole-provisioning automatic
+replays and uses ownership-checked, resumable teardown for failed provisioning.
+Uncertain native outcomes remain available for administrator reconciliation.

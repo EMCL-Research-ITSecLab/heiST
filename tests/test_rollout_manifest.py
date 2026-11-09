@@ -182,3 +182,19 @@ class ManifestTests(unittest.TestCase):
         ui.write_bytes(bundle(target))
         with self.assertRaisesRegex(ValueError,'does not declare a browser runtime'):
             build_plan(self.root,target,'releases/release.json','config',ui,'undeclared.tar.gz')
+
+
+class PublishedBrowserUpdateContractTests(unittest.TestCase):
+    def test_rc2_retains_rc1_migration_identities_and_declares_the_installed_browser_baseline(self):
+        root=Path(__file__).resolve().parents[1]
+        previous=json.loads((root/'releases/0.4.0-rc.1.json').read_text())
+        current=json.loads((root/'releases/0.4.0-rc.2.json').read_text())
+        self.assertEqual(current['schema'],3)
+        self.assertEqual(current['version'],'0.4.0-rc.2')
+        self.assertIn('2dc7a767bb46db0432a918fb85ed8f9c5e1a722c',current['supported_from'])
+        self.assertTrue(set(previous['supported_from'])<=set(current['supported_from']))
+        self.assertEqual(current['migrations'],previous['migrations'])
+        self.assertEqual(current['protected_tables'],previous['protected_tables'])
+        self.assertTrue(current['frontend'] and current['web_runtime'])
+        for migration in current['migrations']:
+            self.assertEqual(hashlib.sha256((root/migration['path']).read_bytes()).hexdigest(),migration['sha256'])

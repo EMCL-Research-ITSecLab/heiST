@@ -111,6 +111,14 @@ Check workstation RAM and disk capacity before starting it. Infrastructure and
 challenge guests require additional RAM; a small provisioning host is not a
 production capacity test.
 
+Keep long rehearsals, their disks, SSH keys and receipts on persistent storage,
+for example `/mnt/data/heist-builds/runs/`. Do not use `/tmp`: a workstation reboot
+or temporary-file cleanup can remove the entire rehearsal. Sparse QCOW2 sizes
+are capacity commitments, not limits on physical usage. Before boot, the pilot
+now checks each backing filesystem against the combined possible growth of its
+attached disks plus a 32-GiB reserve. Put bulk disks on a sufficiently large
+filesystem instead of relying on their initially small allocated size.
+
 All management forwarding remains bound to `127.0.0.1`. Boot, SSH and the
 current-boot isolation verifier read the same validated mapping from `pilot.json`.
 Old workspaces without a mapping retain the original ports. Never enable

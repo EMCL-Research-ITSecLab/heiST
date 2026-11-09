@@ -161,6 +161,36 @@ def supplemental_storage(work, config):
     return arguments
 
 
+def check_storage_capacity(work, config, *, reserve=32*1024**3):
+    """Sparse disks must fit when fully allocated, including a filesystem reserve."""
+    disks=[work/'disk.qcow2']
+    for name in ('backup','data'):
+        if config.get('attach_'+name+'_disk',False):
+            disks.append(Path(config.get('backup_disk_path',str(work/'backup.qcow2')))
+                         if name=='backup' else work/'data.qcow2')
+    filesystems={}
+    for path in disks:
+        if path.is_symlink() or not path.is_file():
+            raise ValueError('Capacity checks require regular pilot disks')
+        info=json.loads(subprocess.check_output(['qemu-img','info','--output=json',str(path)]))
+        virtual=info.get('virtual-size')
+        if type(virtual) is not int or virtual<=0:
+            raise ValueError('Cannot confirm pilot disk virtual capacity')
+        stat=path.stat()
+        entry=filesystems.setdefault(stat.st_dev,{'path':str(path.parent),'remaining':0,'disks':[]})
+        # Include QCOW2 metadata growth. Backing images already occupy host
+        # space; an overlay may still allocate its entire virtual size again.
+        entry['remaining']+=max(0,virtual-stat.st_blocks*512)+max(64*1024**2,virtual//128)
+        entry['disks'].append(str(path))
+    for entry in filesystems.values():
+        free=shutil.disk_usage(entry['path']).free
+        required=entry['remaining']+reserve
+        if free<required:
+            raise ValueError('Insufficient backing storage at '+entry['path']+
+                             ': sparse pilot disks need '+str((required+1024**3-1)//1024**3)+
+                             ' GiB available including reserve; move them to a larger persistent filesystem')
+
+
 def start(work, online=False):
     if (work / 'qmp.sock').exists():
         raise ValueError('QMP socket exists; inspect the existing process before restarting')
@@ -181,6 +211,7 @@ def start(work, online=False):
                    '-drive', f'file={work}/disk.qcow2,format=qcow2,if=none,id=pilotdisk,cache=none,discard=unmap,detect-zeroes=unmap',
                    '-device', 'ide-hd,drive=pilotdisk,bus=pilotahci.0,bootindex=1']
     storage += supplemental_storage(work,config)
+    check_storage_capacity(work,config)
     if config.get('attach_seed', True):
         storage += ['-drive', f'file={work}/seed.iso,format=raw,media=cdrom,readonly=on']
     run('qemu-system-x86_64', '-name', 'heist-nested-pilot', '-enable-kvm', '-cpu', 'host',

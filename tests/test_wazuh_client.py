@@ -19,6 +19,24 @@ def result(items, **extra):
 
 
 class WazuhTests(unittest.TestCase):
+    def test_read_inventory_is_authenticated_bounded_and_excludes_event_fields(self):
+        items = [{'name':'Agent_123','status':'active','lastKeepAlive':'2026-11-10T12:00:00Z',
+                  'dateAdd':'2026-11-01T12:00:00Z','password':'private'},
+                 {'name':'Agent_124','status':'disconnected'}]
+        self.session.request.side_effect = [response('a.b.c',raw=True),response(result(items,total_affected_items=2))]
+        agents=self.client.agents()
+        self.assertEqual([a['machine_id'] for a in agents],[123,124])
+        self.assertNotIn('private',json.dumps(agents))
+        self.assertEqual(self.session.request.call_args.kwargs['params']['limit'],256)
+        self.assertEqual([c.args[0] for c in self.session.request.call_args_list],['POST','GET'])
+
+    def test_partial_duplicate_and_invalid_agent_metadata_are_not_successful_inventories(self):
+        for items,total in [([],257),([],1),([{'name':'Agent_1','status':'active'}]*2,2),
+                            ([{'name':'Agent_1','status':'invalid'}],1),
+                            ([{'name':'Agent_1','status':'active','lastKeepAlive':'2026-11-10'}],1)]:
+            self.session.request.side_effect=[response('a.b.c',raw=True),response(result(items,total_affected_items=total))]
+            with self.subTest(total=total),self.assertRaises(RuntimeError):self.client.agents()
+
     def setUp(self):
         self.session = Mock()
         self.client = Wazuh('fd12:3456::103', 55000, 'test-user', 'private-test-password', session=self.session)

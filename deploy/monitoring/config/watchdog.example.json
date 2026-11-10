@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "host": "proxmox.example.invalid",
+  "user": "root",
+  "status_file": "/var/lib/heist/monitoring/status.json"
+}

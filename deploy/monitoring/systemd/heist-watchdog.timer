@@ -1,0 +1,11 @@
+[Unit]
+Description=Observe heiST independently every minute
+
+[Timer]
+OnBootSec=30s
+OnUnitInactiveSec=1min
+AccuracySec=5s
+Unit=heist-watchdog.service
+
+[Install]
+WantedBy=timers.target

@@ -33,7 +33,8 @@ from .tasks import Tasks
 UI_AGENT = Path(ui_assets.__file__).read_text().split("if __name__ == '__main__':")[0]
 
 class PVE:
-    units = ('pool_manager','cleanup','backend','heist-expiry.timer','heist-expiry.service','start-vm.service')
+    units = ('pool_manager','cleanup','backend','heist-expiry.timer','heist-expiry.service','start-vm.service',
+             'heist-monitoring.timer','heist-monitoring.service')
 
     def __init__(self, config, config_sha256):
         self.config, self.config_sha256 = config, config_sha256
@@ -506,6 +507,7 @@ class PVE:
         write_json(directory/'checkpoint.json',transaction.data)
 
     def host_configuration_paths(self,runtime=None):
+        from .monitoring_deployment import paths as monitoring_paths
         paths = [Path(self.config.backend_env), self.installation/'setup/.env',
                  self.installation/'config/installer.env', Path(self.config.api_certificate)]
         key = self.environment.get('BACKEND_CERTIFICATE_KEY_FILE')
@@ -515,6 +517,7 @@ class PVE:
                       Path('/etc/systemd/system/heist-expiry.service'),
                       Path('/etc/systemd/system/heist-expiry.timer'),self.state/'wazuh-api-leaf.pem'))
         paths.extend((Path('/etc/openvpn/server.conf'), Path('/etc/openvpn/crl.pem')))
+        paths.extend(monitoring_paths(self.environment))
         from .internal_runtime import paths as runtime_paths
         paths.extend(runtime_paths(self.state/'internal-runtime',runtime))
         return paths
@@ -732,7 +735,7 @@ class PVE:
         if checkpoint.data.get('vpn_identity'):
             from .vpn import UNIT
             self.command(['systemctl','stop',UNIT],timeout=60)
-        for unit in ('heist-expiry.timer','heist-expiry.service'):
+        for unit in ('heist-expiry.timer','heist-expiry.service','heist-monitoring.timer','heist-monitoring.service'):
             if not checkpoint.data['host_services'].get(unit,{}).get('installed',False) and Path('/etc/systemd/system',unit).exists():
                 self.command(['systemctl','disable','--now',unit],timeout=60)
         for vm in self.config.vms:

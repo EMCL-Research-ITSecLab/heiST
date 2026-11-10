@@ -9,6 +9,18 @@ from tests.browser.support import BrowserFixture
 
 
 class BrowserTests(BrowserFixture):
+    def test_instance_monitoring_shows_agent_states_without_command_content(self):
+        from tests.browser.showcase_data import responses
+        self.role='admin';self.responses=responses()
+        self.visit('/manage-instances')
+        self.page.get_by_role('button',name='Inspect',exact=True).first.click()
+        panel=self.page.get_by_role('region',name='Challenge monitoring',exact=True)
+        panel.get_by_role('table',name='Challenge monitoring agents').wait_for()
+        self.assertIn('Active',panel.inner_text())
+        self.assertIn('Disconnected',panel.inner_text())
+        self.assertIn('remain unverified',panel.inner_text())
+        self.assertEqual(self.mutations,[])
+
     def test_monitoring_failures_and_stale_evidence_are_visible(self):
         self.role = 'admin'
         monitoring = {

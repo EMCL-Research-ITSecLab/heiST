@@ -18,7 +18,8 @@
     "frontend/src/features/administration/ArtifactsPage.tsx": "05441570e206dfb6391ba1f7ea9cf86049d854c39840aaa92f8b205d85ce5243",
     "frontend/src/features/administration/ChallengeEditorPage.tsx": "a65c2ef06bc85bc758638d10cb0655fd8204f69cc4c4018a7ec7afcdf64e7545",
     "frontend/src/features/administration/ChallengeManagementPage.tsx": "337164616d7903cf7e119bffb9c691ccb61c52b3a002d136217cfc52c2f03a46",
-    "frontend/src/features/administration/InstanceManagementPage.tsx": "5c86f839f7e2da480802ef65ae15f2621dab4c6749a316db8fecf4ebdace5d32",
+    "frontend/src/features/administration/InstanceManagementPage.tsx": "51d7614cbcfb091865e149088a775dfbf4b579b6eadaf30b75eed0d9abb15d8c",
+    "frontend/src/features/administration/InstanceMonitoringPanel.tsx": "8d76525233d2c15e9053f009a562c88ecb0b93ed084ec214ee3c6413075ca1c7",
     "frontend/src/features/administration/MonitoringPanel.tsx": "3be7f7da0cdfe738d444299efb49ede8cb2a7aa54c0fa8526c610f526075208e",
     "frontend/src/features/administration/OperationJournalPanel.tsx": "83062b8d8dedac3ea31e8ce3541e0048b7a3218699a73db1a48b20429e8befc5",
     "frontend/src/features/administration/OperationsPage.tsx": "b17a0b1f552a0415fed7dbe3475e6bf7e2709f3e4f28841414e13fdadce5d369",
@@ -59,7 +60,7 @@
     "frontend/package.json": "3c077337e4fcde11de4679cbed43b108e9195ec82c1a3189b525ef9969188a89",
     "frontend/package-lock.json": "2a08069191a56bf56b0b8da29159129329629aa2ad2fdf0b23548ea5153f69b2",
     "tests/browser/support.py": "71745aee80877c538a805b2c9b486cc2097f7dfd0923c515dbb1231551e742d8",
-    "tests/browser/showcase_data.py": "6dc0966d2d4303a23c4031811428160afca40f8c8d68c28f873c4541d2b21848",
+    "tests/browser/showcase_data.py": "e31e1a26b072cf8562d7789e1fc898c4393d5763e6d1956e002145563e32113b",
     "tools/testing/screenshots.py": "dcdeee3297ea6fbd98f3e8bc3e6976a88f63d8909db0b390c99ef5ff57f91c3b"
   },
   "captures": [
@@ -269,7 +270,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "aaeec8da89d001ced1c332db58da0acd266b1cf8a69597ad13769d475859e461"
+      "sha256": "80f799b8abfac5b0bbf61980cee3a93604ae08595c7d02a004b5fa2c12d72bf9"
     },
     {
       "file": "instance_details_light.png",
@@ -281,8 +282,8 @@
         "height": 1000
       },
       "full_page": true,
-      "document_height": 1569,
-      "sha256": "6bdaea52432fa6728e5bbb8d554aea7b8ab3bb6d47634985f5fc42ee94a50f6b"
+      "document_height": 1899,
+      "sha256": "7f80cd9c207fbc34e5eadab7d1cd5c9998c94ef6688e5a5b67baf989c8d1a243"
     },
     {
       "file": "login_light.png",
@@ -399,7 +400,7 @@
       },
       "full_page": true,
       "document_height": 1515,
-      "sha256": "7e2e741f3f38854e337e2735915b3208fe671d49366c04f47f1226f446e01c7d"
+      "sha256": "b019e5c0e2fdbc841d0d3a59737714b538755a534a86823c8e551c212df84f91"
     },
     {
       "file": "landing_dark.png",
@@ -619,8 +620,8 @@
         "height": 1000
       },
       "full_page": true,
-      "document_height": 1569,
-      "sha256": "0890340c4fad8858618b90f3be1d81b4deac253fadaca0bbe146417b86592022"
+      "document_height": 1899,
+      "sha256": "2a20d65a069ec92f3343af26721a2d1a2464885a835b256cb47428a0a36ce95d"
     },
     {
       "file": "login_dark.png",
@@ -737,7 +738,7 @@
       },
       "full_page": true,
       "document_height": 1515,
-      "sha256": "55510e4f308c783de2eb70aff4e13816f1edb82b0db170152e3b6a906882b46b"
+      "sha256": "bb442eee7289ddfd2ccbb82ffe33c75f0dc0000549b69129c8128624ceef90ea"
     }
   ]
 }

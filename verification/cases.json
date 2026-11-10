@@ -2135,6 +2135,58 @@
       "sources": [
         "tests/test_terms_acceptance.py"
       ]
+    },
+    {
+      "id": "UNIT-MONITORING-DEPLOYMENT",
+      "area": "monitoring_deployment",
+      "mode": "automated",
+      "procedure": "Run tests/test_monitoring_deployment.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "Authenticated monitoring, recovery inventory and independent detection contracts pass without exposing private events or bypassing TLS.",
+      "evidence": [
+        "portable suite results and skip reasons"
+      ],
+      "sources": [
+        "tests/test_monitoring_deployment.py"
+      ]
+    },
+    {
+      "id": "UNIT-MONITORING-PIPELINE",
+      "area": "monitoring_pipeline",
+      "mode": "automated",
+      "procedure": "Run tests/test_monitoring_pipeline.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "Authenticated monitoring, recovery inventory and independent detection contracts pass without exposing private events or bypassing TLS.",
+      "evidence": [
+        "portable suite results and skip reasons"
+      ],
+      "sources": [
+        "tests/test_monitoring_pipeline.py"
+      ]
+    },
+    {
+      "id": "UNIT-MONITORING-WATCHDOG",
+      "area": "monitoring_watchdog",
+      "mode": "automated",
+      "procedure": "Run tests/test_monitoring_watchdog.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "Authenticated monitoring, recovery inventory and independent detection contracts pass without exposing private events or bypassing TLS.",
+      "evidence": [
+        "portable suite results and skip reasons"
+      ],
+      "sources": [
+        "tests/test_monitoring_watchdog.py"
+      ]
+    },
+    {
+      "id": "UNIT-PILOT-ACCESS-RECOVERY",
+      "area": "pilot_access",
+      "mode": "automated",
+      "procedure": "Run tests/test_pilot_access_recovery.py through tools/check.py.",
+      "expected": "Only the exact offline disposable QEMU copy can receive one console login and the replacement public key; credentials never enter commands or diagnostics.",
+      "evidence": [
+        "portable suite results"
+      ],
+      "sources": [
+        "tests/test_pilot_access_recovery.py"
+      ]
     }
   ]
 }

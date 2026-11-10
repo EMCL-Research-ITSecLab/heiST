@@ -6,6 +6,7 @@ unchanged; passwords and raw host commands never enter diagnostics or journals.
 from contextlib import contextmanager
 import subprocess
 import re
+import os
 from itertools import islice
 
 from psycopg2.extras import RealDictCursor
@@ -146,6 +147,8 @@ class Administration:
                               WHERE n.challenge_id=%s ORDER BY nc.machine_id,nc.network_id LIMIT 400''',(identifier,))
             result['connections']=[dict(row) for row in cursor.fetchall()]
         for machine in result['machines']:machine['status']=self.status(machine['id'])
+        from heist.monitoring.agents import instance as instance_monitoring
+        result['monitoring'] = instance_monitoring(result['machines'], os.environ)
         owner=result['user_id'] or result.get('pre_assigned_user_id')
         result['operation']=self.operation('instance',identifier) or (self.operation('user',owner) if owner else None)
         return result

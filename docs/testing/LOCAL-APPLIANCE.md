@@ -47,6 +47,24 @@ verification intentionally refuses unrelated machines. Browse
 `https://127.0.0.1:18443` using the appliance's private administrator credentials.
 Guest certificate trust must be configured for the test appliance.
 
+If the original disposable SSH key was lost, a replacement key may be authorized
+through the supplied private console password **on a new isolated copy only**.
+Prepare a private access directory with a fresh `id_ed25519` key pair and the
+original pinned `known_hosts`, cold-import using it, then boot offline. Run:
+
+```sh
+sudo python3 tools/local/recover_pilot_access.py --work /absolute/private/copy \
+  --console-password-file /absolute/private/operator-access/CONSOLE-PASSWORD.txt
+```
+
+The helper first verifies the actual QEMU PID, copied disk, serial socket and
+restricted loopback network arguments, then permits one console login attempt.
+It checks the guest's pilot marker and hostname before appending the public key.
+It never prints the password or private key and writes a private recovery receipt.
+Verify SSH using the original pinned server key afterwards. This modifies the
+disposable guest and is fixture instrumentation, not acceptance of an unmodified
+sealed appliance. It neither modifies the original OVA nor enrolls a new host key.
+
 ## Build, checkpoint and installation rollback
 
 `nested_pilot.py --work /absolute/new/work prepare --image BASE.qcow2 --sums

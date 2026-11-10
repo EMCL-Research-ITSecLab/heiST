@@ -170,6 +170,8 @@ def stage_host(adapter, transaction):
                'WAZUH_PINNED_CERTIFICATE_FILE': str(adapter.state/'wazuh-api-leaf.pem'),
                'HEIST_INTERNAL_CERTIFICATE': '/etc/pve/local/pve-ssl.pem',
                'HEIST_INTERNAL_KEY': '/etc/pve/local/pve-ssl.key'}
+    from . import monitoring_deployment
+    overlay['HEIST_MONITORING_STATUS_FILE'] = str(monitoring_deployment.STATUS)
     overlay.update(preserved_registration_settings(adapter.installation, adapter.environment,
                    transaction.data['preserved_files']))
     original = Path(adapter.config.backend_env).read_bytes()
@@ -188,6 +190,7 @@ def stage_host(adapter, transaction):
                units/'backend.service.d/heist-runtime.conf': (dropin.encode(), 0o644),
                units/'heist-expiry.service': (expiry.encode(), 0o644),
                units/'heist-expiry.timer': (blob(adapter.installation, transaction.plan.target, 'deploy/platform/systemd/heist-expiry.timer'), 0o644)}
+    planned.update(monitoring_deployment.files(adapter, transaction.plan.target))
     version = adapter.state/'internal-runtime/versions'/transaction.plan.target
     hashes = {str(path): digest(body) for path,(body,_) in planned.items()}
     hashes.update({str(version/'metadata.json'): digest((json.dumps(receipt,sort_keys=True)+'\n').encode()),
@@ -272,6 +275,8 @@ def deploy(adapter, transaction):
         host['start-vm.service'].update(enabled=False,active=False)
     host['heist-expiry.timer'] = {'installed': True, 'enabled': True, 'active': True}
     host['heist-expiry.service'] = {'installed': True, 'enabled': False, 'active': False}
+    from .monitoring_deployment import target_services
+    host.update(target_services())
     web = {key:dict(value) for key,value in transaction.data['web_services'].items()}
     for name in ('apache2','heist-web','heist-artifacts'):
         web[name] = {'installed': True, 'enabled': True, 'active': True}

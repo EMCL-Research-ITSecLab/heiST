@@ -9,7 +9,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 from heist.monitoring.health import (capture_configuration, containers, dashboards, eve_health,
-                                    publish, receipt, remote_checks, sanitize, sensor_interfaces, services)
+                                    publish, receipt, remote_checks, resources, sanitize, sensor_interfaces, services)
 
 
 NOW = datetime(2026, 11, 10, 12, tzinfo=timezone.utc)
@@ -21,6 +21,17 @@ def snapshot(state='ok', **extra):
 
 
 class HealthTests(unittest.TestCase):
+    def test_resource_pressure_is_visible_and_missing_counters_remain_unknown(self):
+        from types import SimpleNamespace
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            (root/'meminfo').write_text('MemTotal: 1000 kB\nMemAvailable: 10 kB\n')
+            result=resources('host',proc=root,statvfs=lambda path:SimpleNamespace(f_files=100,f_favail=1),load=lambda:(9,0,0),cpus=lambda:2)
+            self.assertTrue(all(c['state']=='failed' for c in result))
+            (root/'meminfo').write_text('invalid')
+            result=resources('host',proc=root,statvfs=lambda path:SimpleNamespace(f_files=0),load=lambda:(0,0,0),cpus=lambda:None)
+            self.assertTrue(all(c['state']=='unknown' for c in result))
+
     def test_snapshot_freshness_and_unknown_coverage_never_claim_success(self):
         self.assertEqual(sanitize(snapshot(), now=NOW)['status'], 'ok')
         self.assertEqual(sanitize(snapshot('unknown'), now=NOW)['status'], 'unknown')

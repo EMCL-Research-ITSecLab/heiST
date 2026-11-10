@@ -46,12 +46,26 @@ duration under load; set event delivery latency, packet-loss budget, archive RPO
 retention and alert deadlines before production activation. A surviving timer or
 an HTTP200 response is insufficient evidence.
 
-The current collector implements the service inventory, root-storage utilization,
-clock synchronization flag, sensor heartbeat/configuration and receipt contracts.
-It does **not** implement all matrix rows: correlated canary generation, application
-and TLS probes on each remote role, per-agent/event queries, CPU/RAM/inode metrics,
-independent alert routing, full-PCAP archival and upgrade/recovery integration
-remain to be implemented and rehearsed. Keep these release requirements visible.
+The collector implements service inventory, root storage/inodes, available memory,
+CPU-normalized load, clock synchronization, sensor heartbeat/configuration and
+receipt contracts. Authenticated probes check Wazuh agent metadata, Grafana health
+and expected dashboards, and fresh ClickHouse sensor statistics. Administrator
+instance inspection projects only its current VM IDs. Rollout stages/checkpoints
+collector configuration and units. The independent observer reports to the systemd
+journal and its standalone artifact is tested through healthy/failure/recovery.
+
+`tests/test_monitoring_pipeline.py`, `tests/test_monitoring_deployment.py` and
+`tests/test_monitoring_watchdog.py` cover these additional paths, including invalid
+TLS/credentials, missing/partial inventory, cross-instance filtering, critical
+service evidence and the packaged observer's real exit code without site-packages.
+
+Remaining native acceptance includes deploying these components to the isolated
+appliance, full upgrade/failure/rollback, actual off-host outages and recovery,
+correlated command/flow canaries, all capture points and full-PCAP archival.
+Application/TLS probes for the web/database roles, panel query correctness and
+complete command/packet coverage remain separate requirements. CPU load is not a
+utilization measurement. Keep these limitations visible; portable tests do not
+prove the complete platform paths.
 
 ## Dataset acceptance for later ML use
 

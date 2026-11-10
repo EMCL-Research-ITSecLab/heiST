@@ -3,6 +3,7 @@ import { Badge, Card, Confirm, Empty, Notice, PageTitle, ResourceState } from '.
 import { request } from '../../lib/api.ts';
 import { date, number, payload, row, rows, text, truth, type Row } from '../../lib/data.ts';
 import { useAction, useResource } from '../../lib/state.tsx';
+import { InstanceMonitoringPanel } from './InstanceMonitoringPanel.tsx';
 
 type InstanceAction = 'release' | 'rebuild' | 'remove';
 type Selection = { instance: Row; kind: InstanceAction };
@@ -80,7 +81,7 @@ export function ManageInstances() {
 }
 
 function InstanceDetails({ identifier, onClose }: { identifier: number; onClose: () => void }) {
-  const resource = useResource('/api/admin/instances/' + identifier);
+  const resource = useResource('/api/admin/instances/' + identifier, 30000);
   const data = payload(resource.data);
   const operation = row(data.operation);
   return <Card title={`Instance ${identifier}`} action={<div className="button-row">
@@ -93,6 +94,7 @@ function InstanceDetails({ identifier, onClose }: { identifier: number; onClose:
       <ul>{rows(data.machines).map(vm => <li key={number(vm.id)}>
         {number(vm.id)} · {text(vm.name)} · <Badge>{text(vm.status)}</Badge>
       </li>)}</ul>
+      <InstanceMonitoringPanel value={data.monitoring} />
       <h3>Networks</h3>
       <ul>{rows(data.networks).map(network => <li key={number(network.id)}>
         {text(network.name)} · {text(network.subnet)}{truth(network.accessible) ? ' · Student access' : ''}{truth(network.is_dmz) ? ' · DMZ' : ''}

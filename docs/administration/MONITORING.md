@@ -16,7 +16,7 @@ This is the initial health inventory, not certification of complete telemetry.
 | Web VM | Flask/Gunicorn unit and Apache |
 | Database VM | PostgreSQL unit and local connection readiness; the operations API separately executes an application database query |
 | Archive VM | Database and log collection timers and their last job results; verified-file delivery is reported by the existing archive receipt |
-| All roles | Root filesystem capacity and clock synchronization |
+| All roles | Root filesystem capacity/inodes, available memory, CPU-normalized system load and clock synchronization |
 
 The fixed service inventory follows the current deployment layout. Review unit
 names, Wazuh Compose names and paths when changing provisioning. An unknown or
@@ -33,19 +33,35 @@ Inactive successful oneshot jobs are normal between timer runs. Never-run jobs
 remain unknown. Wazuh runs in containers, so an absent host `wazuh-manager.service`
 is not an outage. A stopped/missing required daemon or timer is a failure.
 
-Each role deliberately includes an **unverified end-to-end check**. The initial
-collector does not authenticate Grafana data-source queries, query ClickHouse
-row freshness, inspect Wazuh agent coverage, validate tc/iptables attachment,
-or certify packet completeness. Therefore an otherwise successful inventory
-still reports `unknown`. Idle traffic, an empty archive batch and a missing
-canary cannot prove delivery. These distinctions prevent false green status.
+Authenticated probes now check Wazuh managed-agent inventory, Grafana HTTPS/database
+health and all six expected dashboards. ClickHouse read-only aggregate queries
+check recent statistics in the VPN, DMZ and backend tables. Sensor statistics
+provide a heartbeat even for a quiet exercise; no command or packet payload is
+queried. These checks require explicitly configured credentials and TLS trust.
+
+Each role still deliberately includes an **unverified end-to-end check**. Heartbeat
+ingestion does not prove correct dashboard panels, command delivery, tc/iptables
+attachment or packet completeness. An otherwise successful inventory therefore
+remains `unknown`. Correlated canaries and fault/recovery rehearsals are required
+before claiming full coverage.
 
 ## Configure the collector for a reviewed release
 
-The files are staged for deployment; existing installations are not modified
-automatically. The current release controller does not yet install or checkpoint
-these new units. Include their configuration, trust files and enablement state in
-the next reviewed deployment/recovery plan before enabling collection.
+The protocol 3 full-platform rollout now stages the collector units and
+`/etc/heist/monitoring.json` from the exact target commit. It derives infrastructure
+hosts/accounts from the deployment description, adds the archive role when
+`HEIST_ARCHIVE_STATUS_HOST` is configured, and sets `HEIST_MONITORING_STATUS_FILE`.
+`HEIST_ARCHIVE_MONITORING_USER` defaults to `ubuntu`; the archive-receipt account
+may lack sudo and is deliberately not reused for privileged health checks.
+
+The configuration files and original service enablement/running states participate
+in checkpoint/recovery. Previously absent units are disabled and removed on
+rollback. A configured extra monitoring environment file is also checkpointed.
+Portable recovery contracts pass; a full native upgrade/failure/rollback rehearsal
+of this integration is still required. Production has not been changed. The
+clean-host installer remains disabled.
+
+For an independently reviewed manual installation, use the following procedure:
 
 1. Review `deploy/monitoring/config/monitoring.example.json`. Replace every
    placeholder with the existing infrastructure host and SSH account for that
@@ -53,10 +69,11 @@ the next reviewed deployment/recovery plan before enabling collection.
    a student's exercise VM as an infrastructure role.
 2. Verify and pin each infrastructure SSH host key through a trusted channel.
    Keep the existing private key on the host; never forward its agent or copy it
-   to a VM. Collection uses pinned SSH and noninteractive `sudo python3` to run
+   to a VM. Collection uses pinned SSH and noninteractive `sudo python3` for
+   non-root infrastructure accounts (direct Python for root) to run
    this fixed standard-library probe over stdin. It needs the operator's already
    authorized infrastructure access; do not grant students this sudo access.
-3. Review the two units under `deploy/monitoring/systemd/`. Adapt the installation
+3. Review `heist-monitoring.service` and `.timer` under `deploy/monitoring/systemd/`. Adapt the installation
    and virtualenv paths if they differ from `/root/heiST`. Install under
    `/etc/systemd/system/`, reload systemd, then start the service manually before
    enabling the timer. Systemd creates private `/var/lib/heist/monitoring` state.
@@ -73,10 +90,11 @@ One-off inspection, without installing units or writing a receipt:
 ```sh
 bin/heist monitor --role host
 bin/heist monitor --role host --config /etc/heist/monitoring.json
+bin/heist monitor --role host --config /etc/heist/monitoring.json --environment /root/heiST/backend/.env
 ```
 
 The timer refreshes one minute after each completed collection, avoiding overlapping
-jobs. Remote checks have a 15-second timeout per role; the service has a 90-second
+jobs. Remote checks have a 15-second timeout per role; the service has a 180-second
 deadline. Receipts are atomically replaced, mode0600, bounded to 64 KiB and considered
 stale after 180 seconds. Future timestamps over 30 seconds are rejected. A failed
 collector leaves its previous receipt to become stale; a missing configured file
@@ -97,14 +115,78 @@ and authenticated embedding options are documented in its
 [configuration reference](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/)
 and [JWT authentication guide](https://grafana.com/docs/grafana/latest/setup-grafana/configure-access/configure-authentication/jwt/).
 
-The next instance-level API should resolve instance → VM IDs → `Agent_<vmid>`
-and network IDs on the server, then return agent last-seen, sensor state and
-delivery timestamps. Scope queries using immutable instance and assignment IDs
-and their start/end times; IP addresses are reused. Recheck the administrator role
-and instance identity on every request. Grafana variables are filters, not access
-control. Student views would need separate ownership enforcement and must never
-query unrestricted terminal logs or another student's traffic. This instance-level
-telemetry view is not implemented by the initial platform panel.
+**Running challenges → Inspect** now shows the selected instance's VM/agent state,
+last keepalive and shared platform sensors. SQL refreshes administrator authority
+and resolves the instance's VM IDs before projecting cached `Agent_<vmid>` records.
+Other instances' agents are excluded. Missing agents and active agents with
+keepalives older than 180 seconds are labelled explicitly. A stale platform receipt
+cannot produce current agent or sensor health. Stopped VMs use a warning tone
+instead of a false running-VM alarm. The view refreshes every 30 seconds.
+
+The inventory is bounded to 256 matching managed-agent candidates; an incomplete
+or ambiguous inventory fails closed. Registration and keepalive metadata establish
+the current VM-ID association only. Historical command/packet attribution must
+additionally bind immutable instance and assignment IDs and their start/end times;
+VM IDs and IPs can be reused. Grafana variables are filters, not access control.
+Student event views would need separate ownership enforcement; this release adds
+no unrestricted event browser.
+
+## Configure authenticated pipeline probes
+
+The collector reads the existing backend environment for Wazuh API credentials and
+its pinned certificate. Set `HEIST_MONITORING_ENVIRONMENT_FILE` there to an existing
+absolute path, such as `/etc/heist/monitoring.env`, for additional private settings.
+Keep it root-owned, mode0600, outside Git. The declared file participates in the
+host checkpoint. Missing credentials produce unknown checks.
+
+Use `MONITORING_HOST`, `GRAFANA_USER`, `GRAFANA_PASSWORD`, `GRAFANA_PORT`,
+`CLICKHOUSE_USER`, `CLICKHOUSE_PASSWORD` and `CLICKHOUSE_HTTPS_PORT`.
+Optional `GRAFANA_CA_FILE`/`CLICKHOUSE_CA_FILE` specify trusted CA files. Legacy
+leaf pinning uses `GRAFANA_PINNED_CERTIFICATE_FILE` or
+`CLICKHOUSE_PINNED_CERTIFICATE_FILE`; obtain and verify leaves through the trusted
+infrastructure channel. TLS verification stays enabled and redirects are rejected.
+Use dedicated read-only API/database accounts when provisioning monitoring access.
+
+Grafana search checks the six source dashboard titles within the account's view;
+an account without access cannot prove dashboards are present. ClickHouse queries
+are fixed `SELECT` aggregates over recent `stats` rows in `suricata.*_eve_logs`,
+with read-only mode, a three-second execution limit and bounded results. They do
+not retrieve addresses, commands or payloads. See the official
+[Grafana search API](https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/folder_dashboard_search/)
+and [Wazuh API examples](https://documentation.wazuh.com/current/user-manual/api/api-examples.html).
+
+## Independent watchdog and journal alerts
+
+The off-host observer runs on the archive VM, independently of heiST HTTP/Gunicorn
+and the frontend. It reads the bounded private snapshot over pinned SSH, detects
+stale/malformed/missing receipts, and requires evidence for nine core services.
+Failed checks or unverified critical services produce exit 1 and a failed systemd
+job. Unknown end-to-end coverage remains unknown, without becoming a false service
+outage. Recovery publishes a new snapshot and the next job exits successfully.
+Alerts currently go to the **systemd journal only**, as selected by the operator;
+no email/webhook destination is configured or contacted.
+
+Build the standard-library-only artifact from reviewed source:
+
+```sh
+python3 tools/build/watchdog.py --output /private/artifacts/watchdog.pyz
+```
+
+For a reviewed archive-host installation, copy the artifact to
+`/usr/local/lib/heist/watchdog.pyz`, adapt `watchdog.example.json` to the source
+host, and install it as root-owned `/etc/heist/watchdog.json` mode0600. Review
+`heist-watchdog.service` and `.timer` separately from the source collector units.
+They use the existing archive account and systemd-loaded identity/known-host
+credentials; no additional Python package or private-key export is needed.
+The key must already support noninteractive SSH. Inspect a manual service run,
+then enable its timer. Read alerts with `journalctl -u heist-watchdog.service`;
+its receipt is private under `/var/lib/heist-watchdog/status.json`. The observer is
+prepared and tested locally, not installed on the production archive host yet.
+
+The packaged-artifact test runs without site-packages or the application and
+proves healthy→failed→recovered exit codes using a synthetic SSH source. Live
+off-host reachability, reboot, actual source failure and alert recovery still
+require the isolated appliance rehearsal before deployment.
 
 ## Command telemetry
 
@@ -173,9 +255,9 @@ Read-only inspection of the host and monitoring VM found:
 No services, capture settings or dashboard configuration were changed during this
 inspection. Repair the DMZ generated configuration and validate it in isolation
 before a guarded restart. Provision the expected six source dashboards through a
-certificate-verified client and test their data queries. The legacy Grafana updater
-globally disables requests certificate verification on import; the health collector
-does not import it. Replace that behavior before reusing the updater in a service.
+certificate-verified client and test their data queries. The local Grafana updater
+now uses a bounded, certificate-verified session and no longer changes requests
+globally. Default passwords were removed. The deployed updater has not been changed.
 
 See the [monitoring acceptance matrix](../testing/MONITORING.md) for the required
 rehearsals. Neither these observations nor portable tests certify complete capture

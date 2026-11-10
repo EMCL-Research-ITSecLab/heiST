@@ -3,6 +3,7 @@ import ipaddress
 import json
 from pathlib import Path
 import re
+from datetime import datetime
 
 import requests
 from heist.infrastructure.tls import PinnedCertificateAdapter
@@ -55,13 +56,52 @@ class Wazuh:
         except (requests.RequestException, ValueError, UnicodeError):
             raise RuntimeError('Monitoring API is unavailable or returned an invalid response') from None
 
-    def remove_agent(self, machine_id):
-        if isinstance(machine_id, bool) or not isinstance(machine_id, int) or not 0 < machine_id < 2**31:
-            raise ValueError('Invalid guest machine identifier')
+    def authentication(self):
         token = self.call('POST', '/security/user/authenticate', raw=True, auth=self.credentials, params={'raw': 'true'})
         if re.fullmatch(r'[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+', token) is None:
             raise RuntimeError('Monitoring API authentication was not confirmed')
-        headers = {'Authorization': 'Bearer '+token}
+        return {'Authorization': 'Bearer '+token}
+
+    def agents(self):
+        """Return bounded managed-agent metadata, never commands or event payloads."""
+        data = self.call('GET', '/agents', headers=self.authentication(), params={
+            'search': 'Agent_', 'select': 'id,name,status,lastKeepAlive,dateAdd', 'limit': 256, 'sort': '+id'})
+        items, total = data.get('affected_items'), data.get('total_affected_items')
+        if (not isinstance(items, list) or type(total) is not int or not 0 <= total <= 256
+                or len(items) != total or data.get('total_failed_items', 0) != 0):
+            raise RuntimeError('Monitoring agent inventory is incomplete')
+        result, seen = [], set()
+        for item in items:
+            if not isinstance(item, dict):
+                raise RuntimeError('Invalid monitoring agent metadata')
+            name = item.get('name', '')
+            match = re.fullmatch(r'Agent_([1-9][0-9]{0,9})', name) if isinstance(name, str) else None
+            if not match:
+                continue
+            identifier = int(match[1])
+            if identifier >= 2**31 or identifier in seen or item.get('status') not in ('active', 'disconnected', 'pending', 'never_connected'):
+                raise RuntimeError('Ambiguous or invalid monitoring agent identity')
+            seen.add(identifier)
+            value = {'machine_id': identifier, 'status': item['status']}
+            for source, target in (('lastKeepAlive', 'last_keepalive'), ('dateAdd', 'registered_at')):
+                timestamp = item.get(source)
+                if timestamp is None:
+                    value[target] = None
+                else:
+                    try:
+                        date = datetime.fromisoformat(timestamp)
+                        if date.tzinfo is None:
+                            raise ValueError('Missing timezone')
+                        value[target] = date.isoformat()
+                    except (ValueError, TypeError):
+                        raise RuntimeError('Invalid monitoring agent timestamp') from None
+            result.append(value)
+        return result
+
+    def remove_agent(self, machine_id):
+        if isinstance(machine_id, bool) or not isinstance(machine_id, int) or not 0 < machine_id < 2**31:
+            raise ValueError('Invalid guest machine identifier')
+        headers = self.authentication()
         name = 'Agent_'+str(machine_id)
         result = self.call('GET', '/agents', headers=headers, params={'name': name})
         agents = result.get('affected_items')

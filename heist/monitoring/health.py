@@ -184,8 +184,40 @@ def containers(*, run=subprocess.run):
     return checks
 
 
+def resources(role, *, proc=Path('/proc'), statvfs=os.statvfs, load=os.getloadavg, cpus=os.cpu_count):
+    checks = []
+    try:
+        info = {line.split(':', 1)[0]: int(line.split()[1]) for line in (proc/'meminfo').read_text().splitlines()}
+        total, available = info['MemTotal'], info['MemAvailable']
+        if total <= 0 or not 0 <= available <= total:
+            raise ValueError('Invalid memory counters')
+        percent = round((total-available)/total*100, 1)
+        checks.append(check(role+'.memory', role.capitalize()+' memory', 'failed' if percent >= 95 else 'warning' if percent >= 85 else 'ok',
+                            f'{percent}% unavailable according to MemAvailable; application limits need separate validation'))
+    except (OSError, ValueError, KeyError, IndexError):
+        checks.append(check(role+'.memory', role.capitalize()+' memory', 'unknown', 'Memory counters could not be verified'))
+    try:
+        usage = statvfs('/')
+        if usage.f_files <= 0:
+            raise ValueError('No inode accounting')
+        percent = round((usage.f_files-usage.f_favail)/usage.f_files*100, 1)
+        checks.append(check(role+'.inodes', role.capitalize()+' root inodes', 'failed' if percent >= 95 else 'warning' if percent >= 85 else 'ok', f'{percent}% of root filesystem inodes used'))
+    except (OSError, ValueError):
+        checks.append(check(role+'.inodes', role.capitalize()+' root inodes', 'unknown', 'Inode counters could not be verified'))
+    try:
+        average, count = load()[0], cpus()
+        if not count or average < 0:
+            raise ValueError('Invalid load counters')
+        checks.append(check(role+'.load', role.capitalize()+' system load', 'failed' if average > count*4 else 'warning' if average > count*2 else 'ok',
+                            f'One-minute load {average:.2f} on {count} CPUs; this is not a CPU utilization percentage'))
+    except (OSError, ValueError):
+        checks.append(check(role+'.load', role.capitalize()+' system load', 'unknown', 'System load could not be verified'))
+    return checks
+
+
 def local_snapshot(role, *, run=subprocess.run):
     checks = services(role, run=run)
+    checks.extend(resources(role))
     usage = shutil.disk_usage('/')
     percent = round(usage.used/usage.total*100, 1)
     checks.append(check(role+'.storage', role.capitalize()+' root storage',
@@ -237,7 +269,38 @@ def sanitize(value, *, now=None, maximum_age=180):
     state = 'failed' if any(c['state'] == 'failed' for c in checks) else 'warning' if any(c['state'] == 'warning' for c in checks) else 'unknown' if any(c['state'] == 'unknown' for c in checks) else 'ok'
     if (now-at).total_seconds() > maximum_age:
         state = 'stale'
-    return {'schema': 1, 'status': state, 'checked_at': at.isoformat(), 'checks': checks}
+    result = {'schema': 1, 'status': state, 'checked_at': at.isoformat(), 'checks': checks}
+    inventory = value.get('agent_inventory')
+    if inventory is not None:
+        result['agent_inventory'] = sanitize_agents(inventory, now)
+    return result
+
+
+def sanitize_agents(value, now):
+    if not isinstance(value, dict) or value.get('status') not in ('ready', 'unavailable', 'not configured'):
+        raise ValueError('Invalid agent inventory')
+    agents = value.get('agents')
+    if not isinstance(agents, list) or len(agents) > 256 or (value['status'] != 'ready' and agents):
+        raise ValueError('Invalid inventory size')
+    result, seen = [], set()
+    for agent in agents:
+        identifier = agent.get('machine_id') if isinstance(agent, dict) else None
+        if type(identifier) is not int or not 0 < identifier < 2**31 or identifier in seen:
+            raise ValueError('Invalid agent identity')
+        seen.add(identifier)
+        if agent.get('status') not in ('active', 'disconnected', 'pending', 'never_connected'):
+            raise ValueError('Invalid agent state')
+        item = {'machine_id': identifier, 'status': agent['status']}
+        for key in ('last_keepalive', 'registered_at'):
+            timestamp = agent.get(key)
+            if timestamp is not None:
+                at = datetime.fromisoformat(timestamp)
+                if at.tzinfo is None or (at-now).total_seconds() > 30:
+                    raise ValueError('Invalid agent timestamp')
+                timestamp = at.isoformat()
+            item[key] = timestamp
+        result.append(item)
+    return {'status': value['status'], 'agents': result}
 
 
 def receipt(settings, *, now=None):
@@ -273,7 +336,8 @@ def remote_checks(config):
         try:
             from heist.remote import SSH
             ssh = SSH(remote['host'], remote.get('user', 'ubuntu'))
-            result = ssh.run(['sudo', '-n', 'python3', '-', '--role', role],
+            arguments = ([] if ssh.user == 'root' else ['sudo', '-n'])+['python3', '-', '--role', role]
+            result = ssh.run(arguments,
                              input=Path(__file__).read_bytes(), timeout=15)
             if len(result.stdout) > LIMIT:
                 raise ValueError('Oversized remote receipt')
@@ -311,12 +375,29 @@ def main(argv=None):
     parser.add_argument('--role', choices=ROLES, default='host')
     parser.add_argument('--config', type=Path, help='Private JSON remote-role configuration (host only)')
     parser.add_argument('--output', type=Path, help='Status file in an existing private directory')
+    parser.add_argument('--environment', type=Path, help='Existing private backend environment (host only)')
     args = parser.parse_args(argv)
-    if args.config and args.role != 'host':
+    if (args.config or args.environment) and args.role != 'host':
         parser.error('Remote collection is available only on the host role')
     value = local_snapshot(args.role)
     if args.role == 'host':
         value['checks'].extend(remote_checks(json.loads(args.config.read_text()) if args.config else {}))
+        if args.environment:
+            from dotenv import dotenv_values
+            from heist.monitoring.agents import collect
+            from heist.monitoring.pipeline import grafana, clickhouse
+            settings = dict(dotenv_values(args.environment))
+            extra = settings.get('HEIST_MONITORING_ENVIRONMENT_FILE')
+            if extra:
+                if not Path(extra).is_absolute() or '..' in Path(extra).parts or not Path(extra).is_file():
+                    raise ValueError('Use an existing absolute monitoring environment path')
+                settings.update(dotenv_values(extra))
+            inventory, status = collect(settings)
+            value['agent_inventory'] = inventory
+            value['checks'].append(status)
+            value['checks'].extend(grafana(settings))
+            value['checks'].extend(clickhouse(settings))
+    value['checked_at'] = datetime.now(timezone.utc).isoformat()
     if args.output:
         publish(args.output, value)
     else:

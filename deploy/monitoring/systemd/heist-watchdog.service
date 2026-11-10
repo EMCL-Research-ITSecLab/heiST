@@ -1,0 +1,22 @@
+[Unit]
+Description=Observe heiST platform health from the archive host
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=heist-archive
+Group=heist-archive
+UMask=0077
+StateDirectory=heist-watchdog
+StateDirectoryMode=0700
+LoadCredential=identity:/etc/heist/archive/keys/proxmox-logs.key
+LoadCredential=known_hosts:/etc/heist/archive/known_hosts
+ExecStart=/usr/bin/python3 /usr/local/lib/heist/watchdog.pyz --config /etc/heist/watchdog.json --output /var/lib/heist-watchdog/status.json
+TimeoutStartSec=20
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/heist-watchdog
+# Add the operator's reviewed notification unit through an OnFailure= drop-in.

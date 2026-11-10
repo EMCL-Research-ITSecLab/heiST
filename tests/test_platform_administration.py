@@ -82,6 +82,8 @@ class PlatformAdministrationTests(unittest.TestCase):
         detail=self.service.instance(self.admin,self.instance)
         self.assertEqual(detail['user_id'],self.user_id)
         self.assertEqual(detail['state'],'ACTIVE')
+        self.assertEqual(detail['monitoring']['network_coverage'],'unverified')
+        self.assertEqual({m['machine_id'] for m in detail['monitoring']['machines']},{m['id'] for m in detail['machines']})
         self.service.change_instance(self.admin,self.instance,'release')
         self.stop.assert_called_once_with(self.user_id,expected_challenge_id=self.instance)
         self.assertEqual(self.sql('SELECT running_challenge FROM users WHERE id=%s',(self.user_id,)),[(None,)])

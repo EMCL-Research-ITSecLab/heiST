@@ -9,20 +9,6 @@ import os
 import sys
 import argparse
 from heist.environment import load_installer_env as load_dotenv
-import urllib3
-
-# Disable SSL warnings
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-# Monkey patch requests to always disable SSL verification
-original_request = requests.Session.request
-
-def no_ssl_verification_request(self, method, url, **kwargs):
-    kwargs['verify'] = False
-    kwargs.setdefault('timeout', 30)
-    return original_request(self, method, url, **kwargs)
-
-requests.Session.request = no_ssl_verification_request
 
 # Load environment variables
 load_dotenv()
@@ -32,7 +18,7 @@ GRAFANA_HOST_URL = os.getenv("MONITORING_HOST", "10.0.0.103")
 GRAFANA_PORT = os.getenv("GRAFANA_PORT", "3000")
 GRAFANA_URL = f"https://{GRAFANA_HOST_URL}:{GRAFANA_PORT}"
 ADMIN_USER = os.getenv("GRAFANA_USER", "admin")
-ADMIN_PASS = os.getenv("GRAFANA_PASSWORD", "SuperSecure123!")
+ADMIN_PASS = os.getenv("GRAFANA_PASSWORD")
 
 MONITORING_FILES_DIR = os.getenv("MONITORING_FILES_DIR", "/root/heiST/heist/monitoring")
 GRAFANA_FILES_SETUP_DIR = os.getenv("GRAFANA_FILES_SETUP_DIR", f"{MONITORING_FILES_DIR}/grafana")
@@ -55,13 +41,13 @@ CLICKHOUSE_IP = os.getenv("MONITORING_HOST", "10.0.0.103")
 CLICKHOUSE_HTTPS_PORT = os.getenv("CLICKHOUSE_HTTPS_PORT", "8443")
 CLICKHOUSE_NATIVE_PORT = os.getenv("CLICKHOUSE_NATIVE_PORT", "9440")
 CLICKHOUSE_USER = os.getenv("CLICKHOUSE_USER", "default")
-CLICKHOUSE_PASSWORD = os.getenv("CLICKHOUSE_PASSWORD", "changeme")
+CLICKHOUSE_PASSWORD = os.getenv("CLICKHOUSE_PASSWORD")
 
 # Wazuh configuration
 WAZUH_MANAGER_IP = os.getenv("MONITORING_HOST", "10.0.0.103")
 WAZUH_MANAGER_PORT = os.getenv("WAZUH_MANAGER_PORT", "9200")
 WAZUH_USER = os.getenv("WAZUH_INDEXER_USER", "admin")
-WAZUH_PASSWORD = os.getenv("WAZUH_INDEXER_PASSWORD", "SecretPassword")
+WAZUH_PASSWORD = os.getenv("WAZUH_INDEXER_PASSWORD")
 
 DEBUG_MODE = False
 
@@ -90,11 +76,31 @@ def get_auth_headers():
     }
 
 
+class VerifiedSession(requests.Session):
+    def request(self, method, url, **kwargs):
+        from pathlib import Path
+        verification = kwargs.get('verify', self.verify)
+        if verification is not True and not (isinstance(verification, str) and Path(verification).is_absolute() and '..' not in Path(verification).parts):
+            raise ValueError('Grafana HTTPS certificate verification is required')
+        kwargs['verify'] = verification
+        kwargs.setdefault('timeout', (3, 10))
+        kwargs.setdefault('allow_redirects', False)
+        return super().request(method, url, **kwargs)
+
+
 def get_session():
     """Create authenticated session"""
-    session = requests.Session()
+    if not ADMIN_USER or not ADMIN_PASS:
+        raise ValueError('Configure Grafana credentials before provisioning dashboards')
+    session = VerifiedSession()
+    session.trust_env = False
     session.auth = (ADMIN_USER, ADMIN_PASS)
-    session.verify = False
+    session.verify = os.getenv('GRAFANA_CA_FILE') or True
+    pinned = os.getenv('GRAFANA_PINNED_CERTIFICATE_FILE')
+    if pinned:
+        from heist.infrastructure.tls import PinnedCertificateAdapter
+        session.mount(GRAFANA_URL+'/', PinnedCertificateAdapter(pinned))
+        session.verify = pinned
     return session
 
 

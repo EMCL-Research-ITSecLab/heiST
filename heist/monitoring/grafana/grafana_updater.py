@@ -84,7 +84,8 @@ class VerifiedSession(requests.Session):
             raise ValueError('Grafana HTTPS certificate verification is required')
         kwargs['verify'] = verification
         kwargs.setdefault('timeout', (3, 10))
-        kwargs.setdefault('allow_redirects', False)
+        # Session.get supplies allow_redirects=True before calling request().
+        kwargs['allow_redirects'] = False
         return super().request(method, url, **kwargs)
 
 

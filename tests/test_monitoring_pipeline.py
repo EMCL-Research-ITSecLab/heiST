@@ -102,6 +102,10 @@ class PipelineTests(unittest.TestCase):
         self.assertIs(requests.Session.request,original)
         with patch.object(module,'ADMIN_PASS','fixture-password'):
             session=module.get_session()
+            with patch.object(requests.Session,'request') as send:
+                session.get('https://example.invalid')
+                self.assertFalse(send.call_args.kwargs['allow_redirects'])
+                self.assertEqual(send.call_args.kwargs['timeout'],(3,10))
             for invalid in (False,0,None,'../ca.pem'):
                 with self.assertRaises(ValueError):session.get('https://example.invalid',verify=invalid)
             session.close()

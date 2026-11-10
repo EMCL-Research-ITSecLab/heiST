@@ -8,6 +8,7 @@ remain gated; see the current [acceptance status](validation/rollouts.md).
 | Manage users, exercises and running instances | [Administrator guide](administration/README.md) |
 | Plan an update or recover an interrupted rollout | [Updates and recovery](administration/UPDATES.md) |
 | Configure the separate archive VM | [Log archiving](administration/LOG-ARCHIVING.md) |
+| Check services, sensors and telemetry coverage | [Monitoring](administration/MONITORING.md) · [Monitoring acceptance](testing/MONITORING.md) |
 | Build offline browser runtimes | [Offline runtime](administration/OFFLINE-RUNTIME.md) |
 | Run development tests | [Testing](testing/README.md) |
 | Review the complete acceptance concept | [Test concept](testing/TEST-CONCEPT.md) |

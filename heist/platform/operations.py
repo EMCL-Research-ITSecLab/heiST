@@ -8,6 +8,7 @@ import subprocess
 import tomllib
 
 from heist.remote import SSH
+from heist.monitoring.health import receipt as monitoring_status
 
 UNITS = ('backend.service', 'pool_manager.service', 'cleanup.service')
 ROOT = Path(__file__).resolve().parents[2]
@@ -101,6 +102,7 @@ def collect(connection, settings, maintenance_file, *, services=None, archive=No
               'maintenance': Path(maintenance_file).exists(), 'lifecycle': {},
               'services': services() if services else service_states(),
               'archive': archive() if archive else archive_status(settings),
+              'monitoring': monitoring_status(settings),
               'release': release_status(settings.get('HEIST_STATE_DIRECTORY', '/var/lib/heist'))}
     try:
         result['source_version'] = tomllib.loads((ROOT/'pyproject.toml').read_text())['project']['version']

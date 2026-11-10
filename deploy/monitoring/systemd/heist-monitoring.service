@@ -1,0 +1,21 @@
+[Unit]
+Description=Collect read-only heiST platform health
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+UMask=0077
+WorkingDirectory=/root/heiST
+ExecStart=/root/heiST/.venv/bin/python -m heist.monitoring.health --config /etc/heist/monitoring.json --output /var/lib/heist/monitoring/status.json
+StateDirectory=heist/monitoring
+StateDirectoryMode=0700
+TimeoutStartSec=90
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/heist/monitoring
+# OpenSSH needs the existing private key and pinned host trust in /root/.ssh.
+# No credentials are passed to the remote program or written to the receipt.
+

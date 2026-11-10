@@ -5,6 +5,7 @@ import runpy
 import sys
 
 MODULE_COMMANDS = {
+    'monitor': ('heist.monitoring.health', 'Collect read-only platform health checks'),
     'install': ('heist.installer.cli', 'Configure a clean Proxmox host'),
     'update': ('heist.rollout.cli', 'Alias for the full-platform release controller'),
     'db': ('heist.maintenance.database', 'Back up or restore PostgreSQL'),

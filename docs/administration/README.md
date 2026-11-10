@@ -116,6 +116,14 @@ and `privacy-policy.html` and `terms-of-service.html`, then run
 Review the text and provenance changes before building. This updates the text-bound
 revision automatically and excludes scripts and the old navigation.
 
+## Monitoring
+
+**Platform status → Platform monitoring** displays scheduled read-only checks for
+the infrastructure roles, sensors and shippers. Failed and stale evidence remains
+visible; an active service alone does not certify event delivery. See
+[Monitoring](MONITORING.md) for setup, the production findings, instance-level
+integration design and the limits of command and packet coverage.
+
 ## Users
 
 Open **Users** to search by username or email, inspect active-session counts,

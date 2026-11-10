@@ -7,7 +7,7 @@ from .learning import pagination
 from .validation import choice, positive_id, text
 
 blueprint = Blueprint('administration', __name__)
-DIAGNOSTIC_FIELDS = ('checked_at', 'database', 'maintenance', 'lifecycle', 'services', 'archive', 'release', 'source_version', 'storage')
+DIAGNOSTIC_FIELDS = ('checked_at', 'database', 'maintenance', 'lifecycle', 'services', 'archive', 'monitoring', 'release', 'source_version', 'storage')
 
 
 @blueprint.get('/admin/operations')

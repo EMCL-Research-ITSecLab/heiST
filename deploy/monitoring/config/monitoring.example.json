@@ -1,0 +1,8 @@
+{
+  "remotes": [
+    {"role": "monitoring", "host": "monitoring.example.invalid", "user": "ubuntu"},
+    {"role": "web", "host": "web.example.invalid", "user": "ubuntu"},
+    {"role": "database", "host": "database.example.invalid", "user": "ubuntu"},
+    {"role": "archive", "host": "archive.example.invalid", "user": "ubuntu"}
+  ]
+}

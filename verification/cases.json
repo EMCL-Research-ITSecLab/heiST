@@ -1385,7 +1385,10 @@
         "positive and negative observations",
         "cleanup and data-integrity proof"
       ],
-      "sources": []
+      "sources": [
+        "docs/testing/MONITORING.md",
+        "docs/administration/MONITORING.md"
+      ]
     },
     {
       "id": "ARCHIVE-TIMER",
@@ -1946,6 +1949,191 @@
         "tests/test_platform_administration.py",
         "heist/platform/administration.py",
         "heist/api/administration.py"
+      ]
+    },
+    {
+      "id": "UNIT-MONITORING-HEALTH",
+      "area": "monitoring_health",
+      "mode": "automated",
+      "procedure": "Run tests/test_monitoring_health.py through tools/check.py and browser monitoring-state contracts.",
+      "expected": "Required service failures, stale receipts and unverified delivery are distinct; diagnostics are bounded, private and read-only.",
+      "evidence": [
+        "portable suite results",
+        "browser and frontend results"
+      ],
+      "sources": [
+        "tests/test_monitoring_health.py",
+        "tests/browser/ui_smoke.py",
+        "frontend/tests/monitoring.test.ts"
+      ]
+    },
+    {
+      "id": "UNIT-BACKUP-REPLICATION",
+      "area": "backup_replication",
+      "mode": "automated",
+      "procedure": "Run tests/test_backup_replication.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All regression contracts in this module pass with their declared prerequisites; missing prerequisites remain explicit skips.",
+      "evidence": [
+        "portable suite results and skip reasons"
+      ],
+      "sources": [
+        "tests/test_backup_replication.py"
+      ]
+    },
+    {
+      "id": "UNIT-GUEST-AGENT-FILES",
+      "area": "guest_agent_files",
+      "mode": "automated",
+      "procedure": "Run tests/test_guest_agent_files.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All regression contracts in this module pass with their declared prerequisites; missing prerequisites remain explicit skips.",
+      "evidence": [
+        "portable suite results and skip reasons"
+      ],
+      "sources": [
+        "tests/test_guest_agent_files.py"
+      ]
+    },
+    {
+      "id": "UNIT-IMAGE-WORKER",
+      "area": "image_worker",
+      "mode": "automated",
+      "procedure": "Run tests/test_image_worker.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All regression contracts in this module pass with their declared prerequisites; missing prerequisites remain explicit skips.",
+      "evidence": [
+        "portable suite results and skip reasons"
+      ],
+      "sources": [
+        "tests/test_image_worker.py"
+      ]
+    },
+    {
+      "id": "UNIT-LEGACY-WRAPPERS",
+      "area": "legacy_wrappers",
+      "mode": "automated",
+      "procedure": "Run tests/test_legacy_wrappers.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All regression contracts in this module pass with their declared prerequisites; missing prerequisites remain explicit skips.",
+      "evidence": [
+        "portable suite results and skip reasons"
+      ],
+      "sources": [
+        "tests/test_legacy_wrappers.py"
+      ]
+    },
+    {
+      "id": "UNIT-LOG-PREPARE",
+      "area": "log_prepare",
+      "mode": "automated",
+      "procedure": "Run tests/test_log_prepare.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All regression contracts in this module pass with their declared prerequisites; missing prerequisites remain explicit skips.",
+      "evidence": [
+        "portable suite results and skip reasons"
+      ],
+      "sources": [
+        "tests/test_log_prepare.py"
+      ]
+    },
+    {
+      "id": "UNIT-PILOT-STORAGE",
+      "area": "pilot_storage",
+      "mode": "automated",
+      "procedure": "Run tests/test_pilot_storage.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All regression contracts in this module pass with their declared prerequisites; missing prerequisites remain explicit skips.",
+      "evidence": [
+        "portable suite results and skip reasons"
+      ],
+      "sources": [
+        "tests/test_pilot_storage.py"
+      ]
+    },
+    {
+      "id": "UNIT-POOL-RECOVERY",
+      "area": "pool_recovery",
+      "mode": "automated",
+      "procedure": "Run tests/test_pool_recovery.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All regression contracts in this module pass with their declared prerequisites; missing prerequisites remain explicit skips.",
+      "evidence": [
+        "portable suite results and skip reasons"
+      ],
+      "sources": [
+        "tests/test_pool_recovery.py"
+      ]
+    },
+    {
+      "id": "UNIT-ROLLOUT-ADMISSION",
+      "area": "rollout_admission",
+      "mode": "automated",
+      "procedure": "Run tests/test_rollout_admission.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All regression contracts in this module pass with their declared prerequisites; missing prerequisites remain explicit skips.",
+      "evidence": [
+        "portable suite results and skip reasons"
+      ],
+      "sources": [
+        "tests/test_rollout_admission.py"
+      ]
+    },
+    {
+      "id": "UNIT-ROLLOUT-LEGACY-RECOVERY",
+      "area": "rollout_legacy_recovery",
+      "mode": "automated",
+      "procedure": "Run tests/test_rollout_legacy_recovery.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All regression contracts in this module pass with their declared prerequisites; missing prerequisites remain explicit skips.",
+      "evidence": [
+        "portable suite results and skip reasons"
+      ],
+      "sources": [
+        "tests/test_rollout_legacy_recovery.py"
+      ]
+    },
+    {
+      "id": "UNIT-ROLLOUT-VPN",
+      "area": "rollout_vpn",
+      "mode": "automated",
+      "procedure": "Run tests/test_rollout_vpn.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All regression contracts in this module pass with their declared prerequisites; missing prerequisites remain explicit skips.",
+      "evidence": [
+        "portable suite results and skip reasons"
+      ],
+      "sources": [
+        "tests/test_rollout_vpn.py"
+      ]
+    },
+    {
+      "id": "UNIT-SOURCE-OVERRIDES",
+      "area": "source_overrides",
+      "mode": "automated",
+      "procedure": "Run tests/test_source_overrides.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All regression contracts in this module pass with their declared prerequisites; missing prerequisites remain explicit skips.",
+      "evidence": [
+        "portable suite results and skip reasons"
+      ],
+      "sources": [
+        "tests/test_source_overrides.py"
+      ]
+    },
+    {
+      "id": "UNIT-TEMPLATE-ARCHIVE",
+      "area": "template_archive",
+      "mode": "automated",
+      "procedure": "Run tests/test_template_archive.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All regression contracts in this module pass with their declared prerequisites; missing prerequisites remain explicit skips.",
+      "evidence": [
+        "portable suite results and skip reasons"
+      ],
+      "sources": [
+        "tests/test_template_archive.py"
+      ]
+    },
+    {
+      "id": "UNIT-TERMS-ACCEPTANCE",
+      "area": "terms_acceptance",
+      "mode": "automated",
+      "procedure": "Run tests/test_terms_acceptance.py through tools/check.py; retain its result and skip reasons.",
+      "expected": "All regression contracts in this module pass with their declared prerequisites; missing prerequisites remain explicit skips.",
+      "evidence": [
+        "portable suite results and skip reasons"
+      ],
+      "sources": [
+        "tests/test_terms_acceptance.py"
       ]
     }
   ]

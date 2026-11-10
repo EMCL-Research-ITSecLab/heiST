@@ -6,6 +6,10 @@ percentage does not prove an exercise, an update or a restore works. This concep
 combines contract tests, real infrastructure rehearsals and independent restore
 checks. Missing prerequisites and untested paths remain visible release blockers.
 
+The [monitoring acceptance matrix](MONITORING.md) expands sensor, command,
+network, ingestion, Grafana, archive and independent-alert validation. Service
+inventory results and complete end-to-end acceptance are separate evidence.
+
 ## Inventory and traceability
 
 [The machine-readable catalogue](../../verification/cases.json) defines the required

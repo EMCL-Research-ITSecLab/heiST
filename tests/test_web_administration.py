@@ -26,10 +26,11 @@ class AdministrationTests(unittest.TestCase):
         self.assertEqual(self.request('admin/operations').status_code, 403)
         self.platform.request.assert_not_called()
         self.update_user('is_admin=TRUE')
-        self.platform.request.return_value = {'success': True, 'data': {'database': 'ready', 'services': {}, 'raw_configuration': 'private-token'}}
+        monitoring = {'status': 'failed', 'checks': []}
+        self.platform.request.return_value = {'success': True, 'data': {'database': 'ready', 'services': {}, 'monitoring': monitoring, 'raw_configuration': 'private-token'}}
         result = self.request('admin/operations')
         self.assertEqual(result.status_code, 200, result.json)
-        self.assertEqual(result.json['data'], {'database': 'ready', 'services': {}})
+        self.assertEqual(result.json['data'], {'database': 'ready', 'services': {}, 'monitoring': monitoring})
         self.assertNotIn('private-token', str(result.json))
         self.update_user('is_admin=FALSE')
         self.platform.reset_mock()

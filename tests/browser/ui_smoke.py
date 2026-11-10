@@ -9,6 +9,22 @@ from tests.browser.support import BrowserFixture
 
 
 class BrowserTests(BrowserFixture):
+    def test_monitoring_failures_and_stale_evidence_are_visible(self):
+        self.role = 'admin'
+        monitoring = {
+            'status': 'stale', 'checked_at': '2026-11-01T10:00:00Z', 'checks': [
+                {'id': 'host.sensor.dmz', 'label': 'DMZ sensor', 'state': 'failed', 'summary': 'Required sensor stopped'},
+                {'id': 'monitoring.delivery', 'label': 'Event delivery', 'state': 'unknown', 'summary': 'Canary not verified'},
+            ]}
+        self.responses['admin/operations'] = {'success': True, 'data': {'monitoring': monitoring}}
+        self.visit('/operations')
+        panel = self.page.get_by_role('region', name='Platform monitoring', exact=True)
+        self.assertIn('Current health is unavailable', panel.inner_text())
+        self.assertIn('Failed checks: 1', panel.inner_text())
+        self.assertIn('Required sensor stopped', panel.inner_text())
+        self.assertTrue(panel.get_by_role('table', name='Platform monitoring checks').is_visible())
+        self.assertEqual(self.mutations, [])
+
     def test_all_public_and_administrator_pages_render_without_runtime_errors(self):
         pages = ['/', '/landing', '/explore', '/challenge?id=1', '/login', '/signup', '/404', '/profile_public?username=someone']
         for path in pages:

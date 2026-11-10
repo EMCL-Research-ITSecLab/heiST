@@ -8,11 +8,11 @@ import shlex
 import subprocess
 
 from heist.remote import SSH
-from .health import LIMIT, check, publish, sanitize
+from .health import JOBS, LIMIT, ROLE_UNITS, check, publish, sanitize
 
-REQUIRED = tuple('host.service.'+name+'.service' for name in
-                 ('backend', 'pool_manager', 'suricata-vpn', 'suricata-dmz',
-                  'suricata-backend', 'vector-vpn', 'vector-dmz', 'vector-backend', 'zeek'))
+REQUIRED = tuple(role+'.service.'+unit for role, units in ROLE_UNITS.items() for unit in units if unit not in JOBS)+(
+    'monitoring.wazuh.manager', 'monitoring.wazuh.indexer', 'monitoring.wazuh.dashboard',
+    'monitoring.grafana.dashboards', 'database.connections')
 
 
 def evaluate(body, *, now=None):

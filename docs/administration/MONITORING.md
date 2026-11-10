@@ -159,7 +159,10 @@ and [Wazuh API examples](https://documentation.wazuh.com/current/user-manual/api
 
 The off-host observer runs on the archive VM, independently of heiST HTTP/Gunicorn
 and the frontend. It reads the bounded private snapshot over pinned SSH, detects
-stale/malformed/missing receipts, and requires evidence for nine core services.
+stale/malformed/missing receipts, and requires evidence for critical services across
+the host, web, database, monitoring and archive roles, plus Wazuh containers and
+database readiness. A fresh host receipt with an unreachable infrastructure VM
+still produces a critical failure. Configure all roles before activating it.
 Failed checks or unverified critical services produce exit 1 and a failed systemd
 job. Unknown end-to-end coverage remains unknown, without becoming a false service
 outage. Recovery publishes a new snapshot and the next job exits successfully.

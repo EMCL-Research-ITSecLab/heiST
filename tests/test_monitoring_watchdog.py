@@ -55,6 +55,14 @@ class WatchdogTests(unittest.TestCase):
         for body in (b'x'*65537,b'null',b'{}',source(checked_at='2026-11-10T12:00:00')):
             self.assertTrue(evaluate(body,now=NOW)[1])
 
+    def test_unreachable_infrastructure_role_is_critical_even_with_a_fresh_host_receipt(self):
+        value=json.loads(source())
+        value['checks']=[c for c in value['checks'] if not c['id'].startswith('web.')]
+        value['checks'].append({'id':'web.connection','label':'Web connection','state':'unknown','summary':'Unavailable'})
+        receipt,critical=evaluate(json.dumps(value).encode(),now=NOW)
+        self.assertTrue(critical)
+        self.assertEqual(sanitize(receipt,now=NOW)['status'],'failed')
+
     def test_standalone_archive_host_artifact_needs_no_app_or_third_party_packages(self):
         with tempfile.TemporaryDirectory() as directory:
             artifact=Path(directory)/'watchdog.pyz'

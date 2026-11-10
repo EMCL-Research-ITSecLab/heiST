@@ -100,7 +100,9 @@ def clickhouse(settings, *, client_factory=HTTPS, now=None):
                      'FROM suricata.'+role+"_eve_logs WHERE event_type='stats' "
                      'AND timestamp >= now()-INTERVAL 5 MINUTE FORMAT JSONEachRow')
             # The response is one JSON object because the aggregate has no GROUP BY.
-            row = client.get('/', params={'query': query, 'readonly': 1, 'max_execution_time': 3,
+            # Match HTTP GET's readonly mode while allowing bounded query settings.
+            # Use a SELECT-only account; readonly=2 is not a privilege boundary.
+            row = client.get('/', params={'query': query, 'readonly': 2, 'max_execution_time': 3,
                                           'max_result_rows': 1, 'max_result_bytes': 1024})
             if not isinstance(row, dict) or not str(row.get('samples', '')).isdigit() or not str(row.get('latest', '')).isdigit():
                 raise ValueError('Invalid ingestion result')

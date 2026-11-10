@@ -4,13 +4,14 @@ import json
 from pathlib import Path
 import sqlite3
 import subprocess
+import ssl
 import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
 from heist.monitoring.health import (capture_configuration, containers, dashboards, database_backup, eve_health,
                                     prometheus_targets, proxmox_storage, publish, receipt, remote_checks,
-                                    resources, sanitize, sensor_interfaces, services)
+                                    resources, sanitize, sensor_interfaces, services, vector_transport)
 
 
 NOW = datetime(2026, 11, 10, 12, tzinfo=timezone.utc)
@@ -22,6 +23,37 @@ def snapshot(state='ok', **extra):
 
 
 class HealthTests(unittest.TestCase):
+    def test_vector_transport_detects_wrong_certificate_without_sending_events(self):
+        with tempfile.TemporaryDirectory() as directory:
+            config = Path(directory)/'vector.toml'
+            config.write_text('[sinks.clickhouse]\nendpoint="https://monitor.invalid:8443"\n[sinks.clickhouse.tls]\nca_file="/private/ca.pem"\n')
+            run = Mock(return_value=subprocess.CompletedProcess([], 0, 'argv[]=vector --config '+str(config)))
+            connection = Mock()
+            connection.__enter__ = Mock(return_value=connection)
+            connection.__exit__ = Mock(return_value=False)
+            connect = Mock(return_value=connection)
+            trust = Mock()
+            trust.wrap_socket.side_effect = ssl.SSLCertVerificationError('untrusted fixture certificate')
+            result = vector_transport(run=run, connect=connect, context=Mock(return_value=trust))
+            self.assertEqual(result['state'], 'failed')
+            self.assertIn('4 failed', result['summary'])
+            trust.wrap_socket.assert_called_with(connection, server_hostname='monitor.invalid')
+            connection.send.assert_not_called()
+
+    def test_vector_transport_refuses_disabled_verification_before_connecting(self):
+        with tempfile.TemporaryDirectory() as directory:
+            config = Path(directory)/'vector.toml'
+            config.write_text('[sinks.clickhouse]\nendpoint="https://monitor.invalid:8443"\n[sinks.clickhouse.tls]\nca_file="/private/ca.pem"\nverify_certificate=false\n')
+            run = Mock(return_value=subprocess.CompletedProcess([], 0, '--config '+str(config)))
+            connect = Mock()
+            self.assertEqual(vector_transport(run=run, connect=connect)['state'], 'failed')
+            connect.assert_not_called()
+
+    def test_vector_transport_reports_unresolved_units_as_unknown(self):
+        result = vector_transport(run=Mock(return_value=subprocess.CompletedProcess([], 1, '')))
+        self.assertEqual(result['state'], 'unknown')
+        self.assertIn('4 unverified', result['summary'])
+
     def test_old_or_incomplete_source_backup_is_not_hidden_by_successful_archive_jobs(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);generation=root/'20261110T120000Z-backup-aaaaaaaaaaaa';generation.mkdir()

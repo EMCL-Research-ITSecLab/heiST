@@ -13,6 +13,9 @@ import shutil
 import subprocess
 import tempfile
 import socket
+import ssl
+import tomllib
+from urllib.parse import urlsplit
 
 
 ROLE_UNITS = {
@@ -310,6 +313,41 @@ def database_backup(*, root=Path('/var/backups/heist/database'), now=None):
     return check('host.backup.database', 'Database backup freshness', state, summary)
 
 
+def vector_transport(*, run=subprocess.run, connect=socket.create_connection, context=ssl.create_default_context):
+    """Verify configured sink trust without sending authentication or log events."""
+    import re
+    verified, failed, unknown = 0, 0, 0
+    for name in ('vpn', 'dmz', 'backend', 'zeek'):
+        result = command(['systemctl', 'show', 'vector-'+name+'.service', '--property=ExecStart', '--value'], run=run)
+        match = re.search(r'(?:--config|-c)\s+(/[A-Za-z0-9_./-]+)', result.stdout) if result else None
+        if not match:
+            unknown += 1
+            continue
+        try:
+            with Path(match[1]).open('rb') as stream:
+                body = stream.read(LIMIT+1)
+            if len(body) > LIMIT:
+                raise ValueError('Oversized sink configuration')
+            sink = tomllib.loads(body.decode())['sinks']['clickhouse']
+            endpoint = urlsplit(sink['endpoint'])
+            tls = sink['tls']
+            ca = Path(tls['ca_file'])
+            if (endpoint.scheme != 'https' or not endpoint.hostname or endpoint.username or endpoint.password
+                    or not ca.is_absolute() or '..' in ca.parts
+                    or tls.get('verify_certificate', True) is not True or tls.get('verify_hostname', True) is not True):
+                raise ValueError('Require certificate and hostname verification')
+            trust = context(cafile=str(ca))
+            with connect((endpoint.hostname, endpoint.port or 443), timeout=3) as connection:
+                with trust.wrap_socket(connection, server_hostname=endpoint.hostname):
+                    pass
+            verified += 1
+        except (OSError, ValueError, KeyError, TypeError):
+            failed += 1
+    state = 'failed' if failed else 'unknown' if unknown else 'ok'
+    return check('host.vector.transport', 'Vector sink TLS', state,
+                 f'{verified} verified sink connections; {failed} failed; {unknown} unverified. Authentication and event delivery require separate checks.')
+
+
 def local_snapshot(role, *, run=subprocess.run):
     checks = services(role, run=run)
     checks.extend(resources(role))
@@ -325,6 +363,7 @@ def local_snapshot(role, *, run=subprocess.run):
     if role == 'host':
         checks.append(proxmox_storage(run=run))
         checks.append(database_backup())
+        checks.append(vector_transport(run=run))
         checks.extend(eve_health(name) for name in ('vpn', 'dmz', 'backend'))
         checks.append(capture_configuration())
         checks.extend(sensor_interfaces())

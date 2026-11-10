@@ -163,8 +163,12 @@ Use dedicated read-only API/database accounts when provisioning monitoring acces
 Grafana search checks the six source dashboard titles within the account's view;
 an account without access cannot prove dashboards are present. ClickHouse queries
 are fixed `SELECT` aggregates over recent `stats` rows in `suricata.*_eve_logs`,
-with read-only mode, a three-second execution limit and bounded results. They do
+with `readonly=2`, a three-second execution limit and bounded results. This matches
+ClickHouse's HTTP GET mode and allows the per-query limits. Mode2 alone is not a
+permission boundary: provision a SELECT-only account with appropriate settings
+constraints. A strict mode1 profile cannot be overridden by these requests. They do
 not retrieve addresses, commands or payloads. See the official
+[ClickHouse query permissions](https://clickhouse.com/docs/operations/settings/permissions-for-queries),
 [Grafana search API](https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/folder_dashboard_search/)
 and [Wazuh API examples](https://documentation.wazuh.com/current/user-manual/api/api-examples.html).
 

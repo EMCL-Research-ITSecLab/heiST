@@ -64,8 +64,10 @@ import base64,hashlib,http.client,json,re,ssl,sys,urllib.parse,xml.etree.Element
 from pathlib import Path
 p=json.loads(sys.stdin.buffer.read(65537))
 if not re.fullmatch('[a-f0-9]{32}',p['nonce']):raise ValueError('Invalid canary identity')
-tree=ET.parse('/etc/clickhouse-server/config.xml')
-certificate=tree.findtext('.//openSSL/server/certificateFile') or '/etc/clickhouse-server/server.crt'
+effective=Path('/var/lib/clickhouse/preprocessed_configs/config.xml')
+tree=ET.parse(effective if effective.exists() else '/etc/clickhouse-server/config.xml')
+certificate=tree.findtext('.//openSSL/server/certificateFile')
+if not certificate:raise ValueError('Effective ClickHouse server certificate was not confirmed')
 pem=Path(certificate).read_text()
 leaf=re.search(r'-----BEGIN CERTIFICATE-----[A-Za-z0-9+/=\r\n]+-----END CERTIFICATE-----',pem)[0]
 fingerprint=hashlib.sha256(ssl.PEM_cert_to_DER_cert(leaf)).digest()
@@ -77,7 +79,7 @@ try:
     client.connect()
     if hashlib.sha256(client.sock.getpeercert(binary_form=True)).digest()!=fingerprint:raise ValueError('ClickHouse certificate differs')
     query="SELECT count() AS received FROM suricata.dmz_eve_logs WHERE alert_signature='heiST monitoring canary:"+p['nonce']+"' FORMAT JSONEachRow"
-    params=urllib.parse.urlencode({'query':query,'readonly':1,'max_execution_time':3,'max_result_rows':1,'max_result_bytes':1024})
+    params=urllib.parse.urlencode({'query':query,'readonly':2,'max_execution_time':3,'max_result_rows':1,'max_result_bytes':1024})
     auth=base64.b64encode((p['user']+':'+p['password']).encode()).decode()
     client.request('GET','/?'+params,headers={'Authorization':'Basic '+auth})
     response=client.getresponse();body=response.read(8193)
@@ -100,7 +102,10 @@ from heist.remote import SSH
 monitor=SSH('10.0.0.103','ubuntu')
 def remote(program,payload=None,timeout=30):
     args=['sudo','-n','python3','-'] if payload is None else ['sudo','-n','python3','-c',program]
-    return monitor.run(args,input=program.encode() if payload is None else json.dumps(payload).encode(),timeout=timeout).stdout
+    try:return monitor.run(args,input=program.encode() if payload is None else json.dumps(payload).encode(),timeout=timeout).stdout
+    except subprocess.CalledProcessError as error:
+        (case/'query-error.log').write_bytes(error.stderr);(case/'query-error.log').chmod(0o600)
+        raise RuntimeError('Fixture canary query failed; inspect the private sensor case evidence') from None
 def snapshot():
     return json.loads(monitor.run(['sudo','-n','python3','-','--role','monitoring'],input=Path(health.__file__).read_bytes(),timeout=25).stdout)
 def state(value,identifier):

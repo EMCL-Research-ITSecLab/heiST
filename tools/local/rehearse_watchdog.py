@@ -66,7 +66,7 @@ if p['action']=='run':
         entry=json.loads(line)
         try:body=json.loads(entry.get('MESSAGE',''))
         except (ValueError,TypeError):continue
-        if isinstance(body,dict) and body.get('schema')==1:messages.append({'uid':entry.get('_UID'),'data':body})
+        if isinstance(body,dict) and body.get('schema')==1:messages.append({'uid':entry.get('_UID'),'invocation_id':entry.get('_SYSTEMD_INVOCATION_ID'),'data':body})
     print(json.dumps({'returncode':result.returncode,'properties':values,'receipt':status,'journal':messages[-1:]}))
 elif p['action']=='pin':
     value=(Path('/etc/ssh/ssh_host_ed25519_key.pub').read_text().split()[:2] if p['wrong'] else p['host_key'].split()[:2])
@@ -127,8 +127,9 @@ try:
         if (int(props['ExecMainStatus'])!=expected or props['User']!='ubuntu' or status!=('failed' if expected else 'ok')
                 or not outcome['journal'] or outcome['journal'][0]['uid']!=value['service_uid']):
             raise RuntimeError('Observer service, credentials, exit code or journal did not match '+label)
-        if props['InvocationID'] in invocations:raise RuntimeError('Observer invocation was reused')
-        invocations.append(props['InvocationID']);report['cases'].append({'case':label,**outcome})
+        invocation=outcome['journal'][0]['invocation_id']
+        if not isinstance(invocation,str) or not re.fullmatch('[a-f0-9]{32}',invocation) or invocation in invocations:raise RuntimeError('Observer invocation was reused or unverified')
+        invocations.append(invocation);report['cases'].append({'case':label,**outcome})
 finally:
     if entry is not None:
         current=keys.read_bytes()

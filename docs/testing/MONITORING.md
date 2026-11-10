@@ -73,6 +73,34 @@ silently relabelled as a supported upgrade baseline. Use a reconstructed support
 production clone for that separate acceptance. Evidence and diagnostic failures
 stay in a new private directory; credentials and packet bodies are not exported.
 
+### Native component results, 2026-11-10
+
+The retained pilot OVA was cold-imported onto a separate disk. Its missing SSH
+access was recovered through its console with a new disposable key; the sealed
+OVA and original pinned host key were preserved. QEMU isolation and sampled
+external connection denials were verified against the current guest boot.
+
+Actual monitoring tests observed the node-exporter outage in both systemd and
+Prometheus, followed by recovery. The nonroot observer passed seven real systemd
+runs: healthy, failed service, recovery, stale receipt, recovery, wrong SSH host
+pin, recovery. Each run had a distinct journal invocation. The observer's source
+inventory was synthetic; these results verify its transport and permissions.
+
+The packet rehearsal initially exposed a real failure: Vector was running but
+trusted a different self-signed certificate from the one ClickHouse served. On
+the disposable copy only, the public server certificate was fetched through
+pinned SSH, verified with chain and IP-name checking, and installed as the fixture
+trust file after saving its original. Certificate verification remained enabled.
+After that fixture repair, all four synthetic frames were observed in EVE and
+ClickHouse. The host collector now checks the configured TLS connections of all
+four Vector sinks without sending credentials or events, and the off-host
+watchdog requires that evidence. TLS success still does not prove ingestion.
+
+These component results do **not** certify the complete platform upgrade,
+rollback, real guest-network coverage, terminal auditing or PCAP archival. The
+legacy appliance lacks the Git metadata required for a supported upgrade baseline.
+Production was unchanged during these rehearsals.
+
 | Path | Required positive evidence | Failure and recovery cases |
 |---|---|---|
 | Collector and browser | Every configured role appears; collection and rendered states agree; no secrets or student events in response/export | Kill collector, malformed receipt, future clock, timeout, unknown SSH key, missing role; stale banner appears; recovery requires a new valid receipt |

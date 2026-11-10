@@ -54,7 +54,7 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual([c['state'] for c in result],['ok','failed','failed'])
         for call in client.get.call_args_list:
             params=call.kwargs['params']
-            self.assertEqual(params['readonly'],1)
+            self.assertEqual(params['readonly'],2)
             self.assertIn("event_type='stats'",params['query'])
             self.assertNotIn('payload',params['query'])
         client.close.assert_called_once()

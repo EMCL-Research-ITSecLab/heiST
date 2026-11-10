@@ -13,7 +13,7 @@ from .health import JOBS, LIMIT, ROLE_UNITS, check, publish, sanitize
 REQUIRED = tuple(role+'.service.'+unit for role, units in ROLE_UNITS.items() for unit in units if unit not in JOBS)+(
     'monitoring.wazuh.manager', 'monitoring.wazuh.indexer', 'monitoring.wazuh.dashboard',
     'monitoring.grafana.dashboards', 'database.connections', 'host.proxmox.storage',
-    'host.backup.database', 'monitoring.prometheus.targets')
+    'host.backup.database', 'host.vector.transport', 'monitoring.prometheus.targets')
 
 
 def evaluate(body, *, now=None):

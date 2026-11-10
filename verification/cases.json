@@ -2187,6 +2187,19 @@
       "sources": [
         "tests/test_pilot_access_recovery.py"
       ]
+    },
+    {
+      "id": "KERNEL-SURICATA-FANOUT",
+      "area": "monitoring_capture",
+      "mode": "automated",
+      "procedure": "Run tests/test_suricata_fanout.py with HEIST_PRIVILEGED_TESTS=1, root, ip and unshare.",
+      "expected": "In an isolated network namespace, two interfaces reject shared fanout group99 and accept distinct groups99/100, without capturing frames or modifying host links.",
+      "evidence": [
+        "strict privileged test results"
+      ],
+      "sources": [
+        "tests/test_suricata_fanout.py"
+      ]
     }
   ]
 }

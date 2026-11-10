@@ -20,6 +20,13 @@ stale monitoring receipt without issuing a mutation. The responsive layout suite
 also visits the operations page. These tests use synthetic data and do not
 establish real event delivery.
 
+`tests/test_suricata_fanout.py` is an opt-in privileged kernel regression. It
+creates two dummy capture interfaces in a fresh network namespace and verifies
+that shared group99 is rejected across interfaces while separate group100 works.
+It captures no frames and changes no host interfaces. This reproduces the kernel
+constraint behind the deployed configuration drift; it does not reconstruct the
+historical startup log or replace a live sensor/flow rehearsal.
+
 ## Appliance acceptance matrix
 
 | Path | Required positive evidence | Failure and recovery cases |

@@ -2228,6 +2228,34 @@
         "tools/local/rehearse_monitoring.py",
         "docs/testing/MONITORING.md"
       ]
+    },
+    {
+      "id": "UNIT-WATCHDOG-REHEARSAL",
+      "area": "monitoring_fixture",
+      "mode": "automated",
+      "procedure": "Run tests/test_watchdog_rehearsal.py through tools/check.py.",
+      "expected": "Observer artifacts match the exact declared Git source and unsafe fixture targets fail before effects.",
+      "evidence": [
+        "portable suite results"
+      ],
+      "sources": [
+        "tests/test_watchdog_rehearsal.py"
+      ]
+    },
+    {
+      "id": "NATIVE-OFFHOST-OBSERVER",
+      "area": "monitoring",
+      "mode": "appliance",
+      "procedure": "Run tools/local/rehearse_watchdog.py with a matching staged source and artifact on the verified offline pilot.",
+      "expected": "Actual nonroot systemd jobs read root-owned credentials and emit journal alerts over pinned SSH; failed, stale and wrong-pin cases recover; temporary credentials/authorization are removed. Synthetic inventory does not certify app health.",
+      "evidence": [
+        "private journal and job receipts",
+        "cleanup proof"
+      ],
+      "sources": [
+        "tools/local/rehearse_watchdog.py",
+        "deploy/monitoring/systemd/heist-watchdog.service"
+      ]
     }
   ]
 }

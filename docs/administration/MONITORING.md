@@ -192,8 +192,8 @@ For a reviewed archive-host installation, copy the artifact to
 `/usr/local/lib/heist/watchdog.pyz`, adapt `watchdog.example.json` to the source
 host, and install it as root-owned `/etc/heist/watchdog.json` mode0600. Review
 `heist-watchdog.service` and `.timer` separately from the source collector units.
-They use the existing archive account and systemd-loaded identity/known-host
-credentials; no additional Python package or private-key export is needed.
+They use the existing archive account and systemd-loaded identity, known-host and
+configuration credentials; no additional Python package or private-key export is needed.
 The key must already support noninteractive SSH. Inspect a manual service run,
 then enable its timer. Read alerts with `journalctl -u heist-watchdog.service`;
 its receipt is private under `/var/lib/heist-watchdog/status.json`. The observer is

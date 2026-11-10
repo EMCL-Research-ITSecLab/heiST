@@ -29,6 +29,25 @@ historical startup log or replace a live sensor/flow rehearsal.
 
 ## Appliance acceptance matrix
 
+Test the real nonroot observer unit separately, after staging the matching runtime
+with `rehearse_monitoring.py`:
+
+```sh
+sudo python3 tools/local/rehearse_watchdog.py --work /private/pilot \
+  --artifact /private/watchdog.pyz --commit FULL_COMMIT \
+  --output /private/pilot/evidence/observer-run
+```
+
+The observer runs on the monitoring VM as a surrogate off-host collector. It uses
+the actual service template with fixture account/paths, real systemd credentials,
+an in-VM generated key restricted to reading one synthetic source receipt, and a
+pinned source SSH host key. Healthy, failed, stale and incorrect-host-pin cases
+must alternate with successful recovery, unique job invocations and nonroot
+journal entries. The temporary service and observer private key are removed, and
+only its restricted source authorization is removed. This verifies real transport
+and deployment permissions; its **synthetic service inventory** cannot certify
+application/guest health or replace a production-clone upgrade rehearsal.
+
 For a verified offline pilot, run the real component rehearsal from an exact
 source-bound runtime:
 
@@ -42,11 +61,12 @@ It stages code separately under `/opt/heist-monitoring-rehearsal/`, without
 upgrading the installed application. It stops/restores the monitoring VM's node
 exporter and verifies Prometheus detects the outage and recovery. A temporary DMZ
 sensor uses distinct fanout and a unique test rule, injects four documentation-net
-UDP frames at the dummy mirror device, then checks a matching EVE alert and an
+UDP frames through a temporary veth ingress mirror into the IFB/dummy device,
+then checks a matching EVE alert and an
 authenticated certificate-pinned ClickHouse aggregate. The original sensor config
 is never edited; the prior service-active state is restored in `finally`.
 
-The packet injection occurs **after tc**: guest NIC/bridge mirror coverage,
+The packet injection validates **one temporary veth tc mirror**; guest NIC/bridge mirror coverage,
 command logging, PCAP archival and full application upgrade/rollback are not
 certified by this component test. A legacy OVA without Git metadata cannot be
 silently relabelled as a supported upgrade baseline. Use a reconstructed supported

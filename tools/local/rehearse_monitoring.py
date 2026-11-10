@@ -1,7 +1,7 @@
 """Run monitoring component acceptance on the verified offline disposable pilot.
 
 Does not install/upgrade the application or change its Git history. The optional
-canary injects four synthetic UDP frames at the DMZ mirror device, after tc; it
+canary injects four synthetic UDP frames through a temporary veth tc mirror; it
 does not certify challenge-NIC mirror coverage or a full-platform upgrade.
 """
 import argparse
@@ -11,6 +11,7 @@ from pathlib import Path
 import shlex
 import subprocess
 import sys
+import uuid
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -109,6 +110,11 @@ def exporter(action):
     monitor.run(['sudo','-n','systemctl',action,'node_exporter.service'],timeout=20)
 report={'scope':'monitoring components on a legacy fixture; not application upgrade/rollback acceptance',
         'commit':source.parent.name,'production_changed':False,'host':health.local_snapshot('host'),'monitoring_before':snapshot()}
+if not re.fullmatch('[a-f0-9]{32}',settings['evidence_id']):raise ValueError('Invalid evidence identity')
+progress=source.parent/'component-runs'/settings['evidence_id']/'result.json';progress.parent.mkdir(mode=0o700,parents=True)
+def save_report(phase):
+    report['phase']=phase;progress.write_text(json.dumps(report));progress.chmod(0o600)
+save_report('baseline_collected')
 if settings['faults']:
     if state(report['monitoring_before'],'monitoring.service.node_exporter.service')!='ok' or state(report['monitoring_before'],'monitoring.prometheus.targets')!='ok':raise RuntimeError('Fixture exporter and scraping must be healthy before fault injection')
     try:
@@ -120,6 +126,7 @@ if settings['faults']:
             time.sleep(3);down=snapshot()
         if state(down,'monitoring.prometheus.targets')!='failed':raise RuntimeError('Scrape outage was not detected')
         report['exporter_outage']=down
+        save_report('exporter_outage_observed')
     finally:
         exporter('start')
     deadline=time.monotonic()+75
@@ -129,6 +136,7 @@ if settings['faults']:
         if time.monotonic()>deadline:raise RuntimeError('Exporter/scrape recovery was not confirmed')
         time.sleep(3)
     report['exporter_recovered']=recovered
+    save_report('exporter_recovery_observed')
 if settings['canary']:
     nonce=uuid.uuid4().hex;case=source.parent/'canary-cases'/nonce;case.mkdir(mode=0o700,parents=True)
     original=Path('/etc/suricata/suricata-dmz.yaml').read_bytes()
@@ -141,11 +149,11 @@ if settings['canary']:
     config=case/'suricata.yaml';config.write_text(body);config.chmod(0o600)
     rule=case/'canary.rules';rule.write_text('alert udp 192.0.2.1 any -> 192.0.2.2 55555 (msg:"heiST monitoring canary:'+nonce+'"; content:"'+nonce+'"; sid:9900001; rev:1;)\n');rule.chmod(0o600)
     links=json.loads(subprocess.check_output(['ip','-j','-d','link','show','dev','dmz_monitoring']))
-    if len(links)!=1 or links[0].get('linkinfo',{}).get('info_kind')!='dummy':raise RuntimeError('Require the fixture dummy mirror device')
+    if len(links)!=1 or links[0].get('linkinfo',{}).get('info_kind') not in ('dummy','ifb'):raise RuntimeError('Require the fixture IFB/dummy mirror device')
     was_active=subprocess.run(['systemctl','is-active','--quiet','suricata-dmz.service']).returncode==0
     (case/'original-state.json').write_text(json.dumps({'was_active':was_active,'configuration_sha256':hashlib.sha256(original).hexdigest()}))
-    process=None
-    started=datetime.now(timezone.utc)
+    process=None;veth=None
+    started=None
     def candidate_ready():
         try:
             with Path('/var/log/suricata/eve_dmz.json').open('rb') as events:
@@ -163,12 +171,23 @@ if settings['canary']:
     try:
         subprocess.run(['systemctl','stop','suricata-dmz.service'],check=True,capture_output=True,timeout=30)
         with (case/'sensor.log').open('wb') as log:
+            # A service stop emits final stats. They must not mark the new
+            # candidate ready before it has opened its packet sockets.
+            started=datetime.now(timezone.utc)
             process=subprocess.Popen(['/usr/bin/suricata','-c',str(config),'-i','dmz_monitoring','--pidfile',str(case/'sensor.pid'),'-s',str(rule)],stdout=log,stderr=log)
             deadline=time.monotonic()+60
             while not candidate_ready():
                 if process.poll() is not None or time.monotonic()>deadline:raise RuntimeError('Candidate DMZ sensor did not become ready')
                 time.sleep(2)
             payload=nonce.encode();port=49152+(int(nonce[:4],16)%10000)
+            candidate='hm'+nonce[:6]+'a';peer='hm'+nonce[:6]+'b'
+            subprocess.run(['ip','link','add',candidate,'type','veth','peer','name',peer],check=True,capture_output=True)
+            veth=candidate  # Cleanup owns the interface only after successful creation.
+            for name,mac in [(veth,'02:00:00:00:00:01'),(peer,'02:00:00:00:00:02')]:
+                subprocess.run(['ip','link','set','dev',name,'address',mac,'up'],check=True,capture_output=True)
+            subprocess.run(['tc','qdisc','add','dev',peer,'clsact'],check=True,capture_output=True)
+            # Mirror before dropping the original; no IP address or route is added.
+            subprocess.run(['tc','filter','add','dev',peer,'ingress','protocol','ip','matchall','action','mirred','egress','mirror','dev','dmz_monitoring','action','drop'],check=True,capture_output=True)
             def checksum(data):
                 if len(data)%2:data+=b'\0'
                 total=sum(struct.unpack('!'+str(len(data)//2)+'H',data));total=(total&65535)+(total>>16);total=(total&65535)+(total>>16)
@@ -177,7 +196,7 @@ if settings['canary']:
             ip=ip[:10]+struct.pack('!H',checksum(ip))+ip[12:]
             frame=bytes.fromhex('0200000000020200000000010800')+ip+struct.pack('!HHHH',port,55555,8+len(payload),0)+payload
             with socket.socket(socket.AF_PACKET,socket.SOCK_RAW,socket.htons(3)) as sender:
-                sender.bind(('dmz_monitoring',0))
+                sender.bind((veth,0))
                 for _ in range(4):sender.send(frame)
             deadline=time.monotonic()+30;seen=False
             while time.monotonic()<deadline:
@@ -190,7 +209,13 @@ if settings['canary']:
                 if seen:break
                 time.sleep(1)
             if not seen:raise RuntimeError('Synthetic mirror-device alert was not observed')
-            credentials=tomllib.loads(Path('/etc/vector/vector-dmz.toml').read_text())['sinks']['clickhouse']['auth']
+            report['canary']={'nonce':nonce,'frames_sent':4,'eve_alert_seen':True,'clickhouse_rows':None,
+                'injection_point':'temporary veth ingress tc mirror into DMZ virtual device','guest_nic_mirroring_verified':False}
+            save_report('canary_eve_observed')
+            vector_command=subprocess.check_output(['systemctl','show','vector-dmz.service','--property=ExecStart','--value'],text=True)
+            match=re.search(r'(?:--config|-c)\s+(/[A-Za-z0-9_./-]+)',vector_command)
+            if not match:raise RuntimeError('Fixture Vector configuration path was not confirmed')
+            credentials=tomllib.loads(Path(match[1]).read_text())['sinks']['clickhouse']['auth']
             deadline=time.monotonic()+90
             while True:
                 result=json.loads(remote(settings['query'],{'nonce':nonce,'user':credentials['user'],'password':credentials['password']},timeout=15))
@@ -198,8 +223,10 @@ if settings['canary']:
                 if time.monotonic()>deadline:raise RuntimeError('Synthetic alert did not reach ClickHouse')
                 time.sleep(3)
             report['canary']={'nonce':nonce,'frames_sent':4,'eve_alert_seen':seen,'clickhouse_rows':result['received'],'tls_leaf_verified':result['tls_leaf_verified'],
-                'injection_point':'DMZ dummy mirror device, after tc','guest_nic_mirroring_verified':False,'original_configuration_changed':False}
+                'injection_point':'temporary veth ingress tc mirror into DMZ virtual device','guest_nic_mirroring_verified':False,'original_configuration_changed':False}
+            save_report('canary_delivered')
     finally:
+        if veth is not None:subprocess.run(['ip','link','delete',veth],capture_output=True,timeout=10)
         if process is not None:
             process.terminate()
             try:process.wait(timeout=30)
@@ -207,6 +234,7 @@ if settings['canary']:
         if was_active:subprocess.run(['systemctl','start','suricata-dmz.service'],check=True,capture_output=True,timeout=30)
         if Path('/etc/suricata/suricata-dmz.yaml').read_bytes()!=original:raise RuntimeError('Original sensor configuration changed')
 report['monitoring_after']=snapshot()
+save_report('complete')
 print(json.dumps(report))
 '''
 
@@ -233,14 +261,18 @@ def main(argv=None):
     receipt = json.loads(staged.stdout)
     (output/'stage.json').write_text(json.dumps(receipt,indent=2)+'\n')
     (output/'stage.json').chmod(0o600)
-    settings = {'source':receipt['source'],'faults':args.faults,'canary':args.canary,'query':QUERY}
+    settings = {'source':receipt['source'],'faults':args.faults,'canary':args.canary,'query':QUERY,'evidence_id':uuid.uuid4().hex}
     command = shlex.join(['/root/heiST/.venv/bin/python','-c',RUN])
     with (output/'private-stderr.log').open('wb') as errors:
         import os
         os.fchmod(errors.fileno(),0o600)
         result = subprocess.run(ssh_args(work)+[command],input=json.dumps(settings).encode(),stdout=subprocess.PIPE,stderr=errors,timeout=360)
     if result.returncode:
-        (output/'result.json').write_text(json.dumps({'passed':False,'commit':args.commit,'returncode':result.returncode,'production_changed':False})+'\n')
+        path=Path(receipt['source']).parent/'component-runs'/settings['evidence_id']/'result.json'
+        program='import sys;from pathlib import Path;sys.stdout.buffer.write(Path('+repr(str(path))+').read_bytes()[:262145])'
+        fetched=subprocess.run(ssh_args(work)+[shlex.join(['python3','-c',program])],capture_output=True,timeout=20)
+        partial=json.loads(fetched.stdout) if fetched.returncode==0 and len(fetched.stdout)<=262144 else {}
+        (output/'result.json').write_text(json.dumps({**partial,'passed':False,'commit':args.commit,'returncode':result.returncode,'production_changed':False})+'\n')
         (output/'result.json').chmod(0o600)
         raise RuntimeError('Fixture monitoring rehearsal failed; inspect its private evidence directory')
     value = json.loads(result.stdout)

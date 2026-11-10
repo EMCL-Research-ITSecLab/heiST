@@ -27,6 +27,16 @@ storage VM whose large data volume is also its root filesystem, a reviewed bind
 mount can supply this mount guard; it does not create an independent disk. Reserve
 root capacity explicitly. Never format an existing filesystem to set this up.
 
+On the source, `heist-log-prepare.service` checks the Suricata logrotate policy
+hourly using the shared state lock, then prepares closed rotations for transfer.
+Use `daily` with `maxsize`, rather than `size` overriding daily rotation. Retain
+`delaycompress` for normal logrotate; the helper separately compresses only
+aged files with no open descriptors, confirms a full decompression SHA256 match,
+and checks source identity again before replacing the original with gzip. It
+budgets for incompressible output plus an 8-GiB reserve and processes smaller
+files first. Active files and insufficient-space cases are left alone. Install
+the helper and its service/timer on Proxmox, not on the storage VM.
+
 Run log archiving on the dedicated archive VM. The application/source machines
 rotate and close logs; the archive VM pulls only closed `.gz` files over SSH.
 Source removal is off by default. Each source has a separate service, timer,

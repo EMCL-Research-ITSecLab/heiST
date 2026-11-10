@@ -1,0 +1,10 @@
+[Unit]
+Description=Prepare closed heiST logs hourly
+
+[Timer]
+OnCalendar=hourly
+Persistent=yes
+RandomizedDelaySec=30s
+
+[Install]
+WantedBy=timers.target

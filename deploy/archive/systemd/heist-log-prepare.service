@@ -1,0 +1,16 @@
+[Unit]
+Description=Prepare closed heiST log rotations for verified archiving
+
+[Service]
+Type=oneshot
+User=root
+UMask=0077
+ExecStartPre=/usr/sbin/logrotate --wait-for-state-lock /etc/logrotate.d/suricata
+ExecStart=/usr/bin/python3 /usr/local/lib/heist/prepare_logs.py
+TimeoutStartSec=1h
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/log/suricata /var/lib/logrotate
+

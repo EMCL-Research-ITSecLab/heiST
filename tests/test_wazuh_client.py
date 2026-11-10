@@ -38,7 +38,7 @@ class WazuhTests(unittest.TestCase):
         self.session.close.assert_called_once()
 
     def test_exact_agent_is_removed_and_partial_failure_cannot_free_its_identity(self):
-        inventory = [{'id': '042', 'name': 'agent_123'}]
+        inventory = [{'id': '042', 'name': 'Agent_123'}]
         self.session.request.side_effect = [response('a.b.c', raw=True), response(result(inventory)), response(result(['042']))]
         self.assertTrue(self.client.remove_agent(123))
         self.assertEqual(self.session.request.call_args.kwargs['params']['agents_list'], '042')
@@ -47,7 +47,7 @@ class WazuhTests(unittest.TestCase):
             self.client.remove_agent(123)
 
     def test_wrong_identity_manager_id_invalid_inventory_and_authentication_are_rejected(self):
-        for inventory in (None, [{'id': '000', 'name': 'agent_123'}], [{'id': '042', 'name': 'another-agent'}], [{'id': '042', 'name': 'agent_123'}, {'id': '043', 'name': 'agent_123'}]):
+        for inventory in (None, [{'id': '000', 'name': 'Agent_123'}], [{'id': '042', 'name': 'another-agent'}], [{'id': '042', 'name': 'agent_123'}], [{'id': '042', 'name': 'Agent_123'}, {'id': '043', 'name': 'Agent_123'}]):
             self.session.reset_mock()
             self.session.request.side_effect = [response('a.b.c', raw=True), response(result(inventory))]
             with self.subTest(inventory=inventory), self.assertRaises(RuntimeError):
@@ -56,6 +56,22 @@ class WazuhTests(unittest.TestCase):
         self.session.request.side_effect = [response('invalid token\nheader', raw=True)]
         with self.assertRaises(RuntimeError):
             self.client.remove_agent(123)
+
+    def test_cleanup_uses_the_name_registered_by_provisioning(self):
+        from pathlib import Path
+        import ast
+        source = Path(__file__).resolve().parents[1]/'heist/platform/challenges/warmup.py'
+        assignments = [node.value for node in ast.walk(ast.parse(source.read_text()))
+                       if isinstance(node, ast.Assign)
+                       and any(isinstance(target, ast.Name) and target.id == 'agent_name'
+                               for target in node.targets)]
+        self.assertEqual(len(assignments), 2)
+        for value in assignments:
+            self.assertIsInstance(value, ast.JoinedStr)
+            self.assertEqual(value.values[0].value, 'Agent_')
+        self.session.request.side_effect = [response('a.b.c', raw=True), response(result([]))]
+        self.assertTrue(self.client.remove_agent(123))
+        self.assertEqual(self.session.request.call_args.kwargs['params'], {'name': 'Agent_123'})
 
     def test_transport_error_redirect_and_malformed_json_are_closed_without_private_error(self):
         for reply in (response('ignored', raw=True, status=307), response('not-json', raw=True)):

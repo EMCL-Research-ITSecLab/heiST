@@ -62,7 +62,7 @@ class Wazuh:
         if re.fullmatch(r'[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+', token) is None:
             raise RuntimeError('Monitoring API authentication was not confirmed')
         headers = {'Authorization': 'Bearer '+token}
-        name = 'agent_'+str(machine_id)
+        name = 'Agent_'+str(machine_id)
         result = self.call('GET', '/agents', headers=headers, params={'name': name})
         agents = result.get('affected_items')
         if not isinstance(agents, list) or result.get('total_failed_items', 0) != 0:

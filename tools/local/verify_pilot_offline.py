@@ -7,7 +7,9 @@ import os
 from pathlib import Path
 import subprocess
 
-from nested_pilot import management_network, pilot_configuration, qmp, ssh_args
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from tools.local.nested_pilot import management_network, pilot_configuration, qmp, ssh_args
 
 
 def validate_command(arguments, work):

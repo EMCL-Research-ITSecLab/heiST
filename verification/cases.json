@@ -2200,6 +2200,34 @@
       "sources": [
         "tests/test_suricata_fanout.py"
       ]
+    },
+    {
+      "id": "UNIT-MONITORING-REHEARSAL",
+      "area": "monitoring_fixture",
+      "mode": "automated",
+      "procedure": "Run tests/test_monitoring_rehearsal.py through tools/check.py.",
+      "expected": "Non-fixture transport and malformed canaries fail before filesystem effects or queries.",
+      "evidence": [
+        "portable suite results"
+      ],
+      "sources": [
+        "tests/test_monitoring_rehearsal.py"
+      ]
+    },
+    {
+      "id": "NATIVE-MONITORING-COMPONENTS",
+      "area": "monitoring",
+      "mode": "appliance",
+      "procedure": "Run tools/local/rehearse_monitoring.py on the verified restricted pilot with --faults --canary and an exact-source runtime.",
+      "expected": "Exporter outage/recovery is observed by Prometheus; synthetic mirror-device alert reaches EVE and ClickHouse; original configuration and active-state are restored. Does not certify tc coverage or application upgrade.",
+      "evidence": [
+        "private stage and result receipts",
+        "fixture boot/isolation proof"
+      ],
+      "sources": [
+        "tools/local/rehearse_monitoring.py",
+        "docs/testing/MONITORING.md"
+      ]
     }
   ]
 }

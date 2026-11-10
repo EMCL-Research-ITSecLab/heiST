@@ -231,9 +231,11 @@ def start(work, online=False):
 
 
 def ssh_args(work):
-    ports = management_ports(pilot_configuration(work))
+    config = pilot_configuration(work)
+    ports = management_ports(config)
+    trust = 'yes' if config.get('attach_seed') is False else 'accept-new'
     return ['ssh', '-p', str(ports['ssh']), '-i', str(work / 'id_ed25519'),
-            '-o', 'IdentitiesOnly=yes', '-o', 'StrictHostKeyChecking=accept-new',
+            '-o', 'IdentitiesOnly=yes', '-o', 'ForwardAgent=no', '-o', 'StrictHostKeyChecking='+trust,
             '-o', f'UserKnownHostsFile={work}/known_hosts', '-o', 'ConnectTimeout=10',
             'root@127.0.0.1']
 

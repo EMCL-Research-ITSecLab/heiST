@@ -29,6 +29,30 @@ historical startup log or replace a live sensor/flow rehearsal.
 
 ## Appliance acceptance matrix
 
+For a verified offline pilot, run the real component rehearsal from an exact
+source-bound runtime:
+
+```sh
+sudo python3 tools/local/rehearse_monitoring.py --work /private/pilot \
+  --runtime-bundle /private/runtime.tar.gz --commit FULL_COMMIT \
+  --output /private/pilot/evidence/monitoring-run --faults --canary
+```
+
+It stages code separately under `/opt/heist-monitoring-rehearsal/`, without
+upgrading the installed application. It stops/restores the monitoring VM's node
+exporter and verifies Prometheus detects the outage and recovery. A temporary DMZ
+sensor uses distinct fanout and a unique test rule, injects four documentation-net
+UDP frames at the dummy mirror device, then checks a matching EVE alert and an
+authenticated certificate-pinned ClickHouse aggregate. The original sensor config
+is never edited; the prior service-active state is restored in `finally`.
+
+The packet injection occurs **after tc**: guest NIC/bridge mirror coverage,
+command logging, PCAP archival and full application upgrade/rollback are not
+certified by this component test. A legacy OVA without Git metadata cannot be
+silently relabelled as a supported upgrade baseline. Use a reconstructed supported
+production clone for that separate acceptance. Evidence and diagnostic failures
+stay in a new private directory; credentials and packet bodies are not exported.
+
 | Path | Required positive evidence | Failure and recovery cases |
 |---|---|---|
 | Collector and browser | Every configured role appears; collection and rendered states agree; no secrets or student events in response/export | Kill collector, malformed receipt, future clock, timeout, unknown SSH key, missing role; stale banner appears; recovery requires a new valid receipt |

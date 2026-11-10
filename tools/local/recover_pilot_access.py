@@ -75,10 +75,15 @@ def authorize(connection, password, public_key):
             raise RuntimeError('Disposable console authentication failed; no retry was attempted')
     key = shlex.quote(public_key)
     command = ("test -f /root/pilot-cloud-init-ready && test \"$(hostname)\" = heist-pilot "
-               "&& test ! -L /root/.ssh && test ! -L /root/.ssh/authorized_keys "
-               "&& install -d -m 0700 /root/.ssh && umask 077 && touch /root/.ssh/authorized_keys "
+               "&& test ! -L /root/.ssh "
+               "&& { test ! -L /root/.ssh/authorized_keys || { "
+               "test \"$(readlink -f /root/.ssh/authorized_keys)\" = /etc/pve/priv/authorized_keys "
+               "&& test \"$(stat -c %a /etc/pve/priv/authorized_keys)\" = 600; }; } "
+               "&& install -d -m 0700 /root/.ssh && umask 077 "
+               "&& { test -e /root/.ssh/authorized_keys || : > /root/.ssh/authorized_keys; } "
                "&& { grep -qxF -- "+key+" /root/.ssh/authorized_keys || printf '%s\\n' "+key+" >> /root/.ssh/authorized_keys; } "
-               "&& chmod 0600 /root/.ssh/authorized_keys && printf '\\nHEIST-ACCESS-%s\\n' RECOVERED\n")
+               "&& { test -L /root/.ssh/authorized_keys || chmod 0600 /root/.ssh/authorized_keys; } "
+               "&& printf '\\nHEIST-ACCESS-%s\\n' RECOVERED\n")
     connection.sendall(command.encode())
     # The full success marker is not present verbatim in the echoed command.
     receive(connection, (b'HEIST-ACCESS-RECOVERED\r\n', b'HEIST-ACCESS-RECOVERED\n'))

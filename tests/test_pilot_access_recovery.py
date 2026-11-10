@@ -2,14 +2,45 @@
 import json
 from pathlib import Path
 import tempfile
+import subprocess
 import unittest
 from unittest.mock import Mock
 
-from tools.local.nested_pilot import management_network
+from tools.local.nested_pilot import management_network, ssh_args
 from tools.local.recover_pilot_access import authorize, receive, validate
 
 
 class PilotAccessTests(unittest.TestCase):
+    def test_cold_import_requires_the_existing_host_pin(self):
+        with tempfile.TemporaryDirectory() as directory:
+            work=Path(directory)
+            (work/'pilot.json').write_text(json.dumps({'attach_seed':False}))
+            self.assertIn('StrictHostKeyChecking=yes',ssh_args(work))
+            self.assertIn('ForwardAgent=no',ssh_args(work))
+            (work/'pilot.json').write_text(json.dumps({'attach_seed':True}))
+            self.assertIn('StrictHostKeyChecking=accept-new',ssh_args(work))
+
+    def test_only_the_canonical_proxmox_managed_key_symlink_can_be_appended(self):
+        connection=Mock();connection.recv.side_effect=[b'root@heist-pilot:~#',b'HEIST-ACCESS-RECOVERED\r\n']
+        key='ssh-ed25519 '+'A'*68+' fixture'
+        authorize(connection,'fixture-password',key)
+        command=connection.sendall.call_args.args[0].decode()
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);ssh=root/'ssh';ssh.mkdir()
+            marker=root/'pilot-marker';marker.touch()
+            managed=root/'managed-keys';managed.write_text('old-key\n');managed.chmod(0o600)
+            foreign=root/'foreign-keys';foreign.write_text('do-not-change\n');foreign.chmod(0o600)
+            script=command.replace('/root/pilot-cloud-init-ready',str(marker)).replace('/root/.ssh',str(ssh))
+            script=script.replace('/etc/pve/priv/authorized_keys',str(managed)).replace('test "$(hostname)" = heist-pilot','true')
+            target=ssh/'authorized_keys';target.symlink_to(managed)
+            result=subprocess.run(['sh','-c',script],capture_output=True,text=True,timeout=5)
+            self.assertEqual(result.returncode,0,result.stderr)
+            self.assertEqual(managed.read_text(),'old-key\n'+key+'\n')
+            target.unlink();target.symlink_to(foreign)
+            result=subprocess.run(['sh','-c',script],capture_output=True,text=True,timeout=5)
+            self.assertNotEqual(result.returncode,0)
+            self.assertEqual(foreign.read_text(),'do-not-change\n')
+
     def test_password_is_sent_only_after_login_and_never_embedded_in_the_shell_command(self):
         connection=Mock()
         connection.recv.side_effect=[b'heist-pilot login:',b'Password:',b'root@heist-pilot:~#',b'HEIST-ACCESS-RECOVERED\r\n']

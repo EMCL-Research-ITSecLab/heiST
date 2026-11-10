@@ -60,6 +60,9 @@ sudo python3 tools/local/recover_pilot_access.py --work /absolute/private/copy \
 The helper first verifies the actual QEMU PID, copied disk, serial socket and
 restricted loopback network arguments, then permits one console login attempt.
 It checks the guest's pilot marker and hostname before appending the public key.
+The canonical `/etc/pve/priv/authorized_keys` symlink is supported with its
+Proxmox-managed mode0600; unrelated key-file symlinks are rejected and the managed
+link is never replaced.
 It never prints the password or private key and writes a private recovery receipt.
 Verify SSH using the original pinned server key afterwards. This modifies the
 disposable guest and is fixture instrumentation, not acceptance of an unmodified

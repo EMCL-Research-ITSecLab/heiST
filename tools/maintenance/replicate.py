@@ -60,6 +60,10 @@ def archive(ssh, remote_directory, destination, *, remove_remote=False, minimum_
                         raise RuntimeError('Downloaded archive checksum differs')
                     with open(temporary, 'rb') as stream:
                         os.fsync(stream.fileno())
+                    current = sftp.lstat(remote)
+                    if (not S_ISREG(current.st_mode) or
+                            (current.st_size, current.st_mtime) != (entry.st_size, entry.st_mtime)):
+                        raise RuntimeError('Remote archive changed; incomplete local copy not published')
                     os.replace(temporary, target)
                     totals['copied'] += 1
                     directory = os.open(destination, os.O_RDONLY | os.O_DIRECTORY)

@@ -114,6 +114,7 @@ class ArchiveServiceTests(unittest.TestCase):
             with tempfile.TemporaryDirectory() as directory, patch('tools.maintenance.replicate.remote_digest', return_value=hashlib.sha256(b'closed gzip archive').hexdigest()):
                 with self.assertRaises(RuntimeError):
                     archive(ssh, '/logs', directory, remove_remote=True)
+                self.assertFalse((Path(directory)/'closed.log.gz').exists())
             sftp.remove.assert_not_called()
 
     def test_successful_service_run_records_verified_counts_and_timestamp(self):

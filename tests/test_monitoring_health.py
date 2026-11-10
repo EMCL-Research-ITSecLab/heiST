@@ -8,8 +8,9 @@ import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
-from heist.monitoring.health import (capture_configuration, containers, dashboards, eve_health,
-                                    publish, receipt, remote_checks, resources, sanitize, sensor_interfaces, services)
+from heist.monitoring.health import (capture_configuration, containers, dashboards, database_backup, eve_health,
+                                    prometheus_targets, proxmox_storage, publish, receipt, remote_checks,
+                                    resources, sanitize, sensor_interfaces, services)
 
 
 NOW = datetime(2026, 11, 10, 12, tzinfo=timezone.utc)
@@ -21,6 +22,47 @@ def snapshot(state='ok', **extra):
 
 
 class HealthTests(unittest.TestCase):
+    def test_old_or_incomplete_source_backup_is_not_hidden_by_successful_archive_jobs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);generation=root/'20261110T120000Z-backup-aaaaaaaaaaaa';generation.mkdir()
+            (generation/'database.backup').write_bytes(b'PGDMPfixture')
+            value={'schema':1,'created_at':NOW.isoformat(),'bytes':12,'sha256':'a'*64,'secret':'private'}
+            (generation/'metadata.json').write_text(json.dumps(value))
+            (root/'latest.backup').symlink_to(generation.name+'/database.backup')
+            status=database_backup(root=root,now=NOW)
+            self.assertEqual(status['state'],'ok');self.assertNotIn('private',json.dumps(status))
+            self.assertEqual(database_backup(root=root,now=NOW+timedelta(minutes=31))['state'],'failed')
+            (generation/'database.backup').write_bytes(b'incomplete')
+            self.assertEqual(database_backup(root=root,now=NOW)['state'],'failed')
+            (root/'latest.backup').unlink();(root/'latest.backup').symlink_to('/etc/passwd')
+            self.assertEqual(database_backup(root=root,now=NOW)['state'],'failed')
+
+    def test_prometheus_requires_every_expected_job_and_fresh_successful_scrapes(self):
+        jobs=['monitoring-vm','proxmox-node','proxmox-pve','apache','webserver-node','database-node','postgres']
+        targets=[{'labels':{'job':job},'health':'up','lastScrape':NOW.isoformat(),'scrapeUrl':'private'} for job in jobs]
+        client=Mock();response=client.getresponse.return_value;response.status=200
+        response.read.return_value=json.dumps({'status':'success','data':{'activeTargets':targets}}).encode()
+        self.assertEqual(prometheus_targets(connection=client,now=NOW)['state'],'ok')
+        self.assertEqual(client.request.call_args.args,('GET','/api/v1/targets?state=active'))
+        self.assertEqual(prometheus_targets(connection=client,now=NOW+timedelta(minutes=4))['state'],'failed')
+        targets.pop();response.read.return_value=json.dumps({'status':'success','data':{'activeTargets':targets}}).encode()
+        value=prometheus_targets(connection=client,now=NOW)
+        self.assertEqual(value['state'],'failed');self.assertNotIn('private',json.dumps(value))
+        response.status=302
+        self.assertEqual(prometheus_targets(connection=client,now=NOW)['state'],'failed')
+
+    def test_proxmox_capacity_detects_full_and_inactive_stores_without_exposing_paths(self):
+        run=Mock()
+        for store,state in [({'enabled':1,'active':1,'used':90,'total':100},'warning'),
+                            ({'enabled':1,'active':1,'used':99,'total':100},'failed'),
+                            ({'enabled':1,'active':0},'failed')]:
+            run.return_value=subprocess.CompletedProcess([],0,json.dumps([dict(store,path='private')]))
+            value=proxmox_storage(run=run,node='pilot')
+            self.assertEqual(value['state'],state);self.assertNotIn('private',json.dumps(value))
+        run.return_value=subprocess.CompletedProcess([],0,'[]')
+        self.assertEqual(proxmox_storage(run=run,node='pilot')['state'],'unknown')
+        self.assertEqual(run.call_args.args[0],['pvesh','get','/nodes/pilot/storage','--output-format','json'])
+
     def test_resource_pressure_is_visible_and_missing_counters_remain_unknown(self):
         from types import SimpleNamespace
         with tempfile.TemporaryDirectory() as directory:

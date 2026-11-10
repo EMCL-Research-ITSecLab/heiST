@@ -10,13 +10,26 @@ This is the initial health inventory, not certification of complete telemetry.
 
 | Role | Checks implemented |
 |---|---|
-| Proxmox host | Backend, pool manager, startup cleanup, PVE daemons, backend DNS, OpenVPN, all three Suricata sensors, four Vector shippers, Zeek, expiry and log-preparation timers and last job results |
+| Proxmox host | Backend, pool manager, startup cleanup, PVE daemons, backend DNS, OpenVPN, all three Suricata sensors, four Vector shippers, Zeek, node/PVE exporters, Proxmox-reported storage capacity, source database-backup freshness, expiry/log-preparation timers and last job results |
 | Host capture | Recent EVE statistics, AF_PACKET packet/drop counters, NFQUEUE heartbeat, distinct VPN/DMZ fanout groups, configured capture interfaces present and administratively up |
-| Monitoring VM | Grafana, ClickHouse, Docker, the three Wazuh Compose containers, nonempty Grafana dashboard inventory |
-| Web VM | Flask/Gunicorn unit and Apache |
-| Database VM | PostgreSQL unit and local connection readiness; the operations API separately executes an application database query |
+| Monitoring VM | Grafana, ClickHouse, Docker, Prometheus, node exporter, enrollment banner, three Wazuh containers, Grafana dashboard inventory and seven expected fresh Prometheus scrape jobs |
+| Web VM | Flask/Gunicorn, artifact worker, Apache, node and Apache exporters |
+| Database VM | PostgreSQL, node/PostgreSQL exporters and local connection readiness; the operations API separately executes an application database query |
 | Archive VM | Database and log collection timers and their last job results; verified-file delivery is reported by the existing archive receipt |
 | All roles | Root filesystem capacity/inodes, available memory, CPU-normalized system load and clock synchronization |
+
+Prometheus is queried only on the monitoring VM's loopback port 9090, over the
+existing pinned SSH transport. Redirects are rejected; target URLs and labels
+are excluded from diagnostics. Every expected job must have fresh successful
+scrapes. Proxmox capacity checks use its local read-only storage API through
+`pvesh`; inactive enabled stores and data utilization at or above 95 percent fail.
+Thin-pool metadata utilization still requires separate validation.
+
+The source's published `latest.backup` must point to a complete PostgreSQL custom
+archive with matching metadata size and an aware timestamp less than 30 minutes
+old. This matches the current 15-minute backup schedule. An archive timer's recent
+successful empty run cannot hide a stopped database-backup job. The freshness
+probe does not replace the archiver's SHA256 verification or an independent restore.
 
 The fixed service inventory follows the current deployment layout. Review unit
 names, Wazuh Compose names and paths when changing provisioning. An unknown or

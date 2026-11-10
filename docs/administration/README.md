@@ -148,6 +148,11 @@ results, network prefixes, DMZ/student-access settings, machine/network connecti
 addresses, MACs and the latest recorded operation. Unavailable VM status is shown
 explicitly. The browser receives no raw shell output or private failure reports.
 
+Inspection also shows cached Wazuh agent state/last keepalive for this instance's
+VM IDs and the shared platform sensors. Stale evidence stays unknown; stopped
+guests are distinguished from running guests with missing/disconnected agents.
+These summaries do not certify command delivery or per-instance packet coverage.
+
 | Action | Effect |
 |---|---|
 | Release | Disconnect the exact student assignment and expire its instance for cleanup |

@@ -47,8 +47,10 @@ retention and alert deadlines before production activation. A surviving timer or
 an HTTP200 response is insufficient evidence.
 
 The collector implements service inventory, root storage/inodes, available memory,
-CPU-normalized load, clock synchronization, sensor heartbeat/configuration and
-receipt contracts. Authenticated probes check Wazuh agent metadata, Grafana health
+CPU-normalized load, clock synchronization, sensor heartbeat/configuration,
+Proxmox-reported storage, source-backup freshness and receipt contracts. The seven
+expected Prometheus jobs must report fresh successful scrapes. Authenticated
+probes check Wazuh agent metadata, Grafana health
 and expected dashboards, and fresh ClickHouse sensor statistics. Administrator
 instance inspection projects only its current VM IDs. Rollout stages/checkpoints
 collector configuration and units. The independent observer reports to the systemd

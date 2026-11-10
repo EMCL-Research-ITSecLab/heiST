@@ -12,6 +12,7 @@ import sqlite3
 import shutil
 import subprocess
 import tempfile
+import socket
 
 
 ROLE_UNITS = {
@@ -21,10 +22,11 @@ ROLE_UNITS = {
              'suricata-vpn.service', 'suricata-dmz.service', 'suricata-backend.service',
              'vector-vpn.service', 'vector-dmz.service', 'vector-backend.service', 'vector-zeek.service',
              'zeek.service', 'heist-expiry.timer', 'heist-log-prepare.timer',
-             'heist-expiry.service', 'heist-log-prepare.service'),
-    'monitoring': ('grafana-server.service', 'clickhouse-server.service', 'docker.service'),
-    'web': ('heist-web.service', 'apache2.service'),
-    'database': ('postgresql.service',),
+             'heist-expiry.service', 'heist-log-prepare.service', 'node_exporter.service', 'prometheus-pve-exporter.service'),
+    'monitoring': ('grafana-server.service', 'clickhouse-server.service', 'docker.service',
+                   'prometheus.service', 'node_exporter.service', 'banner-server.service'),
+    'web': ('heist-web.service', 'apache2.service', 'heist-artifacts.service', 'node_exporter.service', 'apache_exporter.service'),
+    'database': ('postgresql.service', 'node_exporter.service', 'postgres_exporter.service'),
     'archive': ('heist-log-archive@database.timer', 'heist-log-archive@proxmox-logs.timer',
                 'heist-log-archive@database.service', 'heist-log-archive@proxmox-logs.service'),
 }
@@ -215,6 +217,99 @@ def resources(role, *, proc=Path('/proc'), statvfs=os.statvfs, load=os.getloadav
     return checks
 
 
+def prometheus_targets(*, connection=None, now=None):
+    """Loopback-only query on the monitoring VM; no TLS bypass or remote URLs."""
+    from http.client import HTTPConnection, HTTPException
+    now = now or datetime.now(timezone.utc)
+    expected = {'monitoring-vm', 'proxmox-node', 'proxmox-pve', 'apache', 'webserver-node', 'database-node', 'postgres'}
+    client = connection or HTTPConnection('127.0.0.1', 9090, timeout=3)
+    try:
+        client.request('GET', '/api/v1/targets?state=active')
+        response = client.getresponse()
+        body = response.read(LIMIT+1)
+        if response.status != 200 or len(body) > LIMIT:
+            raise ValueError('Prometheus query not confirmed')
+        value = json.loads(body)
+        targets = value['data']['activeTargets']
+        if value.get('status') != 'success' or not isinstance(targets, list) or len(targets) > 64:
+            raise ValueError('Invalid target inventory')
+        jobs, failed = set(), 0
+        for target in targets:
+            jobs.add(target['labels']['job'])
+            at = datetime.fromisoformat(target['lastScrape'])
+            if target['health'] != 'up' or at.tzinfo is None or not -30 <= (now-at).total_seconds() <= 180:
+                failed += 1
+        missing = len(expected-jobs)
+        state = 'failed' if failed or missing else 'ok'
+        summary = f'{len(targets)} active targets; {failed} down/stale; {missing} expected jobs missing. This validates scraping, not every metric or alert rule.'
+    except (OSError, HTTPException, ValueError, KeyError, TypeError, AttributeError):
+        state, summary = 'failed', 'Prometheus loopback target inventory could not be verified'
+    finally:
+        client.close()
+    return check('monitoring.prometheus.targets', 'Prometheus metric delivery', state, summary)
+
+
+def proxmox_storage(*, run=subprocess.run, node=None):
+    node = node or socket.gethostname().split('.')[0]
+    result = command(['pvesh', 'get', '/nodes/'+node+'/storage', '--output-format', 'json'], run=run)
+    try:
+        if result is None or len(result.stdout) > LIMIT:
+            raise ValueError('Storage inventory unavailable')
+        stores = json.loads(result.stdout)
+        if not isinstance(stores, list) or not 1 <= len(stores) <= 64:
+            raise ValueError('Invalid storage inventory')
+        stores = [store for store in stores if store.get('enabled', 1)]
+        if not stores:
+            raise ValueError('No enabled stores')
+        inactive, maximum = 0, 0
+        for store in stores:
+            if store.get('active') != 1:
+                inactive += 1
+                continue
+            used, total = store['used'], store['total']
+            if type(used) is not int or type(total) is not int or used < 0 or total <= 0:
+                raise ValueError('Invalid storage counters')
+            maximum = max(maximum, used/total*100)
+        state = 'failed' if inactive or maximum >= 95 else 'warning' if maximum >= 85 else 'ok'
+        summary = f'{len(stores)} enabled stores; {inactive} inactive; highest reported data usage {maximum:.1f}%. Thin-pool metadata requires separate validation.'
+    except (ValueError, KeyError, TypeError, AttributeError):
+        state, summary = 'unknown', 'Proxmox storage capacity could not be verified'
+    return check('host.proxmox.storage', 'Proxmox storage capacity', state, summary)
+
+
+def database_backup(*, root=Path('/var/backups/heist/database'), now=None):
+    """A successful empty archive run cannot hide a stopped source backup job."""
+    import re
+    now = now or datetime.now(timezone.utc)
+    try:
+        target = (root/'latest.backup').readlink()
+        if (target.is_absolute() or len(target.parts) != 2 or target.name != 'database.backup'
+                or not re.fullmatch(r'\d{8}T\d{6}Z-[A-Za-z0-9_-]{1,32}-[a-f0-9]{12}', target.parts[0])):
+            raise ValueError('Invalid published generation')
+        generation, dump = root/target.parts[0], root/target
+        metadata = generation/'metadata.json'
+        if generation.is_symlink() or dump.is_symlink() or metadata.is_symlink():
+            raise ValueError('Unexpected backup symlink')
+        with metadata.open('rb') as stream:
+            body = stream.read(LIMIT+1)
+        if len(body) > LIMIT:
+            raise ValueError('Oversized backup metadata')
+        value = json.loads(body)
+        if (value.get('schema') != 1 or type(value.get('bytes')) is not int or value['bytes'] < 5
+                or dump.stat().st_size != value['bytes'] or not re.fullmatch('[a-f0-9]{64}', value.get('sha256', ''))):
+            raise ValueError('Incomplete backup generation')
+        at = datetime.fromisoformat(value['created_at'])
+        if at.tzinfo is None or not -30 <= (now-at).total_seconds() <= 1800:
+            raise ValueError('Source backup is stale')
+        with dump.open('rb') as stream:
+            if stream.read(5) != b'PGDMP':
+                raise ValueError('Not a PostgreSQL custom archive')
+        state, summary = 'ok', 'Published source backup is less than 30 minutes old; archive checksums and independent restore are separate checks'
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        state, summary = 'failed', 'No fresh complete source database backup was confirmed; inspect the backup schedule and generation metadata'
+    return check('host.backup.database', 'Database backup freshness', state, summary)
+
+
 def local_snapshot(role, *, run=subprocess.run):
     checks = services(role, run=run)
     checks.extend(resources(role))
@@ -228,10 +323,13 @@ def local_snapshot(role, *, run=subprocess.run):
                         'ok' if clock and clock.stdout.strip() == 'yes' else 'unknown',
                         'System reports synchronized time' if clock and clock.stdout.strip() == 'yes' else 'Clock synchronization was not confirmed'))
     if role == 'host':
+        checks.append(proxmox_storage(run=run))
+        checks.append(database_backup())
         checks.extend(eve_health(name) for name in ('vpn', 'dmz', 'backend'))
         checks.append(capture_configuration())
         checks.extend(sensor_interfaces())
     if role == 'monitoring':
+        checks.append(prometheus_targets())
         checks.extend(containers(run=run))
         checks.append(dashboards())
     if role == 'database':

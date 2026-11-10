@@ -1,5 +1,32 @@
 # Separate archive VM
 
+The collector now lives in `tools/maintenance/replicate.py`. One configuration
+and systemd timer instance represents one source. `kind: "logs"` copies closed
+gzip archives; `recursive: true` includes dated rotation directories and skips
+symlinks. `kind: "database"` copies complete generations from
+`/var/backups/heist/database`, including their `metadata.json` and custom-format
+dump. It ignores `.pending-*` directories, verifies size and SHA256, and publishes
+each generation atomically. Database replication never removes source copies.
+
+Use `deploy/archive/config/proxmox-logs.example.json` and
+`database.example.json` for these sources. Configure a free-space reserve;
+it is checked before each new file or database generation as well as at startup.
+Do not delete source logs until a copied-file restore and the failure cases below
+have been verified. A missing timer or an empty archive is not a successful backup.
+
+Install the existing Paramiko dependency for the dedicated service account. Pin
+the source's SSH host key through a trusted channel. `LoadCredential` can read an
+existing protected key on the collector host; a private key need not be copied
+off its host. If `public_status` is configured, create its parent directory owned
+by the collector with mode 0755. It publishes only the bounded receipt (source,
+timestamps, status, counters and error type), with mode 0644; archive contents stay
+private. Create `/var/lib/heist-archive/status` before starting the unit.
+
+The destination must be an explicitly mounted storage path. On a dedicated
+storage VM whose large data volume is also its root filesystem, a reviewed bind
+mount can supply this mount guard; it does not create an independent disk. Reserve
+root capacity explicitly. Never format an existing filesystem to set this up.
+
 Run log archiving on the dedicated archive VM. The application/source machines
 rotate and close logs; the archive VM pulls only closed `.gz` files over SSH.
 Source removal is off by default. Each source has a separate service, timer,
@@ -14,7 +41,7 @@ this change. Install the distribution's `python3-paramiko`, a system account
 
 ```sh
 sudo install -d -m 0755 /usr/local/lib/heist
-sudo install -m 0644 tools/maintenance/archive_logs.py /usr/local/lib/heist/archive_logs.py
+sudo install -m 0644 tools/maintenance/replicate.py /usr/local/lib/heist/replicate.py
 sudo install -m 0644 deploy/archive/systemd/heist-log-archive@.{service,timer} /etc/systemd/system/
 sudo install -d -m 0750 -o root -g heist-archive /etc/heist/archive
 sudo install -d -m 0700 /etc/heist/archive/keys

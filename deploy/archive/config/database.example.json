@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "source": "proxmox-database",
+  "host": "proxmox.example.invalid",
+  "user": "root",
+  "remote_directory": "/var/backups/heist/database",
+  "destination": "/var/lib/heist-archive/files/database",
+  "kind": "database",
+  "remove_remote": false,
+  "minimum_free_bytes": 107374182400
+}

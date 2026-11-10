@@ -2,6 +2,24 @@
 
 ## Current acceptance scope
 
+On 2026-11-10, the existing production installation completed an explicitly
+authorized deployment to `651263f7096722aef978fe9b29de86f29a06e8f4`
+(`0.4.0-rc.3`). The operator explicitly waived the unfinished complete clone
+rehearsal before deployment. That rehearsal is **not marked passed**; the normal
+source-bound admission requirement remains in the application.
+
+The release passed 539 strict Python tests with zero skips. Its controller verified
+25 VM archives, SQL, registered source images, protected data and platform health.
+Both new three-VM/two-network labs passed real API start, cancel and complete
+cleanup; 30 desktop/mobile production browser checks passed. The configured pool
+replenished with zero manager restarts. A real database backup succeeded, and
+backup transport was detached with a successful offline read-only filesystem
+check. These are target-specific results; they do not complete clean-host
+installation or prove that every future rollout/rollback succeeds. Production
+screenshots and recovery evidence remain private.
+
+### Earlier prerequisite and rehearsal history
+
 The operator authorized deployment after the restored production clone passes
 upgrade, injected failure/recovery and rollback acceptance. Clean-host application
 installation is deferred until afterward; its installer remains disabled.

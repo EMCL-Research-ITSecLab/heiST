@@ -1,5 +1,10 @@
 # Administrator operations
 
+**Maintenance mode: Off** means the platform is accepting normal operations.
+**On** means an operator has entered scheduled maintenance. This is a current
+state indicator, not an unavailable or unconfigured feature. Maintenance and
+release recovery remain explicit CLI operations.
+
 The console separates exercise management from platform diagnostics. Exercise
 management has search, category/availability filters, sorting and pagination;
 mutations retain server-side ownership and administrator checks. Role revocation

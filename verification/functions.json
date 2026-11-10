@@ -49,7 +49,7 @@
     ],
     "rationale": "Checks fixed no-shell command/timeout and explicit missing-unit state; real systemd execution is separately required."
   },
-  "tools/maintenance/archive_logs.py::archive": {
+  "tools/maintenance/replicate.py::archive": {
     "tests": [
       "tests.test_archive_logs.ArchiveTests.test_default_copy_preserves_remote_log",
       "tests.test_archive_logs.ArchiveTests.test_bad_checksum_never_removes_remote_even_when_requested",
@@ -58,7 +58,7 @@
     ],
     "rationale": "Uses real local files and digests; checks explicit deletion only after integrity checks, and preservation on changed or symlinked remote content."
   },
-  "tools/maintenance/archive_logs.py::digest": {
+  "tools/maintenance/replicate.py::digest": {
     "tests": [
       "tests.test_archive_logs.ArchiveTests.test_default_copy_preserves_remote_log",
       "tests.test_archive_logs.ArchiveTests.test_bad_checksum_never_removes_remote_even_when_requested",
@@ -67,7 +67,7 @@
     ],
     "rationale": "Uses real local files and digests; checks explicit deletion only after integrity checks, and preservation on changed or symlinked remote content."
   },
-  "tools/maintenance/archive_logs.py::run_configuration": {
+  "tools/maintenance/replicate.py::run_configuration": {
     "tests": [
       "tests.test_archive_logs.ArchiveServiceTests.test_successful_service_run_records_verified_counts_and_timestamp",
       "tests.test_archive_logs.ArchiveServiceTests.test_failed_run_preserves_last_success_and_hides_exception_details",
@@ -76,7 +76,7 @@
     ],
     "rationale": "Checks private durable receipt, successful counters, retained last success, nonsecret failure detail, capacity gate and exclusive lock; VM timer/credentials remain separate integration cases."
   },
-  "tools/maintenance/archive_logs.py::write_status": {
+  "tools/maintenance/replicate.py::write_status": {
     "tests": [
       "tests.test_archive_logs.ArchiveServiceTests.test_successful_service_run_records_verified_counts_and_timestamp",
       "tests.test_archive_logs.ArchiveServiceTests.test_failed_run_preserves_last_success_and_hides_exception_details",
@@ -85,13 +85,13 @@
     ],
     "rationale": "Checks private durable receipt, successful counters, retained last success, nonsecret failure detail, capacity gate and exclusive lock; VM timer/credentials remain separate integration cases."
   },
-  "tools/maintenance/archive_logs.py::remote_digest": {
+  "tools/maintenance/replicate.py::remote_digest": {
     "tests": [
       "tests.test_archive_logs.ArchiveServiceTests.test_remote_digest_quotes_paths_and_rejects_command_failure"
     ],
     "rationale": "Checks exact digest extraction, shell quoting of hostile-looking paths, and nonzero command failure."
   },
-  "tools/maintenance/archive_logs.py::load_configuration": {
+  "tools/maintenance/replicate.py::load_configuration": {
     "tests": [
       "tests.test_archive_logs.ArchiveServiceTests.test_untrusted_paths_and_unknown_configuration_fields_are_rejected"
     ],
@@ -1467,5 +1467,21 @@
       "tests.test_template_checkpoint.TemplateCheckpointTests.test_scsi_and_empty_templates_are_unaffected_and_unknown_versions_fail_closed"
     ],
     "rationale": "Uses real Debian version comparisons for production qemu-server 9.0.16, the 9.0.18 fix, epochs and prereleases; rejects unconfirmed versions without changing template configuration. Native backup/restore remains separate acceptance."
+  },
+  "tools/maintenance/replicate.py::archive_database": {
+    "tests": [
+      "tests.test_backup_replication.DatabaseReplicationTests.test_verified_generation_is_atomic_and_repeatable_without_source_removal",
+      "tests.test_backup_replication.DatabaseReplicationTests.test_corrupt_transfer_or_changed_source_never_publishes_a_generation",
+      "tests.test_backup_replication.DatabaseReplicationTests.test_corrupt_existing_copy_cannot_be_reported_successful",
+      "tests.test_backup_replication.DatabaseReplicationTests.test_pending_directories_and_remote_symlinks_are_not_copied",
+      "tests.test_backup_replication.DatabaseReplicationTests.test_capacity_and_removal_guards_prevent_transfer"
+    ],
+    "rationale": "Exercises real local atomic generations and integrity metadata, repeat runs, corruption, changed source, symlinks and capacity refusal. Actual collector and PostgreSQL restore remain integration checks."
+  },
+  "tools/maintenance/replicate.py::archive_tree": {
+    "tests": [
+      "tests.test_archive_logs.ArchiveServiceTests.test_dated_directories_are_traversed_but_links_are_not"
+    ],
+    "rationale": "Checks dated rotation directories are visited and symlink entries are excluded."
   }
 }

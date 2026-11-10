@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Copy closed gzip log archives over trusted SSH; remote removal is explicit."""
+"""Replicate closed logs and verified database generations over pinned SSH."""
 import argparse
 from datetime import datetime, timezone
 import fcntl
@@ -11,7 +11,7 @@ import os
 from pathlib import Path, PurePosixPath
 import re
 import shlex
-from stat import S_ISREG
+from stat import S_ISREG, S_ISDIR
 import tempfile
 
 
@@ -31,7 +31,7 @@ def remote_digest(ssh, path):
     return result[0].lower()
 
 
-def archive(ssh, remote_directory, destination, *, remove_remote=False):
+def archive(ssh, remote_directory, destination, *, remove_remote=False, minimum_free_bytes=0):
     destination = Path(destination)
     if destination.is_symlink():
         raise ValueError('Archive destination must not be a symlink')
@@ -50,6 +50,8 @@ def archive(ssh, remote_directory, destination, *, remove_remote=False):
             if target.is_symlink():
                 raise ValueError('Archive file must not be a symlink')
             if not target.exists():
+                if shutil.disk_usage(destination).free < entry.st_size + minimum_free_bytes:
+                    raise OSError('Archive filesystem free-space threshold reached')
                 descriptor, temporary = tempfile.mkstemp(prefix='.pending-', dir=destination)
                 os.close(descriptor)
                 try:
@@ -105,10 +107,97 @@ def write_status(path, data):
         Path(temporary).unlink(missing_ok=True)
 
 
+def archive_tree(ssh, remote_directory, destination, *, remove_remote=False, minimum_free_bytes=0):
+    """Include dated rotation directories, without following remote links."""
+    totals = dict(copied=0, verified=0, bytes=0, removed_remote=0)
+    pending = [(remote_directory, Path(destination), 0)]
+    visited = 0
+    while pending:
+        remote, local, depth = pending.pop()
+        if depth > 8 or visited >= 10000:
+            raise ValueError('Log archive directory limit reached')
+        visited += 1
+        counts = archive(ssh, remote, local, remove_remote=remove_remote,
+                         minimum_free_bytes=minimum_free_bytes)
+        for key in totals:
+            totals[key] += counts[key]
+        with ssh.open_sftp() as sftp:
+            for entry in sftp.listdir_attr(remote):
+                if S_ISDIR(entry.st_mode) and re.fullmatch(r'[A-Za-z0-9_][A-Za-z0-9_.-]*', entry.filename):
+                    pending.append((str(PurePosixPath(remote)/entry.filename), local/entry.filename, depth+1))
+    return totals
+
+
+def archive_database(ssh, remote_directory, destination, *, remove_remote=False, minimum_free_bytes=0):
+    """Publish only complete immutable pg_dump generations; keep source copies."""
+    if remove_remote:
+        raise ValueError('Database replication never removes source backups')
+    destination = Path(destination)
+    if destination.is_symlink():
+        raise ValueError('Backup destination must not be a symlink')
+    destination.mkdir(mode=0o700, parents=True, exist_ok=True)
+    if destination.stat().st_mode & 0o077:
+        raise ValueError('Use a private backup directory')
+    totals = dict(copied=0, verified=0, bytes=0, removed_remote=0)
+    with ssh.open_sftp() as sftp:
+        for entry in sorted(sftp.listdir_attr(remote_directory), key=lambda item: item.filename):
+            name = entry.filename
+            if not S_ISDIR(entry.st_mode) or not re.fullmatch(r'\d{8}T\d{6}Z-[A-Za-z0-9_-]{1,32}-[a-f0-9]{12}', name):
+                continue
+            remote = str(PurePosixPath(remote_directory)/name)
+            meta_entry = sftp.lstat(remote+'/metadata.json')
+            dump_entry = sftp.lstat(remote+'/database.backup')
+            if not S_ISREG(meta_entry.st_mode) or not S_ISREG(dump_entry.st_mode) or meta_entry.st_size > 65536:
+                raise ValueError('Backup generation contains an invalid file')
+            with sftp.open(remote+'/metadata.json', 'rb') as stream:
+                body = stream.read(65537)
+            metadata = json.loads(body)
+            size, checksum = metadata.get('bytes'), metadata.get('sha256')
+            if (metadata.get('schema') != 1 or type(size) is not int or size < 5
+                    or size != dump_entry.st_size or not isinstance(checksum, str)
+                    or not re.fullmatch('[a-f0-9]{64}', checksum)):
+                raise ValueError('Backup integrity metadata is invalid')
+            target = destination/name
+            if target.is_symlink():
+                raise ValueError('Backup generation must not be a symlink')
+            if not target.exists():
+                if shutil.disk_usage(destination).free < size + minimum_free_bytes:
+                    raise OSError('Backup filesystem free-space threshold reached')
+                with tempfile.TemporaryDirectory(prefix='.pending-', dir=destination) as temporary:
+                    stage = Path(temporary)
+                    dump = stage/'database.backup'
+                    sftp.get(remote+'/database.backup', str(dump))
+                    dump.chmod(0o600)
+                    if dump.stat().st_size != size or digest(dump) != checksum:
+                        raise RuntimeError('Downloaded database backup checksum differs')
+                    with dump.open('rb') as stream:
+                        if stream.read(5) != b'PGDMP':
+                            raise ValueError('Backup is not a custom-format PostgreSQL archive')
+                        os.fsync(stream.fileno())
+                    write_status(stage/'metadata.json', metadata)
+                    if remote_digest(ssh, remote+'/database.backup') != checksum:
+                        raise RuntimeError('Source database backup changed during replication')
+                    os.rename(stage, target)
+                    directory = os.open(destination, os.O_RDONLY | os.O_DIRECTORY)
+                    try:
+                        os.fsync(directory)
+                    finally:
+                        os.close(directory)
+                totals['copied'] += 1
+            local_dump, local_meta = target/'database.backup', target/'metadata.json'
+            if (local_dump.is_symlink() or local_meta.is_symlink() or not local_dump.is_file()
+                    or not local_meta.is_file() or local_dump.stat().st_size != size
+                    or digest(local_dump) != checksum or json.loads(local_meta.read_text()) != metadata):
+                raise RuntimeError('Existing backup generation differs; source retained')
+            totals['verified'] += 1
+            totals['bytes'] += size
+    return totals
+
+
 def load_configuration(path):
     config = json.loads(Path(path).read_text())
     required = {'schema', 'source', 'host', 'user', 'remote_directory', 'destination', 'remove_remote', 'minimum_free_bytes'}
-    if set(config) != required or config['schema'] != 1:
+    if not required <= set(config) or set(config)-required-{'kind', 'recursive', 'public_status'} or config['schema'] != 1:
         raise ValueError('Unsupported archive configuration')
     if not isinstance(config['source'], str) or not re.fullmatch(r'[a-zA-Z0-9_-]{1,64}', config['source']):
         raise ValueError('Invalid source identifier')
@@ -118,13 +207,17 @@ def load_configuration(path):
         raise ValueError('Invalid SSH account')
     if type(config['remove_remote']) is not bool or type(config['minimum_free_bytes']) is not int or config['minimum_free_bytes'] < 0:
         raise ValueError('Invalid archive retention/capacity settings')
-    for name in ('destination', 'remote_directory'):
+    for name in ('destination', 'remote_directory', *(['public_status'] if 'public_status' in config else [])):
         value = config[name]
         if not isinstance(value, str):
             raise ValueError('Archive directories must be absolute paths')
         candidate = PurePosixPath(value)
         if not candidate.is_absolute() or '..' in candidate.parts or str(candidate) != value or any(ord(c) < 32 for c in value):
             raise ValueError('Archive directories must be normalized absolute paths')
+    if config.get('kind', 'logs') not in ('logs', 'database') or type(config.get('recursive', False)) is not bool:
+        raise ValueError('Unsupported replication kind or recursion setting')
+    if config.get('kind') == 'database' and config['remove_remote']:
+        raise ValueError('Database replication never removes source backups')
     return config
 
 
@@ -141,12 +234,20 @@ def run_configuration(config, identity, known_hosts, *, connect=None, clock=None
     with os.fdopen(descriptor, 'a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         status_path = destination/'status.json'
+        def publish(status):
+            write_status(status_path, status)
+            if config.get('public_status'):
+                public = Path(config['public_status'])
+                if any(path.is_symlink() for path in (public, *public.parents)):
+                    raise ValueError('Status path must not contain symlinks')
+                write_status(public, status)
+                public.chmod(0o644)
         previous = json.loads(status_path.read_text()) if status_path.exists() else {}
         if previous and previous.get('source') != config['source']:
             raise ValueError('Do not share one archive destination between sources')
         status = {'schema': 1, 'source': config['source'], 'status': 'running', 'started_at': clock(),
                   'last_success_at': previous.get('last_success_at')}
-        write_status(status_path, status)
+        publish(status)
         try:
             if shutil.disk_usage(destination).free < config['minimum_free_bytes']:
                 raise OSError('Archive filesystem free-space threshold reached')
@@ -164,14 +265,15 @@ def run_configuration(config, identity, known_hosts, *, connect=None, clock=None
                         raise
                     return client
             with connect() as ssh:
-                totals = archive(ssh, config['remote_directory'], destination, remove_remote=config['remove_remote'])
+                transfer = archive_database if config.get('kind') == 'database' else archive_tree if config.get('recursive') else archive
+                totals = transfer(ssh, config['remote_directory'], destination, remove_remote=config['remove_remote'], minimum_free_bytes=config['minimum_free_bytes'])
             status.update(status='success', completed_at=clock(), counters=totals)
             status['last_success_at'] = status['completed_at']
-            write_status(status_path, status)
+            publish(status)
             return status
         except Exception as error:
             status.update(status='failed', completed_at=clock(), error=type(error).__name__)
-            write_status(status_path, status)
+            publish(status)
             raise
 
 

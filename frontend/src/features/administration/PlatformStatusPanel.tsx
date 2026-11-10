@@ -31,7 +31,7 @@ export function PlatformStatusPanel() {
         <section aria-label="Platform health">
           <h3>Platform health</h3>
           <p>Database <Badge tone={tone(text(data.database))}>{text(data.database, 'unknown')}</Badge></p>
-          <p>Maintenance <Badge tone={truth(data.maintenance) ? 'warning' : ''}>{truth(data.maintenance) ? 'Enabled' : 'Not enabled'}</Badge></p>
+          <p>Maintenance mode <Badge tone={truth(data.maintenance) ? 'warning' : ''}>{truth(data.maintenance) ? 'On' : 'Off'}</Badge></p>
           <p>Running source version: <strong>{text(data.source_version, 'unknown')}</strong></p>
           <p>Last recorded release: <strong>{text(release.version, 'unknown')}</strong></p>
           {text(release.commit) && <p className="muted">Commit <code>{text(release.commit)}</code></p>}

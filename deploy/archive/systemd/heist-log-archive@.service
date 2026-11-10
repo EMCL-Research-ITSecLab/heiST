@@ -1,5 +1,5 @@
 [Unit]
-Description=heiST verified log archive from %i
+Description=heiST verified replication for %i
 Documentation=https://www.freedesktop.org/software/systemd/man/systemd.timer.html
 Wants=network-online.target
 After=network-online.target
@@ -15,8 +15,9 @@ StateDirectory=heist-archive/files
 StateDirectoryMode=0700
 LoadCredential=identity:/etc/heist/archive/keys/%i.key
 LoadCredential=known_hosts:/etc/heist/archive/known_hosts
-ExecStart=/usr/bin/python3 /usr/local/lib/heist/archive_logs.py --config /etc/heist/archive/%i.json
-TimeoutStartSec=15min
+ExecStart=/usr/bin/python3 /usr/local/lib/heist/replicate.py --config /etc/heist/archive/%i.json
+TimeoutStartSec=1h
+ReadWritePaths=/var/lib/heist-archive/status
 NoNewPrivileges=yes
 PrivateTmp=yes
 PrivateDevices=yes

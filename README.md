@@ -60,16 +60,12 @@ Use `bin/heist --help` for the explicit administrator and service commands.
 
 ### Deployment status
 
-This development branch replaces the PHP application with React and Flask. The
-fresh installer and production upgrade adapter remain gated until their complete
-migration and recovery acceptance passes. Do not run the historical PHP installer
-over a production system. See [installation and update status](docs/administration/UPDATES.md)
-and use the [isolated appliance workflow](docs/testing/LOCAL-APPLIANCE.md) for testing.
-
-The existing legacy baseline has been checkpointed and restored on the disposable
-nested Proxmox appliance, including three service VMs, six templates and eight
-source image files. This verifies baseline recovery; it does not approve a Flask
-migration or a production rollout.
+This development branch uses React and Flask. Existing installations have a
+checkpointed upgrade and recovery workflow; normal production admission requires
+source-bound appliance acceptance. Clean-host installation is still disabled
+pending its separate acceptance. See [updates and recovery](docs/administration/UPDATES.md),
+[dated validation results](docs/validation/rollouts.md), and the
+[isolated appliance workflow](docs/testing/LOCAL-APPLIANCE.md).
 
 ## Using the new workspace
 

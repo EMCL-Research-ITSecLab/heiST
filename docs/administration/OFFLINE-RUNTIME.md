@@ -32,10 +32,11 @@ standalone UI bundle and pins both full artifact hashes. The CLI accepts
 and schema-2 releases refuse an undeclared runtime. Planning tests reject altered
 source even when an artifact's internal checksums have been recomputed.
 
-The Proxmox execution adapter currently refuses schema 3 before maintenance.
-Planning is reviewable; applying it remains blocked until the full dependency,
-role, service, image/template and recovery adapter passes appliance acceptance.
-No schema-3 production release manifest is published in this branch yet.
+The existing-installation Proxmox adapter supports schema-3 releases, including
+versioned browser runtimes, database roles, templates and checkpointed recovery.
+Published release manifests are under `releases/`. Applying a release normally
+requires source-bound appliance acceptance; see [updates](UPDATES.md). A dated
+operator waiver is an exception and never counts as a passing rehearsal.
 
 The installer
 checks that pinned hash again, creates an immutable versioned venv, installs with
@@ -47,9 +48,10 @@ existing runtime or the Proxmox host's existing `.venv`.
 The systemd template references the active source through `PYTHONPATH`. Private
 configuration belongs in `/etc/heist/web.env`; writable data belongs in
 `/var/lib/heist-web`. Neither is part of the runtime artifact. The candidate
-installer deliberately does not provision accounts, secrets, Apache, migrations,
-media or services by itself. Their checked deployment and rollback integration
-must complete before this is a production release procedure.
+runtime installer deliberately does not provision accounts, secrets, Apache,
+migrations, media or services by itself. The existing-installation rollout
+coordinates those operations. Clean-host installation remains a separate,
+unfinished acceptance path.
 
 
 ## Browser database and configuration boundary

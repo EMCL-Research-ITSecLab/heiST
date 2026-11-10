@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "source": "proxmox-logs",
+  "host": "proxmox.example.invalid",
+  "user": "root",
+  "remote_directory": "/var/log/suricata/rotated",
+  "destination": "/var/lib/heist-archive/files/proxmox-logs",
+  "kind": "logs",
+  "recursive": true,
+  "remove_remote": false,
+  "minimum_free_bytes": 107374182400
+}

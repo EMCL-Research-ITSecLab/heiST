@@ -2,7 +2,7 @@
 import os
 import tempfile
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 from pathlib import Path
 from heist.platform.administration import Administration, AdminError
 from heist.platform.jobs.journal import Journal, RecoveryRequired
@@ -30,6 +30,20 @@ class PlatformAdministrationTests(unittest.TestCase):
         self.teardown=Mock(side_effect=lambda identifier,**kwargs:self.sql('DELETE FROM challenges WHERE id=%s',(identifier,)))
         self.launch=Mock(return_value=[])
         self.service=Administration(lambda:self.psycopg2.connect(**self.settings),self.journal,stop=self.stop,teardown=self.teardown,launch=self.launch,status=Mock(return_value='running'))
+
+    def test_private_activity_rechecks_role_and_uses_database_machine_scope(self):
+        with patch('heist.monitoring.activity.read', return_value={'status':'ready'}) as read:
+            with self.assertRaises(AdminError):self.service.activity(self.user_id,self.instance)
+            read.assert_not_called()
+            self.service.activity(self.admin,self.instance)
+            expected=[v[0] for v in self.sql('SELECT id FROM machines WHERE challenge_id=%s ORDER BY id',(self.instance,))]
+            self.assertEqual(read.call_args.args[1],expected)
+            read.reset_mock()
+            with self.assertRaises(AdminError):self.service.activity(self.admin,2**62)
+            read.assert_not_called()
+            self.sql('UPDATE users SET is_admin=FALSE WHERE id=%s',(self.admin,))
+            with self.assertRaises(AdminError):self.service.activity(self.admin)
+            read.assert_not_called()
 
     def release(self,user,*,expected_challenge_id):
         changed=self.sql('UPDATE users SET running_challenge=NULL WHERE id=%s AND running_challenge=%s RETURNING id',(user,expected_challenge_id))

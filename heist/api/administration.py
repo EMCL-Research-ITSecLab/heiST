@@ -61,6 +61,11 @@ def blueprint(factory):
     @routes.get('/admin/instances')
     def instances():return run(lambda service,data:service.instances(identifier(data.get('actor_id')),page(data)))
 
+    @routes.get('/admin/monitoring/activity')
+    def activity():
+        return run(lambda service,data:service.activity(identifier(data.get('actor_id')),
+                   identifier(data['instance_id']) if 'instance_id' in data else None))
+
     @routes.get('/admin/instances/details')
     def instance():return run(lambda service,data:service.instance(identifier(data.get('actor_id')),identifier(data.get('instance_id'))))
 

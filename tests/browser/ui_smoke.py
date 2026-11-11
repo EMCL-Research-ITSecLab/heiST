@@ -9,6 +9,37 @@ from tests.browser.support import BrowserFixture
 
 
 class BrowserTests(BrowserFixture):
+    def test_private_activity_loads_on_demand_and_command_html_is_only_text(self):
+        self.role='admin'
+        command='<img src=x onerror="window.injected=true">'+'x'*2048
+        self.responses['admin/monitoring/activity']={'success':True,'data':{'status':'ready','counts':{'commands':1,'processes':1},'events':[
+            {'machine_id':123,'timestamp':'2026-11-11T12:00:00Z','kind':'command','description':'Fixture command','command':command,'truncated':True}]}}
+        self.page.set_viewport_size({'width':320,'height':900})
+        self.visit('/operations')
+        self.assertFalse(any(endpoint=='admin/monitoring/activity' for _,endpoint,_ in self.requests))
+        self.page.get_by_role('button',name='Load activity',exact=True).click()
+        table=self.page.get_by_role('table',name='Recent command and process events');table.wait_for()
+        self.assertIn('<img',table.inner_text())
+        self.assertIsNone(self.page.evaluate('window.injected'))
+        self.assertEqual(table.locator('img').count(),0)
+        self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),320)
+        self.page.get_by_role('button',name='Hide activity',exact=True).click()
+        self.assertEqual(self.page.get_by_role('table',name='Recent command and process events').count(),0)
+        self.assertEqual(self.mutations,[])
+
+    def test_instance_activity_is_scoped_and_zero_events_are_not_coverage(self):
+        from tests.browser.showcase_data import responses
+        self.role='admin';self.responses=responses()
+        self.responses['admin/monitoring/activity']={'success':True,'data':{'status':'ready','counts':{'commands':0,'processes':0},'events':[]}}
+        self.visit('/manage-instances')
+        self.page.get_by_role('button',name='Inspect',exact=True).first.click()
+        self.page.get_by_role('button',name='Load activity',exact=True).click()
+        self.page.get_by_text('No events received in this time window.',exact=False).wait_for()
+        urls=[url for _,endpoint,url in self.requests if endpoint=='admin/monitoring/activity']
+        self.assertTrue(urls and urls[-1].endswith('?instance_id=101'))
+        self.assertIn('coverage is unverified',self.page.locator('main').inner_text())
+        self.assertEqual(self.mutations,[])
+
     def test_instance_monitoring_shows_agent_states_without_command_content(self):
         from tests.browser.showcase_data import responses
         self.role='admin';self.responses=responses()

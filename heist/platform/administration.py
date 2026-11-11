@@ -126,6 +126,26 @@ class Administration:
             items=[dict(item) for item in cursor.fetchall()]
             return {'instances':items[:25],'has_more':len(items)>25,'page':page}
 
+    def activity(self, actor, instance_id=None):
+        # Recheck authority before reading private telemetry or credentials.
+        machines = None
+        with self.database(actor) as db, db.cursor() as cursor:
+            if instance_id is not None:
+                cursor.execute('SELECT id FROM public.challenges WHERE id=%s', (instance_id,))
+                if not cursor.fetchone():raise AdminError('Instance not found', 404)
+                cursor.execute('SELECT id FROM public.machines WHERE challenge_id=%s ORDER BY id LIMIT 21', (instance_id,))
+                machines = [row[0] for row in cursor.fetchall()]
+        settings = dict(os.environ)
+        filename = settings.get('HEIST_MONITORING_ENVIRONMENT_FILE')
+        if filename:
+            from pathlib import Path
+            from dotenv import dotenv_values
+            path = Path(filename)
+            if not path.is_absolute() or '..' in path.parts:raise ValueError('Invalid monitoring environment path')
+            settings.update({k:v for k,v in dotenv_values(path).items() if v is not None})
+        from heist.monitoring.activity import read
+        return read(settings, machines)
+
     def instance(self, actor, identifier):
         with self.database(actor) as db, db.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute('''SELECT c.id,c.challenge_template_id,c.lifecycle_state::text AS state,

@@ -20,6 +20,23 @@ class AdministrationTests(unittest.TestCase):
         self.platform = Mock()
         self.app.extensions['internal_client_factory'] = lambda: self.platform
 
+    def test_private_activity_requires_current_admin_and_ignores_forged_actor(self):
+        path='admin/monitoring/activity'
+        self.assertEqual(self.request(path).status_code,401)
+        self.login()
+        self.assertEqual(self.request(path).status_code,403)
+        self.platform.request.assert_not_called()
+        self.update_user('is_admin=TRUE')
+        self.platform.request.return_value={'success':True,'data':{'status':'ready','events':[]}}
+        response=self.request(path+'?instance_id=123&actor_id=999')
+        self.assertEqual(response.status_code,200)
+        self.assertIn('no-store',response.headers['Cache-Control'])
+        self.assertEqual(self.platform.request.call_args.args,('admin_activity',{'actor_id':self.user_id,'instance_id':123}))
+        self.assertEqual(self.request(path+'?instance_id=0').status_code,400)
+        self.update_user('is_admin=FALSE');self.platform.reset_mock()
+        self.assertEqual(self.request(path).status_code,403)
+        self.platform.request.assert_not_called()
+
     def test_administration_reloads_role_before_platform_access(self):
         self.assertEqual(self.request('admin/operations').status_code, 401)
         self.login()

@@ -96,6 +96,15 @@ def instances():
     return internal().request('admin_instances',{'actor_id':actor['id'],'page':page})
 
 
+@blueprint.get('/admin/monitoring/activity')
+def activity():
+    actor=require_admin()
+    rate_limit('admin-activity',str(actor['id']),30)
+    data={'actor_id':actor['id']}
+    if 'instance_id' in request.args:data['instance_id']=positive_id(request.args['instance_id'],'instance identifier')
+    return internal().request('admin_activity',data)
+
+
 @blueprint.route('/admin/instances/<identifier>',methods=['GET','POST'])
 def manage_instance(identifier):
     actor=require_admin()

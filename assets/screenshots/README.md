@@ -18,6 +18,7 @@ Full-page captures in both themes, using synthetic records. Click a file to insp
 | Artifacts | [Light](artifacts_light.png) | [Dark](artifacts_dark.png) |
 | Manage Announcements | [Light](manage_announcements_light.png) | [Dark](manage_announcements_dark.png) |
 | Operations | [Light](operations_light.png) | [Dark](operations_dark.png) |
+| Monitoring Activity | [Light](monitoring_activity_light.png) | [Dark](monitoring_activity_dark.png) |
 | Users | [Light](users_light.png) | [Dark](users_dark.png) |
 | Instances | [Light](instances_light.png) | [Dark](instances_dark.png) |
 | Instance Details | [Light](instance_details_light.png) | [Dark](instance_details_dark.png) |

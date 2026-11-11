@@ -2,6 +2,7 @@ import { Badge, Card, ResourceState } from '../../components/ui.tsx';
 import { number, payload, row, rows, text, truth } from '../../lib/data.ts';
 import { useResource } from '../../lib/state.tsx';
 import { MonitoringPanel } from './MonitoringPanel.tsx';
+import { ActivityPanel } from './ActivityPanel.tsx';
 
 const lifecycleStates = ['PROVISIONING', 'READY', 'ASSIGNED', 'ACTIVE', 'EXPIRED', 'TERMINATING'];
 function tone(state: string) {
@@ -51,6 +52,7 @@ export function PlatformStatusPanel() {
         </section>
       </div>
       <MonitoringPanel value={data.monitoring} />
+      <ActivityPanel />
       <div className="table-wrap">
         <table aria-label="Platform services">
           <thead><tr><th>Service</th><th>State</th><th>Detail</th></tr></thead>

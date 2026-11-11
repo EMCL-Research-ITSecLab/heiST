@@ -1841,3 +1841,4 @@ dialog .button-row {
 .dashboard-announcement.critical {border-inline-start-color:var(--red)}
 .dashboard-announcement h3 {font-size:19px;margin:12px 0 6px}
 .dashboard-announcement .prose {margin-bottom:8px}
+.activity-command { white-space: pre-wrap; overflow-wrap: anywhere; max-width: 44rem; max-height: 12rem; overflow: auto; font-size: .85rem; }

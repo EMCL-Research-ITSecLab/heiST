@@ -4,6 +4,7 @@ import { request } from '../../lib/api.ts';
 import { date, number, payload, row, rows, text, truth, type Row } from '../../lib/data.ts';
 import { useAction, useResource } from '../../lib/state.tsx';
 import { InstanceMonitoringPanel } from './InstanceMonitoringPanel.tsx';
+import { ActivityPanel } from './ActivityPanel.tsx';
 
 type InstanceAction = 'release' | 'rebuild' | 'remove';
 type Selection = { instance: Row; kind: InstanceAction };
@@ -95,6 +96,7 @@ function InstanceDetails({ identifier, onClose }: { identifier: number; onClose:
         {number(vm.id)} · {text(vm.name)} · <Badge>{text(vm.status)}</Badge>
       </li>)}</ul>
       <InstanceMonitoringPanel value={data.monitoring} />
+      <ActivityPanel instanceId={identifier} />
       <h3>Networks</h3>
       <ul>{rows(data.networks).map(network => <li key={number(network.id)}>
         {text(network.name)} · {text(network.subnet)}{truth(network.accessible) ? ' · Student access' : ''}{truth(network.is_dmz) ? ' · DMZ' : ''}

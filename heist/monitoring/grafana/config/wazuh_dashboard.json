@@ -173,9 +173,9 @@
               "type": "raw_data"
             }
           ],
-          "query": "rule.id:100100",
+          "query": "(rule.id:100100) AND agent.name:${agent:lucene}",
           "refId": "A",
-          "timeField": "@timestamp"
+          "timeField": "timestamp"
         }
       ],
       "title": "CPU Usage",
@@ -191,7 +191,7 @@
             },
             "includeByName": {},
             "indexByName": {
-              "@timestamp": 0,
+              "timestamp": 27,
               "_id": 1,
               "_index": 2,
               "_type": 3,
@@ -217,8 +217,7 @@
               "rule.id": 23,
               "rule.level": 24,
               "rule.mail": 25,
-              "sort": 26,
-              "timestamp": 27
+              "sort": 26
             },
             "renameByName": {
               "agent.id": "",
@@ -350,9 +349,9 @@
               "type": "raw_data"
             }
           ],
-          "query": "rule.id:100105",
+          "query": "(rule.id:100105) AND agent.name:${agent:lucene}",
           "refId": "A",
-          "timeField": "@timestamp"
+          "timeField": "timestamp"
         }
       ],
       "title": "Memory Used",
@@ -568,9 +567,9 @@
               "type": "raw_data"
             }
           ],
-          "query": "rule.id:100105",
+          "query": "(rule.id:100105) AND agent.name:${agent:lucene}",
           "refId": "A",
-          "timeField": "@timestamp"
+          "timeField": "timestamp"
         }
       ],
       "title": "Total Memory",
@@ -769,9 +768,9 @@
               "type": "raw_data"
             }
           ],
-          "query": "rule.id:100104",
+          "query": "(rule.id:100104) AND agent.name:${agent:lucene}",
           "refId": "A",
-          "timeField": "@timestamp"
+          "timeField": "timestamp"
         }
       ],
       "title": "Load Average",
@@ -786,7 +785,7 @@
             },
             "includeByName": {},
             "indexByName": {
-              "@timestamp": 0,
+              "timestamp": 28,
               "_id": 1,
               "_index": 2,
               "_type": 3,
@@ -813,8 +812,7 @@
               "rule.id": 24,
               "rule.level": 25,
               "rule.mail": 26,
-              "sort": 27,
-              "timestamp": 28
+              "sort": 27
             },
             "renameByName": {
               "agent.name": "Agent",
@@ -943,9 +941,9 @@
               "type": "raw_data"
             }
           ],
-          "query": "100106",
+          "query": "(rule.id:100106) AND agent.name:${agent:lucene}",
           "refId": "A",
-          "timeField": "@timestamp"
+          "timeField": "timestamp"
         }
       ],
       "title": "Disk Space Used ",
@@ -968,7 +966,7 @@
             },
             "includeByName": {},
             "indexByName": {
-              "@timestamp": 0,
+              "timestamp": 27,
               "_id": 1,
               "_index": 2,
               "_type": 3,
@@ -994,8 +992,7 @@
               "rule.id": 23,
               "rule.level": 24,
               "rule.mail": 25,
-              "sort": 26,
-              "timestamp": 27
+              "sort": 26
             },
             "renameByName": {
               "agent.name": "Agent",
@@ -1179,9 +1176,9 @@
               "type": "raw_data"
             }
           ],
-          "query": "rule.id:100106",
+          "query": "(rule.id:100106) AND agent.name:${agent:lucene}",
           "refId": "A",
-          "timeField": "@timestamp"
+          "timeField": "timestamp"
         }
       ],
       "title": "Total Disk Space",
@@ -1387,9 +1384,9 @@
               "type": "raw_data"
             }
           ],
-          "query": "rule.id:100100",
+          "query": "(rule.id:100100) AND agent.name:${agent:lucene}",
           "refId": "A",
-          "timeField": "@timestamp"
+          "timeField": "timestamp"
         }
       ],
       "title": "System Usage",
@@ -1404,7 +1401,7 @@
             },
             "includeByName": {},
             "indexByName": {
-              "@timestamp": 0,
+              "timestamp": 28,
               "_id": 1,
               "_index": 2,
               "_type": 3,
@@ -1431,8 +1428,7 @@
               "rule.id": 24,
               "rule.level": 25,
               "rule.mail": 26,
-              "sort": 27,
-              "timestamp": 28
+              "sort": 27
             },
             "renameByName": {
               "agent.name": "Agent",
@@ -1565,9 +1561,9 @@
               "type": "raw_data"
             }
           ],
-          "query": "rule.id:100204",
+          "query": "(rule.id:100204) AND agent.name:${agent:lucene}",
           "refId": "A",
-          "timeField": "@timestamp"
+          "timeField": "timestamp"
         }
       ],
       "timeFrom": "4h",
@@ -1654,7 +1650,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "@timestamp"
+              "options": "timestamp"
             },
             "properties": [
               {
@@ -1872,9 +1868,9 @@
               "type": "raw_data"
             }
           ],
-          "query": "rule.id:100203",
+          "query": "(rule.id:100203) AND agent.name:${agent:lucene}",
           "refId": "A",
-          "timeField": "@timestamp"
+          "timeField": "timestamp"
         }
       ],
       "timeFrom": "1m",
@@ -1884,7 +1880,7 @@
           "id": "groupBy",
           "options": {
             "fields": {
-              "@timestamp": {
+              "timestamp": {
                 "aggregations": []
               },
               "agent.id": {
@@ -1961,24 +1957,6 @@
               "data.extra_data": "Idle (Win)",
               "data.logon_time": "Logon Time (Win)"
             }
-          }
-        },
-        {
-          "id": "filterByValue",
-          "options": {
-            "filters": [
-              {
-                "config": {
-                  "id": "regex",
-                  "options": {
-                    "value": "${agent:regex}"
-                  }
-                },
-                "fieldName": "Server"
-              }
-            ],
-            "match": "any",
-            "type": "include"
           }
         }
       ],
@@ -2088,7 +2066,7 @@
           "alias": "Authentication Success",
           "bucketAggs": [
             {
-              "field": "@timestamp",
+              "field": "timestamp",
               "id": "2",
               "settings": {
                 "interval": "5m"
@@ -2106,15 +2084,15 @@
               "type": "count"
             }
           ],
-          "query": "rule.id:5715 AND agent.name:${agent}",
+          "query": "(rule.id:5715) AND agent.name:${agent:lucene}",
           "refId": "C",
-          "timeField": "@timestamp"
+          "timeField": "timestamp"
         },
         {
           "alias": "Authentication Failed",
           "bucketAggs": [
             {
-              "field": "@timestamp",
+              "field": "timestamp",
               "id": "2",
               "settings": {
                 "interval": "5m"
@@ -2132,9 +2110,9 @@
               "type": "count"
             }
           ],
-          "query": "rule.id:[5700 TO 5761] AND NOT rule.id:5715 AND agent.name:${agent}",
+          "query": "(rule.id:[5700 TO 5761] AND NOT rule.id:5715) AND agent.name:${agent:lucene}",
           "refId": "A",
-          "timeField": "@timestamp"
+          "timeField": "timestamp"
         }
       ],
       "title": "SSH: Login Warnings",
@@ -2479,18 +2457,18 @@
               "type": "raw_data"
             }
           ],
-          "query": "rule.id:100900 -location:journald",
+          "query": "(rule.groups:\"command_executed\") AND agent.name:${agent:lucene}",
           "refId": "A",
-          "timeField": "@timestamp"
+          "timeField": "timestamp"
         }
       ],
-      "title": "Command Executed (All Platforms)",
+      "title": "Commands received",
       "transformations": [
         {
           "id": "filterFieldsByName",
           "options": {
             "include": {
-              "pattern": "^@timestamp$|^agent\\.(name|ip)$|^data\\.(cmd_line|dstuser|ps_user|exit_code)$|^data\\.win\\.eventdata\\.(commandLine|scriptBlockText|subjectUserName)$"
+              "pattern": "^timestamp$|^agent\\.(name|ip)$|^data\\.(cmd_line|dstuser|ps_user|exit_code)$|^data\\.win\\.eventdata\\.(commandLine|scriptBlockText|subjectUserName)$"
             }
           }
         },
@@ -2553,7 +2531,7 @@
             },
             "includeByName": {},
             "indexByName": {
-              "@timestamp": 0,
+              "timestamp": 0,
               "agent.name": 1,
               "agent.ip": 2,
               "User": 3,
@@ -2561,29 +2539,11 @@
               "data.exit_code": 5
             },
             "renameByName": {
-              "@timestamp": "Timestamp",
+              "timestamp": "Timestamp",
               "agent.ip": "Server",
               "agent.name": "Agent",
               "data.exit_code": "Exit Code"
             }
-          }
-        },
-        {
-          "id": "filterByValue",
-          "options": {
-            "filters": [
-              {
-                "config": {
-                  "id": "regex",
-                  "options": {
-                    "value": "${agent:regex}"
-                  }
-                },
-                "fieldName": "Agent"
-              }
-            ],
-            "match": "any",
-            "type": "include"
           }
         }
       ],
@@ -2628,7 +2588,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "@timestamp"
+              "options": "timestamp"
             },
             "properties": [
               {
@@ -2714,18 +2674,18 @@
               "type": "logs"
             }
           ],
-          "query": "rule.groups:\"process_creation\" -rule.groups:\"command_executed\"",
+          "query": "(rule.groups:\"process_creation\") AND agent.name:${agent:lucene}",
           "refId": "A",
-          "timeField": "@timestamp"
+          "timeField": "timestamp"
         }
       ],
-      "title": "Process Created",
+      "title": "Process events",
       "transformations": [
         {
           "id": "filterFieldsByName",
           "options": {
             "include": {
-              "pattern": "^@timestamp$|^agent\\.(name|ip)$|^data\\.win\\.eventdata\\.(newProcessName|parentProcessName|commandLine|subjectUserName)$"
+              "pattern": "^timestamp$|^agent\\.(name|ip)$|^data\\.win\\.eventdata\\.(newProcessName|parentProcessName|commandLine|subjectUserName)$"
             }
           }
         },
@@ -2735,7 +2695,7 @@
             "excludeByName": {},
             "includeByName": {},
             "indexByName": {
-              "@timestamp": 0,
+              "timestamp": 0,
               "agent.name": 1,
               "agent.ip": 2,
               "data.win.eventdata.subjectUserName": 3,
@@ -2744,7 +2704,7 @@
               "data.win.eventdata.parentProcessName": 6
             },
             "renameByName": {
-              "@timestamp": "Timestamp",
+              "timestamp": "Timestamp",
               "agent.ip": "Server",
               "agent.name": "Agent",
               "data.win.eventdata.commandLine": "Command Line",
@@ -2752,24 +2712,6 @@
               "data.win.eventdata.parentProcessName": "Parent Process",
               "data.win.eventdata.subjectUserName": "User"
             }
-          }
-        },
-        {
-          "id": "filterByValue",
-          "options": {
-            "filters": [
-              {
-                "config": {
-                  "id": "regex",
-                  "options": {
-                    "value": "${agent:regex}"
-                  }
-                },
-                "fieldName": "Agent"
-              }
-            ],
-            "match": "any",
-            "type": "include"
           }
         }
       ],
@@ -2791,7 +2733,7 @@
     {
       "datasource": {
         "type": "elasticsearch",
-        "uid": "P264E5F2539E6FB2F"
+        "uid": "${DS_WAZUH-2}"
       },
       "fieldConfig": {
         "defaults": {
@@ -2860,7 +2802,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "@timestamp"
+              "options": "timestamp"
             },
             "properties": [
               {
@@ -2978,9 +2920,9 @@
               "type": "raw_data"
             }
           ],
-          "query": "rule.id:100600 AND data.Action:*",
+          "query": "(rule.id:100600 AND data.Action:*) AND agent.name:${agent:lucene}",
           "refId": "A",
-          "timeField": "@timestamp"
+          "timeField": "timestamp"
         }
       ],
       "timeFrom": "1m",
@@ -3107,24 +3049,6 @@
               }
             ]
           }
-        },
-        {
-          "id": "filterByValue",
-          "options": {
-            "filters": [
-              {
-                "config": {
-                  "id": "regex",
-                  "options": {
-                    "value": "${agent:regex}"
-                  }
-                },
-                "fieldName": "Agent"
-              }
-            ],
-            "match": "any",
-            "type": "include"
-          }
         }
       ],
       "type": "table"
@@ -3209,9 +3133,9 @@
               "type": "count"
             }
           ],
-          "query": "rule.id:101006",
+          "query": "(rule.id:101006) AND agent.name:${agent:lucene}",
           "refId": "A",
-          "timeField": "@timestamp"
+          "timeField": "timestamp"
         }
       ],
       "title": "AD Account Lockouts (Possible Brute Force)",
@@ -3259,7 +3183,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "@timestamp"
+              "options": "timestamp"
             },
             "properties": [
               {
@@ -3346,7 +3270,7 @@
         "sortBy": [
           {
             "desc": true,
-            "displayName": "@timestamp"
+            "displayName": "timestamp"
           }
         ]
       },
@@ -3368,9 +3292,9 @@
               "type": "raw_data"
             }
           ],
-          "query": "rule.id:[101001 TO 101013]",
+          "query": "(rule.id:[101001 TO 101013]) AND agent.name:${agent:lucene}",
           "refId": "A",
-          "timeField": "@timestamp"
+          "timeField": "timestamp"
         }
       ],
       "title": "AD Account & Group Changes",
@@ -3405,7 +3329,7 @@
             },
             "includeByName": {},
             "indexByName": {
-              "@timestamp": 0,
+              "timestamp": 0,
               "agent.name": 1,
               "rule.description": 2,
               "rule.level": 3,
@@ -3414,24 +3338,6 @@
             "renameByName": {
               "agent.name": "Domain Controller"
             }
-          }
-        },
-        {
-          "id": "filterByValue",
-          "options": {
-            "filters": [
-              {
-                "config": {
-                  "id": "regex",
-                  "options": {
-                    "value": "${agent:regex}"
-                  }
-                },
-                "fieldName": "Domain Controller"
-              }
-            ],
-            "match": "any",
-            "type": "include"
           }
         }
       ],
@@ -3479,7 +3385,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "@timestamp"
+              "options": "timestamp"
             },
             "properties": [
               {
@@ -3566,7 +3472,7 @@
         "sortBy": [
           {
             "desc": true,
-            "displayName": "@timestamp"
+            "displayName": "timestamp"
           }
         ]
       },
@@ -3588,9 +3494,9 @@
               "type": "raw_data"
             }
           ],
-          "query": "rule.id:[101020 TO 101035]",
+          "query": "(rule.id:[101020 TO 101035]) AND agent.name:${agent:lucene}",
           "refId": "A",
-          "timeField": "@timestamp"
+          "timeField": "timestamp"
         }
       ],
       "title": "AD Computer, GPO & Directory Service Changes",
@@ -3625,7 +3531,7 @@
             },
             "includeByName": {},
             "indexByName": {
-              "@timestamp": 0,
+              "timestamp": 0,
               "agent.name": 1,
               "rule.description": 2,
               "rule.level": 3,
@@ -3634,24 +3540,6 @@
             "renameByName": {
               "agent.name": "Domain Controller"
             }
-          }
-        },
-        {
-          "id": "filterByValue",
-          "options": {
-            "filters": [
-              {
-                "config": {
-                  "id": "regex",
-                  "options": {
-                    "value": "${agent:regex}"
-                  }
-                },
-                "fieldName": "Domain Controller"
-              }
-            ],
-            "match": "any",
-            "type": "include"
           }
         }
       ],
@@ -3666,27 +3554,7 @@
   "templating": {
     "list": [
       {
-        "baseFilters": [],
-        "datasource": {
-          "type": "elasticsearch",
-          "uid": "fe5lh06b93x8ga"
-        },
-        "filters": [],
-        "name": "Filters",
-        "type": "adhoc"
-      },
-      {
-        "baseFilters": [],
-        "datasource": {
-          "type": "elasticsearch",
-          "uid": "cehb1bql19w5cb"
-        },
-        "filters": [],
-        "name": "Filters",
-        "type": "adhoc"
-      },
-      {
-        "allValue": ".*",
+        "allValue": "*",
         "current": {
           "text": [
             "All"
@@ -3699,12 +3567,12 @@
           "type": "elasticsearch",
           "uid": "${DS_WAZUH-2}"
         },
-        "definition": "{\"find\": \"terms\", \"field\": \"agent.name\", \"query\": \"@timestamp:[now-24h TO now]\"}",
+        "definition": "{\"find\": \"terms\", \"field\": \"agent.name\", \"query\": \"timestamp:[now-24h TO now]\"}",
         "includeAll": true,
         "multi": true,
         "name": "agent",
         "options": [],
-        "query": "{\"find\": \"terms\", \"field\": \"agent.name\", \"query\": \"@timestamp:[now-24h TO now]\"}",
+        "query": "{\"find\": \"terms\", \"field\": \"agent.name\", \"query\": \"timestamp:[now-24h TO now]\"}",
         "refresh": 1,
         "regex": "",
         "type": "query"
@@ -3721,4 +3589,4 @@
   "uid": "ee5oyzl487bwga",
   "version": 24
 }
-  }
+}

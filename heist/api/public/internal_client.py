@@ -11,6 +11,7 @@ import requests
 from .errors import ApiError
 
 OPERATIONS = {
+    'admin_activity':('GET','/admin/monitoring/activity',15),
     'admin_jobs':('GET','/admin/jobs',20),
     'admin_users':('GET','/admin/users',15),
     'admin_user_change':('POST','/admin/users/manage',30),

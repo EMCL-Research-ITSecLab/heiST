@@ -7,7 +7,7 @@
   "access": "proxy",
   "url": "https://<wazuh_manager_ip>:9200",
   "user": "<wazuh_user>",
-  "database": "",
+  "database": "wazuh-alerts-*",
   "basicAuth": true,
   "basicAuthUser": "<wazuh_user>",
   "secureJsonData": {
@@ -22,10 +22,11 @@
     "oauthPassThru": false,
     "serverName": "",
     "sigV4Auth": false,
-    "timeField": "@timestamp",
+    "timeField": "timestamp",
     "tlsAuth": false,
     "tlsAuthWithCACert": false,
-    "tlsSkipVerify": true
+    "tlsSkipVerify": true,
+    "index": "wazuh-alerts-*"
   },
   "readOnly": false
 }

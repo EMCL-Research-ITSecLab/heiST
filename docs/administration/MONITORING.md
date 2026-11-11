@@ -208,6 +208,70 @@ proves healthy→failed→recovered exit codes using a synthetic SSH source. Liv
 off-host reachability, reboot, actual source failure and alert recovery still
 require the isolated appliance rehearsal before deployment.
 
+## Administrator command and process activity
+
+**Platform status** and **Running challenges → Inspect** include an on-demand
+activity table. The privileged API rechecks administrator authority, then reads
+only a fixed 15-minute window from `wazuh-alerts-*`. Instance filtering uses VM
+IDs queried from the database. The browser cannot supply an index name, query or
+indexer credentials. It receives at most 25 events, selected fields and bounded
+command text. Results are not included in the diagnostics download and responses
+are private/no-store. Hiding the panel removes its displayed records.
+
+Counts refer to received `command_executed` and `process_creation` events; an
+event may belong to both groups. Empty results do not prove collection works.
+Timeouts, failed shards, out-of-scope events and oversized responses are reported
+as unavailable. VM IDs are reusable, so these records must not be attributed to
+the current student without a separate assignment-time correlation.
+
+Configure the existing private `HEIST_MONITORING_ENVIRONMENT_FILE` with
+`ACTIVITY_INDEXER_USER`, `ACTIVITY_INDEXER_PASSWORD` and
+`ACTIVITY_INDEXER_CA_FILE`. Use a dedicated account limited to reading the alert
+indices. `MONITORING_HOST` supplies its address; `ACTIVITY_INDEXER_PORT` defaults
+to 9200. For legacy certificate names, an independently verified leaf followed by
+its CA chain can be supplied as `ACTIVITY_INDEXER_PINNED_CERTIFICATE_FILE`.
+Certificate and expiry verification remain required; no browser iframe or shared
+Grafana administrator session is used. Without credentials the panel explicitly
+reports not configured. This feature does not install new guest auditing.
+
+## Grafana System Monitoring repair
+
+The corrected source dashboard consistently resolves its Wazuh data source,
+queries the actual `timestamp` field, filters every panel by the selected agents,
+and searches event groups instead of relying solely on one catch-all command
+rule. The source index pattern is `wazuh-alerts-*`. Duplicate stale data-source
+variables and obsolete client-side agent filters were removed.
+
+Changing the templates does not repair an existing installed data source. After
+the normal verified Grafana database/configuration/secret backup, the operator
+can use the verified-session updater during the maintenance window:
+
+```sh
+python -m heist.monitoring.grafana.grafana_updater --repair-wazuh-source
+```
+
+This explicitly writes the existing Wazuh data source in place, preserving its
+UID, then updates the System Monitoring dashboard. Configure the installer's
+`GRAFANA_*` verified HTTPS credentials, `WAZUH_INDEXER_USER/PASSWORD`, and
+`WAZUH_INDEXER_CA_FILE` containing only the public indexer CA. Where needed, set
+`WAZUH_INDEXER_SERVER_NAME` to its verified certificate name. Use an index reader
+account. The repair enables CA verification, refreshes authentication and fixes
+the index/time-field settings; it refuses to overwrite another source type.
+Grafana API success is not acceptance: test data-source health and each panel's
+queries afterward, including a canary from a disposable challenge. Restore the
+saved Grafana database/configuration if repair fails; Grafana does not return old
+secure credential values through its API.
+
+Read-only production inspection on **2026-11-11** found ten dashboards, including
+System Monitoring. Its two stale variable UIDs, empty source index pattern and
+`@timestamp` setting remained. A Grafana proxy search returned HTTP 403. A direct
+indexer query, authenticated through existing credentials and verified TLS,
+found 12,002 process-group events and 160 command-group events in the previous
+24 hours. The new event reader also passed a live, read-only 15-minute search;
+only counts were exported from that check. These observations establish some
+ingestion, not complete command/process capture. No production configuration or
+service was changed. They supersede the earlier dashboard-inventory observation.
+
 ## Command telemetry
 
 The existing Linux `PROMPT_COMMAND`/shell-history logger is incomplete and can be

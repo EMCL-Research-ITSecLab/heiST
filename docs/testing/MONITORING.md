@@ -29,6 +29,15 @@ historical startup log or replace a live sensor/flow rehearsal.
 
 ## Appliance acceptance matrix
 
+`tests/test_monitoring_activity.py` verifies fixed index/time/scope queries,
+partial-result rejection, bounded event projections, empty-state honesty and
+dashboard data-source/time-field contracts. The real PostgreSQL administrator
+tests check role revocation and SQL-derived VM scope. Browser tests load activity
+only on demand, render injected HTML as text, exercise mobile overflow and clear
+the table when hidden. The Grafana source-repair tests preserve existing UIDs and
+reject missing trust or denied lookups before writes. Source-repair API fixtures
+do not replace native Grafana panel/query acceptance.
+
 Test the real nonroot observer unit separately, after staging the matching runtime
 with `rehearse_monitoring.py`:
 

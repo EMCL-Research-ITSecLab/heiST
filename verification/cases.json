@@ -2256,6 +2256,26 @@
         "tools/local/rehearse_watchdog.py",
         "deploy/monitoring/systemd/heist-watchdog.service"
       ]
+    },
+    {
+      "id": "AUTO-MONITORING-ACTIVITY",
+      "area": "monitoring_activity",
+      "mode": "automated",
+      "procedure": "Run tests/test_monitoring_activity.py, administrator authorization tests and browser command/process activity contracts.",
+      "expected": "Only current administrators can request bounded, fixed-window event searches; SQL-derived instance scope, partial-result rejection, private field exclusion, empty-state honesty and escaped mobile rendering pass. Dashboard references resolve to the configured Wazuh source and timestamp field.",
+      "evidence": [
+        "source-bound suite receipt",
+        "browser verification output"
+      ],
+      "sources": [
+        "tests/test_monitoring_activity.py",
+        "tests/test_platform_administration.py",
+        "tests/test_web_administration.py",
+        "tests/browser/ui_smoke.py",
+        "heist/monitoring/activity.py",
+        "frontend/src/features/administration/ActivityPanel.tsx",
+        "heist/monitoring/grafana/datasources.py"
+      ]
     }
   ]
 }

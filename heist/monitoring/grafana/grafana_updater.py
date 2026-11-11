@@ -668,6 +668,7 @@ Examples:
     parser.add_argument("-i", "--interactive", action="store_true", help="Interactive mode")
     parser.add_argument("--clickhouse", action="store_true", help="Update all ClickHouse dashboards")
     parser.add_argument("--wazuh", action="store_true", help="Update Wazuh dashboard")
+    parser.add_argument("--repair-wazuh-source", action="store_true", help="Update Wazuh source credentials, index, time field and CA trust, then its dashboard; requires a Grafana recovery backup")
     parser.add_argument("--systemd", action="store_true", help="Update Systemd Services dashboard")
     parser.add_argument("--list", action="store_true", help="List all dashboards")
     parser.add_argument("--list-datasources", action="store_true", help="List all datasources")
@@ -704,6 +705,14 @@ Examples:
         list_datasources(session)
     elif args.clickhouse:
         update_clickhouse_dashboards(session, args.datasource_uid)
+    elif args.repair_wazuh_source:
+        from heist.monitoring.grafana.datasources import update_wazuh
+        try:
+            uid = update_wazuh(session, GRAFANA_URL, os.environ)
+            if not update_wazuh_dashboard(session, uid):raise RuntimeError('Dashboard update was not confirmed')
+        except (OSError, ValueError, KeyError, RuntimeError, requests.RequestException):
+            log_error('Wazuh source repair failed; inspect Grafana and its saved recovery backup')
+            raise SystemExit(1)
     elif args.wazuh:
         update_wazuh_dashboard(session, args.datasource_uid)
     elif args.systemd:

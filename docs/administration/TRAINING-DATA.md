@@ -1,9 +1,9 @@
 # Network traffic for training
 
 The operator-selected user policy is **eligible by default, with an opt-out**.
-Signup includes an optional exclusion checkbox, separate from required legal
-acceptance. Existing accounts receive the same default when migration0012 runs.
-Users can change their own preference under **Profile → Training data** without
+Signup has no training preference control. Existing accounts receive the same
+default when migration0012 runs. Users can uncheck **Allow my challenge traffic
+in training datasets** under **Profile → Training data** without
 losing access to exercises. The setting applies to training use, not the existing
 operational security monitoring.
 

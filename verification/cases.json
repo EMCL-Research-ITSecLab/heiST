@@ -2282,7 +2282,7 @@
       "area": "training_privacy",
       "mode": "automated",
       "procedure": "Run tests/test_training_policy.py, account/signup PostgreSQL tests and browser opt-out tests; run the strict suite with tools/testing/postgres.py using a new private report.",
-      "expected": "Default-on preference, optional signup exclusion, private session-owned CSRF-protected updates, idempotent revisions and revision history pass; opted-out, changed, unknown, shared and unclosed training captures are blocked. This is policy admission testing, not capture/export acceptance.",
+      "expected": "Default-on preference changed only in account settings, no signup control, private session-owned CSRF-protected updates, idempotent revisions and revision history pass; opted-out, changed, unknown, shared and unclosed training captures are blocked. This is policy admission testing, not capture/export acceptance.",
       "evidence": [
         "source-bound strict suite receipt",
         "browser output"

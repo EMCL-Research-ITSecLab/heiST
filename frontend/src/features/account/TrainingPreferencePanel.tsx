@@ -29,9 +29,9 @@ export function TrainingPreferencePanel() {
     <Notice error={action.error} message={action.message} />
     <ResourceState {...resource}>
       {typeof data.opted_out === 'boolean' ? <label className="check">
-        <input type="checkbox" checked={choice ?? truth(data.opted_out)} disabled={action.busy}
-          onChange={event => change(event.target.checked)} />
-        <span>Exclude my challenge traffic from training datasets.</span>
+        <input type="checkbox" checked={!(choice ?? truth(data.opted_out))} disabled={action.busy}
+          onChange={event => change(!event.target.checked)} />
+        <span>Allow my challenge traffic in training datasets.</span>
       </label> : <p>Training preference could not be loaded. <button className="secondary small" onClick={resource.reload}>Try again</button></p>}
     </ResourceState>
   </Card>;

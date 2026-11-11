@@ -14,7 +14,7 @@
     "frontend/src/components/ui.tsx": "6bd7e951f18365b93c5d0b79386c4d6672bfbe97414a89e992b0b14ee968c728",
     "frontend/src/env.d.ts": "65996936fbb042915f7b74a200fcdde7e410f32a669b1ab9597cfaa4b0faddb5",
     "frontend/src/features/account/ProfilePage.tsx": "25cce95e6e8db91a503d158a9c2f0492601a4fb4c71ef22735d1a423b79b0640",
-    "frontend/src/features/account/TrainingPreferencePanel.tsx": "efad46345ec08e7c936a34c89a10edb7e835b94a3b9f24f61bfafb46bafb2de6",
+    "frontend/src/features/account/TrainingPreferencePanel.tsx": "344703282451370de824bd769328123d3ab1685df011a6b507806dba833773da",
     "frontend/src/features/administration/ActivityPanel.tsx": "0705491445da3c369e24ffc2b6fe566d00e98bcaf9abc83d9220193cfae0fdd8",
     "frontend/src/features/administration/AnnouncementManagementPage.tsx": "f124cc8f272c60591d840ed611b3948141f7f359a224670b2931f880deb98a00",
     "frontend/src/features/administration/ArtifactsPage.tsx": "05441570e206dfb6391ba1f7ea9cf86049d854c39840aaa92f8b205d85ce5243",
@@ -28,7 +28,7 @@
     "frontend/src/features/administration/PlatformStatusPanel.tsx": "c353ff7ded370367ba46d40cae5d53020024fe7bf5a9f3b2ed055c815597e254",
     "frontend/src/features/administration/UserManagementPage.tsx": "95d63fc656050032db482598a05ab535f56827c98159f4eeacb36fa5e186d7f2",
     "frontend/src/features/administration/useArtifactUpload.ts": "1f1fff9299ea5309592c27cf9dcca6990a57a8d857ca5ab076b34e6efe3c46e0",
-    "frontend/src/features/auth/AuthPage.tsx": "36f7a4a742c37c060d1ffb027515a0f153ff0ffcf594c6cd33675963cda9dc56",
+    "frontend/src/features/auth/AuthPage.tsx": "9e4f90a6b5b86ae88d3bd23f405689ec6950f45f15af90da5faca55d589cf3b0",
     "frontend/src/features/challenges/ChallengePage.tsx": "4411e07db1d7bd9630edb4008cb5387f76e23951da467da5e8c0fa5119ea5277",
     "frontend/src/features/challenges/ExplorePage.tsx": "01914bf9cfe49679b662d9138ae80b171bfe5edf80f06aa553e838a2150746bc",
     "frontend/src/features/community/FeedPage.tsx": "63f4eba5001ae14a718ea876031c4147cd6f5bb5eb3fe30e5480e4a255d9642d",
@@ -129,7 +129,7 @@
       },
       "full_page": true,
       "document_height": 2253,
-      "sha256": "820fb9b29ce86e46d457000976548117016b306d314e7dadbf7983cf7f6edf9c"
+      "sha256": "c2cfb2ed95084834753b2d9b1152e056727080d27c0fa8a67f66912f801c2391"
     },
     {
       "file": "public_profile_light.png",
@@ -323,8 +323,8 @@
         "height": 1000
       },
       "full_page": true,
-      "document_height": 1178,
-      "sha256": "89aaad6c56bf2b4ef3da4415fc6e121390ccc963bab48bb91623b81170b293cc"
+      "document_height": 1060,
+      "sha256": "30f5c4623e89bfb6dc1aff1154ee78b44d8e964cfc5aa55ab4c13d7e6e74a520"
     },
     {
       "file": "reset_password_light.png",
@@ -480,7 +480,7 @@
       },
       "full_page": true,
       "document_height": 2253,
-      "sha256": "aad6d0667572d07f6d6f0fd206a0120254ab7982e2f0f390ce306984427a8cdd"
+      "sha256": "d366db7accba56f1793999ac79c3fbfafd2b1c6aac4af69914e608ef6fdd9d95"
     },
     {
       "file": "public_profile_dark.png",
@@ -636,7 +636,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "311eac1c753398de2a03f16f4b6c1d08c2264c5fa6f63ccaa863bd0d7cbaff72"
+      "sha256": "4f5409eebde200c0a0c4e0aeabb91b0e18580119a2b1a4c4bc8c6b55ab03354b"
     },
     {
       "file": "instance_details_dark.png",
@@ -674,8 +674,8 @@
         "height": 1000
       },
       "full_page": true,
-      "document_height": 1178,
-      "sha256": "e98ff2ec1be6928ef858c723d42d1a37e6738c333906847eea8e8d865c908861"
+      "document_height": 1060,
+      "sha256": "11235875cae45d3abcc3022246764156f24682415f9de3e413ec25b360f56f57"
     },
     {
       "file": "reset_password_dark.png",

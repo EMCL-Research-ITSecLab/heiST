@@ -2,14 +2,41 @@
 
 ## Current acceptance scope
 
-The 2026-11-11 RC5 development candidate adds connected platform management,
-durable administrator work, configuration history and pool policy revisions.
-Local evidence includes the strict PostgreSQL suite, built-UI browser workflows
-and a real systemd worker exercised with inert hypervisor commands. Its new
-worker unit is included in deployment/recovery configuration and pending work
-blocks rollout admission. These local results do not complete native Proxmox
-effects, fresh installation, whole-platform upgrade/failure/rollback or training
-capture/revocation acceptance. This management candidate has not been deployed.
+On 2026-11-11, production completed the RC5 upgrade from `651263f` to
+`68c683b`, including the connected administration UI, durable administrator
+worker, configuration history, pool policies and challenge countdown fix.
+The operator explicitly waived the unfinished production-clone rehearsal for
+RC5 only. The full upgrade/failure/rollback rehearsal remains **not passed**;
+clean-host installation acceptance remains deferred and its installer disabled.
+
+The controller verified 25 VM/template archives, SQL/configuration and registered
+source-image checkpoints. The application-only correction `47481b0` subsequently
+fixed a real Proxmox reboot race: an accepted task may briefly report the VM as
+stopped before it becomes running. The worker now waits for observed state without
+repeating the command. All 643 strict Python tests passed with zero skips. The
+unchanged UI passed 42 browser checks. Production acceptance passed 10 API checks,
+28 desktop/mobile administration checks and a disposable student's real challenge
+start, countdown, administrator reboot, stop and account cleanup. Protected student
+data was verified unchanged. These results do not certify whole-platform recovery.
+
+The monitoring collector correction `95ba0ea` supports Grafana unified dashboard
+storage and uses systemd to reopen rotated Suricata logs. The `dd0bfee` unit change
+allows advisory LVM locks needed by the read-only storage probe. The collector is
+installed as a separately receipted operational artifact; the application remains
+at `47481b0`. Thirty-six focused monitoring tests passed. Grafana datasource and
+systemd metric queries, ClickHouse sensor heartbeats and the administrator's
+command/process reader were verified. The final platform snapshot had 93 checks,
+no failures and five explicitly unverified end-to-end coverage checks. The archive
+host's independent watchdog is enabled with journal alerts and reports those same
+limits. Training capture remains disabled; exhaustive command/packet completeness,
+training consent revocation and correlated recovery canaries remain acceptance work.
+
+For this deployment, reverse the application-only correction before invoking the
+original core transaction's full-platform rollback. The private candidate's
+recovery instructions identify the exact runner and checkpoint records. Grafana
+recovery configuration stays on its VM; additional operational configuration
+backups and source/checksum receipts are retained privately. Do not infer a passing
+clone rehearsal from successful production checks or from the operator's waiver.
 
 On 2026-11-10, the existing production installation completed an explicitly
 authorized deployment to `651263f7096722aef978fe9b29de86f29a06e8f4`

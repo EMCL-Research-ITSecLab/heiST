@@ -42,6 +42,15 @@ class AdministratorQueueTests(unittest.TestCase):
         self.assertEqual([event['stage'] for event in operation['events']],['checking_assignment','requesting_shutdown','verifying_vm_state'])
         self.assertNotIn('expected',str(history))
 
+    def test_reboot_waits_for_transient_power_state_without_replaying_command(self):
+        self.service.vm_control.side_effect=lambda *args:setattr(self.service.status,'side_effect',['stopped','unavailable','running'])
+        self.enqueue('reboot')
+        with patch('heist.platform.administration.time.sleep') as pause:
+            self.assertTrue(self.queue.run_one())
+        self.service.vm_control.assert_called_once_with(self.machine,'reboot')
+        self.assertEqual(pause.call_count,2)
+        self.assertEqual(self.sql('SELECT state FROM administrator_requests WHERE id=%s',('a'*32,)),[('SUCCEEDED',)])
+
     def test_pending_duplicate_cancel_and_role_revocation_are_checked(self):
         job=self.enqueue()
         self.assertEqual(self.enqueue()['job_id'],job['job_id'])

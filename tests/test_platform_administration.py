@@ -231,3 +231,20 @@ class VMStatusTests(unittest.TestCase):
         from unittest.mock import patch
         with patch('heist.platform.administration.subprocess.run',side_effect=subprocess.TimeoutExpired('qm',2)):
             self.assertEqual(Administration.vm_status(123),'unavailable')
+
+
+class VmPowerObservationTests(unittest.TestCase):
+    def test_transient_reboot_states_are_observed_until_running(self):
+        service=Administration.__new__(Administration)
+        service.status=Mock(side_effect=['stopped','unavailable','running'])
+        clock=Mock(side_effect=[0,0,1]);pause=Mock()
+        service.wait_for_vm_state(123,'running',clock=clock,pause=pause)
+        self.assertEqual(service.status.call_count,3)
+        self.assertEqual([call.args for call in pause.call_args_list],[(1,),(1,)])
+
+    def test_unconfirmed_state_times_out_instead_of_claiming_success(self):
+        service=Administration.__new__(Administration);service.status=Mock(return_value='stopped')
+        clock=Mock(side_effect=[0,0,60]);pause=Mock()
+        with self.assertRaisesRegex(RuntimeError,'VM state was not confirmed'):
+            service.wait_for_vm_state(123,'running',clock=clock,pause=pause)
+        pause.assert_called_once_with(1)

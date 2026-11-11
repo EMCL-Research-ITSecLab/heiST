@@ -9,6 +9,7 @@ import re
 import os
 import hashlib
 import json
+import time
 from itertools import islice
 
 from psycopg2.extras import RealDictCursor
@@ -292,7 +293,7 @@ class Administration:
             self.vm_control(machine_id,action)
             progress('verifying_vm_state')
             target='stopped' if action=='shutdown' else 'running'
-            if self.status(machine_id)!=target:raise RuntimeError('VM state was not confirmed')
+            self.wait_for_vm_state(machine_id,target)
             return {'machine_id':machine_id,'action':action,'status':target,'guest_readiness':'unverified'}
         scope,key=('user',preview['user_id']) if preview['user_id'] else ('instance',identifier)
         return self.journal.execute(scope,key,'admin_vm_'+action,{'actor':actor,'instance':identifier,'machine':machine_id,'expected':expected},change,
@@ -310,6 +311,25 @@ class Administration:
                 return value.stdout.strip().removeprefix('status: ')
         except (OSError,subprocess.TimeoutExpired):pass
         return 'unavailable'
+
+    def wait_for_vm_state(self, identifier, target, *, timeout=60, clock=None, pause=None):
+        """Observe an already submitted task; never repeat its power command.
+
+        A successful Proxmox reboot can briefly report stopped while QEMU comes
+        back. Unavailable status is also possible during that transition. Only
+        the requested final power state confirms completion; a bounded timeout
+        leaves the existing operation held for reconciliation.
+        """
+        clock = clock or time.monotonic
+        pause = pause or time.sleep
+        deadline = clock()+timeout
+        while True:
+            if self.status(identifier) == target:
+                return
+            remaining = deadline-clock()
+            if remaining <= 0:
+                raise RuntimeError('VM state was not confirmed')
+            pause(min(1,remaining))
 
     def change_instance(self, actor, identifier, action, *, request_id=None, expected=None):
         if action not in ('release','rebuild','remove'):raise AdminError('Unknown instance action',400)

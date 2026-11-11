@@ -164,9 +164,6 @@ class PoolManager:
             current_pool_size = self.get_current_pool_size(connection, challenge_template_id)
             target_pool_size = self.get_target_pool_size(connection, challenge_template_id)
 
-            target_pool_size = max(self.minimal_pool_size, target_pool_size)
-            target_pool_size = min(self.maximal_pool_size, target_pool_size)
-
             running_warmups_count = self.get_current_provisioning_for_pool_count(connection, challenge_template_id)
             total_effective_pool_size = current_pool_size + running_warmups_count
 
@@ -289,10 +286,15 @@ class PoolManager:
         return size
 
     def get_target_pool_size(self, connection, challenge_template_id):
+        """Explicit administrator targets override the forecast's minimum floor."""
         with connection.cursor() as cursor:
             cursor.execute('SELECT size FROM public.pool_overrides WHERE challenge_template_id=%s AND enabled',(challenge_template_id,))
             override=cursor.fetchone()
             if override is not None:return int(override[0])
+        forecast = self.forecast_pool_size(connection, challenge_template_id)
+        return min(self.maximal_pool_size, max(self.minimal_pool_size, forecast))
+
+    def forecast_pool_size(self, connection, challenge_template_id):
         current_time = datetime.datetime.now()
         print(f"[POOL] Calculating target pool size for {challenge_template_id} at {current_time}")
 

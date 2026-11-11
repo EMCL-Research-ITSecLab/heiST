@@ -106,6 +106,24 @@ class AdministratorQueueTests(unittest.TestCase):
         self.service.set_pool(self.admin,self.template,2,False,result['revision'])
         self.service.vm_control.assert_not_called()
 
+    def test_zero_manual_pool_target_does_not_schedule_a_minimum_copy(self):
+        from heist.platform.pools.manager import PoolManager
+        self.sql('UPDATE challenge_templates SET is_active=TRUE,ready_to_launch=TRUE WHERE id=%s',(self.template,))
+        self.service.set_pool(self.admin,self.template,0,True,0)
+        manager=PoolManager.__new__(PoolManager)
+        manager.minimal_pool_size=1;manager.maximal_pool_size=10
+        with self.psycopg2.connect(**self.settings) as db, \
+             patch('heist.platform.pools.manager.pool_template_ids',return_value=[self.template]), \
+             patch('heist.platform.pools.manager.threading.Thread') as thread:
+            manager._check_and_maintain_pool(db)
+            thread.assert_not_called()
+            self.assertEqual(manager.get_target_pool_size(db,self.template),0)
+            self.sql('UPDATE pool_overrides SET enabled=FALSE WHERE challenge_template_id=%s',(self.template,))
+            with patch.object(manager,'forecast_pool_size',return_value=0):
+                self.assertEqual(manager.get_target_pool_size(db,self.template),1)
+            with patch.object(manager,'forecast_pool_size',return_value=100):
+                self.assertEqual(manager.get_target_pool_size(db,self.template),10)
+
     def test_internal_http_acknowledges_queue_without_executing_vm_command(self):
         from pathlib import Path
         from heist.api.internal import create_app

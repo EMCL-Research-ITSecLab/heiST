@@ -36,7 +36,7 @@
     "frontend/src/features/administration/UserManagementPage.tsx": "95d63fc656050032db482598a05ab535f56827c98159f4eeacb36fa5e186d7f2",
     "frontend/src/features/administration/useArtifactUpload.ts": "1f1fff9299ea5309592c27cf9dcca6990a57a8d857ca5ab076b34e6efe3c46e0",
     "frontend/src/features/auth/AuthPage.tsx": "9e4f90a6b5b86ae88d3bd23f405689ec6950f45f15af90da5faca55d589cf3b0",
-    "frontend/src/features/challenges/ChallengePage.tsx": "4411e07db1d7bd9630edb4008cb5387f76e23951da467da5e8c0fa5119ea5277",
+    "frontend/src/features/challenges/ChallengePage.tsx": "a7a394150c70e9178e00f938a07405c95c9893151e861c45eccb0fa0847d61f4",
     "frontend/src/features/challenges/ExplorePage.tsx": "01914bf9cfe49679b662d9138ae80b171bfe5edf80f06aa553e838a2150746bc",
     "frontend/src/features/community/FeedPage.tsx": "63f4eba5001ae14a718ea876031c4147cd6f5bb5eb3fe30e5480e4a255d9642d",
     "frontend/src/features/dashboard/DashboardAnnouncements.tsx": "70b7df109616ba04a97bb529c79b454791525dbaef689b72fef9e2e2b65a028f",
@@ -383,7 +383,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "de1c891f557e7aecce492d5467e9651e38992660a3779e218e4263358e858eb7"
+      "sha256": "89b838994f326dcef1aff4a537ca88a7cdbb0a55a7af6a377194d638cdfd41a5"
     },
     {
       "file": "instance_details_light.png",

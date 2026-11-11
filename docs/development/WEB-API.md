@@ -15,6 +15,14 @@ separate unprivileged worker handles sealed image transfers. Installation/rollou
 integration and whole-appliance acceptance remain release gates; these contracts
 alone do not authorize deploying the migration.
 
+## Challenge timing
+
+Student challenge timing reports `timing_ready: false` and
+`remaining_seconds: null` while activation has not replaced the pool's placeholder
+expiry with a real deadline. The browser shows preparation, disables extensions
+and refreshes in place. It never substitutes a guessed one-hour deadline.
+Finalized timing counts down normally and permits the full six extensions.
+
 ## Connected administrator management
 
 All paths below require a current administrator session. Mutations also require

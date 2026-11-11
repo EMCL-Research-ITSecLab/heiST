@@ -71,6 +71,25 @@ class ChallengeTests(unittest.TestCase):
         self.assertEqual(solved['leaderboard'][0]['username'], self.username)
         self.platform.request.assert_not_called()
 
+    def test_first_assignment_does_not_expose_pool_expiry_before_activation(self):
+        self.login()
+        instance=self.instance()
+        self.sql("UPDATE challenges SET expires_at=CURRENT_TIMESTAMP+INTERVAL '100 years' WHERE id=%s",(instance,))
+        initial=self.request('challenge?id='+str(self.identifier)).json['challenge']
+        self.assertEqual(initial['challenge_status']['challenge_status'],'running')
+        self.assertFalse(initial['timing_ready'])
+        self.assertIsNone(initial['remaining_seconds'])
+        self.assertEqual(self.action('extend_time').status_code,409)
+        self.assertEqual(self.sql('SELECT used_extensions FROM challenges WHERE id=%s',(instance,)),[(0,)])
+        self.sql("UPDATE challenges SET expires_at=CURRENT_TIMESTAMP+INTERVAL '1 hour' WHERE id=%s",(instance,))
+        activated=self.request('challenge?id='+str(self.identifier)).json['challenge']
+        self.assertTrue(activated['timing_ready'])
+        self.assertTrue(3590<=activated['remaining_seconds']<=3600)
+        self.sql("UPDATE challenges SET expires_at=CURRENT_TIMESTAMP+INTERVAL '7 hours',used_extensions=6 WHERE id=%s",(instance,))
+        extended=self.request('challenge?id='+str(self.identifier)).json['challenge']
+        self.assertTrue(extended['timing_ready'])
+        self.assertTrue(25190<=extended['remaining_seconds']<=25200)
+
     def test_drafts_and_retired_exercises_are_hidden_from_unrelated_students(self):
         self.login()
         self.sql('UPDATE challenge_templates SET creator_id=NULL,is_active=FALSE WHERE id=%s', (self.identifier,))

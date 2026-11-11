@@ -9,6 +9,34 @@ from tests.browser.support import BrowserFixture
 
 
 class BrowserTests(BrowserFixture):
+    def test_initial_launch_waits_for_real_deadline_and_updates_without_navigation(self):
+        self.role='student'
+        state={'started':False,'activated':False,'launches':0}
+        self.page.clock.install()
+        def challenge(route):
+            if route.request.method=='POST':
+                state['started']=True;state['launches']+=1
+                return route.fulfill(json={'success':True,'message':'Challenge started','remaining_seconds':None,'timing_ready':False})
+            return route.fulfill(json={'success':True,'challenge':{'id':4,'name':'Timer regression','is_active':True,
+                'challenge_status':{'challenge_status':'running' if state['started'] else 'not_tried'},
+                'remaining_seconds':3600 if state['activated'] else None,'timing_ready':state['activated'],'remaining_extensions':6}})
+        self.page.route('**/api/challenge?**',challenge)
+        self.page.route('**/api/challenge',challenge)
+        self.visit('/challenge?id=4')
+        self.page.get_by_role('button',name='Start investigation',exact=False).click()
+        timer=self.page.locator('.time-remaining strong')
+        timer.get_by_text('Preparing…',exact=True).wait_for()
+        self.assertTrue(self.page.get_by_role('button',name='Extend time',exact=False).is_disabled())
+        self.assertNotIn('876',timer.inner_text())
+        state['activated']=True
+        self.page.clock.fast_forward(15000)
+        timer.get_by_text('01:00:00',exact=True).wait_for()
+        self.assertFalse(self.page.get_by_role('button',name='Extend time',exact=False).is_disabled())
+        self.page.clock.fast_forward(1000)
+        timer.get_by_text('00:59:59',exact=True).wait_for()
+        self.assertEqual(state['launches'],1)
+        self.assertTrue(self.page.url.endswith('/challenge?id=4'))
+
     def test_unconfirmed_training_preference_is_not_reported_as_saved(self):
         self.role='student';writes=[]
         def preference(route):

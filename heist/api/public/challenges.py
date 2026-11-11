@@ -7,6 +7,7 @@ from .validation import positive_id, text
 
 blueprint = Blueprint('challenges', __name__)
 MAX_EXTENSIONS = 6
+MAX_LIFETIME_SECONDS = (MAX_EXTENSIONS+1)*3600
 
 
 def visible_challenge(user, template_id):
@@ -23,8 +24,14 @@ def visible_challenge(user, template_id):
 
 def timing(user_id, template_id):
     used = repository().scalar('get_remaining_extensions_for_user_challenge', user_id, template_id)
+    remaining = repository().scalar('get_remaining_seconds_for_user_challenge', user_id, template_id)
+    # Assignment becomes visible before activation commits the one-hour deadline.
+    # Pool instances retain a 100-year placeholder until then. It is not student
+    # time, and must not be displayed or clamped to a guessed one-hour deadline.
+    ready = type(remaining) is int and remaining <= MAX_LIFETIME_SECONDS
     return {'elapsed_seconds': max(0, repository().scalar('get_elapsed_seconds_for_challenge', user_id, template_id) or 0),
-            'remaining_seconds': max(0, repository().scalar('get_remaining_seconds_for_user_challenge', user_id, template_id) or 0),
+            'remaining_seconds': max(0, remaining) if ready else None,
+            'timing_ready': ready,
             'remaining_extensions': max(0, MAX_EXTENSIONS-used) if used is not None else 0}
 
 
@@ -137,6 +144,8 @@ def extend(user, template_id):
         record = repo.call('get_id_and_used_extensions_of_running_challenge', user['id'], template_id, one=True)
         if not record or (repo.scalar('get_remaining_seconds_for_user_challenge', user['id'], template_id) or 0) <= 0:
             raise ApiError('You do not have this challenge running', 409)
+        if not timing(user['id'], template_id)['timing_ready']:
+            raise ApiError('Your challenge is still preparing; wait before extending time', 409)
         if record['used_extensions'] >= MAX_EXTENSIONS:
             raise ApiError('No time extensions remain', 409)
         repo.call('extend_user_challenge_time', record['id'], 1)

@@ -9,6 +9,7 @@ export function Challenge() {
   const resource = useResource(`/api/challenge?id=${id}`, 15000), challenge = row(resource.data.challenge), status = row(challenge.challenge_status), action = useAction();
   const [flag, setFlag] = useState(''), [confirm, setConfirm] = useState(false), [tick, setTick] = useState(0);
   const running = text(status.challenge_status) === 'running';
+  const timingReady = challenge.timing_ready !== false && challenge.remaining_seconds != null;
   useEffect(() => { const timer = window.setInterval(() => setTick(v => v + 1), 1000); return () => clearInterval(timer); }, []);
   useEffect(() => { setTick(0); }, [resource.data]);
   const remaining = Math.max(0, number(challenge.remaining_seconds) - tick);
@@ -116,17 +117,17 @@ export function Challenge() {
           <Card title="Your environment">
             <span className="environment-glyph" aria-hidden>⌘</span>
             <h3>
-              {running ? 'Your lab is running' : 'Ready to investigate?'}
+              {running ? timingReady ? 'Your lab is running' : 'Preparing your lab…' : 'Ready to investigate?'}
             </h3>
             <p className="muted">Connect through your heiST VPN to access the isolated lab.</p>
             {running ? <>
               <div className="time-remaining">
                 <small>TIME REMAINING</small>
                 <strong className="mono">
-                  {duration(remaining)}
+                  {timingReady ? duration(remaining) : 'Preparing…'}
                 </strong>
               </div>
-              <button className="full secondary" disabled={action.busy || number(challenge.remaining_extensions) === 0} onClick={() => void operate('extend_time')}>Extend time ({number(challenge.remaining_extensions)} left)</button>
+              <button className="full secondary" disabled={action.busy || !timingReady || number(challenge.remaining_extensions) === 0} onClick={() => void operate('extend_time')}>Extend time ({number(challenge.remaining_extensions)} left)</button>
               <button className="full danger subtle" disabled={action.busy} onClick={() => setConfirm(true)}>Stop this instance</button>
               <div className="connection-info">
                 <strong>Connection details</strong>

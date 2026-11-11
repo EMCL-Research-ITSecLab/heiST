@@ -215,6 +215,34 @@ class HealthTests(unittest.TestCase):
             self.assertEqual(dashboards(missing)['state'], 'unknown')
             self.assertFalse(missing.exists())
 
+    def test_grafana_unified_storage_counts_only_live_dashboard_resources(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory)/'grafana.db'
+            with sqlite3.connect(path) as db:
+                db.execute('CREATE TABLE dashboard (is_folder INTEGER)')
+                db.execute('CREATE TABLE resource ("group" TEXT, resource TEXT, action INTEGER)')
+                db.executemany('INSERT INTO resource VALUES (?, ?, ?)', [
+                    ('dashboard.grafana.app', 'dashboards', 3),
+                    ('advisor.grafana.app', 'checktypes', 1),
+                    ('dashboard.grafana.app', 'folders', 1)])
+            self.assertEqual(dashboards(path)['state'], 'failed')
+            with sqlite3.connect(path) as db:
+                db.executemany('INSERT INTO resource VALUES (?, ?, ?)', [
+                    ('dashboard.grafana.app', 'dashboards', 1),
+                    ('dashboard.grafana.app', 'dashboards', 2)])
+            result = dashboards(path)
+            self.assertEqual(result['state'], 'ok')
+            self.assertIn('2 dashboards stored', result['summary'])
+            with sqlite3.connect(path) as db:
+                self.assertEqual(db.execute('SELECT COUNT(*) FROM resource').fetchone()[0], 5)
+
+    def test_unrecognized_grafana_storage_is_unverified(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory)/'grafana.db'
+            with sqlite3.connect(path) as db:
+                db.execute('CREATE TABLE unrelated (id INTEGER)')
+            self.assertEqual(dashboards(path)['state'], 'unknown')
+
     def test_containerized_wazuh_does_not_require_host_manager_unit(self):
         run = Mock(return_value=subprocess.CompletedProcess([],0,
             'single-node-wazuh.manager-1\trunning\tUp 1 hour\n'

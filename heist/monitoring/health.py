@@ -168,7 +168,19 @@ def dashboards(path=Path('/var/lib/grafana/grafana.db')):
     try:
         with sqlite3.connect(path.as_uri()+'?mode=ro', uri=True, timeout=2) as db:
             db.execute('PRAGMA query_only=ON')
-            count = db.execute('SELECT count(*) FROM dashboard WHERE is_folder=0').fetchone()[0]
+            tables = {row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+            counts = []
+            if 'dashboard' in tables:
+                counts.append(db.execute('SELECT count(*) FROM dashboard WHERE is_folder=0').fetchone()[0])
+            if 'resource' in tables:
+                # Grafana unified storage keeps live dashboard resources here.
+                # Actions 1/2 are create/update; deletion tombstones are excluded.
+                counts.append(db.execute(
+                    'SELECT count(*) FROM resource WHERE "group"=? AND resource=? AND action IN (1, 2)',
+                    ('dashboard.grafana.app', 'dashboards')).fetchone()[0])
+            if not counts:
+                raise ValueError('Unrecognized Grafana storage schema')
+            count = max(counts)  # A migration may retain the same dashboards in both tables.
         return check('monitoring.grafana.dashboards', 'Grafana dashboards', 'ok' if count else 'failed',
                      f'{count} dashboards stored; data-source queries still require validation' if count else 'No dashboards stored; provision and verify the expected dashboards')
     except (OSError, ValueError, sqlite3.Error):

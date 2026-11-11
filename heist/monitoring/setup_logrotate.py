@@ -78,9 +78,9 @@ def deploy_logrotate_config():
     endscript
     olddir /var/log/suricata/rotated/daily
     postrotate
-        /bin/kill -HUP `cat /var/run/suricata-vpn.pid 2>/dev/null` 2>/dev/null || true
-        /bin/kill -HUP `cat /var/run/suricata-dmz.pid 2>/dev/null` 2>/dev/null || true
-        /bin/kill -HUP `cat /var/run/suricata-backend.pid 2>/dev/null` 2>/dev/null || true
+        /bin/systemctl kill --kill-whom=main --signal=HUP suricata-vpn.service 2>/dev/null || true
+        /bin/systemctl kill --kill-whom=main --signal=HUP suricata-dmz.service 2>/dev/null || true
+        /bin/systemctl kill --kill-whom=main --signal=HUP suricata-backend.service 2>/dev/null || true
         CURRENT_DATE=$(date +%Y-%m-%d)
         TARGET_DIR="/var/log/suricata/rotated/${{CURRENT_DATE}}"
         mkdir -p "$TARGET_DIR"
@@ -105,9 +105,9 @@ def deploy_logrotate_config():
     endscript
     olddir /var/log/suricata/rotated/daily
     postrotate
-        /bin/kill -HUP `cat /var/run/suricata-vpn.pid 2>/dev/null` 2>/dev/null || true
-        /bin/kill -HUP `cat /var/run/suricata-dmz.pid 2>/dev/null` 2>/dev/null || true
-        /bin/kill -HUP `cat /var/run/suricata-backend.pid 2>/dev/null` 2>/dev/null || true
+        /bin/systemctl kill --kill-whom=main --signal=HUP suricata-vpn.service 2>/dev/null || true
+        /bin/systemctl kill --kill-whom=main --signal=HUP suricata-dmz.service 2>/dev/null || true
+        /bin/systemctl kill --kill-whom=main --signal=HUP suricata-backend.service 2>/dev/null || true
         CURRENT_DATE=$(date +%Y-%m-%d)
         TARGET_DIR="/var/log/suricata/rotated/${{CURRENT_DATE}}"
         mkdir -p "$TARGET_DIR"

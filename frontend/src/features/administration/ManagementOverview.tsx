@@ -77,7 +77,7 @@ function AttentionPanel() {
     <ResourceState {...health}>
       {data.database !== 'ready' && <p className="notice">Database readiness is unverified. <Link href="/operations?tab=health">Inspect health</Link></p>}
       {truth(data.maintenance) && <p className="notice">Maintenance mode is on.</p>}
-      {monitoring.status === 'stale' || !['ok', 'warning', 'failed'].includes(text(monitoring.status)) ? <p className="notice">Current monitoring evidence is unavailable or stale.</p> : <>
+      {monitoring.status === 'stale' || !['ok', 'warning', 'failed', 'unknown'].includes(text(monitoring.status)) ? <p className="notice">Current monitoring evidence is unavailable or stale.</p> : <>
         {failed.map(check => <p key={text(check.id)} className="notice"><strong>{text(check.label)}</strong>: {text(check.summary)} <Link href="/operations?tab=health">Inspect</Link></p>)}
         {!failed.length && <p>No failed checks in the current monitoring receipt.</p>}
         {uncertain.length > 0 && <p>{uncertain.length} checks need verification. <Link href="/operations?tab=health">Review evidence</Link></p>}

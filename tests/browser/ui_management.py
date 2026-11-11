@@ -15,6 +15,24 @@ class ManagementBrowserTests(BrowserFixture):
         self.visit(path)
         self.page.wait_for_function("!document.querySelector('main .loading')")
 
+    def test_fresh_unverified_coverage_is_distinct_from_missing_or_stale_evidence(self):
+        for status in ('unknown', 'stale', 'unavailable'):
+            with self.subTest(status=status):
+                self.responses['admin/operations'] = {'success': True, 'data': {
+                    'database': 'ready', 'archive': {'status': 'success'},
+                    'monitoring': {'status': status, 'checks': [
+                        {'id': 'host.end_to_end', 'label': 'End-to-end', 'state': 'unknown', 'summary': 'Canary required'}]}}}
+                self.settled('/operations')
+                main = self.page.get_by_role('main')
+                warning = main.get_by_text('Current monitoring evidence is unavailable or stale.', exact=True)
+                if status == 'unknown':
+                    self.assertEqual(warning.count(), 0)
+                    main.get_by_text('1 checks need verification.', exact=False).wait_for()
+                    main.get_by_text('No failed checks in the current monitoring receipt.', exact=True).wait_for()
+                else:
+                    warning.wait_for()
+                    self.assertEqual(main.get_by_text('No failed checks in the current monitoring receipt.', exact=True).count(), 0)
+
     def test_vm_action_previews_exact_target_and_reports_queued_not_finished(self):
         self.settled('/manage-instances?instance=101')
         self.page.get_by_role('button',name='Shut down',exact=True).first.click()

@@ -16,6 +16,7 @@ must never directly execute privileged host code.
 | `heist/artifacts/` | Resumable staging, bounded OVA inspection and isolated disk normalization; role-specific workers |
 | `heist/security/` | Password compatibility/upgrades, sessions, CSRF, authorization and rate limits |
 | `heist/platform/` | Challenge, image, pool and user/VPN application services |
+| `heist/platform/jobs/` | Durable operation receipts, resource leases and the single-host administrator worker |
 | `heist/infrastructure/` | Proxmox, guest, network and database adapters |
 | `heist/installer/` | New-host provisioning and service installation |
 | `heist/rollout/` | Versioned deployment, dependency adapters and recovery |
@@ -53,5 +54,6 @@ must never directly execute privileged host code.
 - Keep every supported function in the inventory and map behavior assertions to
   passing tests. Run the full catalogue and final-commit recovery rehearsal.
 
-This checklist is tracked work, not a statement that the migration has already
-passed. The current production baseline is untouched.
+This checklist tracks acceptance work, not a statement that the whole migration
+has passed. Existing production rollout evidence and outstanding clone tests are
+recorded in [rollout validation](../validation/rollouts.md).

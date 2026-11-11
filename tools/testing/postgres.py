@@ -15,8 +15,12 @@ IMAGE = 'postgres@sha256:f9a7b9ebf6f56201f949db745e47bc423c0f0f8294bafe991cc10bf
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--report', type=Path, required=True)
+    parser.add_argument('--native-worker', action='store_true', help='Also exercise a temporary local systemd worker with inert VM commands')
+    parser.add_argument('--wheelhouse', type=Path, help='Reviewed offline runtime wheels for the native worker test')
     args = parser.parse_args()
     report = args.report
+    if args.native_worker and (not args.wheelhouse or not args.wheelhouse.is_dir()):
+        parser.error('--native-worker requires --wheelhouse')
     if os.geteuid() != 0 or not report.is_absolute() or report.exists():
         parser.error('Run with host test privileges and a new absolute report path')
     report.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -46,6 +50,12 @@ def main():
                     cwd=ROOT,env=env,stdout=log,stderr=log,timeout=600)
             value = json.loads(report.read_text())
             print(json.dumps({key:value[key] for key in ('commit','dirty','counts','returncode')}))
+            if result.returncode == 0 and args.native_worker:
+                env.update(HEIST_TEST_WHEELHOUSE=str(args.wheelhouse.resolve()),HEIST_NATIVE_EVIDENCE_FILE=str(report.with_suffix('.native.json')))
+                with report.with_suffix('.native.log').open('xb') as log:
+                    os.fchmod(log.fileno(),0o600)
+                    result=subprocess.run([os.sys.executable,'-m','unittest','tests.native.administrator_worker','-q'],cwd=ROOT,env=env,stdout=log,stderr=log,timeout=180)
+                print(json.dumps({'native_worker_returncode':result.returncode,'evidence':str(report.with_suffix('.native.json'))}))
             return result.returncode
         finally:
             subprocess.run(['docker','rm','--force',name],capture_output=True)

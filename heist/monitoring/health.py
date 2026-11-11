@@ -19,7 +19,7 @@ from urllib.parse import urlsplit
 
 
 ROLE_UNITS = {
-    'host': ('backend.service', 'pool_manager.service', 'cleanup.service',
+    'host': ('backend.service', 'pool_manager.service', 'cleanup.service','heist-administrator-worker.service',
              'pveproxy.service', 'pvedaemon.service', 'pvestatd.service', 'pve-cluster.service',
              'dnsmasq-backend.service', 'openvpn@server.service',
              'suricata-vpn.service', 'suricata-dmz.service', 'suricata-backend.service',

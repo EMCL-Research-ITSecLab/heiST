@@ -1,5 +1,9 @@
 # Administrator operations
 
+See [platform management](MANAGEMENT.md) for the connected console, instance/VM
+actions, durable jobs, reconciliation, revision history, capacity policies,
+metadata audit and maintenance evidence.
+
 **Maintenance mode: Off** means the platform is accepting normal operations.
 **On** means an operator has entered scheduled maintenance. This is a current
 state indicator, not an unavailable or unconfigured feature. Maintenance and
@@ -31,10 +35,9 @@ Update, rollback and destructive recovery use the reviewed CLI/runbooks and the
 scheduled maintenance window. See [updates](UPDATES.md),
 [archive VM setup](LOG-ARCHIVING.md) and [release verification](../testing/TEST-CONCEPT.md).
 
-The final architecture is being migrated from PHP to the existing Flask stack.
-Do not remove the old web runtime from an installed appliance until the exact
-Flask replacement and deployment adapter pass the PHP-removal, authentication,
-file-validation, worker and recovery cases in the catalogue.
+The browser uses React and the Flask API. PHP is removed from the source tree;
+installed appliances still require the reviewed runtime deployment and recovery
+procedure before obsolete runtime packages can be removed.
 
 ## Partial imports and quarantined transfers
 
@@ -164,7 +167,7 @@ instance identity, and preserve grades. Rebuild is a fresh exercise deployment; 
 is not a restore of a student's VM snapshot. The existing teardown ownership and
 resource guards still apply. A changed assignment cannot stop a different instance.
 
-**Platform status → Recorded operations** lists journal status across users,
+**Platform status → Jobs** lists journal status across users,
 instances, templates, pools and artifacts, including jobs whose instance record
 has already been removed. Filter by operation state and use the displayed scope,
 resource and operation IDs for reconciliation. Results exclude receipt payloads,

@@ -15,6 +15,38 @@ separate unprivileged worker handles sealed image transfers. Installation/rollou
 integration and whole-appliance acceptance remain release gates; these contracts
 alone do not authorize deploying the migration.
 
+## Connected administrator management
+
+All paths below require a current administrator session. Mutations also require
+the existing CSRF protection. The browser never supplies its privileged actor ID;
+the public API derives it from the session and forwards only allowlisted internal
+operations. Restricted web-role credentials cannot read the private queue,
+exercise revisions or pool policy tables directly.
+
+| Browser endpoint | Contract |
+|---|---|
+| `GET /api/admin/overview` | Aggregate counts, global exercise readiness, host measurements and pool policy revisions |
+| `GET /api/admin/instances` | Bounded `search`, `state`, `template_id` and `page` filters |
+| `GET /api/admin/instances/<id>/preview` | Allowlisted action and optional `machine_id`; returns affected IDs and definition fingerprint |
+| `POST /api/admin/instances/<id>` | Release/rebuild/remove with `action` and exact `expected` fingerprint; returns QUEUED identity |
+| `POST /api/admin/instances/<id>/machines/<vm>` | Start/shutdown/reboot with the same preview contract; verifies instance membership |
+| `GET /api/admin/jobs/<scope>/<resource>` | Bounded safe operation history and current receipt state |
+| `POST /api/admin/jobs/<job>/cancel` | Only QUEUED work can be cancelled |
+| `POST /api/admin/jobs/<job>/resolve` | Only uncertain managed work; requires `reason` and exact operation-ID `confirmation` |
+| `POST /api/admin/pools/<exercise>` | `size` 0–10, boolean `enabled`, `expected_revision`; asynchronous policy application |
+| `GET /api/admin/audit` | Paginated exercise-event metadata |
+| `GET /api/admin/maintenance` | Release/transaction metadata, pending-work count and existing CLI acceptance verification |
+| `GET, POST /api/admin/challenges/<id>/revisions` | Owner-scoped list or record-current revision |
+| `GET /api/admin/challenges/<id>/revisions/<revision>` | Owner-scoped immutable definition |
+| `POST /api/admin/challenges/<id>/revisions/<revision>/clone` | Validate retained image identities and create a separate inactive exercise |
+
+The SQL queue acknowledges receipt separately from infrastructure completion.
+One source-verified privileged systemd worker processes it under a singleton
+lease. The operation journal preserves actor, stages and terminal outcomes;
+recovery never automatically replays uncertain work. See the
+[management runbook](../administration/MANAGEMENT.md) and
+[acceptance concept](../testing/TEST-CONCEPT.md) for deployment boundaries.
+
 ## Sessions and database boundaries
 
 `WEB_SESSION_SECRET` is a persistent 32-byte secret encoded as 64 hexadecimal

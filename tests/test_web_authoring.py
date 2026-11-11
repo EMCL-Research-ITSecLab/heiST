@@ -92,6 +92,38 @@ class AuthoringTests(unittest.TestCase):
         self.assertEqual(self.sql('SELECT COUNT(*) FROM network_connection_templates c JOIN machine_templates m ON m.id=c.machine_template_id WHERE m.challenge_template_id=%s', (identifier,))[0][0], 1)
         self.assertEqual(self.request('admin/challenges', 'POST', json=self.value).status_code, 409)
 
+    def test_revisions_preserve_old_configuration_and_clone_as_inactive(self):
+        identifier=self.create()
+        history=self.request(f'admin/challenges/{identifier}/revisions').json['data']['revisions']
+        self.assertGreaterEqual(len(history),2)
+        revision=history[0]['id']
+        self.assertNotIn(self.value['flags'][0]['flag'],json.dumps(history))
+        self.assertEqual(self.request(f'admin/challenges/{identifier}','PUT',json={**self.value,'description':'Changed metadata'}).status_code,200)
+        old=self.request(f'admin/challenges/{identifier}/revisions/{revision}').json['data']['definition']
+        self.assertEqual(old['description'],self.value['description'])
+        result=self.request(f'admin/challenges/{identifier}/revisions/{revision}/clone','POST',json={'name':self.username+' clone'})
+        self.assertEqual(result.status_code,201,result.json)
+        copied=result.json['id'];self.assertNotEqual(copied,identifier)
+        self.assertEqual(self.sql('SELECT is_active FROM challenge_templates WHERE id=%s',(copied,)),[(False,)])
+        self.assertEqual(self.sql('SELECT count(*) FROM network_templates WHERE challenge_template_id=%s',(copied,)),[(1,)])
+        self.assertEqual(self.sql('SELECT description FROM challenge_templates WHERE id=%s',(identifier,)),[('Changed metadata',)])
+
+    def test_revision_clone_rejects_unavailable_images_and_history_checks_authority(self):
+        identifier=self.create();revision=self.request(f'admin/challenges/{identifier}/revisions').json['data']['revisions'][0]['id']
+        self.sql('UPDATE disk_files SET is_available=FALSE WHERE user_id=%s',(self.user_id,));self.platform.reset_mock()
+        result=self.request(f'admin/challenges/{identifier}/revisions/{revision}/clone','POST',json={'name':self.username+' clone'})
+        self.assertEqual(result.status_code,409)
+        self.platform.request.assert_not_called()
+        self.update_user('is_admin=FALSE')
+        self.assertEqual(self.request(f'admin/challenges/{identifier}/revisions').status_code,403)
+
+    def test_deleted_exercise_retains_only_metadata_audit(self):
+        identifier=self.create()
+        result=self.request(f'admin/challenges/{identifier}','DELETE',json={'force':True})
+        self.assertEqual(result.status_code,200,result.json)
+        self.assertEqual(self.sql('SELECT count(*) FROM exercise_revisions WHERE challenge_template_id=%s',(identifier,)),[(0,)])
+        self.assertEqual(self.sql("SELECT action FROM administrator_events WHERE resource_id=%s ORDER BY id DESC LIMIT 1",(identifier,)),[('deleted',)])
+
     def test_invalid_or_foreign_image_definition_creates_no_rows_or_platform_operations(self):
         self.login()
         self.value['vms'][0]['ova_name'] = 'Foreign image'

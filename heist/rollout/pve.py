@@ -34,7 +34,7 @@ UI_AGENT = Path(ui_assets.__file__).read_text().split("if __name__ == '__main__'
 
 class PVE:
     units = ('pool_manager','cleanup','backend','heist-expiry.timer','heist-expiry.service','start-vm.service',
-             'heist-monitoring.timer','heist-monitoring.service')
+             'heist-monitoring.timer','heist-monitoring.service','heist-administrator-worker.service')
 
     def __init__(self, config, config_sha256):
         self.config, self.config_sha256 = config, config_sha256
@@ -157,6 +157,10 @@ class PVE:
                 if allow_ready:cursor.execute("SELECT count(*) FROM challenges WHERE lifecycle_state<>'READY'")
                 else:cursor.execute('SELECT count(*) FROM challenges')
                 if cursor.fetchone()[0]:raise RuntimeError('Challenge provisioning/teardown must finish before rollout')
+                cursor.execute("SELECT to_regclass('public.administrator_requests') IS NOT NULL")
+                if cursor.fetchone()==(True,):
+                    cursor.execute("SELECT count(*) FROM public.administrator_requests WHERE state IN ('QUEUED','RUNNING','NEEDS_REVIEW')")
+                    if cursor.fetchone()[0]:raise RuntimeError('Finish, cancel or reconcile administrator requests before rollout')
 
     def protected_hashes(self, tables):
         from psycopg2 import sql
@@ -515,7 +519,7 @@ class PVE:
             paths.append(Path(key))
         paths.extend((Path('/etc/systemd/system/backend.service.d/heist-runtime.conf'),
                       Path('/etc/systemd/system/heist-expiry.service'),
-                      Path('/etc/systemd/system/heist-expiry.timer'),self.state/'wazuh-api-leaf.pem'))
+                      Path('/etc/systemd/system/heist-expiry.timer'),Path('/etc/systemd/system/heist-administrator-worker.service'),self.state/'wazuh-api-leaf.pem'))
         paths.extend((Path('/etc/openvpn/server.conf'), Path('/etc/openvpn/crl.pem')))
         paths.extend(monitoring_paths(self.environment))
         from .internal_runtime import paths as runtime_paths
@@ -735,7 +739,7 @@ class PVE:
         if checkpoint.data.get('vpn_identity'):
             from .vpn import UNIT
             self.command(['systemctl','stop',UNIT],timeout=60)
-        for unit in ('heist-expiry.timer','heist-expiry.service','heist-monitoring.timer','heist-monitoring.service'):
+        for unit in ('heist-expiry.timer','heist-expiry.service','heist-monitoring.timer','heist-monitoring.service','heist-administrator-worker.service'):
             if not checkpoint.data['host_services'].get(unit,{}).get('installed',False) and Path('/etc/systemd/system',unit).exists():
                 self.command(['systemctl','disable','--now',unit],timeout=60)
         for vm in self.config.vms:

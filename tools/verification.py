@@ -51,7 +51,7 @@ def collect(suite, output, *, strict=False):
     commands = {
         'python': [sys.executable, 'tools/check.py', '--report', str(output/'results.json')],
         'ui': ['npm', '--prefix', 'frontend', 'run', 'check'],
-        'browser': [sys.executable, '-m', 'unittest', 'tests.browser.ui_smoke', 'tests.browser.ui_layout'],
+        'browser': [sys.executable, '-m', 'unittest', 'tests.browser.ui_smoke', 'tests.browser.ui_layout', 'tests.browser.ui_management'],
         'ui-build': ['npm', '--prefix', 'frontend', 'run', 'build'],
         'browser-database': [sys.executable, 'tests/browser/ui_database.py'],
         'vpn': ['unshare', '--net', sys.executable, '-m', 'tests.integration.vpn.lifecycle'],

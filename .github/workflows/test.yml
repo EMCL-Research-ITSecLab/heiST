@@ -52,6 +52,7 @@ jobs:
       - run: python -m playwright install --with-deps ${{ matrix.browser }}
       - run: python tests/browser/ui_smoke.py
       - run: python tests/browser/ui_layout.py
+      - run: python -m unittest tests.browser.ui_management
       - run: python tools/testing/screenshots.py --check
 
   react-database:

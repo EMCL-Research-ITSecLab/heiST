@@ -92,6 +92,7 @@ def create_definition(user, value, cover):
                           flag['user_specific'], machines.get(flag['vm_name']))
             for hint in parsed['hints']:
                 repo.call('create_challenge_hint', identifier, hint['hint_text'], hint['unlock_points'], hint['order_index'])
+            repo.call('web_record_exercise_revision',user['id'],identifier,'created')
     except BaseException:
         if image:
             remove_owned_image(image, 'challenge_images', user['id'])
@@ -106,8 +107,10 @@ def create_definition(user, value, cover):
             raise ApiError('Machine import readiness is not confirmed', 503)
     except ApiError:
         raise ApiError('Exercise '+str(identifier)+' was saved inactive. Check its machine import before retrying.', 503) from None
-    repo.call('update_challenge_template', identifier, parsed['name'], parsed['description'], parsed['category'], parsed['difficulty'],
-              parsed['hint'], parsed['solution'], parsed['is_active'])
+    with repo.transaction():
+        repo.call('update_challenge_template', identifier, parsed['name'], parsed['description'], parsed['category'], parsed['difficulty'],
+                  parsed['hint'], parsed['solution'], parsed['is_active'])
+        repo.call('web_record_exercise_revision',user['id'],identifier,'updated')
     return {'success': True, 'message': 'Exercise created', 'id': identifier}, 201
 
 
@@ -144,8 +147,11 @@ def update_challenge(identifier):
     state = repo.call('web_template_state', value['id'], one=True)
     if parsed['is_active'] and (not state or not state['ready']):
         raise ApiError('Confirm machine import readiness before publishing this exercise', 409)
-    repo.call('update_challenge_template', value['id'], parsed['name'], parsed['description'], parsed['category'], parsed['difficulty'],
-              parsed['hint'], parsed['solution'], parsed['is_active'])
+    with repo.transaction():
+        repo.call('web_record_exercise_revision',user['id'],value['id'],'revision_saved')
+        repo.call('update_challenge_template', value['id'], parsed['name'], parsed['description'], parsed['category'], parsed['difficulty'],
+                  parsed['hint'], parsed['solution'], parsed['is_active'])
+        repo.call('web_record_exercise_revision',user['id'],value['id'],'updated')
     return {'success': True, 'message': 'Exercise updated'}
 
 
@@ -156,7 +162,10 @@ def restore(identifier):
     state = repository().call('web_template_state', value['id'], one=True)
     if not state or not state['ready']:
         raise ApiError('Machine templates need reconciliation before this exercise can be restored', 409)
-    repository().call('restore_challenge_template', value['id'])
+    with repository().transaction():
+        repository().call('web_record_exercise_revision',user['id'],value['id'],'revision_saved')
+        repository().call('restore_challenge_template', value['id'])
+        repository().call('web_record_exercise_revision',user['id'],value['id'],'restored')
     return {'success': True, 'message': 'Exercise restored'}
 
 
@@ -181,7 +190,10 @@ def delete_challenge(identifier):
     repo = repository()
     # Retirement is durable before infrastructure work. A failed operation must
     # never make a half-deleted exercise available to students again.
-    repo.call('mark_challenge_template_for_soft_deletion', value['id'])
+    with repo.transaction():
+        repo.call('web_record_exercise_revision',user['id'],value['id'],'revision_saved')
+        repo.call('mark_challenge_template_for_soft_deletion', value['id'])
+        repo.call('web_record_exercise_revision',user['id'],value['id'],'retired')
     if not force:
         return {'success': True, 'message': 'Exercise retired; existing instances can finish and grades are retained'}
     for instance in repo.call('get_running_instances_of_challenge_template', value['id']):
@@ -192,9 +204,44 @@ def delete_challenge(identifier):
         raise ApiError('Exercise retired. Instance teardown is not yet confirmed; inspect before retrying.', 503)
     with repo.transaction():
         repo.call('web_challenge_grade_lock', value['id'])
+        repo.call('web_record_exercise_revision',user['id'],value['id'],'deleted')
         repo.call('delete_challenge_template', value['id'])
     try:
         remove_owned_image(value['image_path'], 'challenge_images', user['id'])
     except OSError:
         current_app.logger.warning('Deleted exercise cover cleanup deferred')
     return {'success': True, 'message': 'Exercise permanently deleted'}
+
+
+@blueprint.route('/admin/challenges/<identifier>/revisions',methods=['GET','POST'])
+def revisions(identifier):
+    user=require_admin();value=owned_template(user,identifier);repo=repository()
+    if request.method=='POST':
+        rate_limit('exercise-revisions',str(user['id']),20)
+        with repo.transaction():revision=repo.scalar('web_record_exercise_revision',user['id'],value['id'],'revision_saved')
+        return {'success':True,'data':{'id':revision}}
+    items=repo.call('web_exercise_revisions',user['id'],value['id'])
+    return {'success':True,'data':{'revisions':items[:50],'has_more':len(items)>50}}
+
+
+@blueprint.get('/admin/challenges/<identifier>/revisions/<revision>')
+def revision_details(identifier,revision):
+    user=require_admin();value=owned_template(user,identifier)
+    data=repository().scalar('web_exercise_revision',user['id'],value['id'],positive_id(revision,'revision identifier'))
+    if data is None:raise ApiError('Revision not found',404)
+    return {'success':True,'data':{'definition':data}}
+
+
+@blueprint.post('/admin/challenges/<identifier>/revisions/<revision>/clone')
+def clone_revision(identifier,revision):
+    user=require_admin();value=owned_template(user,identifier)
+    rate_limit('clone-exercise',str(user['id']),10,3600)
+    data=repository().scalar('web_exercise_revision',user['id'],value['id'],positive_id(revision,'revision identifier'))
+    if not isinstance(data,dict):raise ApiError('Revision not found',404)
+    artifacts={item['display_name']:item for item in repository().call('get_user_available_disk_files',user['id'])}
+    for machine in data.get('vms',[]):
+        artifact=artifacts.get(machine.get('ova_name'))
+        if not artifact or artifact['id']!=machine.get('artifact_id'):raise ApiError('A referenced VM image is unavailable or has changed',409)
+        if len(machine.get('domain_names',[]))>1:raise ApiError('This legacy revision has multiple domains per VM and requires manual authoring',409)
+    data={**data,'name':body().get('name'),'isActive':False}
+    return create_definition(user,data,None)

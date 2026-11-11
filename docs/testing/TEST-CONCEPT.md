@@ -10,6 +10,44 @@ The [monitoring acceptance matrix](MONITORING.md) expands sensor, command,
 network, ingestion, Grafana, archive and independent-alert validation. Service
 inventory results and complete end-to-end acceptance are separate evidence.
 
+## Administrator management acceptance
+
+The [management runbook](../administration/MANAGEMENT.md) describes the operational
+contracts. Portable tests cover current-role checks, server-derived scope,
+assignment fingerprints, target membership, durable enqueue/cancel/reconcile,
+uncertain outcomes, restart recovery, pool revision conflicts, immutable exercise
+history and unavailable image identities. Tests use real disposable PostgreSQL
+for database functions, transactions and privilege boundaries.
+
+`tests.browser.ui_management` exercises the built React UI with synthetic HTTP
+fixtures: VM preview/queue acknowledgement, blocked confirmation, cancellation,
+typed reconciliation, bounded pool policy, revision inspection and unknown
+maintenance evidence. Run it together with smoke/layout tests using
+`make test-ui-browser` or the source-bound `tools.verification` browser suite.
+These fixtures do not validate real VM effects.
+
+For the native worker boundary, explicitly run:
+
+```sh
+sudo /path/to/test-python tools/testing/postgres.py \
+  --report /private/evidence/new-suite.json \
+  --native-worker --wheelhouse /private/reviewed-runtime-wheels
+```
+
+This uses the pinned, locally cached PostgreSQL container without networking and
+a temporary local systemd service. Hypervisor commands are inert fixtures. It
+checks source-file runtime verification, execution as root, singleton exclusion,
+interrupted execution without replay and journal invocation identities. The
+temporary service is stopped and removed afterward. Its separate `.native.json`
+and `.native.log` qualify the proof; they are not full Proxmox acceptance.
+
+Before rollout, additionally demonstrate native VM/network effects, power loss,
+changed assignment/role during queued work, backup restore of queue/history data,
+worker installation on an existing host, failed-upgrade recovery and rollback to
+a baseline without the worker. Verify existing maintenance gates reject pending
+or uncertain jobs. Full-platform acceptance remains unfinished until these
+exact-release checks pass on the isolated production clone.
+
 ## Inventory and traceability
 
 [The machine-readable catalogue](../../verification/cases.json) defines the required

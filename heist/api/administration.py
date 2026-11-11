@@ -31,6 +31,44 @@ def blueprint(factory):
         if p>10000:raise AdminError('Page is out of range',400)
         return p
 
+    def fingerprint(data):
+        import re
+        value=data.get('expected')
+        if not isinstance(value,str) or not re.fullmatch('[a-f0-9]{64}',value):raise AdminError('Review the action before confirming',400)
+        return value
+
+    @routes.get('/admin/overview')
+    def overview():return run(lambda service,data:service.overview(identifier(data.get('actor_id'))))
+
+    @routes.get('/admin/audit')
+    def audit():return run(lambda service,data:service.audit(identifier(data.get('actor_id')),page(data)))
+
+    @routes.get('/admin/maintenance')
+    def maintenance():return run(lambda service,data:service.maintenance(identifier(data.get('actor_id'))))
+
+    @routes.post('/admin/pools/manage')
+    def pool():
+        return run(lambda service,data:service.set_pool(identifier(data.get('actor_id')),identifier(data.get('template_id')),data.get('size'),data.get('enabled'),
+            data.get('expected_revision'),request_id=Journal.request_id(request.headers.get('Idempotency-Key'))))
+
+    @routes.get('/admin/jobs/history')
+    def history():
+        def load(service,data):
+            scope=data.get('scope')
+            if scope not in ('user','template','pool','artifact','instance'):raise AdminError('Unknown operation scope',400)
+            return service.job_history(identifier(data.get('actor_id')),scope,identifier(data.get('resource')))
+        return run(load)
+
+    @routes.post('/admin/jobs/cancel')
+    def cancel_job():
+        from heist.platform.jobs.administrator import AdministratorQueue
+        return run(lambda service,data:AdministratorQueue(service).cancel(identifier(data.get('actor_id')),data.get('job_id')))
+
+    @routes.post('/admin/jobs/resolve')
+    def resolve_job():
+        from heist.platform.jobs.administrator import AdministratorQueue
+        return run(lambda service,data:AdministratorQueue(service).resolve(identifier(data.get('actor_id')),data.get('job_id'),data.get('reason'),data.get('confirmation')))
+
     @routes.get('/admin/users')
     def users():
         def load(service,data):
@@ -53,13 +91,26 @@ def blueprint(factory):
     def jobs():
         def load(service,data):
             state=data.get('state','all')
-            if state not in ('all','RUNNING','NEEDS_REVIEW','SUCCEEDED','REJECTED','RESOLVED','UNAVAILABLE'):
+            if state not in ('all','QUEUED','RUNNING','NEEDS_REVIEW','SUCCEEDED','REJECTED','RESOLVED','UNAVAILABLE','CANCELLED'):
                 raise AdminError('Unknown operation state',400)
             return service.jobs(identifier(data.get('actor_id')),page(data),state)
         return run(load)
 
     @routes.get('/admin/instances')
-    def instances():return run(lambda service,data:service.instances(identifier(data.get('actor_id')),page(data)))
+    def instances():return run(lambda service,data:service.instances(identifier(data.get('actor_id')),page(data),data.get('search',''),data.get('state','all'),
+                                                               identifier(data['template_id']) if 'template_id' in data else None))
+
+    @routes.get('/admin/instances/preview')
+    def preview():return run(lambda service,data:service.preview(identifier(data.get('actor_id')),identifier(data.get('instance_id')),data.get('action'),
+                                                             identifier(data['machine_id']) if 'machine_id' in data else None))
+
+    @routes.post('/admin/instances/machines/manage')
+    def manage_machine():
+        from heist.platform.jobs.administrator import AdministratorQueue
+        from heist.runtime import cleanup_is_complete
+        if not cleanup_is_complete(current_app.config['CLEANUP_FILE']):return {'success':False,'message':'Startup cleanup requires reconciliation'},503
+        return run(lambda service,data:AdministratorQueue(service).enqueue(identifier(data.get('actor_id')),identifier(data.get('instance_id')),
+            data.get('action'),fingerprint(data),identifier(data.get('machine_id')),request_id=Journal.request_id(request.headers.get('Idempotency-Key'))))
 
     @routes.get('/admin/monitoring/activity')
     def activity():
@@ -71,10 +122,11 @@ def blueprint(factory):
 
     @routes.post('/admin/instances/manage')
     def manage_instance():
+        from heist.platform.jobs.administrator import AdministratorQueue
         from heist.runtime import cleanup_is_complete
         data=request.get_json(silent=True)
         if isinstance(data,dict) and data.get('action')=='rebuild' and not cleanup_is_complete(current_app.config['CLEANUP_FILE']):
             return {'success':False,'message':'Startup cleanup requires reconciliation before rebuilding'},503
-        return run(lambda service,data:service.change_instance(identifier(data.get('actor_id')),identifier(data.get('instance_id')),
-            data.get('action'),request_id=Journal.request_id(request.headers.get('Idempotency-Key'))))
+        return run(lambda service,data:AdministratorQueue(service).enqueue(identifier(data.get('actor_id')),identifier(data.get('instance_id')),
+            data.get('action'),fingerprint(data),request_id=Journal.request_id(request.headers.get('Idempotency-Key'))))
     return routes

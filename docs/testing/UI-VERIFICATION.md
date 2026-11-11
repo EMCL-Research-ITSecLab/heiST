@@ -10,6 +10,7 @@ npm --prefix frontend run check
 npm --prefix frontend run build
 python tests/browser/ui_smoke.py
 python tests/browser/ui_layout.py
+python -m unittest tests.browser.ui_management
 python tools/testing/screenshots.py
 ```
 
@@ -20,7 +21,7 @@ frontend testing library is required.
 
 The smoke suite checks public/student/admin routing, CSRF login, password reset,
 role boundaries, safe error recovery, authoring, binary uploads and diagnostics.
-The populated-state suite checks 220 page/size/theme combinations: twenty-two pages at
+The populated-state suite checks public, student and administrator views at
 320, 390, 768, 1024 and 1440 CSS pixels, in light and dark themes. Assertions cover
 horizontal overflow, one page heading, runtime errors, loaded visible images,
 official branding and plain headings, YAML preview/draft preservation, retired exercise restoration, paging/filter reset, dialog cancellation and focus,
@@ -32,7 +33,7 @@ size, including long text, empty, loading, error and destructive-confirmation st
 
 ## Screenshot gallery
 
-[Open the complete gallery](../../assets/screenshots/README.md): 52 full-page
+[Open the complete gallery](../../assets/screenshots/README.md): 68 full-page
 captures cover every canonical view in both themes, plus phone navigation,
 collapsed desktop navigation and expanded instance diagnostics. Achievements shows
 all nine synthetic badges. Editor captures contain multiple networks and include

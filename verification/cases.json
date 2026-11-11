@@ -2297,6 +2297,64 @@
         "releases/migrations/0012_training_preferences.sql",
         "tools/testing/postgres.py"
       ]
+    },
+    {
+      "id": "AUTO-ADMINISTRATOR-QUEUE",
+      "area": "administrator_management",
+      "mode": "automated",
+      "procedure": "Run tests/test_administrator_queue.py through the strict suite with disposable PostgreSQL and retain exact-source results.",
+      "expected": "Authorization, uncertain outcomes, recovery and metadata projections satisfy the reviewed management contracts without skips.",
+      "evidence": [
+        "source-bound strict suite receipt",
+        "test output"
+      ],
+      "sources": [
+        "tests/test_administrator_queue.py"
+      ]
+    },
+    {
+      "id": "AUTO-ADMINISTRATOR-DEPLOYMENT",
+      "area": "administrator_management",
+      "mode": "automated",
+      "procedure": "Run tests/test_administrator_deployment.py through the strict suite with disposable PostgreSQL and retain exact-source results.",
+      "expected": "Authorization, uncertain outcomes, recovery and metadata projections satisfy the reviewed management contracts without skips.",
+      "evidence": [
+        "source-bound strict suite receipt",
+        "test output"
+      ],
+      "sources": [
+        "tests/test_administrator_deployment.py"
+      ]
+    },
+    {
+      "id": "AUTO-MANAGEMENT",
+      "area": "administrator_management",
+      "mode": "automated",
+      "procedure": "Run tests/test_management.py through the strict suite with disposable PostgreSQL and retain exact-source results.",
+      "expected": "Authorization, uncertain outcomes, recovery and metadata projections satisfy the reviewed management contracts without skips.",
+      "evidence": [
+        "source-bound strict suite receipt",
+        "test output"
+      ],
+      "sources": [
+        "tests/test_management.py"
+      ]
+    },
+    {
+      "id": "ADMIN-WORKER-NATIVE",
+      "area": "administrator_management",
+      "mode": "manual",
+      "procedure": "Run tools/testing/postgres.py --native-worker with reviewed cached runtime wheels. Inspect the separate native evidence and journal. Then perform the native Proxmox scenarios in docs/testing/TEST-CONCEPT.md before rollout.",
+      "expected": "Local systemd worker executes inert commands once; duplicate workers fail; interrupted work is held without replay. Local fixture evidence is not treated as native Proxmox or platform rollback acceptance.",
+      "evidence": [
+        "native worker receipt",
+        "private journal evidence",
+        "isolated Proxmox acceptance receipts"
+      ],
+      "sources": [
+        "tests/native/administrator_worker.py",
+        "docs/testing/TEST-CONCEPT.md"
+      ]
     }
   ]
 }

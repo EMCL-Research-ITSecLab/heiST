@@ -9,6 +9,10 @@ export const date = (value: unknown): string => {
   const parsed = new Date(text(value));
   return Number.isNaN(parsed.getTime()) ? '—' : parsed.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 };
+export const timestamp = (value: unknown): string => {
+  const parsed = new Date(text(value));
+  return Number.isNaN(parsed.getTime()) ? '—' : parsed.toLocaleString(undefined, { timeZoneName: 'short' });
+};
 export const duration = (value: unknown): string => {
   const seconds = Math.max(0, Math.floor(number(value)));
   return [Math.floor(seconds / 3600), Math.floor(seconds / 60) % 60, seconds % 60].map(n => String(n).padStart(2, '0')).join(':');

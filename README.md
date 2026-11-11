@@ -69,7 +69,7 @@ pending its separate acceptance. See [updates and recovery](docs/administration/
 
 ## Using the new workspace
 
-[Browse all 52 full-page screenshots](assets/screenshots/README.md), including achievements, account pages and administrator controls. [Documentation index](docs/README.md).
+[Browse all 68 full-page screenshots](assets/screenshots/README.md), including achievements, account pages and administrator controls. [Documentation index](docs/README.md).
 
 The screenshots below show the actual production UI build with deterministic,
 synthetic demonstration records. They are not screenshots of production data.
@@ -108,11 +108,14 @@ inactive while reviewing it, then publish it after import readiness is confirmed
 **Challenges** provides search, category and availability filters, sorting and
 pagination. Retiring an exercise prevents new allocations; restoring it requires
 ready machine templates. Permanent deletion is a separate confirmed action.
-**Lab overview** reports database, service, storage, lifecycle and archive status.
+**Platform status** connects overview, health, jobs, capacity, data governance,
+audit and maintenance evidence.
 Administrators can manage user roles, temporary passwords and sessions, inspect
-all running instances, release/rebuild/remove instances, and review the operation
-registry. See the [administrator guide](docs/administration/README.md) for recovery
-semantics and limits.
+all instances and their networks, queue release/rebuild/remove and VM power
+actions, cancel queued work and reconcile uncertain operations. Exercise history
+supports immutable definitions and cloning a retained configuration as an inactive
+draft. Pool settings use revisions to reject conflicting changes. See the
+[management runbook](docs/administration/MANAGEMENT.md) for behavior and limits.
 
 Production maintenance and rollback remain CLI operations.
 

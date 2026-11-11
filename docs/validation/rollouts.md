@@ -2,6 +2,15 @@
 
 ## Current acceptance scope
 
+The 2026-11-11 RC5 development candidate adds connected platform management,
+durable administrator work, configuration history and pool policy revisions.
+Local evidence includes the strict PostgreSQL suite, built-UI browser workflows
+and a real systemd worker exercised with inert hypervisor commands. Its new
+worker unit is included in deployment/recovery configuration and pending work
+blocks rollout admission. These local results do not complete native Proxmox
+effects, fresh installation, whole-platform upgrade/failure/rollback or training
+capture/revocation acceptance. This management candidate has not been deployed.
+
 On 2026-11-10, the existing production installation completed an explicitly
 authorized deployment to `651263f7096722aef978fe9b29de86f29a06e8f4`
 (`0.4.0-rc.3`). The operator explicitly waived the unfinished complete clone

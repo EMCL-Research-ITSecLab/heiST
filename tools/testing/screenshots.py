@@ -28,7 +28,14 @@ PAGES = {
     'artifacts': ('/upload-diskfile','admin'),
     'manage_announcements': ('/manage-announcements','admin'),
     'operations': ('/operations', 'admin'),
-    'monitoring_activity': ('/operations', 'admin'),
+    'platform_health': ('/operations?tab=health', 'admin'),
+    'operation_history': ('/operations?tab=jobs&scope=user&resource=2', 'admin'),
+    'capacity': ('/operations?tab=capacity', 'admin'),
+    'data_governance': ('/operations?tab=data', 'admin'),
+    'administrator_audit': ('/operations?tab=audit', 'admin'),
+    'maintenance': ('/operations?tab=maintenance', 'admin'),
+    'exercise_history': ('/manage-ctf?exercise=4', 'admin'),
+    'monitoring_activity': ('/operations?tab=health', 'admin'),
     'users': ('/manage-users','admin'),
     'instances': ('/manage-instances','admin'),
     'instance_details': ('/manage-instances','admin'),
@@ -106,6 +113,11 @@ def capture(output):
                     if name == 'instance_details':
                         fixture.page.get_by_role('row').filter(has_text='101').get_by_role('button',name='Inspect',exact=True).click()
                         fixture.page.get_by_role('heading',name='Latest operation',exact=True).wait_for()
+                    if name == 'exercise_history':
+                        fixture.page.get_by_role('button',name='Inspect revision',exact=True).click()
+                        fixture.page.get_by_role('heading',name='Revision 1',exact=True).wait_for()
+                    if name == 'operation_history':
+                        fixture.page.get_by_text('admin_rebuild',exact=False).last.click()
                     if name in ('instance_details', 'monitoring_activity'):
                         fixture.page.get_by_role('button',name='Load activity',exact=True).click()
                         fixture.page.get_by_role('table',name='Recent command and process events').wait_for()

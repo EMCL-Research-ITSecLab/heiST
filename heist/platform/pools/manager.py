@@ -289,6 +289,10 @@ class PoolManager:
         return size
 
     def get_target_pool_size(self, connection, challenge_template_id):
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT size FROM public.pool_overrides WHERE challenge_template_id=%s AND enabled',(challenge_template_id,))
+            override=cursor.fetchone()
+            if override is not None:return int(override[0])
         current_time = datetime.datetime.now()
         print(f"[POOL] Calculating target pool size for {challenge_template_id} at {current_time}")
 

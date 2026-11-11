@@ -185,6 +185,17 @@ class ManifestTests(unittest.TestCase):
 
 
 class PublishedBrowserUpdateContractTests(unittest.TestCase):
+    def test_rc5_preserves_published_migrations_and_adds_administrator_schema(self):
+        root=Path(__file__).resolve().parents[1]
+        previous=json.loads((root/'releases/0.4.0-rc.4.json').read_text())
+        current=json.loads((root/'releases/0.4.0-rc.5.json').read_text())
+        self.assertEqual(current['migrations'][:len(previous['migrations'])],previous['migrations'])
+        self.assertEqual([item['id'] for item in current['migrations'][len(previous['migrations']):]],
+                         ['0013_administrator_requests','0014_exercise_revisions','0015_pool_overrides'])
+        self.assertTrue(set(previous['supported_from'])<=set(current['supported_from']))
+        for migration in current['migrations']:
+            self.assertEqual(hashlib.sha256((root/migration['path']).read_bytes()).hexdigest(),migration['sha256'])
+
     def test_rc4_preserves_published_migrations_and_adds_training_preferences(self):
         root=Path(__file__).resolve().parents[1]
         previous=json.loads((root/'releases/0.4.0-rc.3.json').read_text())

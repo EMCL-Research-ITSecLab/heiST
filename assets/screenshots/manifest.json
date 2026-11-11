@@ -11,20 +11,27 @@
     "frontend/src/components/AchievementIcon.tsx": "2467aad743689df5087b6211c4a305e7a6c0913f2b7196f8eb56450a545d4c90",
     "frontend/src/components/AppShell.tsx": "46bbdbb7ea580c1462a01515e20af6d9b4d7721d890f6d61a9dc9d2fbceff317",
     "frontend/src/components/NetworkPreview.tsx": "6b7d823726fe5be2f230f826f91792bcd1a11e4f3b9dc44ee36d531a4db45600",
-    "frontend/src/components/ui.tsx": "6bd7e951f18365b93c5d0b79386c4d6672bfbe97414a89e992b0b14ee968c728",
+    "frontend/src/components/ui.tsx": "5d07cdc3fbdfb9b893467f7c68322c45a2871714e4ee6eb3434cc3ff19c07e7b",
     "frontend/src/env.d.ts": "65996936fbb042915f7b74a200fcdde7e410f32a669b1ab9597cfaa4b0faddb5",
     "frontend/src/features/account/ProfilePage.tsx": "25cce95e6e8db91a503d158a9c2f0492601a4fb4c71ef22735d1a423b79b0640",
     "frontend/src/features/account/TrainingPreferencePanel.tsx": "344703282451370de824bd769328123d3ab1685df011a6b507806dba833773da",
     "frontend/src/features/administration/ActivityPanel.tsx": "0705491445da3c369e24ffc2b6fe566d00e98bcaf9abc83d9220193cfae0fdd8",
+    "frontend/src/features/administration/AdministratorAuditPanel.tsx": "2c286ef05083f62fa0fe3f3b69da428891c2b892fe20ef8b622ac29ae7757d3b",
     "frontend/src/features/administration/AnnouncementManagementPage.tsx": "f124cc8f272c60591d840ed611b3948141f7f359a224670b2931f880deb98a00",
     "frontend/src/features/administration/ArtifactsPage.tsx": "05441570e206dfb6391ba1f7ea9cf86049d854c39840aaa92f8b205d85ce5243",
     "frontend/src/features/administration/ChallengeEditorPage.tsx": "a65c2ef06bc85bc758638d10cb0655fd8204f69cc4c4018a7ec7afcdf64e7545",
-    "frontend/src/features/administration/ChallengeManagementPage.tsx": "337164616d7903cf7e119bffb9c691ccb61c52b3a002d136217cfc52c2f03a46",
-    "frontend/src/features/administration/InstanceManagementPage.tsx": "b2ba49596ae4e491bf6bef5995637945fe32494b9c9f2cbc453c7703c639a7ed",
+    "frontend/src/features/administration/ChallengeManagementPage.tsx": "d6145a0d1e4c06e8aca6c85b4759240f061e3a2b5432b9f6b000c918e38e6e6d",
+    "frontend/src/features/administration/ExerciseHistoryPanel.tsx": "df9a7d934e36bbf64b734dd840bcbf3baf18c6e5b8faf7b76a8f0e3f29cefe2a",
+    "frontend/src/features/administration/InstanceActionDialog.tsx": "70e1cf58900b3c6704336692ac69177bfcd4fca21a574f5669b60fe0cb72c263",
+    "frontend/src/features/administration/InstanceDetailsPanel.tsx": "b29928b28026f8c6e5fc3693f8926a4f03a3387bae7fba5eecea5b22a177276e",
+    "frontend/src/features/administration/InstanceManagementPage.tsx": "3c4ed92b5919343434ab6ff74575b78ae17c694b996578e701e50e9f88906061",
     "frontend/src/features/administration/InstanceMonitoringPanel.tsx": "8d76525233d2c15e9053f009a562c88ecb0b93ed084ec214ee3c6413075ca1c7",
+    "frontend/src/features/administration/MaintenancePanel.tsx": "7d2dd3864ef25c5319ed6bfd43a16afd825979b4070f555d95ee646498a82ae1",
+    "frontend/src/features/administration/ManagementOverview.tsx": "6b247b3cd6c62cc41f2dbc7bbe2e99fe9d40c72000e58ee71ce0642bb925ad5d",
     "frontend/src/features/administration/MonitoringPanel.tsx": "3be7f7da0cdfe738d444299efb49ede8cb2a7aa54c0fa8526c610f526075208e",
-    "frontend/src/features/administration/OperationJournalPanel.tsx": "83062b8d8dedac3ea31e8ce3541e0048b7a3218699a73db1a48b20429e8befc5",
-    "frontend/src/features/administration/OperationsPage.tsx": "b17a0b1f552a0415fed7dbe3475e6bf7e2709f3e4f28841414e13fdadce5d369",
+    "frontend/src/features/administration/OperationHistoryPanel.tsx": "2bc6a1645359e9b737470426ac65f5480761190ef592a902d5e47310088637fe",
+    "frontend/src/features/administration/OperationJournalPanel.tsx": "4452e7ec2d5b56e3c37d3ccc915f5847ae578126b2a425649b1cad6c113d1e4c",
+    "frontend/src/features/administration/OperationsPage.tsx": "96232cd45143a317406417206d86f9507e66b3810f7c99bb94c85862527f45cd",
     "frontend/src/features/administration/PlatformStatusPanel.tsx": "c353ff7ded370367ba46d40cae5d53020024fe7bf5a9f3b2ed055c815597e254",
     "frontend/src/features/administration/UserManagementPage.tsx": "95d63fc656050032db482598a05ab535f56827c98159f4eeacb36fa5e186d7f2",
     "frontend/src/features/administration/useArtifactUpload.ts": "1f1fff9299ea5309592c27cf9dcca6990a57a8d857ca5ab076b34e6efe3c46e0",
@@ -39,7 +46,7 @@
     "frontend/src/features/welcome/LandingPage.tsx": "9cd429678ee22bbe373b0d918ab3c62308dbbad367fe1942417270c1c0188749",
     "frontend/src/lib/api.ts": "2a99e5d25d67916fbdea5c6829b5ce43b2a14016039055b18659c4f4113253c4",
     "frontend/src/lib/artwork.ts": "873f487133ca9a890160d2ca1fc62c24792786a6589a2701b9443edccad43639",
-    "frontend/src/lib/data.ts": "0499d40a4e64b78020c1a040630c1b4b24b4a2f3355277fb4d307c436c3305f0",
+    "frontend/src/lib/data.ts": "6b7ec5acb0080f59835b17febf3a55055aca5c57197cb7496e8f931ba6225a50",
     "frontend/src/lib/monitoring.ts": "89e463e91424e305b897e6c2f6f6ec437cf12ea4f3f2e60f6a2542493b2edfd8",
     "frontend/src/lib/router.tsx": "80bd96cf8ccdc18de7da5959083eeb4fcfe3c781170143ac212100278e3719c9",
     "frontend/src/lib/state.tsx": "6d9b1c819d9950a8a0be823c02b743bd01f1ccb11e8b220e60cc4ea6ca98d685",
@@ -59,11 +66,11 @@
     "frontend/public/assets/logo/logo_light.svg": "e6cf270657532d0cba435aa94802b60b464d4f3184d10a7e1865457188520b2e",
     "frontend/public/assets/ui/fontawesome-license.txt": "9b914eae88817d63b576eab5aafde7068c7a1abae125d7cdfb034f1da43a9afc",
     "frontend/index.html": "8ab10020ce2673bb682d5de7e75ba55b46bb8ae197d025720c0ae33a9ced77b7",
-    "frontend/package.json": "9260446cde72c23298b299d7613ee634d9b5843886bf31dd684d2c9b0e313b1c",
-    "frontend/package-lock.json": "bca26f818f1026a1d0de1b80943be09ebf4b1e25cf2f45a87bdbd0e6338cc2c7",
-    "tests/browser/support.py": "1435b055bd383b739d5140da9a34c36379f7ab5da9d1353cfc7dd19eba916a33",
-    "tests/browser/showcase_data.py": "4a324bc2e132ddaf6faaf556ea10d1283be2d4b19fc2dac21311c80ba9a73440",
-    "tools/testing/screenshots.py": "2db4546904a47a2039c0b16e00c49d1c607cd5225eab196706a1ba96797ea823"
+    "frontend/package.json": "93f12c305771c3af905db935a30db34e718e0e50de426aae842964277f0cfcda",
+    "frontend/package-lock.json": "d3b9d4d20cb2bd687f49797f4a646c9e6c86f2bad275475b7ce9bbedb23471cc",
+    "tests/browser/support.py": "099c3504041496f053c771f010d1754cb783371a0c396eee78ccbb39bed36b46",
+    "tests/browser/showcase_data.py": "804dc91c53b9c726dff4cf303cef35c64adf933a95de95b0f86ce91904da93d7",
+    "tools/testing/screenshots.py": "6a16c7f498de3a5759dc2f3961f0c5eb2718648efd865f848410b4e87ed18c4b"
   },
   "captures": [
     {
@@ -194,7 +201,7 @@
       },
       "full_page": true,
       "document_height": 1067,
-      "sha256": "d87b96cb200746b937900644f80e54571bba087d7d16e28b774ded5f4b7c682f"
+      "sha256": "ba80cc1ab9501893ea2032d2bdaaeece72622dd38fffefcbe66a2a2973cac0a0"
     },
     {
       "file": "create_challenge_light.png",
@@ -245,12 +252,12 @@
         "height": 1000
       },
       "full_page": true,
-      "document_height": 2528,
-      "sha256": "1680c830f6edea5077fe5baca593a5b6247d212f88960a52264f2c3c9e64548b"
+      "document_height": 1558,
+      "sha256": "dba24b13b3e0e9289dabd375ce91f9071b87d914acb33a8a43ad43a160a7c048"
     },
     {
-      "file": "monitoring_activity_light.png",
-      "route": "/operations",
+      "file": "platform_health_light.png",
+      "route": "/operations?tab=health",
       "role": "admin",
       "theme": "light",
       "viewport": {
@@ -258,8 +265,99 @@
         "height": 1000
       },
       "full_page": true,
-      "document_height": 2881,
-      "sha256": "ad9609e447fcaf1fbd2acc09ba0c09113769ac838fc55f4c32523de5643b0875"
+      "document_height": 1690,
+      "sha256": "3b42fa066e0669e4a1ec120f4f3950aea151a3d541d2e4ac685763e2c6190d36"
+    },
+    {
+      "file": "operation_history_light.png",
+      "route": "/operations?tab=jobs&scope=user&resource=2",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": true,
+      "document_height": 1399,
+      "sha256": "e84b7eeb49949d8d142ceca5ec7ce8211a7c51e01700f57b70003856bda31526"
+    },
+    {
+      "file": "capacity_light.png",
+      "route": "/operations?tab=capacity",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": true,
+      "document_height": 1378,
+      "sha256": "6543fdc6443cb1cc3dbbd72bbc32c8346653ce4a2b0cc3bbf9e5409339f8aa88"
+    },
+    {
+      "file": "data_governance_light.png",
+      "route": "/operations?tab=data",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": true,
+      "document_height": 1072,
+      "sha256": "d8c68957bcf0e78f895d6bca3e461fabb907e86a06ecad39a406ab0b31e8ae80"
+    },
+    {
+      "file": "administrator_audit_light.png",
+      "route": "/operations?tab=audit",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": true,
+      "document_height": 1000,
+      "sha256": "58f0bca5d838b5e4fe424cbbd847e511ea9173d40aedac360f8b5991a5e3be38"
+    },
+    {
+      "file": "maintenance_light.png",
+      "route": "/operations?tab=maintenance",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": true,
+      "document_height": 1021,
+      "sha256": "17dfe0c58a34c93ffb271377881564e3bb369057df7cd9ce95781e7f045c104e"
+    },
+    {
+      "file": "exercise_history_light.png",
+      "route": "/manage-ctf?exercise=4",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": true,
+      "document_height": 2396,
+      "sha256": "48d9eea652e20ddc20ca3c017f7a72d146d6b3ab897dbb1024127b75cd74ad51"
+    },
+    {
+      "file": "monitoring_activity_light.png",
+      "route": "/operations?tab=health",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": true,
+      "document_height": 2043,
+      "sha256": "38038f97a5fa521dcd003f394f11805ffd8db69b7ca7e80e3aa45c4f94d28bca"
     },
     {
       "file": "users_light.png",
@@ -285,7 +383,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "80f799b8abfac5b0bbf61980cee3a93604ae08595c7d02a004b5fa2c12d72bf9"
+      "sha256": "de1c891f557e7aecce492d5467e9651e38992660a3779e218e4263358e858eb7"
     },
     {
       "file": "instance_details_light.png",
@@ -297,8 +395,8 @@
         "height": 1000
       },
       "full_page": true,
-      "document_height": 2372,
-      "sha256": "52f2496d258acefa4fe35d3d77ac06dfdef4058541b1bdd2e14caf4cdb361918"
+      "document_height": 3239,
+      "sha256": "94c4b2b90bcab37170862950fca85283a211446ab39f5eb8aebe81bd5d5a50c7"
     },
     {
       "file": "login_light.png",
@@ -545,7 +643,7 @@
       },
       "full_page": true,
       "document_height": 1067,
-      "sha256": "96fedcab2805bbe699305f8683448cd71251be5ad786ea2604f9e37d2c321c41"
+      "sha256": "c1c5845064126575a383837eebaace0786d22e4dc0dbedcc45ca224df331c472"
     },
     {
       "file": "create_challenge_dark.png",
@@ -596,12 +694,12 @@
         "height": 1000
       },
       "full_page": true,
-      "document_height": 2528,
-      "sha256": "9ef54fd3c16c37caeaeed0333c70f764380f7ebd3e6f8cd2e023c10a4a5a53d5"
+      "document_height": 1558,
+      "sha256": "125bdc6ba74b3ecac1836aa3e39f95918934e9e7ce530986ef38e8561a6a0e2e"
     },
     {
-      "file": "monitoring_activity_dark.png",
-      "route": "/operations",
+      "file": "platform_health_dark.png",
+      "route": "/operations?tab=health",
       "role": "admin",
       "theme": "dark",
       "viewport": {
@@ -609,8 +707,99 @@
         "height": 1000
       },
       "full_page": true,
-      "document_height": 2881,
-      "sha256": "99b3cdaa29f69b7c6a2cd73a96c92230e3eead65bc9ee689914cf9d5f7b65c3d"
+      "document_height": 1690,
+      "sha256": "2e846248a87598368d842c0f620d5e9329db25dd465466bd669950217f5ed16a"
+    },
+    {
+      "file": "operation_history_dark.png",
+      "route": "/operations?tab=jobs&scope=user&resource=2",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": true,
+      "document_height": 1399,
+      "sha256": "d00f1ac2a569adca8e8e25b8ce0d18629582f86db126a582ce08ac0af2832a29"
+    },
+    {
+      "file": "capacity_dark.png",
+      "route": "/operations?tab=capacity",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": true,
+      "document_height": 1378,
+      "sha256": "f3d9ced57f19300db2c6d332afbbf62e212265e386f8676e2de326ba3ef90640"
+    },
+    {
+      "file": "data_governance_dark.png",
+      "route": "/operations?tab=data",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": true,
+      "document_height": 1072,
+      "sha256": "8deab1c1595d10ed4cb9e3adddf18725218bd1c9d3f3f6c2b3ed03adf3e5eeec"
+    },
+    {
+      "file": "administrator_audit_dark.png",
+      "route": "/operations?tab=audit",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": true,
+      "document_height": 1000,
+      "sha256": "449006904f3ab5f582d2566c260d49891ab7a9cfad7ebd8651c941440ba69185"
+    },
+    {
+      "file": "maintenance_dark.png",
+      "route": "/operations?tab=maintenance",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": true,
+      "document_height": 1021,
+      "sha256": "5c68a2768d8809b1a015e81623510d66a6c6f61a88c1a8fd10daab6670fbc0d6"
+    },
+    {
+      "file": "exercise_history_dark.png",
+      "route": "/manage-ctf?exercise=4",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": true,
+      "document_height": 2396,
+      "sha256": "5d6203e6695a21d15c2e6738216ce8e07766c00472979827edf17ac1d839cae5"
+    },
+    {
+      "file": "monitoring_activity_dark.png",
+      "route": "/operations?tab=health",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": true,
+      "document_height": 2043,
+      "sha256": "15245242fe39aebf1355fd9fe565acb1d6a7d665acc8f7b320696c6341bf46dd"
     },
     {
       "file": "users_dark.png",
@@ -636,7 +825,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "4f5409eebde200c0a0c4e0aeabb91b0e18580119a2b1a4c4bc8c6b55ab03354b"
+      "sha256": "9c8c3518e12d7fb065d5fae52430e1705b74ec4dee746e4b3e855db739640dd7"
     },
     {
       "file": "instance_details_dark.png",
@@ -648,8 +837,8 @@
         "height": 1000
       },
       "full_page": true,
-      "document_height": 2372,
-      "sha256": "c5e4ecd946e7b7e6f0480f2382f7b7e3ea04de0293fdf8660255bc737e52b8fd"
+      "document_height": 3239,
+      "sha256": "cd4d6c7616602bb8be6b9c3a3b693fac285e70985710f0c4011f5460319e6dad"
     },
     {
       "file": "login_dark.png",

@@ -21,7 +21,7 @@ class LayoutTests(BrowserFixture):
         self.page.evaluate('document.fonts.ready')
 
     def test_populated_pages_fit_phone_tablet_desktop_in_both_themes(self):
-        paths = ['/landing', '/dashboard', '/explore', '/challenge?id=4', '/profile', '/manage-ctf', '/create-ctf', '/upload-diskfile', '/operations', '/impressum', '/privacy-policy', '/terms-of-service', '/signup', '/login', '/activity', '/badges', '/announcements', '/manage-announcements', '/manage-users', '/manage-instances', '/profile/investigator', '/404', '/reset-password']
+        paths = ['/landing', '/dashboard', '/explore', '/challenge?id=4', '/profile', '/manage-ctf', '/create-ctf', '/upload-diskfile', '/operations', '/operations?tab=health', '/operations?tab=jobs', '/operations?tab=capacity', '/operations?tab=data', '/operations?tab=audit', '/impressum', '/privacy-policy', '/terms-of-service', '/signup', '/login', '/activity', '/badges', '/announcements', '/manage-announcements', '/manage-users', '/manage-instances', '/profile/investigator', '/404', '/reset-password']
         for width in (320, 390, 768, 1024, 1440):
             self.page.set_viewport_size({'width': width, 'height': 900})
             for theme in ('light', 'dark'):
@@ -281,7 +281,7 @@ class LayoutTests(BrowserFixture):
         active=self.page.get_by_role('row').filter(has_text='student01')
         active.get_by_role('button',name='Inspect',exact=True).click()
         self.page.get_by_role('heading',name='Latest operation',exact=True).wait_for()
-        details=self.page.locator('.diagnostic-grid')
+        details=self.page.get_by_role('region',name='Latest instance operation').locator('.diagnostic-grid')
         self.assertIn('user',details.inner_text())
         self.assertEqual(details.get_by_text('2',exact=True).count(),1)
         self.responses['admin/instances/101']['data']['operation']={'state':'UNAVAILABLE','scope':'instance','resource':101}
@@ -292,8 +292,8 @@ class LayoutTests(BrowserFixture):
         self.page.get_by_role('button',name='Rebuild',exact=True).last.click()
         self.page.get_by_role('dialog').wait_for(state='hidden')
         self.assertEqual(self.mutations[-1][0],'admin/instances/101')
-        self.assertEqual(json.loads(self.mutations[-1][1]),{'action':'rebuild'})
-        self.settled('/operations')
+        self.assertEqual(json.loads(self.mutations[-1][1]),{'action':'rebuild','expected':'a'*64})
+        self.settled('/operations?tab=jobs')
         self.page.get_by_role('heading',name='Recorded operations',exact=True).wait_for()
         self.assertIn('NEEDS_REVIEW',self.page.locator('main').inner_text())
         with self.page.expect_response(lambda response: '/api/admin/jobs?' in response.url and 'state=NEEDS_REVIEW' in response.url):

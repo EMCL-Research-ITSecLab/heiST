@@ -8,7 +8,7 @@ import re
 from pathlib import Path
 import threading
 import unittest
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit,parse_qs
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -78,8 +78,16 @@ class BrowserFixture(unittest.TestCase):
             return route.fulfill(json=value)
         if request.method == 'GET' and endpoint in self.responses:
             return route.fulfill(json=self.responses[endpoint])
+        if request.method=='GET' and endpoint.startswith('admin/instances/') and endpoint.endswith('/preview'):
+            query=parse_qs(urlsplit(request.url).query)
+            return route.fulfill(json={'success':True,'data':{'instance_id':int(endpoint.split('/')[2]),'name':'The Glass Directory',
+                'state':'ACTIVE','user_id':2,'fingerprint':'a'*64,'action':query.get('action',[''])[0],
+                'machines':[int(query['machine_id'][0])] if 'machine_id' in query else [100000101,100000102],
+                'networks':[10,11],'guest_changes_lost':query.get('action',[''])[0] in ('rebuild','remove'),'grades_preserved':True}})
         if request.method in ('POST','PUT','PATCH','DELETE'):
             self.mutations.append((endpoint, request.post_data or '', request.headers))
+            if endpoint.startswith('admin/instances/'):
+                return route.fulfill(json={'success':True,'data':{'job_id':'d'*32,'state':'QUEUED','scope':'user','resource':2}})
             match = re.fullmatch(r'admin/challenges/(\d+)/restore', endpoint)
             if match and request.method == 'POST':
                 for challenge in self.responses.get('admin/challenges', {}).get('data', {}).get('challenges', []):

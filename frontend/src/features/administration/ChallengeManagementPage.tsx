@@ -2,9 +2,11 @@ import { useState, type FormEvent } from 'react';
 import { Area, Badge, Card, Confirm, Empty, Field, Notice, PageTitle, Pager, ResourceState, Select, Stat } from '../../components/ui.tsx';
 import { request } from '../../lib/api.ts';
 import { categories, difficulties, number, payload, row, rows, text, truth, type Row } from '../../lib/data.ts';
-import { Link } from '../../lib/router.tsx';
+import { Link, useRouter } from '../../lib/router.tsx';
 import { useAction, useResource } from '../../lib/state.tsx';
+import { ExerciseHistoryPanel } from './ExerciseHistoryPanel.tsx';
 export function ManageChallenges() {
+  const router=useRouter(), selected=number(new URLSearchParams(router.location.split('?')[1]).get('exercise'));
   const resource = useResource('/api/admin/challenges', 30000), data = payload(resource.data), stats = row(data.stats), action = useAction();
   const [search, setSearch] = useState(''), [state, setState] = useState('all'), [editing, setEditing] = useState<Row | null>(null), [deleting, setDeleting] = useState<Row | null>(null), [force, setForce] = useState(false), [leader, setLeader] = useState<Row | null>(null);
   const [category, setCategory] = useState('all'), [sort, setSort] = useState('name'), [page, setPage] = useState(1);
@@ -85,6 +87,7 @@ export function ManageChallenges() {
                   <div className="table-actions">
                     <button className="secondary small" disabled={truth(c.marked_for_deletion)} onClick={() => setEditing(c)}>Edit</button>
                     <button className="secondary small" onClick={() => setLeader(c)}>Leaderboard</button>
+                    <button className="secondary small" onClick={()=>router.navigate('/manage-ctf?exercise='+number(c.id))}>History</button>
                     {truth(c.marked_for_deletion) ? <button className="secondary small" disabled={action.busy} onClick={() => void action.run(() => request('/api/admin/challenges/'+text(c.id)+'/restore', {method: 'POST', body: {}}), resource.reload)}>Restore</button> : <button className="danger subtle small" onClick={() => { setForce(false); setDeleting(c); }}>Retire</button>}
                     <button className="danger subtle small" onClick={() => { setForce(true); setDeleting(c); }}>Delete</button>
                   </div>
@@ -96,6 +99,7 @@ export function ManageChallenges() {
         <Pager page={currentPage} totalPages={totalPages} onPage={setPage} />
       </Card>
     </ResourceState>
+    {selected>0&&<ExerciseHistoryPanel key={selected} identifier={selected} name={text(rows(data.challenges).find(item=>number(item.id)===selected)?.name,'Exercise #'+selected)} onClose={()=>router.navigate('/manage-ctf')}/>}
     {editing && <Card title={`Edit ${text(editing.name)}`} className="editor-panel">
       <form onSubmit={edit}>
         <Field

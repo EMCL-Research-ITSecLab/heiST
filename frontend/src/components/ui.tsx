@@ -168,13 +168,14 @@ export function Pager({ page, totalPages, onPage }: {
     <button className="secondary" disabled={page >= totalPages} onClick={() => onPage(page + 1)}>Next →</button>
   </nav>;
 }
-export function Confirm({ title, children, confirm, onClose, onConfirm, busy = false }: {
+export function Confirm({ title, children, confirm, onClose, onConfirm, busy = false, disabled = false }: {
   title: string;
   children: ReactNode;
   confirm: string;
   onClose: () => void;
   onConfirm: () => void;
   busy?: boolean;
+  disabled?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -195,7 +196,7 @@ export function Confirm({ title, children, confirm, onClose, onConfirm, busy = f
     {children}
     <div className="button-row">
       <button className="secondary" disabled={busy} onClick={onClose}>Cancel</button>
-      <button className="danger" disabled={busy} onClick={onConfirm}>
+      <button className="danger" disabled={busy || disabled} onClick={onConfirm}>
         {busy ? 'Working…' : confirm}
       </button>
     </div>

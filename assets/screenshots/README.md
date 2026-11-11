@@ -18,6 +18,13 @@ Full-page captures in both themes, using synthetic records. Click a file to insp
 | Artifacts | [Light](artifacts_light.png) | [Dark](artifacts_dark.png) |
 | Manage Announcements | [Light](manage_announcements_light.png) | [Dark](manage_announcements_dark.png) |
 | Operations | [Light](operations_light.png) | [Dark](operations_dark.png) |
+| Platform Health | [Light](platform_health_light.png) | [Dark](platform_health_dark.png) |
+| Operation History | [Light](operation_history_light.png) | [Dark](operation_history_dark.png) |
+| Capacity | [Light](capacity_light.png) | [Dark](capacity_dark.png) |
+| Data Governance | [Light](data_governance_light.png) | [Dark](data_governance_dark.png) |
+| Administrator Audit | [Light](administrator_audit_light.png) | [Dark](administrator_audit_dark.png) |
+| Maintenance | [Light](maintenance_light.png) | [Dark](maintenance_dark.png) |
+| Exercise History | [Light](exercise_history_light.png) | [Dark](exercise_history_dark.png) |
 | Monitoring Activity | [Light](monitoring_activity_light.png) | [Dark](monitoring_activity_dark.png) |
 | Users | [Light](users_light.png) | [Dark](users_dark.png) |
 | Instances | [Light](instances_light.png) | [Dark](instances_dark.png) |

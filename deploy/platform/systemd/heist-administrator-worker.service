@@ -1,0 +1,18 @@
+[Unit]
+Description=Process durable heiST administrator operations
+After=network-online.target backend.service pve-cluster.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/heiST
+ExecStart=/root/heiST/.venv/bin/python -m heist.platform.jobs.administrator --verify-runtime
+Restart=on-failure
+RestartSec=5
+UMask=0077
+TimeoutStopSec=90
+KillMode=control-group
+
+[Install]
+WantedBy=multi-user.target

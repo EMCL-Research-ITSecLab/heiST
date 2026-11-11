@@ -135,11 +135,13 @@ def create_app(config=None, services=None):
     def administrator_service():
         from heist.platform.administration import Administration
         return Administration(connection,Journal(application.config['OPERATION_DIRECTORY']),
+            status=services.get('vm_status'),vm_control=services.get('vm_control'),
             stop=lambda *args,**kwargs:service('stop_challenge')(*args,**kwargs),
             teardown=lambda *args,**kwargs:service('teardown_challenge')(*args,**kwargs),
             launch=lambda template,user:service('launch_challenge')(template,user,
                 os.getenv('MONITORING_VPN_INTERFACE','ctf_monitoring'),os.getenv('MONITORING_DMZ_INTERFACE','dmz_monitoring')))
     from heist.api.administration import blueprint as administrator_routes
+    application.extensions['administrator_service']=administrator_service
     application.register_blueprint(administrator_routes(administrator_service))
 
     @application.get('/admin/operations')

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { duration, external, image, number, row, rows, safeNext, truth } from '../src/lib/data.ts';
+import { duration, external, image, number, row, rows, safeNext, timestamp, truth } from '../src/lib/data.ts';
 
 test('redirects stay on this origin and reject backslashes and protocol-relative targets', () => {
   for (const next of ['https://evil.invalid','//evil.invalid','/\\evil.invalid','/login','/signup']) assert.equal(safeNext(next), '/dashboard');
@@ -18,4 +18,8 @@ test('legacy boolean and numeric encodings normalize without truthy string mista
 });
 test('invalid collection payloads stay empty and cannot crash page rendering',()=>{
   assert.deepEqual(row(null),{});assert.deepEqual(row([]),{});assert.deepEqual(rows('wrong'),[]);
+});
+test('operation timestamps distinguish events on the same day and preserve unknown values',()=>{
+  assert.equal(timestamp(undefined),'—');assert.equal(timestamp('invalid'),'—');
+  assert.notEqual(timestamp('2026-11-11T10:00:00Z'),timestamp('2026-11-11T10:00:01Z'));
 });

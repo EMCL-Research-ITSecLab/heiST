@@ -54,7 +54,7 @@ class BrowserTests(BrowserFixture):
         self.responses['admin/monitoring/activity']={'success':True,'data':{'status':'ready','counts':{'commands':1,'processes':1},'events':[
             {'machine_id':123,'timestamp':'2026-11-11T12:00:00Z','kind':'command','description':'Fixture command','command':command,'truncated':True}]}}
         self.page.set_viewport_size({'width':320,'height':900})
-        self.visit('/operations')
+        self.visit('/operations?tab=health')
         self.assertFalse(any(endpoint=='admin/monitoring/activity' for _,endpoint,_ in self.requests))
         self.page.get_by_role('button',name='Load activity',exact=True).click()
         table=self.page.get_by_role('table',name='Recent command and process events');table.wait_for()
@@ -99,7 +99,7 @@ class BrowserTests(BrowserFixture):
                 {'id': 'monitoring.delivery', 'label': 'Event delivery', 'state': 'unknown', 'summary': 'Canary not verified'},
             ]}
         self.responses['admin/operations'] = {'success': True, 'data': {'monitoring': monitoring}}
-        self.visit('/operations')
+        self.visit('/operations?tab=health')
         panel = self.page.get_by_role('region', name='Platform monitoring', exact=True)
         self.assertIn('Current health is unavailable', panel.inner_text())
         self.assertIn('Failed checks: 1', panel.inner_text())
@@ -217,7 +217,7 @@ class BrowserTests(BrowserFixture):
 
     def test_administrator_diagnostics_show_stale_archive_and_export(self):
         self.role = 'admin'
-        self.visit('/operations')
+        self.visit('/operations?tab=health')
         self.page.get_by_role('heading', name='Log archive', exact=True).wait_for()
         self.assertEqual(self.page.get_by_text('stale', exact=True).count(), 1)
         self.assertEqual(self.page.get_by_text('backend.service', exact=True).count(), 1)

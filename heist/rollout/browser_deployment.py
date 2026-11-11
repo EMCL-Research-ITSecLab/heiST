@@ -191,6 +191,8 @@ def stage_host(adapter, transaction):
                units/'heist-expiry.service': (expiry.encode(), 0o644),
                units/'heist-expiry.timer': (blob(adapter.installation, transaction.plan.target, 'deploy/platform/systemd/heist-expiry.timer'), 0o644)}
     planned.update(monitoring_deployment.files(adapter, transaction.plan.target))
+    from . import administrator_deployment
+    if administrator_deployment.enabled(transaction.plan):planned.update(administrator_deployment.files(adapter,transaction.plan.target))
     version = adapter.state/'internal-runtime/versions'/transaction.plan.target
     hashes = {str(path): digest(body) for path,(body,_) in planned.items()}
     hashes.update({str(version/'metadata.json'): digest((json.dumps(receipt,sort_keys=True)+'\n').encode()),
@@ -277,6 +279,9 @@ def deploy(adapter, transaction):
     host['heist-expiry.service'] = {'installed': True, 'enabled': False, 'active': False}
     from .monitoring_deployment import target_services
     host.update(target_services())
+    from . import administrator_deployment
+    if administrator_deployment.enabled(transaction.plan):
+        host['heist-administrator-worker.service']={'installed':True,'enabled':True,'active':True}
     web = {key:dict(value) for key,value in transaction.data['web_services'].items()}
     for name in ('apache2','heist-web','heist-artifacts'):
         web[name] = {'installed': True, 'enabled': True, 'active': True}

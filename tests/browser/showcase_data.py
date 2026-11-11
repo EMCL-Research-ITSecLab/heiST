@@ -19,7 +19,21 @@ def responses():
     def data(value):
         return {'success': True, 'data': value}
     activity = [{'id': 1, 'title': 'Directory evidence found', 'description': 'The Glass Directory · 150 points', 'created_at': '2026-11-01T10:00:00Z', 'time_ago': 'Today'}]
-    return {
+    result = {
+        'admin/maintenance':data({'release':{'version':'0.4.0-rc.3','commit':'651263f7096722aef978fe9b29de86f29a06e8f4'},'maintenance':False,'pending_requests':1,
+          'acceptance':{'status':'not configured'},'transactions':[{'id':'20261101-rehearsal','version':'0.4.0-rc.5','phase':'RECOVERY_REQUIRED','checkpoint_recorded':True,'committed':False}]}),
+        'admin/overview':data({'counts':{'users':42,'administrators':2,'assigned_users':5,'published':2,'machines':12,'networks':8,'allocated_ram_gb':26,'allocated_cores':20,'available_images':6},
+          'host':{'status':'ready','cores':16,'cpu_percent':21.5,'memory_used_bytes':40*1024**3,'memory_total_bytes':64*1024**3,'root_used_bytes':128*1024**3,'root_total_bytes':400*1024**3},
+          'lifecycle':{'READY':2,'ACTIVE':5,'EXPIRED':1},'training':{'accounts':42,'opted_out':7,'eligible':35,'capture_status':'disabled','export_status':'disabled','reason':'Capture/export and revocation acceptance are unfinished'},
+          'exercises':[{'id':4,'name':'The Glass Directory','owner':'investigator','is_active':True,'ready_to_launch':True,'machines':2,'instances':3,'ready_pool':2,'ram_per_instance':4,'pool_revision':0,'pool_size':0,'pool_override':False}]}),
+        'admin/audit':data({'events':[{'id':1,'recorded_at':'2026-11-01T10:00:00Z','action':'updated','actor':'investigator','resource_id':4,'revision_id':1}],'page':1,'has_more':False}),
+        'admin/jobs/user/2':data({'current':{'state':'SUCCEEDED'},'operations':[{'id':'a'*32,'scope':'user','resource':2,'action':'launch_challenge','state':'SUCCEEDED','actor':1,'started':'2026-11-01T10:00:00Z','finished':'2026-11-01T10:00:20Z','stage':'completed','events':[{'stage':'completed','at':'2026-11-01T10:00:20Z'}]},
+          {'id':'b'*32,'scope':'user','resource':2,'instance_id':101,'managed_queue':True,'action':'admin_rebuild','state':'NEEDS_REVIEW','actor':1,'started':'2026-11-01T09:00:00Z','stage':'removing_instance','events':[]}]}),
+        'admin/challenges/4/revisions':data({'revisions':[{'id':1,'recorded_at':'2026-11-01T10:00:00Z','actor':'investigator','fingerprint':'a'*64,'is_active':True,'machines':2,'networks':2}],'has_more':False}),
+        'admin/challenges/4/revisions/1':data({'definition':{'name':'The Glass Directory','category':'web','difficulty':'medium','description':'A recorded exercise configuration.',
+          'vms':[{'name':'portal','ova_name':'identity-portal.ova','artifact_id':1,'cores':1,'ram_gb':2},{'name':'directory','ova_name':'identity-directory.ova','artifact_id':2,'cores':2,'ram_gb':2}],
+          'subnets':[{'name':'entry','accessible':True,'attached_vms':['portal','directory']},{'name':'internal','accessible':False,'attached_vms':['directory']}],
+          'flags':[{'flag':'synthetic-private-value'}],'hints':[]}}),
         'profile/training-preference': data({'opted_out':False,'revision':1}),
         'admin/monitoring/activity': data({'status':'ready','checked_at':'2026-11-01T10:05:00Z',
             'counts':{'commands':1,'processes':1},'coverage':'unverified','has_more':False,'events':[
@@ -50,3 +64,8 @@ def responses():
             {'id': 'monitoring.end_to_end', 'label': 'End-to-end validation', 'state': 'unknown', 'summary': 'Correlated event delivery has not been verified.'}
         ]}, 'database': 'ready', 'maintenance': False, 'source_version': '0.3.0', 'services': [{'unit': 'backend.service', 'state': 'active', 'detail': 'running'}, {'unit': 'cleanup.service', 'state': 'active', 'detail': 'startup reconciliation complete'}, {'unit': 'pool_manager.service', 'state': 'active', 'detail': 'running'}], 'archive': {'status': 'success', 'last_success_at': '2026-11-01T10:00:00Z', 'counters': {'verified': 24, 'copied': 3}}, 'lifecycle': {'ACTIVE': 5, 'READY': 2}, 'release': {'version': '0.3.0'}, 'storage': {'used_percent': 32, 'free_bytes': 128*1024**3}, 'checked_at': '2026-11-01T10:05:00Z'}),
     }
+
+    detail=result['admin/instances/101']['data']
+    detail.update(challenge_template_id=4,subnet='10.128.42.0/28',activated_at='2026-11-01T09:05:00Z',expires_at='2026-11-01T11:00:00Z')
+    for vm in detail['machines']:vm.update(cores=1,ram_gb=2,ad_role='none')
+    return result

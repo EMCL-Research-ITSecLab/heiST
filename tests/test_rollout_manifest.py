@@ -185,6 +185,17 @@ class ManifestTests(unittest.TestCase):
 
 
 class PublishedBrowserUpdateContractTests(unittest.TestCase):
+    def test_rc4_preserves_published_migrations_and_adds_training_preferences(self):
+        root=Path(__file__).resolve().parents[1]
+        previous=json.loads((root/'releases/0.4.0-rc.3.json').read_text())
+        current=json.loads((root/'releases/0.4.0-rc.4.json').read_text())
+        self.assertEqual(current['version'],'0.4.0-rc.4')
+        self.assertEqual(current['migrations'][:-1],previous['migrations'])
+        self.assertEqual(current['migrations'][-1]['id'],'0012_training_preferences')
+        self.assertIn('651263f7096722aef978fe9b29de86f29a06e8f4',current['supported_from'])
+        for migration in current['migrations']:
+            self.assertEqual(hashlib.sha256((root/migration['path']).read_bytes()).hexdigest(),migration['sha256'])
+
     def test_rc2_retains_rc1_migration_identities_and_declares_the_installed_browser_baseline(self):
         root=Path(__file__).resolve().parents[1]
         previous=json.loads((root/'releases/0.4.0-rc.1.json').read_text())

@@ -20,6 +20,7 @@ def responses():
         return {'success': True, 'data': value}
     activity = [{'id': 1, 'title': 'Directory evidence found', 'description': 'The Glass Directory · 150 points', 'created_at': '2026-11-01T10:00:00Z', 'time_ago': 'Today'}]
     return {
+        'profile/training-preference': data({'opted_out':False,'revision':1}),
         'admin/monitoring/activity': data({'status':'ready','checked_at':'2026-11-01T10:05:00Z',
             'counts':{'commands':1,'processes':1},'coverage':'unverified','has_more':False,'events':[
                 {'machine_id':100000101,'timestamp':'2026-11-01T10:04:30Z','kind':'command','description':'Bash command received','command':'id','truncated':False},

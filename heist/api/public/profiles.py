@@ -57,6 +57,22 @@ def get_profile():
     return {'success': True, 'data': profile_data(user['id'], section=section)}
 
 
+@blueprint.route('/profile/training-preference',methods=['GET','PUT'])
+def training_preference():
+    user = require_user()
+    repo = repository()
+    if request.method == 'PUT':
+        value = body().get('opted_out')
+        if type(value) is not bool:raise ApiError('Choose whether to exclude your traffic from training')
+        rate_limit('training-preference',str(user['id']),30)
+        with repo.transaction():
+            result = repo.call('web_set_training_preference',user['id'],value,one=True)
+    else:
+        result = repo.call('web_training_preference',user['id'],one=True)
+    if not result:raise ApiError('Training preference is unavailable',503)
+    return {'success': True,'data':result}
+
+
 @blueprint.get('/profiles/<requested_username>')
 def public_profile(requested_username):
     require_user()

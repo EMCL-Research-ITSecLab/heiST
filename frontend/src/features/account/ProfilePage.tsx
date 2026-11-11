@@ -1,4 +1,5 @@
 import { AchievementIcon } from '../../components/AchievementIcon.tsx';
+import { TrainingPreferencePanel } from './TrainingPreferencePanel.tsx';
 import { avatarImage } from '../../lib/artwork.ts';
 import { useState, type FormEvent } from 'react';
 import { ActivityList, Area, Badge, Card, Confirm, Field, Notice, PageTitle, ResourceState, Stat } from '../../components/ui.tsx';
@@ -123,6 +124,7 @@ export function Profile({ username }: {
               <button className="secondary" disabled={action.busy}>Upload avatar</button>
             </form>
           </Card>
+          <TrainingPreferencePanel />
           <Card title="Account security">
             <form onSubmit={e => void save(e, 'change_password')}>
               <Field

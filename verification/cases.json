@@ -2276,6 +2276,27 @@
         "frontend/src/features/administration/ActivityPanel.tsx",
         "heist/monitoring/grafana/datasources.py"
       ]
+    },
+    {
+      "id": "AUTO-TRAINING-PREFERENCES",
+      "area": "training_privacy",
+      "mode": "automated",
+      "procedure": "Run tests/test_training_policy.py, account/signup PostgreSQL tests and browser opt-out tests; run the strict suite with tools/testing/postgres.py using a new private report.",
+      "expected": "Default-on preference, optional signup exclusion, private session-owned CSRF-protected updates, idempotent revisions and revision history pass; opted-out, changed, unknown, shared and unclosed training captures are blocked. This is policy admission testing, not capture/export acceptance.",
+      "evidence": [
+        "source-bound strict suite receipt",
+        "browser output"
+      ],
+      "sources": [
+        "tests/test_training_policy.py",
+        "tests/test_web_auth.py",
+        "tests/test_web_profiles.py",
+        "tests/test_web_database.py",
+        "tests/browser/ui_smoke.py",
+        "heist/monitoring/training.py",
+        "releases/migrations/0012_training_preferences.sql",
+        "tools/testing/postgres.py"
+      ]
     }
   ]
 }

@@ -97,6 +97,10 @@ def signup():
         raise ApiError('Registration is currently closed', 403)
     rate_limit('signup-ip', request.remote_addr or 'unknown', 5, 3600)
     value = body()
+    training_opt_out = value.get('training_opt_out',False)
+    if type(training_opt_out) is not bool and training_opt_out not in ('true','false'):
+        raise ApiError('Choose a training-data preference')
+    training_opt_out = training_opt_out is True or training_opt_out == 'true'
     supplied = value.get('lecture_token')
     if not isinstance(supplied,str) or len(supplied)>256 or not hmac.compare_digest(supplied.encode(),current_app.config['LECTURE_SIGNUP_TOKEN'].encode()):
         raise ApiError('Invalid lecture code',403)
@@ -119,6 +123,7 @@ def signup():
         with repo.transaction():
             created = repo.call('create_user', username, email, encoded, '', request.remote_addr, one=True)
             repo.call('web_record_registration',created['id'],legal['version'],legal['imprint_url'],legal['privacy_url'],legal['terms_url'])
+            repo.call('web_set_training_preference',created['id'],training_opt_out)
     except UniqueViolation:
         raise ApiError('Username or email is unavailable', 409) from None
     record = repository().call('web_user_identity', created['id'], one=True)

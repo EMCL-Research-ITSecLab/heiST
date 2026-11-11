@@ -13,7 +13,8 @@
     "frontend/src/components/NetworkPreview.tsx": "6b7d823726fe5be2f230f826f91792bcd1a11e4f3b9dc44ee36d531a4db45600",
     "frontend/src/components/ui.tsx": "6bd7e951f18365b93c5d0b79386c4d6672bfbe97414a89e992b0b14ee968c728",
     "frontend/src/env.d.ts": "65996936fbb042915f7b74a200fcdde7e410f32a669b1ab9597cfaa4b0faddb5",
-    "frontend/src/features/account/ProfilePage.tsx": "b1a382d9137261eb0923352e30e1b28188603578cfd4506ed9a057de0722c2a9",
+    "frontend/src/features/account/ProfilePage.tsx": "25cce95e6e8db91a503d158a9c2f0492601a4fb4c71ef22735d1a423b79b0640",
+    "frontend/src/features/account/TrainingPreferencePanel.tsx": "efad46345ec08e7c936a34c89a10edb7e835b94a3b9f24f61bfafb46bafb2de6",
     "frontend/src/features/administration/ActivityPanel.tsx": "0705491445da3c369e24ffc2b6fe566d00e98bcaf9abc83d9220193cfae0fdd8",
     "frontend/src/features/administration/AnnouncementManagementPage.tsx": "f124cc8f272c60591d840ed611b3948141f7f359a224670b2931f880deb98a00",
     "frontend/src/features/administration/ArtifactsPage.tsx": "05441570e206dfb6391ba1f7ea9cf86049d854c39840aaa92f8b205d85ce5243",
@@ -27,7 +28,7 @@
     "frontend/src/features/administration/PlatformStatusPanel.tsx": "c353ff7ded370367ba46d40cae5d53020024fe7bf5a9f3b2ed055c815597e254",
     "frontend/src/features/administration/UserManagementPage.tsx": "95d63fc656050032db482598a05ab535f56827c98159f4eeacb36fa5e186d7f2",
     "frontend/src/features/administration/useArtifactUpload.ts": "1f1fff9299ea5309592c27cf9dcca6990a57a8d857ca5ab076b34e6efe3c46e0",
-    "frontend/src/features/auth/AuthPage.tsx": "9e4f90a6b5b86ae88d3bd23f405689ec6950f45f15af90da5faca55d589cf3b0",
+    "frontend/src/features/auth/AuthPage.tsx": "36f7a4a742c37c060d1ffb027515a0f153ff0ffcf594c6cd33675963cda9dc56",
     "frontend/src/features/challenges/ChallengePage.tsx": "4411e07db1d7bd9630edb4008cb5387f76e23951da467da5e8c0fa5119ea5277",
     "frontend/src/features/challenges/ExplorePage.tsx": "01914bf9cfe49679b662d9138ae80b171bfe5edf80f06aa553e838a2150746bc",
     "frontend/src/features/community/FeedPage.tsx": "63f4eba5001ae14a718ea876031c4147cd6f5bb5eb3fe30e5480e4a255d9642d",
@@ -58,10 +59,10 @@
     "frontend/public/assets/logo/logo_light.svg": "e6cf270657532d0cba435aa94802b60b464d4f3184d10a7e1865457188520b2e",
     "frontend/public/assets/ui/fontawesome-license.txt": "9b914eae88817d63b576eab5aafde7068c7a1abae125d7cdfb034f1da43a9afc",
     "frontend/index.html": "8ab10020ce2673bb682d5de7e75ba55b46bb8ae197d025720c0ae33a9ced77b7",
-    "frontend/package.json": "3c077337e4fcde11de4679cbed43b108e9195ec82c1a3189b525ef9969188a89",
-    "frontend/package-lock.json": "2a08069191a56bf56b0b8da29159129329629aa2ad2fdf0b23548ea5153f69b2",
-    "tests/browser/support.py": "71745aee80877c538a805b2c9b486cc2097f7dfd0923c515dbb1231551e742d8",
-    "tests/browser/showcase_data.py": "918aa04bc75d362abe081b67c872e24c28db83ff723ef9363f93033cf3bb7e22",
+    "frontend/package.json": "9260446cde72c23298b299d7613ee634d9b5843886bf31dd684d2c9b0e313b1c",
+    "frontend/package-lock.json": "bca26f818f1026a1d0de1b80943be09ebf4b1e25cf2f45a87bdbd0e6338cc2c7",
+    "tests/browser/support.py": "1435b055bd383b739d5140da9a34c36379f7ab5da9d1353cfc7dd19eba916a33",
+    "tests/browser/showcase_data.py": "4a324bc2e132ddaf6faaf556ea10d1283be2d4b19fc2dac21311c80ba9a73440",
     "tools/testing/screenshots.py": "2db4546904a47a2039c0b16e00c49d1c607cd5225eab196706a1ba96797ea823"
   },
   "captures": [
@@ -127,8 +128,8 @@
         "height": 1000
       },
       "full_page": true,
-      "document_height": 2164,
-      "sha256": "ee787a1a635ad944e02d2900240989e260f684d61c76f6b3f55a836bde1dfc81"
+      "document_height": 2253,
+      "sha256": "820fb9b29ce86e46d457000976548117016b306d314e7dadbf7983cf7f6edf9c"
     },
     {
       "file": "public_profile_light.png",
@@ -322,8 +323,8 @@
         "height": 1000
       },
       "full_page": true,
-      "document_height": 1060,
-      "sha256": "30f5c4623e89bfb6dc1aff1154ee78b44d8e964cfc5aa55ab4c13d7e6e74a520"
+      "document_height": 1178,
+      "sha256": "89aaad6c56bf2b4ef3da4415fc6e121390ccc963bab48bb91623b81170b293cc"
     },
     {
       "file": "reset_password_light.png",
@@ -478,8 +479,8 @@
         "height": 1000
       },
       "full_page": true,
-      "document_height": 2164,
-      "sha256": "4ef1065ac26b5bc1f418e8a3d7f6a7b566eae22abe4f57b6d20304c9ba620570"
+      "document_height": 2253,
+      "sha256": "aad6d0667572d07f6d6f0fd206a0120254ab7982e2f0f390ce306984427a8cdd"
     },
     {
       "file": "public_profile_dark.png",
@@ -622,7 +623,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "6a0d588ee77b33d7244e3efaedda3a0281947f79f6b6f01fb833575e843eec98"
+      "sha256": "2c99cb9797d482650d39b22c70bd0e3af2cb358cf817197533f46fc90edf2c08"
     },
     {
       "file": "instances_dark.png",
@@ -673,8 +674,8 @@
         "height": 1000
       },
       "full_page": true,
-      "document_height": 1060,
-      "sha256": "11235875cae45d3abcc3022246764156f24682415f9de3e413ec25b360f56f57"
+      "document_height": 1178,
+      "sha256": "e98ff2ec1be6928ef858c723d42d1a37e6738c333906847eea8e8d865c908861"
     },
     {
       "file": "reset_password_dark.png",

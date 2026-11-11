@@ -59,6 +59,11 @@ export function AuthPage({ mode }: {
           required />}
         {signup && <>
           <Field label="Lecture code" name="lecture_token" type="password" autoComplete="off" required maxLength={256} />
+          <p className="muted">Challenge network traffic, including packet contents, may be used to train machine-learning models. You can opt out now or in your account settings.</p>
+          <label className="check">
+            <input type="checkbox" name="training_opt_out" value="true" />
+            <span>Exclude my challenge traffic from training datasets.</span>
+          </label>
           <label className="check legal-acceptance">
             <input type="checkbox" name="accept_legal" value="true" required />
             <span>I accept the <a href={session.legal.terms_url} target="_blank" rel="noopener noreferrer">Terms of Service</a> and <a href={session.legal.privacy_url} target="_blank" rel="noopener noreferrer">privacy policy</a>.</span>

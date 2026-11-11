@@ -30,6 +30,26 @@ class ProfileTests(unittest.TestCase):
         self.internal = Mock()
         self.app.extensions['internal_client_factory'] = lambda: self.internal
 
+    def test_training_opt_out_is_private_session_owned_and_revisioned(self):
+        path='profile/training-preference'
+        self.assertEqual(self.request(path).status_code,401)
+        self.login()
+        self.assertEqual(self.client.put('/api/profile/training-preference',base_url='https://localhost',json={'opted_out':True}).status_code,403)
+        initial=self.request(path).json['data']
+        self.assertIs(initial['opted_out'],False)
+        result=self.request(path,'PUT',json={'opted_out':True,'user_id':self.user_id+999}).json['data']
+        self.assertIs(result['opted_out'],True)
+        self.assertEqual(result['revision'],initial['revision']+1)
+        self.assertEqual(self.request(path,'PUT',json={'opted_out':True}).json['data']['revision'],result['revision'])
+        self.assertIn('no-store',self.request(path).headers['Cache-Control'])
+        for invalid in ('true',1,None):self.assertEqual(self.request(path,'PUT',json={'opted_out':invalid}).status_code,400)
+        self.assertEqual(self.request(path,'PUT',json={'opted_out':False}).json['data']['revision'],result['revision']+1)
+        with self.psycopg2.connect(**self.settings) as db,db.cursor() as cursor:
+            cursor.execute('SELECT opted_out FROM public.training_preference_history WHERE user_id=%s ORDER BY revision',(self.user_id,))
+            self.assertEqual(cursor.fetchall(),[(True,),(False,)])
+        with self.assertRaises(self.psycopg2.errors.InsufficientPrivilege):
+            with self.repo.db().cursor() as cursor:cursor.execute('SELECT * FROM public.training_preferences')
+
     def test_profile_reads_require_auth_and_public_view_excludes_private_identity(self):
         self.assertEqual(self.request('profile').status_code, 401)
         self.login()

@@ -97,6 +97,13 @@ class PublicAuthenticationTests(unittest.TestCase):
         response = replay.get('/api/session', base_url='https://localhost')
         self.assertFalse(response.json['data']['is_logged_in'])
 
+    def test_signup_training_exclusion_is_optional_and_persisted(self):
+        value=self.registration_body()
+        self.assertEqual(self.request('signup','POST',json={**value,'training_opt_out':'invalid'}).status_code,400)
+        self.assertEqual(self.request('signup','POST',json={**value,'training_opt_out':True}).status_code,200)
+        result=self.request('profile/training-preference').json['data']
+        self.assertIs(result['opted_out'],True)
+
     def test_signup_validates_policy_and_duplicate_accounts_without_partial_success(self):
         self.bootstrap()
         username = 'new_'+self.username[4:]

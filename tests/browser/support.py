@@ -71,6 +71,11 @@ class BrowserFixture(unittest.TestCase):
         request = route.request
         endpoint = urlsplit(request.url).path.removeprefix('/api/')
         self.requests.append((request.method, endpoint, request.url))
+        if endpoint == 'profile/training-preference' and request.method == 'PUT':
+            self.mutations.append((endpoint, request.post_data or '', request.headers))
+            value={'success':True,'data':{'opted_out':json.loads(request.post_data)['opted_out'],'revision':2}}
+            self.responses[endpoint]=value
+            return route.fulfill(json=value)
         if request.method == 'GET' and endpoint in self.responses:
             return route.fulfill(json=self.responses[endpoint])
         if request.method in ('POST','PUT','PATCH','DELETE'):
@@ -105,6 +110,8 @@ class BrowserFixture(unittest.TestCase):
             return route.fulfill(json={'success': True, 'challenge': {'id': 1, 'name': 'Identity lab', 'description': '<script>window.injected=true</script>', 'is_active': True, 'flags_total': 2, 'challenge_status': {'challenge_status': 'running'}, 'remaining_seconds': 3600}})
         if endpoint=='admin/artifacts':
             return route.fulfill(json={'success':True,'data':{'ovas':[],'uploads':[],'limits':{'MAX_FILE_SIZE':10000,'CHUNK_SIZE':5}}})
+        if endpoint=='profile/training-preference':
+            return route.fulfill(json={'success':True,'data':{'opted_out':False,'revision':1}})
         data = {'challenges': [], 'stats': {}, 'pagination': {'total_pages': 1}, 'badges': [], 'activities': [], 'announcements': [], 'ovas': [], 'user': {}, 'profile': {}}
         route.fulfill(json={'success': True, 'data': data})
 

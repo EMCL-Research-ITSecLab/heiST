@@ -291,6 +291,11 @@ tampering remains a limitation even with a healthy agent.
 
 ## Full packet capture and ML datasets
 
+The [training-data policy and opt-out controls](TRAINING-DATA.md) define the new
+default-on account preference, private revision history and fail-closed eligibility
+gate. Training capture remains disabled pending the dedicated worker's acceptance;
+the existing shared security captures are not eligible training datasets.
+
 Suricata EVE and Zeek events are structured metadata; they do not replace PCAP.
 Existing configuration enables some PCAP output, but its completeness, retention,
 capture points and successful archival have not been accepted. Suricata's

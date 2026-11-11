@@ -9,6 +9,41 @@ from tests.browser.support import BrowserFixture
 
 
 class BrowserTests(BrowserFixture):
+    def test_unconfirmed_training_preference_is_not_reported_as_saved(self):
+        self.role='student';writes=[]
+        def preference(route):
+            if route.request.method=='PUT':writes.append(route.request.post_data)
+            route.fulfill(json={'success':True,'data':{'opted_out':False,'revision':1}})
+        self.page.route('**/api/profile/training-preference',preference)
+        self.visit('/profile')
+        checkbox=self.page.get_by_label('Exclude my challenge traffic from training datasets.',exact=True)
+        checkbox.click()
+        self.page.get_by_text('Training preference was not confirmed.',exact=True).wait_for()
+        self.page.wait_for_function("document.querySelector('input[type=checkbox]')?.disabled === false")
+        self.assertFalse(checkbox.is_checked())
+        self.assertEqual(len(writes),1)
+
+    def test_training_opt_out_can_be_changed_in_account_and_is_not_public(self):
+        self.role='student'
+        self.visit('/profile')
+        checkbox=self.page.get_by_label('Exclude my challenge traffic from training datasets.',exact=True)
+        checkbox.wait_for()
+        self.assertFalse(checkbox.is_checked())
+        checkbox.check()
+        self.page.wait_for_function("document.querySelector('input[type=checkbox]:checked') !== null")
+        self.assertTrue(checkbox.is_checked())
+        self.assertEqual(self.mutations[0][0],'profile/training-preference')
+        self.assertEqual(json.loads(self.mutations[0][1]),{'opted_out':True})
+        self.visit('/profile/investigator')
+        self.assertEqual(self.page.get_by_label('Exclude my challenge traffic from training datasets.',exact=True).count(),0)
+
+    def test_signup_training_opt_out_is_optional_and_not_bundled_with_legal_acceptance(self):
+        self.visit('/signup')
+        checkbox=self.page.get_by_label('Exclude my challenge traffic from training datasets.',exact=True)
+        self.assertFalse(checkbox.is_checked())
+        self.assertFalse(checkbox.evaluate('(element) => element.required'))
+        self.assertTrue(self.page.get_by_role('checkbox',name='I accept',exact=False).evaluate('(element) => element.required'))
+
     def test_private_activity_loads_on_demand_and_command_html_is_only_text(self):
         self.role='admin'
         command='<img src=x onerror="window.injected=true">'+'x'*2048

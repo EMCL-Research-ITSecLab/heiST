@@ -41,7 +41,7 @@ def _main(argv=None):
                                            'rollback', 'adopt-task', 'retry-task'))
     parser.add_argument('--config', type=Path, required=True, help='Reviewed deployment JSON; no credentials')
     parser.add_argument('--target', help='Already fetched immutable commit, tag or branch')
-    parser.add_argument('--manifest', default='releases/0.4.0-rc.1.json')
+    parser.add_argument('--manifest', default='releases/0.4.0-rc.4.json')
     parser.add_argument('--ui-bundle', type=Path, help='Prebuilt UI artifact from the exact target commit')
     parser.add_argument('--runtime-bundle', type=Path, help='Offline browser runtime from the exact target commit')
     parser.add_argument('--plan', type=Path, help='Reviewed plan file to apply')

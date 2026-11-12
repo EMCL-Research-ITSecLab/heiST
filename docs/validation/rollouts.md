@@ -2,6 +2,15 @@
 
 ## Current acceptance scope
 
+Collector-only correction `99d879c` fixes an observed scheduled-job race: a
+healthy `Type=oneshot` archive task is `activating/start` while its process runs.
+The collector now reports that observed liveness without claiming completion;
+failed retries and missing processes remain failed/unverified. Forty-nine
+monitoring regression tests and an actual database archive run passed. The five
+delivery proofs were rerun for the new collector artifact; all 93 checks returned
+OK. The application remained at `33ed2c0` and was not restarted. The verifier
+resolves the active systemd collector by default, including a versioned artifact.
+
 On 2026-11-12, the guarded application-only correction `33ed2c0` was deployed.
 The misleading overview message treating fresh `unknown` coverage as stale data
 is fixed. All 655 strict backend tests passed with zero skips; the changed

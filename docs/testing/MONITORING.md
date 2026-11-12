@@ -39,7 +39,9 @@ sudo /private/tool-cache/python/bin/python -m tools.monitoring.verify_delivery \
 
 Run from the repository with its reviewed offline dependencies and cached,
 pinned PostgreSQL image available. The command requires a clean committed probe
-source and a new private output directory. It obtains a fresh backup (at most
+source and a new private output directory. It resolves the active collector from
+its systemd command by default; `--collector /private/staged-collector.py` is for
+explicit staged-artifact verification. It obtains a fresh backup (at most
 30 minutes old), keeps all failure logs private and never restores production.
 The checks do not run from HTTP requests or from the minute health collector.
 

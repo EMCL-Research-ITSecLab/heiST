@@ -26,6 +26,21 @@ from tools.monitoring import probes
 from tools.monitoring.restore_probe import verify as restore
 
 
+def collector_source(exec_start):
+    """Resolve the two supported collector commands; reject unknown launchers."""
+    import re
+    import shlex
+    match = re.search(r'argv\[\]=(.*?) ;', exec_start)
+    if match is None:
+        raise ValueError('Collector command could not be verified')
+    arguments = shlex.split(match[1])
+    if arguments[1:3] == ['-m', 'heist.monitoring.health']:
+        return '/root/heiST/heist/monitoring/health.py'
+    if len(arguments) > 1 and re.fullmatch(r'/usr/local/lib/heist/platform-health-[a-f0-9]{7,40}\.py', arguments[1]):
+        return arguments[1]
+    raise ValueError('Unsupported collector command; inspect the deployed service')
+
+
 class Target:
     def __init__(self, args):
         self.args = args
@@ -54,8 +69,11 @@ class Target:
         return json.loads(result.stdout)
 
     def binding(self, output):
-        program = """p=json.load(sys.stdin)
-path=Path(p['collector']);assert path.is_absolute() and not path.is_symlink() and path.stat().st_uid==0
+        program = inspect.getsource(collector_source)+"""
+import subprocess
+p=json.load(sys.stdin)
+source=p['collector'] or collector_source(subprocess.check_output(['systemctl','show','heist-monitoring.service','--property=ExecStart','--value'],text=True))
+path=Path(source);assert path.is_absolute() and not path.is_symlink() and path.stat().st_uid==0
 print(json.dumps({'source_commit':json.loads(Path('/var/lib/heist/installed.json').read_text())['commit'],
 'host_boot_id':Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
 'collector_sha256':hashlib.sha256(path.read_bytes()).hexdigest()}))
@@ -70,7 +88,7 @@ def main():
     parser.add_argument('--local-user', help='Use this existing local account for SSH only')
     parser.add_argument('--known-hosts', type=Path, help='Pinned host file; defaults to the transport account known_hosts')
     parser.add_argument('--commit', required=True, help='Expected installed application commit')
-    parser.add_argument('--collector', default='/root/heiST/heist/monitoring/health.py')
+    parser.add_argument('--collector', help='Optional staged collector source; defaults to the active systemd command')
     parser.add_argument('--python', default='/root/heiST/.venv/bin/python')
     parser.add_argument('--environment', default='/root/heiST/backend/.env')
     parser.add_argument('--deployment', required=True)

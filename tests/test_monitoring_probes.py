@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 from types import SimpleNamespace
-from tools.monitoring.verify_delivery import Target
+from tools.monitoring.verify_delivery import Target, collector_source
 from tools.monitoring import probes
 from tools.monitoring.restore_probe import verify
 
@@ -18,6 +18,14 @@ class ProbeTests(unittest.TestCase):
         target=Target(args)
         self.assertIn('UserKnownHostsFile=/private/pinned-hosts',target.command)
         self.assertIn('StrictHostKeyChecking=yes',target.command)
+
+    def test_active_collector_detection_supports_module_and_versioned_artifact(self):
+        self.assertEqual(collector_source('{ path=/python ; argv[]=/python -m heist.monitoring.health --config /private/config ; ignore_errors=no ; }'),
+                         '/root/heiST/heist/monitoring/health.py')
+        self.assertEqual(collector_source('{ path=/python ; argv[]=/python /usr/local/lib/heist/platform-health-99d879c.py --config /private/config ; ignore_errors=no ; }'),
+                         '/usr/local/lib/heist/platform-health-99d879c.py')
+        for command in ('', '{ argv[]=/bin/sh /tmp/collector.py ; }'):
+            with self.subTest(command=command), self.assertRaises(ValueError):collector_source(command)
 
     def test_packet_archive_and_web_reject_invalid_run_identity_before_commands(self):
         for probe in (probes.packet_probe, probes.archive_probe, probes.web_probe):

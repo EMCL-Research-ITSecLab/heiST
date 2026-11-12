@@ -2,6 +2,30 @@
 
 ## Current acceptance scope
 
+On 2026-11-12, the guarded application-only correction `33ed2c0` was deployed.
+The misleading overview message treating fresh `unknown` coverage as stale data
+is fixed. All 655 strict backend tests passed with zero skips; the changed
+administration workflows passed eight fixture browser tests. Production passed
+10 API and 28 desktop/mobile UI checks. Protected student data was unchanged.
+
+The five former unconditional delivery placeholders now have explicit,
+[bounded positive/negative/recovery contracts](../testing/MONITORING.md#five-explicit-delivery-contracts).
+All five were executed against this installed commit and published with source,
+collector and host-boot bindings. The resulting 93-check platform receipt and
+independent off-host watchdog reported OK, with no failures or unknown checks.
+The proof timestamps expire after 24 hours; no automatic daily probe schedule
+was installed. The operator tool additionally uses an explicit pinned SSH host
+file (`d7f4b9f`). Training capture remains disabled. These delivery results do not
+certify exhaustive guest/VPN/IPv6 packet coverage or whole-platform rollback.
+
+The first patch attempt refused a recreated, empty retired PHP serving directory
+and automatically recovered the previous application. That empty directory was
+preserved outside the serving roots before the successful retry. The original
+failed attempt and recovery records were retained. To undo this correction,
+restore its separately saved monitoring-unit configuration before reversing the
+application correction; earlier application corrections and full-platform
+recovery remain distinct stages in the private operator notes.
+
 On 2026-11-11, production completed the RC5 upgrade from `651263f` to
 `68c683b`, including the connected administration UI, durable administrator
 worker, configuration history, pool policies and challenge countdown fix.

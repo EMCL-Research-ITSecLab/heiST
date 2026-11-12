@@ -29,8 +29,10 @@ from tools.monitoring.restore_probe import verify as restore
 class Target:
     def __init__(self, args):
         self.args = args
+        home = Path(pwd.getpwnam(args.local_user).pw_dir) if args.local_user else Path.home()
+        known_hosts = args.known_hosts or home/'.ssh/known_hosts'
         self.command = ['ssh', '-T', '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes',
-                        '-o', 'ForwardAgent=no', '-o', 'ConnectTimeout=10', args.host]
+                        '-o', 'ForwardAgent=no', '-o', 'UserKnownHostsFile='+str(known_hosts), '-o', 'ConnectTimeout=10', args.host]
         if args.local_user:
             if os.geteuid() != 0 or pwd.getpwnam(args.local_user).pw_uid == 0:
                 raise ValueError('A local transport account requires root and a nonroot account')
@@ -66,6 +68,7 @@ def main():
     parser.add_argument('--host', required=True, help='Existing pinned SSH config profile')
     parser.add_argument('--node', required=True, help='Expected remote hostname')
     parser.add_argument('--local-user', help='Use this existing local account for SSH only')
+    parser.add_argument('--known-hosts', type=Path, help='Pinned host file; defaults to the transport account known_hosts')
     parser.add_argument('--commit', required=True, help='Expected installed application commit')
     parser.add_argument('--collector', default='/root/heiST/heist/monitoring/health.py')
     parser.add_argument('--python', default='/root/heiST/.venv/bin/python')

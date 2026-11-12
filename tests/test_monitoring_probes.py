@@ -6,11 +6,19 @@ from pathlib import Path
 import tempfile
 import unittest
 from unittest.mock import patch
+from types import SimpleNamespace
+from tools.monitoring.verify_delivery import Target
 from tools.monitoring import probes
 from tools.monitoring.restore_probe import verify
 
 
 class ProbeTests(unittest.TestCase):
+    def test_pinned_host_file_is_explicit_even_if_ssh_profile_overrides_defaults(self):
+        args=SimpleNamespace(local_user=None,known_hosts=Path('/private/pinned-hosts'),host='heist',node='fixture',commit='a'*40)
+        target=Target(args)
+        self.assertIn('UserKnownHostsFile=/private/pinned-hosts',target.command)
+        self.assertIn('StrictHostKeyChecking=yes',target.command)
+
     def test_packet_archive_and_web_reject_invalid_run_identity_before_commands(self):
         for probe in (probes.packet_probe, probes.archive_probe, probes.web_probe):
             with self.subTest(probe=probe.__name__), patch('subprocess.run') as run:

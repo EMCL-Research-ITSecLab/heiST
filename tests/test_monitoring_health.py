@@ -159,6 +159,30 @@ class HealthTests(unittest.TestCase):
             value = next(c for c in services('host', run=run) if c['id']=='host.service.heist-expiry.service')
             self.assertEqual(value['state'], state)
 
+    def test_running_scheduled_job_has_observed_liveness_without_claiming_completion(self):
+        for role, unit in [('archive', 'heist-log-archive@database.service'),
+                           ('archive', 'heist-log-archive@proxmox-logs.service'),
+                           ('host', 'heist-expiry.service'), ('host', 'heist-log-prepare.service')]:
+            with self.subTest(unit=unit):
+                run = Mock(return_value=subprocess.CompletedProcess([], 0,
+                    'Id='+unit+'\nLoadState=loaded\nActiveState=activating\nSubState=start\nResult=success\nMainPID=1234\n'))
+                item = next(c for c in services(role, run=run) if c['label'] == unit)
+                self.assertEqual(item['state'], 'ok')
+                self.assertIn('job is running', item['summary'])
+                self.assertIn('completion and delivery are checked separately', item['summary'])
+                self.assertNotIn('completed', item['summary'])
+
+    def test_failed_retry_and_missing_process_are_not_healthy_running_jobs(self):
+        for substate, result, pid, expected in [('auto-restart', 'exit-code', '0', 'failed'),
+                                               ('start', 'success', '0', 'unknown'),
+                                               ('start', 'success', '', 'unknown')]:
+            with self.subTest(substate=substate, result=result, pid=pid):
+                run = Mock(return_value=subprocess.CompletedProcess([], 0,
+                    'Id=heist-log-archive@database.service\nLoadState=loaded\nActiveState=activating\nSubState='+substate+
+                    '\nResult='+result+'\nMainPID='+pid+'\n'))
+                item = next(c for c in services('archive', run=run) if c['label'] == 'heist-log-archive@database.service')
+                self.assertEqual(item['state'], expected)
+
     def test_eve_heartbeat_uses_stats_even_without_traffic_and_excludes_event_contents(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory)/'eve_dmz.json'

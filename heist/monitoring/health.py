@@ -59,7 +59,7 @@ def services(role, *, run=subprocess.run):
     try:
         # systemctl may return nonzero for a missing unit while reporting the
         # remaining units correctly. Preserve those observations.
-        result = run(['systemctl', 'show', '--property=Id,LoadState,ActiveState,SubState,Result,ExecMainStartTimestamp', *units],
+        result = run(['systemctl', 'show', '--property=Id,LoadState,ActiveState,SubState,Result,ExecMainStartTimestamp,MainPID', *units],
                      capture_output=True, text=True, timeout=5, check=False)
     except (OSError, subprocess.SubprocessError):
         result = None
@@ -74,11 +74,21 @@ def services(role, *, run=subprocess.run):
         value = found.get(unit, {})
         active = value.get('ActiveState')
         state = 'ok' if active == 'active' and value.get('LoadState') == 'loaded' else 'failed' if active in ('inactive', 'failed') or value.get('LoadState') == 'not-found' else 'unknown'
+        job_running = (unit in JOBS and value.get('LoadState') == 'loaded'
+                       and active in ('activating', 'active') and value.get('SubState') in ('start', 'running')
+                       and value.get('Result') == 'success' and value.get('MainPID', '').isdigit()
+                       and int(value['MainPID']) > 0)
+        if job_running:
+            state = 'ok'
+        elif unit in JOBS and active in ('activating', 'active') and value.get('Result') not in (None, 'success'):
+            state = 'failed'
         if unit in JOBS and active == 'inactive' and value.get('LoadState') == 'loaded' and value.get('Result') == 'success':
             state = 'ok' if value.get('ExecMainStartTimestamp') not in (None, '', 'n/a') else 'unknown'
         summary = {'ok': 'Active', 'failed': 'Required unit is stopped, failed or missing',
                    'unknown': 'Service state could not be verified'}[state]
-        if state == 'ok' and unit in JOBS and active == 'inactive':
+        if job_running:
+            summary = 'Scheduled job is running; completion and delivery are checked separately'
+        elif state == 'ok' and unit in JOBS and active == 'inactive':
             summary = 'Last job completed successfully; timer and delivery are checked separately'
         checks.append(check(role+'.service.'+unit, unit, state, summary))
     return checks

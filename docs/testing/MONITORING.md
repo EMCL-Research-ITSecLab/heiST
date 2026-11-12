@@ -5,6 +5,52 @@ read-only unless a specific maintenance change is approved. Retain the exact
 commit, artifacts, infrastructure versions, UTC timestamps and sanitized results.
 Do not save real terminal commands, credentials or packet contents in test reports.
 
+## Five explicit delivery contracts
+
+The former unconditional `*.end_to_end` placeholders now accept only private
+operator-produced evidence for five **bounded paths**. They do not certify the
+entire matrix below or replace full upgrade/rollback acceptance.
+
+| Role | Live positive test | Negative test and recovery |
+|---|---|---|
+| Host | Unique synthetic DNS frames traverse a temporary ingress mirror, the real DMZ Suricata sensor and Vector/ClickHouse | Remove only the temporary mirror, confirm the blocked nonce is absent, restore the mirror and observe a new nonce; remove temporary links |
+| Web | Synthetic account logs in over verified HTTPS and reads its SQL-backed profile | Nonadmin administrator access is denied; a revoked session is rejected; a fresh login succeeds; delete the test account |
+| Database | Download a source backup with matching SHA256/size, restore into a network-isolated local PostgreSQL container and query application integrity | Reject a truncated archive without altering the first restore; restore the valid archive into another database and compare integrity results; remove the container |
+| Monitoring | Grafana's real ClickHouse datasource queries that exact DNS canary | Incorrect reader credentials receive HTTP401; correct credentials query successfully again; TLS verification stays enabled |
+| Archive | A dedicated synthetic gzip source is copied by the real unprivileged archive unit and independently decompressed | A deliberately corrupted copy in its dedicated test destination is rejected for the expected checksum error; remove that fixture, rerun successfully and confirm the source remains |
+
+No production service or student VM is stopped. The host test excludes actual
+student VPN routes, guest NIC mirrors, IPv6/L2 coverage and packet completeness.
+The monitoring test covers the ClickHouse datasource path, not every dashboard or
+Wazuh event class. Those broader paths remain in the matrix below.
+
+`tools.monitoring.verify_delivery` runs these tests and publishes only a complete
+five-path result. It uses the existing pinned SSH profile and credentials in place;
+secrets, account passwords and raw student events never enter the public receipt.
+The copied SQL backup remains private in the run's evidence directory.
+
+```sh
+sudo /private/tool-cache/python/bin/python -m tools.monitoring.verify_delivery \
+  --host heist --local-user OPERATOR --node EXPECTED_PROXMOX_HOST \
+  --commit FULL_INSTALLED_COMMIT \
+  --deployment /private/production-deployment.json \
+  --output /private/new-delivery-run --publish
+```
+
+Run from the repository with its reviewed offline dependencies and cached,
+pinned PostgreSQL image available. The command requires a clean committed probe
+source and a new private output directory. It obtains a fresh backup (at most
+30 minutes old), keeps all failure logs private and never restores production.
+The checks do not run from HTTP requests or from the minute health collector.
+
+Proofs expire after 24 hours and are invalidated by a host reboot, application
+commit change or collector-code change. Re-reading a proof never refreshes its
+timestamp. Missing, stale, malformed, shared-readable, wrong-boot or wrong-source
+proofs remain **unknown**. An explicit failed step is **failed**. Rerun the command
+after changes and before the proof expires; no daily schedule is installed by
+this change. The UI distinguishes fresh unverified coverage from stale/unavailable
+monitoring data.
+
 ## Automated contracts
 
 `tests/test_monitoring_health.py` covers stopped/missing services, mixed-success

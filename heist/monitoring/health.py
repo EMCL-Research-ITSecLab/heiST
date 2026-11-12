@@ -4,6 +4,7 @@ This file uses only the standard library. Never import provisioning modules here
 some legacy installers change requests/TLS behaviour at import time.
 """
 import argparse
+import hashlib
 from datetime import datetime, timezone
 import json
 import os
@@ -392,6 +393,78 @@ def local_snapshot(role, *, run=subprocess.run):
     return {'schema': 1, 'checked_at': datetime.now(timezone.utc).isoformat(), 'checks': checks}
 
 
+
+# Each proof establishes this bounded path, not exhaustive platform coverage.
+DELIVERY_CONTRACTS = {
+    'host': ('Synthetic DMZ mirror → Suricata → ClickHouse',
+             ('source', 'sensor', 'sink', 'interruption_detected', 'recovery', 'cleanup')),
+    'web': ('HTTPS login → Flask → backend → SQL',
+            ('login', 'backend_query', 'access_denied', 'session_revoked', 'recovery', 'cleanup')),
+    'database': ('Verified source backup → isolated PostgreSQL restore',
+                 ('source_checksum', 'restore', 'application_query', 'corruption_rejected', 'recovery', 'cleanup')),
+    'monitoring': ('Grafana authenticated datasource → correlated canary',
+                   ('canary_query', 'authentication_denied', 'recovery', 'tls_verified')),
+    'archive': ('Closed source → archive collector → independently read gzip',
+                ('source_closed', 'checksum', 'decompression', 'corruption_rejected', 'recovery', 'source_retained')),
+}
+
+
+def delivery_checks(value, *, directory=Path('/var/lib/heist/monitoring/end-to-end'),
+                    installed=Path('/var/lib/heist/installed.json'),
+                    boot=Path('/proc/sys/kernel/random/boot_id'), collector=None, now=None):
+    """Use private, bounded proofs bound to this code, installation and host boot.
+
+    A timer cannot renew a proof by rereading it. No probe is run from HTTP or
+    during collection. Fault injection belongs to explicit operator commands.
+    """
+    import re
+    now = now or datetime.now(timezone.utc)
+    try:
+        commit = json.loads(installed.read_text())['commit']
+        boot_id = boot.read_text().strip()
+        collector = collector or hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+        if re.fullmatch('[a-f0-9]{40}', commit) is None:
+            raise ValueError('Invalid installation identity')
+    except (OSError, ValueError, KeyError, TypeError):
+        commit, boot_id = None, None
+    replacements = {}
+    for role, (scope, required) in DELIVERY_CONTRACTS.items():
+        state, summary = 'unknown', 'Not verified: '+scope+'. Run its delivery and recovery probe.'
+        path = directory/(role+'.json')
+        try:
+            info = path.lstat()
+            if (path.is_symlink() or not path.is_file() or info.st_uid != os.geteuid()
+                    or info.st_mode & 0o077 or info.st_size > 8192):
+                raise ValueError('Untrusted delivery evidence')
+            with path.open('rb') as stream: body = stream.read(8193)
+            if len(body) > 8192:
+                raise ValueError('Oversized delivery evidence')
+            proof = json.loads(body)
+            if (not commit or proof['schema'] != 1 or proof['role'] != role
+                    or proof['source_commit'] != commit or proof['host_boot_id'] != boot_id
+                    or proof['collector_sha256'] != collector
+                    or re.fullmatch('[a-f0-9]{32}', proof['run_id']) is None
+                    or re.fullmatch('[a-f0-9]{40}', proof['probe_commit']) is None):
+                raise ValueError('Delivery evidence identity differs')
+            at = datetime.fromisoformat(proof['checked_at'])
+            if at.tzinfo is None or not -30 <= (now-at).total_seconds() <= 86400:
+                raise ValueError('Delivery evidence expired or has invalid time')
+            steps = proof['steps']
+            if set(steps) != set(required) or any(type(v) is not bool for v in steps.values()):
+                raise ValueError('Incomplete delivery evidence')
+            failed = sum(not steps[name] for name in required)
+            state = 'failed' if failed else 'ok'
+            summary = scope+': '+(str(failed)+' probe steps failed' if failed else 'delivery and recovery verified')
+            summary += ' at '+at.isoformat()+'. Valid for 24h; limited to this path.'
+        except FileNotFoundError:
+            pass
+        except (OSError, ValueError, KeyError, TypeError, AttributeError):
+            summary = 'Delivery evidence is invalid, expired or belongs to another installation/boot: '+scope+'. Rerun the probe.'
+        replacements[role+'.end_to_end'] = check(role+'.end_to_end', role.capitalize()+' delivery verification', state, summary)
+    value['checks'] = [replacements.get(item['id'], item) for item in value['checks']]
+    return value
+
+
 def sanitize(value, *, now=None, maximum_age=180):
     """Receipt trust boundary shared by SSH collection and the administrator API."""
     if not isinstance(value, dict) or value.get('schema') != 1:
@@ -546,6 +619,8 @@ def main(argv=None):
             value['checks'].append(status)
             value['checks'].extend(grafana(settings))
             value['checks'].extend(clickhouse(settings))
+    if args.role == 'host':
+        delivery_checks(value)
     value['checked_at'] = datetime.now(timezone.utc).isoformat()
     if args.output:
         publish(args.output, value)

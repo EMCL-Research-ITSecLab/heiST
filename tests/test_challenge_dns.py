@@ -1,4 +1,5 @@
 import getpass
+import os
 from pathlib import Path
 import shutil
 import socket
@@ -8,6 +9,7 @@ import tempfile
 import time
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 from heist.infrastructure.network.dns import connection_dns_servers, fallback_servers, hostname_records
 
@@ -19,6 +21,12 @@ class ChallengeDNSTests(unittest.TestCase):
         self.assertEqual(connection_dns_servers(connection, []), '10.128.1.17')
         connection.machine.template.ad_role = 'dc'
         self.assertEqual(connection_dns_servers(connection, []), '10.128.1.20')
+
+    def test_isolated_defaults_do_not_advertise_public_resolvers(self):
+        with patch.dict(os.environ, {}, clear=True):
+            self.assertEqual(fallback_servers(), [])
+        with patch.dict(os.environ, {'CHALLENGE_DNS_FALLBACK': '192.0.2.53'}):
+            self.assertEqual(fallback_servers(), ['192.0.2.53'])
 
     def test_operator_can_disable_public_fallback_and_invalid_addresses_fail(self):
         self.assertEqual(fallback_servers(''), [])

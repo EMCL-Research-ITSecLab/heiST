@@ -707,9 +707,9 @@ def configure_dnsmasq_instances(challenge):
     machines_with_user_routes = {}
     machines_with_internet_access = {}
 
-    # Preserve the historical public fallback unless an isolated deployment
-    # explicitly disables it. Never advertise another NIC's router on this link.
-    fallback = fallback_servers(os.getenv('CHALLENGE_DNS_FALLBACK', '1.1.1.1,1.0.0.1'))
+    # Advertise only the per-link resolver by default. Explicit fallback DNS
+    # must be reachable and able to resolve the exercise's private names.
+    fallback = fallback_servers()
 
     configs_created = 0
 

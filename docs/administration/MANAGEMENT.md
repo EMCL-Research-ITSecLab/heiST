@@ -84,6 +84,30 @@ not preserve OVA bytes or guest disks, and deleting an exercise removes its full
 configuration snapshots. The separate metadata audit retains deletion events.
 Back up the database and registered image library independently.
 
+## DNS in isolated exercises
+
+Guests use the DNS resolver on their own scenario link by default. Public DNS
+fallback is no longer advertised implicitly: `.heist.test` is private, and
+unreachable public resolvers can make the guest's resolver spend many seconds
+failing over before an LDAP/HTTP connection even begins. A measured Lab 01
+comparison reduced resolution from 13–15 seconds to 1–3 milliseconds and LDAP
+bind/search from 12–20 seconds to 8–9 milliseconds when using only the local DNS.
+The unassigned test instance's original settings were restored after comparison.
+
+`CHALLENGE_DNS_FALLBACK` is an explicit comma-separated IPv4 override, empty by
+default. Use it only for resolvers that are reachable from that exercise and
+resolve its private names. An exercise needing external DNS requires an
+intentionally configured resolver/forwarding policy; public resolvers do not
+replace the authoritative exercise DNS or AD domain controller.
+
+This default affects newly generated DHCP configurations. Existing active and
+ready instances retain their configuration and leases. Updating source alone
+does not repair those guests. Preserve active students' progress: check each
+scenario interface and router, save current settings, update its DHCP DNS policy
+and renew the appropriate lease or apply a reversible per-link resolver repair.
+Exclude the dedicated monitoring NIC. Do not reset an exercise merely to repair
+DNS, and do not replace dynamic addresses with static template addresses.
+
 ## Capacity and pool policy
 
 **Capacity** distinguishes measured host CPU, RAM and root-filesystem usage from

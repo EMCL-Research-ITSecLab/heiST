@@ -2,6 +2,13 @@
 
 ## Current acceptance scope
 
+On 2026-11-16 the five delivery checks became unknown because their 24-hour
+proofs expired. Repeating all five bounded positive/negative/recovery probes
+passed and renewed the proofs. A separate off-host systemd service/timer now
+supports eight-hour verification from a pinned operator checkout; expiry and
+installation/boot/collector binding remain enforced. This does not expand the
+coverage certified by the probes or enable training capture.
+
 Collector-only correction `99d879c` fixes an observed scheduled-job race: a
 healthy `Type=oneshot` archive task is `activating/start` while its process runs.
 The collector now reports that observed liveness without claiming completion;

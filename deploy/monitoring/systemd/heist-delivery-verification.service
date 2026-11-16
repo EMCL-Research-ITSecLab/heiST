@@ -1,0 +1,18 @@
+[Unit]
+Description=Verify five live heiST monitoring delivery paths from an operator workstation
+Wants=network-online.target
+After=network-online.target docker.service
+ConditionPathExists=/etc/heist/delivery-verification.conf
+
+[Service]
+Type=oneshot
+User=root
+UMask=0077
+# Deploy a root-owned pinned source checkout, offline Python environment and
+# explicit installed commit/SSH profile in the operator's override below.
+EnvironmentFile=/etc/heist/delivery-verification.conf
+WorkingDirectory=/opt/heist-delivery-verification
+ExecStart=/opt/heist-delivery-verification/.venv/bin/python -m tools.monitoring.scheduled_delivery --output-root ${EVIDENCE_ROOT} -- --host ${TARGET_HOST} --local-user ${TRANSPORT_USER} --known-hosts ${KNOWN_HOSTS} --node ${TARGET_NODE} --commit ${INSTALLED_COMMIT} --deployment ${DEPLOYMENT_FILE}
+TimeoutStartSec=30min
+# Root/Docker are required only for the network-isolated local restore. Remote
+# canaries never stop production services or student VMs. Failures go to journal.

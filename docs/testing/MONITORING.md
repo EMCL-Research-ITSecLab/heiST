@@ -49,9 +49,40 @@ Proofs expire after 24 hours and are invalidated by a host reboot, application
 commit change or collector-code change. Re-reading a proof never refreshes its
 timestamp. Missing, stale, malformed, shared-readable, wrong-boot or wrong-source
 proofs remain **unknown**. An explicit failed step is **failed**. Rerun the command
-after changes and before the proof expires; no daily schedule is installed by
-this change. The UI distinguishes fresh unverified coverage from stale/unavailable
+after changes and before the proof expires. The UI distinguishes fresh unverified coverage from stale/unavailable
 monitoring data.
+
+### Recurring off-host verification
+
+Install `deploy/monitoring/systemd/heist-delivery-verification.{service,timer}`
+on an operator workstation with root/Docker, the cached PostgreSQL image, reviewed
+offline Python dependencies and an existing nonroot pinned SSH profile. This is
+separate from the read-only minute collector and the archive-host watchdog.
+Use a **root-owned pinned clean checkout**, not a developer's changing worktree.
+The example service expects it and its Python environment under
+`/opt/heist-delivery-verification`; override `WorkingDirectory` and `ExecStart`
+for another location. Do not install this service on the production Proxmox host.
+
+Create root-owned mode-0600 `/etc/heist/delivery-verification.conf` with
+`EVIDENCE_ROOT`, `TARGET_HOST`, `TRANSPORT_USER`, `KNOWN_HOSTS`, `TARGET_NODE`,
+`INSTALLED_COMMIT` and `DEPLOYMENT_FILE`. Use absolute paths, the exact production
+application commit, an existing pinned host file and a new private evidence root.
+No passwords or copied SSH private keys belong in this file. Update the expected
+commit deliberately after a rollout; an unexpected installation fails closed.
+
+Run the service manually and inspect its journal and the production receipt
+before enabling the timer. It repeats the actual positive, negative and recovery
+probes at 00:20, 08:20 and 16:20 UTC with up to two minutes of jitter. Persistent
+timers catch up after workstation downtime, but the workstation must remain
+available for continuous verification. Failed runs report to the systemd journal
+and do not publish partial evidence. Proofs still expire honestly if refresh fails.
+The scheduler serializes runs and keeps receipts and failed-run diagnostics in
+private dated directories. After success it deletes only that run's copied SQL
+archive; the production backup and all older evidence remain untouched.
+
+Disable the timer before maintenance; rerun after a host reboot, collector change
+or deployment rather than waiting eight hours. This schedule does not enable
+training capture or certify exhaustive guest traffic coverage.
 
 ## Automated contracts
 

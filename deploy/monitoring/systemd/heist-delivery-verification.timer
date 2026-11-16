@@ -1,0 +1,11 @@
+[Unit]
+Description=Refresh heiST delivery evidence before its 24-hour expiry
+
+[Timer]
+OnCalendar=*-*-* 00,08,16:20:00 UTC
+RandomizedDelaySec=120
+Persistent=true
+Unit=heist-delivery-verification.service
+
+[Install]
+WantedBy=timers.target

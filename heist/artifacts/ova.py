@@ -27,7 +27,11 @@ class Limits:
     archive_bytes: int = 17*GIB
     disk_bytes: int = 16*GIB
     total_disk_bytes: int = 16*GIB
-    virtual_bytes: int = 16*GIB
+    # Stream-optimized Windows images can remain below the bounded 16 GiB
+    # upload limit while declaring an ordinary sparse 32/64 GiB system disk.
+    # Normalization still verifies the VMDK's exact capacity and reserves the
+    # full sparse output budget before conversion.
+    virtual_bytes: int = 64*GIB
     disks: int = 8
     entries: int = 32
     ovf_bytes: int = 1024**2

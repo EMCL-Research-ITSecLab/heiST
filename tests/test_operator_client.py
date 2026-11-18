@@ -17,12 +17,14 @@ from tools.challenges.client import request
 class BrowserAPI(BaseAdapter):
     def __init__(self):
         self.calls = []
+        self.timeouts = []
         self.chunks = []
         self.state = 'READY'
         self.redirect = False
 
     def send(self, prepared, **kwargs):
         self.calls.append(prepared)
+        self.timeouts.append(kwargs['timeout'])
         response = requests.Response()
         response.request = prepared
         response.status_code = 200
@@ -81,6 +83,8 @@ class OperatorClientTests(unittest.TestCase):
         self.assertEqual(self.adapter.chunks, [b'abcde', b'fghij', b'kl'])
         self.assertEqual([call.method for call in self.adapter.calls], ['GET','POST','GET','POST','PUT','PUT','PUT','POST','GET'])
         self.assertTrue(all('/api/' in call.url for call in self.adapter.calls))
+        seal = next(i for i, call in enumerate(self.adapter.calls) if call.url.endswith('/seal'))
+        self.assertEqual(self.adapter.timeouts[seal], (10, 1800))
 
     def test_sealing_does_not_report_success_or_start_another_upload_on_timeout(self):
         self.adapter.state = 'PROCESSING'

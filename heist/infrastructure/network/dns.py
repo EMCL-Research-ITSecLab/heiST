@@ -1,9 +1,14 @@
 """Per-link DHCP resolvers and authoritative local exercise hostnames."""
 import ipaddress
+import os
 import re
 
 
-def fallback_servers(value):
+def fallback_servers(value=None):
+    # Isolated guests must not fail over to unreachable/public resolvers.
+    # Operators can explicitly configure reachable resolvers when needed.
+    if value is None:
+        value = os.getenv('CHALLENGE_DNS_FALLBACK', '')
     return [str(ipaddress.IPv4Address(item.strip())) for item in value.split(',') if item.strip()]
 
 

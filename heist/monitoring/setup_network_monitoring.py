@@ -645,7 +645,7 @@ outputs:
       filename: {SURICATA_LOG_DIR}/fast_vpn.log
       
   - pcap-log:
-      enabled: yes
+      enabled: no
       filename: pcap/suricata_vpn.pcap
       limit: 5000000000
 
@@ -915,7 +915,7 @@ outputs:
       filename: {SURICATA_LOG_DIR}/fast_backend.log
 
   - pcap-log:
-      enabled: yes
+      enabled: no
       filename: pcap/suricata_backend.pcap
       limit: 5000000000
 
@@ -1209,7 +1209,7 @@ outputs:
       filename: {SURICATA_LOG_DIR}/fast_dmz.log
       
   - pcap-log:
-      enabled: yes
+      enabled: no
       filename: pcap/suricata_dmz.pcap
       limit: 5000000000
 

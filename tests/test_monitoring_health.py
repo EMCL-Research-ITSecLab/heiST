@@ -196,6 +196,17 @@ class HealthTests(unittest.TestCase):
             path.write_text('{"event_type":"flow","src_ip":"private"}\n')
             self.assertEqual(eve_health('dmz', root=Path(directory), now=NOW)['state'], 'unknown')
 
+    def test_eve_heartbeat_survives_busy_bounded_tail(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory)/'eve_vpn.json'
+            stats = json.dumps({'event_type':'stats','timestamp':NOW.isoformat(),
+                'stats':{'capture':{'kernel_packets':12,'kernel_drops':0}}})+'\n'
+            flow = json.dumps({'event_type':'flow','payload':'private'})+'\n'
+            path.write_text(stats + flow*(700*1024//len(flow)))
+            result = eve_health('vpn', root=Path(directory), now=NOW)
+            self.assertEqual(result['state'], 'ok')
+            self.assertNotIn('private', json.dumps(result))
+
     def test_nfqueue_heartbeat_does_not_require_af_packet_counters(self):
         with tempfile.TemporaryDirectory() as directory:
             (Path(directory)/'eve_backend.json').write_text(json.dumps({

@@ -44,6 +44,14 @@ class OvaEnvelopeTests(unittest.TestCase):
         # Payload is deliberately not a VMDK. Envelope success must never be
         # presented as disk/content validation or permission to import.
 
+    def test_sparse_windows_capacity_is_bounded_separately_from_payload(self):
+        accepted = XML.replace(b'capacity="10"', b'capacity="64"')
+        self.assertEqual(inspect_envelope(self.archive(accepted)).disks[0].declared_capacity,
+                         64*1024**3)
+        rejected = XML.replace(b'capacity="10"', b'capacity="65"')
+        with self.assertRaises(InvalidOva):
+            inspect_envelope(self.archive(rejected))
+
     def test_links_extended_headers_and_special_files_are_refused(self):
         for kind in (tarfile.SYMTYPE, tarfile.LNKTYPE, tarfile.FIFOTYPE, tarfile.DIRTYPE,
                      tarfile.GNUTYPE_SPARSE, tarfile.XHDTYPE, tarfile.GNUTYPE_LONGNAME):

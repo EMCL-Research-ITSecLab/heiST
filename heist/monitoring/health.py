@@ -103,10 +103,14 @@ def eve_health(role, *, root=Path('/var/log/suricata'), now=None):
     now = now or datetime.now(timezone.utc)
     state, summary = 'unknown', 'No recent sensor statistics; ingestion and coverage are unverified'
     try:
+        # Stats are emitted every eight seconds, but busy sensors can append more
+        # than 512 KiB of ordinary EVE records between heartbeats. Keep the read
+        # bounded while covering several emission intervals under upload load.
+        tail_bytes = 4*1024*1024
         with (root/('eve_'+role+'.json')).open('rb') as stream:
             stream.seek(0, 2)
-            stream.seek(max(0, stream.tell()-512*1024))
-            lines = stream.read(512*1024).splitlines()
+            stream.seek(max(0, stream.tell()-tail_bytes))
+            lines = stream.read(tail_bytes).splitlines()
         for line in reversed(lines):
             try:
                 event = json.loads(line)

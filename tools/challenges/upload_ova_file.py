@@ -46,7 +46,9 @@ def upload_ova_file(file_path, session, target_filename=None, prints=False, *,
                     headers={'Content-Type': 'application/octet-stream'}, timeout=(10, 1800))
         if stream.read(1):
             raise RuntimeError('Source OVA changed; inspect upload '+identifier)
-    request(session, 'POST', prefix+'/seal', json={})
+    # Sealing assembles and validates multi-gigabyte uploads synchronously
+    # before the receipt can enter its durable processing state.
+    request(session, 'POST', prefix+'/seal', json={}, timeout=(10, 1800))
     deadline = clock()+timeout
     while True:
         value = request(session, 'GET', prefix)['data']

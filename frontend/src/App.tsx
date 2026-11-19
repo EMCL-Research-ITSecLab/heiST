@@ -1,4 +1,4 @@
-import {LanguageProvider,useI18n} from './lib/i18n.tsx';
+import { LanguageProvider, useI18n } from './lib/i18n.tsx';
 import { ManageUsers } from './features/administration/UserManagementPage.tsx';
 import { ManageInstances } from './features/administration/InstanceManagementPage.tsx';
 import { useEffect } from 'react';
@@ -19,86 +19,155 @@ import { Landing } from './features/welcome/LandingPage.tsx';
 import { Link, RouterProvider, useRouter } from './lib/router.tsx';
 import { SessionProvider, useSession } from './lib/state.tsx';
 export const routes = [
-  ['/terms-of-service', 'public'], ['/impressum', 'public'], ['/privacy-policy', 'public'], ['/', 'public'], ['/landing', 'public'], ['/login', 'public'], ['/signup', 'public'],
-  ['/explore', 'public'], ['/challenge', 'student'], ['/dashboard', 'student'],
-  ['/profile', 'student'], ['/profile/:username', 'student'], ['/profile_public', 'student'],
-  ['/reset-password', 'student'], ['/activity', 'student'], ['/badges', 'student'],
-  ['/announcements', 'student'], ['/create-ctf', 'admin'], ['/manage-ctf', 'admin'],
-  ['/manage-users','admin'], ['/manage-instances','admin'], ['/upload-diskfile', 'admin'], ['/manage-announcements', 'admin'], ['/operations', 'admin'], ['/404', 'public'],
+  ['/terms-of-service', 'public'],
+  ['/impressum', 'public'],
+  ['/privacy-policy', 'public'],
+  ['/', 'public'],
+  ['/landing', 'public'],
+  ['/login', 'public'],
+  ['/signup', 'public'],
+  ['/explore', 'public'],
+  ['/challenge', 'student'],
+  ['/dashboard', 'student'],
+  ['/profile', 'student'],
+  ['/profile/:username', 'student'],
+  ['/profile_public', 'student'],
+  ['/reset-password', 'student'],
+  ['/activity', 'student'],
+  ['/badges', 'student'],
+  ['/announcements', 'student'],
+  ['/create-ctf', 'admin'],
+  ['/manage-ctf', 'admin'],
+  ['/manage-users', 'admin'],
+  ['/manage-instances', 'admin'],
+  ['/upload-diskfile', 'admin'],
+  ['/manage-announcements', 'admin'],
+  ['/operations', 'admin'],
+  ['/404', 'public'],
 ] as const;
-function Redirect({ to }: {
-  to: string;
-}) {
-  const {t}=useI18n(); const router = useRouter(); useEffect(() => router.navigate(to, true), [to]); return <div className="loading" role="status">{t("Loading…")}</div>; }
+function Redirect({ to }: { to: string }) {
+  const { t } = useI18n();
+  const router = useRouter();
+  useEffect(() => router.navigate(to, true), [to]);
+  return (
+    <div className="loading" role="status">
+      {t('routing.loading')}
+    </div>
+  );
+}
 function RouteContent() {
-  const {t}=useI18n();
-  const { location } = useRouter(), session = useSession(), path = location.split('?')[0].replace(/\/$/, '') || '/';
+  const { t } = useI18n();
+  const { location } = useRouter(),
+    session = useSession(),
+    path = location.split('?')[0].replace(/\/$/, '') || '/';
   let publicProfile: string | undefined;
   try {
-    publicProfile = path.startsWith('/profile/') ? decodeURIComponent(path.slice(9)) : path === '/profile_public' ? new URLSearchParams(location.split('?')[1]).get('username') ?? '' : undefined;
+    publicProfile = path.startsWith('/profile/')
+      ? decodeURIComponent(path.slice(9))
+      : path === '/profile_public'
+        ? (new URLSearchParams(location.split('?')[1]).get('username') ?? '')
+        : undefined;
   } catch {
     publicProfile = undefined;
   }
-  const route = routes.find(([p]) => p === path || p === '/profile/:username' && publicProfile);
-  if (path === '/impressum' || path === '/privacy-policy' || path === '/terms-of-service') return <LegalPage kind={path.slice(1) as 'impressum' | 'privacy-policy' | 'terms-of-service'} />;
+  const route = routes.find(([p]) => p === path || (p === '/profile/:username' && publicProfile));
+  if (path === '/impressum' || path === '/privacy-policy' || path === '/terms-of-service')
+    return (
+      <LegalPage kind={path.slice(1) as 'impressum' | 'privacy-policy' | 'terms-of-service'} />
+    );
   if (session.loading)
-    return <div className="loading" role="status">
-      <span className="spinner" />{t("Loading…")}</div>;
+    return (
+      <div className="loading" role="status">
+        <span className="spinner" />
+        {t('routing.loading')}
+      </div>
+    );
   if (session.error)
-    return <div className="empty" role="alert">
-      <h1>{t("Connection failed")}</h1>
-      <p>
-        {session.error}
-      </p>
-      <button onClick={() => void session.refresh()}>{t("Try again")}</button>
-    </div>;
+    return (
+      <div className="empty" role="alert">
+        <h1>{t('routing.connectionFailed')}</h1>
+        <p>{session.error}</p>
+        <button onClick={() => void session.refresh()}>{t('routing.tryAgain')}</button>
+      </div>
+    );
   if (session.user?.passwordChange && path !== '/reset-password')
     return <Redirect to="/reset-password" />;
   if (route && route[1] !== 'public' && !session.user)
     return <Redirect to={'/login?next=' + encodeURIComponent(location)} />;
   if (route?.[1] === 'admin' && !session.user?.admin)
-    return <div className="empty">
-      <p className="eyebrow">{t("ADMINISTRATION")}</p>
-      <h1>{t("Administrator access required")}</h1>
-      <p>{t("Your account does not have permission to manage the platform.")}</p>
-      <Link className="button" href="/dashboard">{t("Dashboard")}</Link>
-    </div>;
-  if (publicProfile)
-    return <Profile key={path} username={publicProfile} />;
+    return (
+      <div className="empty">
+        <p className="eyebrow">{t('routing.administration')}</p>
+        <h1>{t('routing.administratorAccessRequired')}</h1>
+        <p>{t('auth.administratorAccessDenied')}</p>
+        <Link className="button" href="/dashboard">
+          {t('routing.dashboard')}
+        </Link>
+      </div>
+    );
+  if (publicProfile) return <Profile key={path} username={publicProfile} />;
   switch (path) {
     case '/':
-    case '/landing': return <Landing />;
+    case '/landing':
+      return <Landing />;
     case '/login':
-    case '/signup': return session.user ? <Redirect to="/dashboard" /> : <AuthPage key={path} mode={path === '/signup' ? 'signup' : 'login'} />;
-    case '/reset-password': return <AuthPage mode="reset-password" />;
-    case '/dashboard': return <Dashboard />;
-    case '/explore': return <Explore />;
-    case '/challenge': return <Challenge key={location} />;
-    case '/profile': return <Profile />;
+    case '/signup':
+      return session.user ? (
+        <Redirect to="/dashboard" />
+      ) : (
+        <AuthPage key={path} mode={path === '/signup' ? 'signup' : 'login'} />
+      );
+    case '/reset-password':
+      return <AuthPage mode="reset-password" />;
+    case '/dashboard':
+      return <Dashboard />;
+    case '/explore':
+      return <Explore />;
+    case '/challenge':
+      return <Challenge key={location} />;
+    case '/profile':
+      return <Profile />;
     case '/activity':
     case '/announcements':
-    case '/badges': return <Feed key={path} kind={path.slice(1) as 'activity' | 'announcements' | 'badges'} />;
-    case '/manage-ctf': return <ManageChallenges />;
-    case '/create-ctf': return <CreateChallenge />;
-    case '/upload-diskfile': return <Artifacts />;
-    case '/manage-announcements': return <ManageAnnouncements />;
-    case '/manage-users': return <ManageUsers />;
-    case '/manage-instances': return <ManageInstances />;
-    case '/operations': return <Operations />;
-    default: return <div className="empty">
-      <p className="eyebrow">404</p>
-      <h1>{t("Page not found")}</h1>
-      <p>{t("This page does not exist.")}</p>
-      <Link className="button" href="/explore">{t("Challenges")}</Link>
-    </div>;
+    case '/badges':
+      return <Feed key={path} kind={path.slice(1) as 'activity' | 'announcements' | 'badges'} />;
+    case '/manage-ctf':
+      return <ManageChallenges />;
+    case '/create-ctf':
+      return <CreateChallenge />;
+    case '/upload-diskfile':
+      return <Artifacts />;
+    case '/manage-announcements':
+      return <ManageAnnouncements />;
+    case '/manage-users':
+      return <ManageUsers />;
+    case '/manage-instances':
+      return <ManageInstances />;
+    case '/operations':
+      return <Operations />;
+    default:
+      return (
+        <div className="empty">
+          <p className="eyebrow">404</p>
+          <h1>{t('routing.pageNotFound')}</h1>
+          <p>{t('routing.thisPageDoesNotExist')}</p>
+          <Link className="button" href="/explore">
+            {t('navigation.challenges')}
+          </Link>
+        </div>
+      );
   }
 }
 export default function App() {
-  return <LanguageProvider><RouterProvider>
-    <SessionProvider>
-      <AppShell>
-        <RouteContent />
-      </AppShell>
-    </SessionProvider>
-  </RouterProvider></LanguageProvider>;
+  return (
+    <LanguageProvider>
+      <RouterProvider>
+        <SessionProvider>
+          <AppShell>
+            <RouteContent />
+          </AppShell>
+        </SessionProvider>
+      </RouterProvider>
+    </LanguageProvider>
+  );
 }

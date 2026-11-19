@@ -1,6 +1,14 @@
-import {useI18n} from '../../lib/i18n.tsx';
+import { useI18n } from '../../lib/i18n.tsx';
 import { useState } from 'react';
-import { Badge, Card, Empty, Field, PageTitle, ResourceState, Select } from '../../components/ui.tsx';
+import {
+  Badge,
+  Card,
+  Empty,
+  Field,
+  PageTitle,
+  ResourceState,
+  Select,
+} from '../../components/ui.tsx';
 import { number, payload, rows, text, truth } from '../../lib/data.ts';
 import { Link, useRouter } from '../../lib/router.tsx';
 import { useResource } from '../../lib/state.tsx';
@@ -8,45 +16,198 @@ import { InstanceActionDialog, type ActionSelection } from './InstanceActionDial
 import { InstanceDetailsPanel } from './InstanceDetailsPanel.tsx';
 
 export function ManageInstances() {
-  const {t}=useI18n();
-  const router = useRouter(), query = new URLSearchParams(router.location.split('?')[1]);
-  const page = Math.max(1, number(query.get('page')) || 1), selected = number(query.get('instance')) || null;
-  const search = query.get('search') ?? '', state = query.get('state') ?? 'all';
+  const { t } = useI18n();
+  const router = useRouter(),
+    query = new URLSearchParams(router.location.split('?')[1]);
+  const page = Math.max(1, number(query.get('page')) || 1),
+    selected = number(query.get('instance')) || null;
+  const search = query.get('search') ?? '',
+    state = query.get('state') ?? 'all';
   const parameters = new URLSearchParams({ page: String(page), search, state });
   if (query.has('template_id')) parameters.set('template_id', query.get('template_id')!);
-  const resource = useResource('/api/admin/instances?' + parameters, 15000), data = payload(resource.data);
+  const resource = useResource('/api/admin/instances?' + parameters, 15000),
+    data = payload(resource.data);
   const [pending, setPending] = useState<ActionSelection | null>(null);
-  const [queued,setQueued]=useState('');
+  const [queued, setQueued] = useState('');
   function update(key: string, value: string, replace = false) {
     const next = new URLSearchParams(query);
-    if (value) next.set(key, value); else next.delete(key);
-    if (['search', 'state', 'template_id'].includes(key)) { next.delete('page'); next.delete('instance'); }
+    if (value) next.set(key, value);
+    else next.delete(key);
+    if (['search', 'state', 'template_id'].includes(key)) {
+      next.delete('page');
+      next.delete('instance');
+    }
     router.navigate('/manage-instances' + (next.size ? '?' + next : ''), replace);
   }
-  return <>
-    <PageTitle title={t("Running challenges")} eyebrow={t("ADMINISTRATION")} description={t("Assignments, virtual machines, networks and recovery.")}
-      action={<button className="secondary" onClick={resource.reload}>{t("Refresh")}</button>} />
-    {queued&&<p className="notice">{t("Operation queued. ")}<Link href={queued}>{t("View progress")}</Link></p>}
-    <Card title={t("Instances")}>
-      <div className="filter-bar"><Field label={t("Find an instance")} value={search} maxLength={100} placeholder={t("Exercise, student or ID")} onChange={event => update('search', event.target.value, true)} />
-        <Select label={t("Instance state")} value={state} options={['all', 'PROVISIONING', 'READY', 'ASSIGNED', 'ACTIVE', 'EXPIRED', 'TERMINATING']} onChange={event => update('state', event.target.value)} />
-        {query.has('template_id') && <button className="secondary" onClick={() => update('template_id', '')}>{t("Clear exercise filter")}</button>}</div>
-      <ResourceState {...resource}>
-        {rows(data.instances).length ? <div className="table-wrap"><table><thead><tr><th>{t("Instance")}</th><th>{t("Challenge")}</th><th>{t("Student")}</th><th>{t("State")}</th><th>{t("Expires")}</th><th>{t("Actions")}</th></tr></thead>
-          <tbody>{rows(data.instances).map(instance => <tr key={number(instance.id)}><td>{number(instance.id)}</td><td>{text(instance.name)}</td><td>{text(instance.username, instance.state === 'READY' && !instance.pre_assigned_user_id ? 'Warm spare' : 'Unassigned')}</td>
-            <td><Badge>{text(instance.state)}</Badge></td><td>{text(instance.expires_at, 'Unavailable')}</td><td><div className="button-row">
-              <button className="secondary small" onClick={() => update('instance', String(instance.id))}>{t("Inspect")}</button>
-              {instance.user_id ? <>{(['release', 'rebuild'] as const).map(kind => <button key={kind} className="secondary small" onClick={() => setPending({ instance: number(instance.id), kind })}>{t(kind === 'release' ? 'Release' : 'Rebuild')}</button>)}</>
-                : <button className="danger small" disabled={(instance.state === 'READY' && Boolean(instance.pre_assigned_user_id)) || !['READY', 'EXPIRED', 'TERMINATING'].includes(text(instance.state))}
-                  onClick={() => setPending({ instance: number(instance.id), kind: 'remove' })}>{t("Remove")}</button>}
-            </div></td></tr>)}</tbody></table></div> : <Empty title={t("No matching instances")} />}
-        <div className="button-row"><button className="secondary" disabled={page <= 1} onClick={() => update('page', String(page - 1))}>{t("Previous")}</button><span>{t("Page ")}{page}</span>
-          <button className="secondary" disabled={!truth(data.has_more)} onClick={() => update('page', String(page + 1))}>{t("Next")}</button></div>
-      </ResourceState>
-    </Card>
-    {selected !== null && <InstanceDetailsPanel key={selected} identifier={selected} onClose={() => update('instance', '')} onAction={setPending} />}
-    {pending && <InstanceActionDialog selection={pending} onClose={() => setPending(null)} onComplete={result => {
-      const job=payload(result);setQueued('/operations?tab=jobs&scope='+text(job.scope)+'&resource='+number(job.resource));setPending(null);resource.reload();
-    }} />}
-  </>;
+  return (
+    <>
+      <PageTitle
+        title={t('navigation.runningChallenges')}
+        eyebrow={t('routing.administration')}
+        description={t('instances.assignmentsVirtualMachinesNetworksAndRecovery')}
+        action={
+          <button className="secondary" onClick={resource.reload}>
+            {t('common.actions.refresh')}
+          </button>
+        }
+      />
+      {queued && (
+        <p className="notice">
+          {t('instances.operationQueued') + ' '}
+          <Link href={queued}>{t('instances.viewProgress')}</Link>
+        </p>
+      )}
+      <Card title={t('common.labels.instances')}>
+        <div className="filter-bar">
+          <Field
+            label={t('instances.findAnInstance')}
+            value={search}
+            maxLength={100}
+            placeholder={t('instances.exerciseStudentOrId')}
+            onChange={(event) => update('search', event.target.value, true)}
+          />
+          <Select
+            label={t('instances.instanceState')}
+            value={state}
+            options={[
+              'all',
+              'PROVISIONING',
+              'READY',
+              'ASSIGNED',
+              'ACTIVE',
+              'EXPIRED',
+              'TERMINATING',
+            ]}
+            onChange={(event) => update('state', event.target.value)}
+          />
+          {query.has('template_id') && (
+            <button className="secondary" onClick={() => update('template_id', '')}>
+              {t('instances.clearExerciseFilter')}
+            </button>
+          )}
+        </div>
+        <ResourceState {...resource}>
+          {rows(data.instances).length ? (
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>{t('instances.instance')}</th>
+                    <th>{t('common.labels.challenge')}</th>
+                    <th>{t('authoring.student')}</th>
+                    <th>{t('common.labels.state')}</th>
+                    <th>{t('instances.expires')}</th>
+                    <th>{t('common.labels.actions')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows(data.instances).map((instance) => (
+                    <tr key={number(instance.id)}>
+                      <td>{number(instance.id)}</td>
+                      <td>{text(instance.name)}</td>
+                      <td>
+                        {text(
+                          instance.username,
+                          instance.state === 'READY' && !instance.pre_assigned_user_id
+                            ? 'Warm spare'
+                            : 'Unassigned',
+                        )}
+                      </td>
+                      <td>
+                        <Badge>{text(instance.state)}</Badge>
+                      </td>
+                      <td>{text(instance.expires_at, 'Unavailable')}</td>
+                      <td>
+                        <div className="button-row">
+                          <button
+                            className="secondary small"
+                            onClick={() => update('instance', String(instance.id))}
+                          >
+                            {t('instances.inspect')}
+                          </button>
+                          {instance.user_id ? (
+                            <>
+                              {(['release', 'rebuild'] as const).map((kind) => (
+                                <button
+                                  key={kind}
+                                  className="secondary small"
+                                  onClick={() =>
+                                    setPending({ instance: number(instance.id), kind })
+                                  }
+                                >
+                                  {kind === 'release' ? t('common.release') : t('common.rebuild')}
+                                </button>
+                              ))}
+                            </>
+                          ) : (
+                            <button
+                              className="danger small"
+                              disabled={
+                                (instance.state === 'READY' &&
+                                  Boolean(instance.pre_assigned_user_id)) ||
+                                !['READY', 'EXPIRED', 'TERMINATING'].includes(text(instance.state))
+                              }
+                              onClick={() =>
+                                setPending({ instance: number(instance.id), kind: 'remove' })
+                              }
+                            >
+                              {t('common.actions.remove')}
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <Empty title={t('instances.noMatchingInstances')} />
+          )}
+          <div className="button-row">
+            <button
+              className="secondary"
+              disabled={page <= 1}
+              onClick={() => update('page', String(page - 1))}
+            >
+              {t('common.pagination.previous')}
+            </button>
+            <span>
+              {t('common.page') + ' '}
+              {page}
+            </span>
+            <button
+              className="secondary"
+              disabled={!truth(data.has_more)}
+              onClick={() => update('page', String(page + 1))}
+            >
+              {t('common.pagination.next')}
+            </button>
+          </div>
+        </ResourceState>
+      </Card>
+      {selected !== null && (
+        <InstanceDetailsPanel
+          key={selected}
+          identifier={selected}
+          onClose={() => update('instance', '')}
+          onAction={setPending}
+        />
+      )}
+      {pending && (
+        <InstanceActionDialog
+          selection={pending}
+          onClose={() => setPending(null)}
+          onComplete={(result) => {
+            const job = payload(result);
+            setQueued(
+              '/operations?tab=jobs&scope=' + text(job.scope) + '&resource=' + number(job.resource),
+            );
+            setPending(null);
+            resource.reload();
+          }}
+        />
+      )}
+    </>
+  );
 }

@@ -1,9 +1,28 @@
-import {useI18n} from '../../lib/i18n.tsx';
+import { useI18n } from '../../lib/i18n.tsx';
 import { useEffect, useState, type FormEvent } from 'react';
-import { Area, Card, Empty, Field, Notice, PageTitle, ResourceState, Select, Stat } from '../../components/ui.tsx';
+import {
+  Area,
+  Card,
+  Empty,
+  Field,
+  Notice,
+  PageTitle,
+  ResourceState,
+  Select,
+  Stat,
+} from '../../components/ui.tsx';
 import { NetworkPreview } from '../../components/NetworkPreview.tsx';
 import { request } from '../../lib/api.ts';
-import { categories, difficulties, number, row, rows, text, truth, type Row } from '../../lib/data.ts';
+import {
+  categories,
+  difficulties,
+  number,
+  row,
+  rows,
+  text,
+  truth,
+  type Row,
+} from '../../lib/data.ts';
 import { Link, useRouter } from '../../lib/router.tsx';
 import { PoolEditor } from './PoolEditor.tsx';
 import { useAction, useResource } from '../../lib/state.tsx';
@@ -46,305 +65,734 @@ export function CreateChallenge() {
   return <ChallengeEditor key={editing} />;
 }
 function ChallengeEditor() {
-  const {t}=useI18n();
-  const router = useRouter(), editing = number(new URLSearchParams(router.location.split('?')[1]).get('edit'));
-  const resource = useResource(editing ? `/api/admin/challenges/${editing}/configuration` : '/api/admin/challenges/options'), action = useAction();
-  const configuration = row(resource.data.data), blocked = !!editing && (truth(row(configuration.definition).isActive) || number(configuration.instances) > 0 || truth(configuration.retired));
-  const [poolOpen,setPoolOpen] = useState(false);
-  const [machines, setMachines] = useState<Machine[]>([]), [networks, setNetworks] = useState<Network[]>([]), [flags, setFlags] = useState<Flag[]>([]), [hints, setHints] = useState<Hint[]>([]);
-  const [imported, setImported] = useState<Row>({}), [importVersion, setImportVersion] = useState(0);
-  const ovaOptions: [
-    string,
-    string
-  ][] = [['', t('Select an artifact')], ...rows(resource.data.ovas).map(ova => [text(ova.filename ?? ova.name ?? ova.ova_name), text(ova.filename ?? ova.name ?? ova.ova_name)] as [
-    string,
-    string
-  ])];
-  function updateMachine(id: string, change: Partial<Machine>) { setMachines(items => items.map(item => item.key === id ? { ...item, ...change } : item)); }
-  function updateNetwork(id: string, change: Partial<Network>) { setNetworks(items => items.map(item => item.key === id ? { ...item, ...change } : item)); }
-  function updateFlag(id: string, change: Partial<Flag>) { setFlags(items => items.map(item => item.key === id ? { ...item, ...change } : item)); }
-  function updateHint(id: string, change: Partial<Hint>) { setHints(items => items.map(item => item.key === id ? { ...item, ...change } : item)); }
+  const { t } = useI18n();
+  const router = useRouter(),
+    editing = number(new URLSearchParams(router.location.split('?')[1]).get('edit'));
+  const resource = useResource(
+      editing ? `/api/admin/challenges/${editing}/configuration` : '/api/admin/challenges/options',
+    ),
+    action = useAction();
+  const configuration = row(resource.data.data),
+    blocked =
+      !!editing &&
+      (truth(row(configuration.definition).isActive) ||
+        number(configuration.instances) > 0 ||
+        truth(configuration.retired));
+  const [poolOpen, setPoolOpen] = useState(false);
+  const [machines, setMachines] = useState<Machine[]>([]),
+    [networks, setNetworks] = useState<Network[]>([]),
+    [flags, setFlags] = useState<Flag[]>([]),
+    [hints, setHints] = useState<Hint[]>([]);
+  const [imported, setImported] = useState<Row>({}),
+    [importVersion, setImportVersion] = useState(0);
+  const ovaOptions: [string, string][] = [
+    ['', t('authoring.selectAnArtifact')],
+    ...rows(resource.data.ovas).map(
+      (ova) =>
+        [
+          text(ova.filename ?? ova.name ?? ova.ova_name),
+          text(ova.filename ?? ova.name ?? ova.ova_name),
+        ] as [string, string],
+    ),
+  ];
+  function updateMachine(id: string, change: Partial<Machine>) {
+    setMachines((items) => items.map((item) => (item.key === id ? { ...item, ...change } : item)));
+  }
+  function updateNetwork(id: string, change: Partial<Network>) {
+    setNetworks((items) => items.map((item) => (item.key === id ? { ...item, ...change } : item)));
+  }
+  function updateFlag(id: string, change: Partial<Flag>) {
+    setFlags((items) => items.map((item) => (item.key === id ? { ...item, ...change } : item)));
+  }
+  function updateHint(id: string, change: Partial<Hint>) {
+    setHints((items) => items.map((item) => (item.key === id ? { ...item, ...change } : item)));
+  }
   async function importYaml(file: File | undefined) {
     if (!file) return;
-    await action.run(async () => {
-      if (file.size > 256 * 1024) throw new Error('YAML file must be at most 256 KiB');
-      return {...await request('/api/admin/challenges/import-yaml', {method: 'POST', body: {yaml: await file.text()}}), message: 'YAML imported. Review the form before creating the challenge.'};
-    }, result => {
-      loadDefinition(row(result.data));
-    });
+    await action.run(
+      async () => {
+        if (file.size > 256 * 1024) throw new Error('YAML file must be at most 256 KiB');
+        return {
+          ...(await request('/api/admin/challenges/import-yaml', {
+            method: 'POST',
+            body: { yaml: await file.text() },
+          })),
+          message: 'YAML imported. Review the form before creating the challenge.',
+        };
+      },
+      (result) => {
+        loadDefinition(row(result.data));
+      },
+    );
   }
   function loadDefinition(value: Row) {
-      const nextMachines = rows(value.vms).map(vm => ({key: key(), id: number(vm.id) || undefined, name: text(vm.name), ova_name: text(vm.ova_name), cores: number(vm.cores), ram_gb: number(vm.ram_gb), domain_name: text(vm.domain_name), ad_role: text(vm.ad_role)}));
-      const machineKey = (name: unknown) => nextMachines.find(vm => vm.name === name)?.key ?? '';
-      setMachines(nextMachines);
-      setNetworks(rows(value.subnets).map(net => ({key: key(), name: text(net.name), dmz: truth(net.dmz), accessible: truth(net.accessible), machines: (Array.isArray(net.attached_vms) ? net.attached_vms : []).map(machineKey)})));
-      setFlags(rows(value.flags).map(flag => ({key: key(), id: number(flag.id) || undefined, order_index: number(flag.order_index), flag: text(flag.flag), description: text(flag.description), points: number(flag.points), user_specific: truth(flag.user_specific), machine: machineKey(flag.vm_name)})));
-      setHints(rows(value.hints).map(hint => ({key: key(), hint_text: text(hint.hint_text), unlock_points: number(hint.unlock_points)})));
-      setImported(value);
-      setImportVersion(version => version + 1);
+    const nextMachines = rows(value.vms).map((vm) => ({
+      key: key(),
+      id: number(vm.id) || undefined,
+      name: text(vm.name),
+      ova_name: text(vm.ova_name),
+      cores: number(vm.cores),
+      ram_gb: number(vm.ram_gb),
+      domain_name: text(vm.domain_name),
+      ad_role: text(vm.ad_role),
+    }));
+    const machineKey = (name: unknown) => nextMachines.find((vm) => vm.name === name)?.key ?? '';
+    setMachines(nextMachines);
+    setNetworks(
+      rows(value.subnets).map((net) => ({
+        key: key(),
+        name: text(net.name),
+        dmz: truth(net.dmz),
+        accessible: truth(net.accessible),
+        machines: (Array.isArray(net.attached_vms) ? net.attached_vms : []).map(machineKey),
+      })),
+    );
+    setFlags(
+      rows(value.flags).map((flag) => ({
+        key: key(),
+        id: number(flag.id) || undefined,
+        order_index: number(flag.order_index),
+        flag: text(flag.flag),
+        description: text(flag.description),
+        points: number(flag.points),
+        user_specific: truth(flag.user_specific),
+        machine: machineKey(flag.vm_name),
+      })),
+    );
+    setHints(
+      rows(value.hints).map((hint) => ({
+        key: key(),
+        hint_text: text(hint.hint_text),
+        unlock_points: number(hint.unlock_points),
+      })),
+    );
+    setImported(value);
+    setImportVersion((version) => version + 1);
   }
-  useEffect(() => { if (editing && resource.data.data) loadDefinition(row(row(resource.data.data).definition)); }, [resource.data,editing]);
+  useEffect(() => {
+    if (editing && resource.data.data) loadDefinition(row(row(resource.data.data).definition));
+  }, [resource.data, editing]);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const names = machines.map(vm => vm.name);
-    if (!flags.length || !machines.length || !networks.length || new Set(names).size !== names.length || names.some(name => !name))
-      return void action.run(async () => { throw new Error('Add at least one machine, network and flag. Every machine needs a unique name.'); });
-    if (networks.some(network => !network.machines.length))
-      return void action.run(async () => { throw new Error('Attach at least one machine to every network.'); });
+    const names = machines.map((vm) => vm.name);
+    if (
+      !flags.length ||
+      !machines.length ||
+      !networks.length ||
+      new Set(names).size !== names.length ||
+      names.some((name) => !name)
+    )
+      return void action.run(async () => {
+        throw new Error(
+          'Add at least one machine, network and flag. Every machine needs a unique name.',
+        );
+      });
+    if (networks.some((network) => !network.machines.length))
+      return void action.run(async () => {
+        throw new Error('Attach at least one machine to every network.');
+      });
     form.set('isActive', !editing && form.has('isActive') ? 'true' : 'false');
-    const machineDefinitions=machines.map(({ key: _, ...vm }) => vm);
-    const subnetDefinitions=networks.map(network => ({ name: network.name, dmz: network.dmz, accessible: network.accessible, attached_vms: network.machines.map(id => machines.find(vm => vm.key === id)?.name).filter(Boolean) }));
-    const flagDefinitions=flags.map((flag, index) => ({ id: flag.id, flag: flag.flag, description: flag.description, points: flag.points, order_index: flag.order_index ?? index, user_specific: flag.user_specific, vm_name: machines.find(vm => vm.key === flag.machine)?.name ?? null }));
-    const hintDefinitions=hints.map((hint, index) => ({ hint_text: hint.hint_text, unlock_points: hint.unlock_points, order_index: index }));
+    const machineDefinitions = machines.map(({ key: _, ...vm }) => vm);
+    const subnetDefinitions = networks.map((network) => ({
+      name: network.name,
+      dmz: network.dmz,
+      accessible: network.accessible,
+      attached_vms: network.machines
+        .map((id) => machines.find((vm) => vm.key === id)?.name)
+        .filter(Boolean),
+    }));
+    const flagDefinitions = flags.map((flag, index) => ({
+      id: flag.id,
+      flag: flag.flag,
+      description: flag.description,
+      points: flag.points,
+      order_index: flag.order_index ?? index,
+      user_specific: flag.user_specific,
+      vm_name: machines.find((vm) => vm.key === flag.machine)?.name ?? null,
+    }));
+    const hintDefinitions = hints.map((hint, index) => ({
+      hint_text: hint.hint_text,
+      unlock_points: hint.unlock_points,
+      order_index: index,
+    }));
     form.set('vms', JSON.stringify(machineDefinitions));
     form.set('subnets', JSON.stringify(subnetDefinitions));
     form.set('flags', JSON.stringify(flagDefinitions));
     form.set('hints', JSON.stringify(hintDefinitions));
-    const editableDefinition: Row={...Object.fromEntries(form),isActive:false,vms:machineDefinitions,subnets:subnetDefinitions,flags:flagDefinitions,hints:hintDefinitions};
+    const editableDefinition: Row = {
+      ...Object.fromEntries(form),
+      isActive: false,
+      vms: machineDefinitions,
+      subnets: subnetDefinitions,
+      flags: flagDefinitions,
+      hints: hintDefinitions,
+    };
     delete editableDefinition.image;
-    await action.run(() => editing
-      ? request(`/api/admin/challenges/${editing}/configuration`, {method:'PUT',body:{expected:configuration.fingerprint,definition:editableDefinition}})
-      : request('/api/admin/challenges', {method: 'POST', body: form}), () => router.navigate('/manage-ctf'));
+    await action.run(
+      () =>
+        editing
+          ? request(`/api/admin/challenges/${editing}/configuration`, {
+              method: 'PUT',
+              body: { expected: configuration.fingerprint, definition: editableDefinition },
+            })
+          : request('/api/admin/challenges', { method: 'POST', body: form }),
+      () => router.navigate('/manage-ctf'),
+    );
   }
-  return <>
-    <PageTitle
-      eyebrow={t("ADMINISTRATION / CHALLENGES")}
-      title={t(editing ? 'Edit challenge' : 'Create challenge')}
-      description={t("Configure machines, networks and flags.")}
-      action={<Link href="/manage-ctf">{t("← Back to challenges")}</Link>} />
-    <Notice error={action.error} message={action.message} />
-    <ResourceState {...resource}>
-      {editing > 0 && <Card title={t("Configuration readiness")}>
-        <p>{number(configuration.instances)}{t(" instances use this exercise. Configuration changes require a paused exercise with no remaining instances.")}</p>
-        <p className="muted">{t("Set the pool to zero and wait for unused copies to drain and assigned labs to finish. Then pause the exercise. Machine images and earned flag identities are preserved.")}</p>
-        <div className="table-actions"><button className="secondary" onClick={()=>setPoolOpen(true)}>{t("Configure pool")}</button>
-          <button className="secondary" onClick={resource.reload}>{t("Reload configuration")}</button>
-          {truth(imported.isActive) && <button disabled={number(configuration.instances)>0 || action.busy} onClick={()=>void action.run(()=>request(`/api/admin/challenges/${editing}`,{method:'PUT',body:{...imported,isActive:false}}),resource.reload)}>{t("Pause exercise")}</button>}</div>
-        {!truth(imported.isActive) && !truth(configuration.retired) && <button disabled={action.busy||resource.loading} onClick={()=>void action.run(()=>request(`/api/admin/challenges/${editing}`,{method:'PUT',body:{...imported,isActive:true}}),resource.reload)}>{t("Publish saved challenge")}</button>}
-      </Card>}
-      {!editing && <Card title={t("Import YAML")}>
-        <p className="muted">{t("Import replaces the current form. It does not create a challenge.")}</p>
-        <Field label={t("YAML file")} type="file" accept=".yaml,.yml" disabled={action.busy} onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; void importYaml(file); }} />
-      </Card>}
-      <form key={importVersion} onSubmit={submit}>
-        <fieldset disabled={action.busy || blocked} className="editor-fieldset">
-          <div className="editor-layout">
-            <div>
-              <Card title={t("01 / The exercise")}>
-                <Field
-                  label={t("Challenge name")}
-                  name="name"
-                  defaultValue={text(imported.name)}
-                  required
-                  maxLength={100}
-                  placeholder={t("Challenge name")}
-                  pattern="[a-zA-Z0-9_\- ]+" />
-                <Area
-                  label={t("Description")}
-                  name="description"
-                  defaultValue={text(imported.description)}
-                  required
-                  maxLength={2000}
-                  placeholder={t("Give students context, objectives and a starting point.")} />
-                <div className="form-grid">
-                  <Select label={t("Category")} name="category" defaultValue={text(imported.category, categories[0])} options={categories} />
-                  <Select label={t("Difficulty")} name="difficulty" defaultValue={text(imported.difficulty, difficulties[0])} options={difficulties} />
-                </div>
-                <Field
-                  label={t("Cover image (optional, up to 2 MiB)")}
-                  name="image"
-                  type="file"
-                  accept="image/png,image/jpeg,image/gif" />
-                <Area label={t("General hint (optional)")} name="hint" defaultValue={text(imported.hint)} maxLength={500} />
-                <Area
-                  label={t("Tutor solution")}
-                  name="solution"
-                  defaultValue={text(imported.solution)}
-                  maxLength={2000}
-                  placeholder={t("The explanation shown by the server once the exercise is solved.")} />
-              </Card>
-              <Card title={t("02 / Machines")} action={<button
-                className="secondary small"
-                type="button"
-                disabled={!!editing || machines.length >= 20} onClick={() => setMachines(items => [...items, { key: key(), name: '', ova_name: '', cores: 1, ram_gb: 1, domain_name: '', ad_role: 'none' }])}>{t("＋ Add machine")}</button>}>
-                {!ovaOptions.slice(1).length && <p className="notice">{t("Upload an artifact in ")}<Link href="/upload-diskfile">{t("Artifacts")}</Link>{t(" before adding a machine.")}</p>}
-                {machines.map((vm, index) => <fieldset className="repeat-row" key={vm.key}>
-                  <legend>{t("Machine ")}{index + 1}
-                  </legend>
+  return (
+    <>
+      <PageTitle
+        eyebrow={t('authoring.administrationChallenges')}
+        title={editing ? t('authoring.edit.title') : t('authoring.create.title')}
+        description={t('authoring.configureMachinesNetworksAndFlags')}
+        action={<Link href="/manage-ctf">{t('authoring.backToChallenges')}</Link>}
+      />
+      <Notice error={action.error} message={action.message} />
+      <ResourceState {...resource}>
+        {editing > 0 && (
+          <Card title={t('authoring.configurationReadiness')}>
+            <p>
+              {number(configuration.instances)}
+              {' ' + t('authoring.edit.instanceRequirement')}
+            </p>
+            <p className="muted">{t('authoring.edit.drainInstructions')}</p>
+            <div className="table-actions">
+              <button className="secondary" onClick={() => setPoolOpen(true)}>
+                {t('authoring.configurePool')}
+              </button>
+              <button className="secondary" onClick={resource.reload}>
+                {t('authoring.reloadConfiguration')}
+              </button>
+              {truth(imported.isActive) && (
+                <button
+                  disabled={number(configuration.instances) > 0 || action.busy}
+                  onClick={() =>
+                    void action.run(
+                      () =>
+                        request(`/api/admin/challenges/${editing}`, {
+                          method: 'PUT',
+                          body: { ...imported, isActive: false },
+                        }),
+                      resource.reload,
+                    )
+                  }
+                >
+                  {t('authoring.pauseExercise')}
+                </button>
+              )}
+            </div>
+            {!truth(imported.isActive) && !truth(configuration.retired) && (
+              <button
+                disabled={action.busy || resource.loading}
+                onClick={() =>
+                  void action.run(
+                    () =>
+                      request(`/api/admin/challenges/${editing}`, {
+                        method: 'PUT',
+                        body: { ...imported, isActive: true },
+                      }),
+                    resource.reload,
+                  )
+                }
+              >
+                {t('authoring.publishSavedChallenge')}
+              </button>
+            )}
+          </Card>
+        )}
+        {!editing && (
+          <Card title={t('authoring.importYaml')}>
+            <p className="muted">{t('authoring.import.replacementHint')}</p>
+            <Field
+              label={t('authoring.yamlFile')}
+              type="file"
+              accept=".yaml,.yml"
+              disabled={action.busy}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = '';
+                void importYaml(file);
+              }}
+            />
+          </Card>
+        )}
+        <form key={importVersion} onSubmit={submit}>
+          <fieldset disabled={action.busy || blocked} className="editor-fieldset">
+            <div className="editor-layout">
+              <div>
+                <Card title={t('authoring.sections.exercise')}>
+                  <Field
+                    label={t('authoring.challengeName')}
+                    name="name"
+                    defaultValue={text(imported.name)}
+                    required
+                    maxLength={100}
+                    placeholder={t('authoring.challengeName')}
+                    pattern="[a-zA-Z0-9_\- ]+"
+                  />
+                  <Area
+                    label={t('common.labels.description')}
+                    name="description"
+                    defaultValue={text(imported.description)}
+                    required
+                    maxLength={2000}
+                    placeholder={t('authoring.giveStudentsContextObjectivesAndAStartingPoint')}
+                  />
                   <div className="form-grid">
-                    <Field
-                      label={t("Machine name")}
-                      value={vm.name}
-                      pattern="[a-zA-Z0-9_\-]+"
-                      required
-                      maxLength={50}
-                      onChange={e => updateMachine(vm.key, { name: e.target.value })} />
                     <Select
-                      label={t("OVA artifact")}
-                      disabled={!!editing}
-                      required
-                      value={vm.ova_name}
-                      options={ovaOptions}
-                      onChange={e => updateMachine(vm.key, { ova_name: e.target.value })} />
-                    <Field
-                      label={t("CPU cores")}
-                      type="number"
-                      min={1}
-                      max={16}
-                      value={vm.cores}
-                      onChange={e => updateMachine(vm.key, { cores: number(e.target.value) })} />
-                    <Field
-                      label={t("Memory (GiB)")}
-                      type="number"
-                      min={1}
-                      max={32}
-                      value={vm.ram_gb}
-                      onChange={e => updateMachine(vm.key, { ram_gb: number(e.target.value) })} />
-                    <Field
-                      label={t("Domain name")}
-                      required
-                      value={vm.domain_name}
-                      placeholder={t("portal.lab")}
-                      maxLength={255}
-                      onChange={e => updateMachine(vm.key, { domain_name: e.target.value })} />
+                      label={t('common.labels.category')}
+                      name="category"
+                      defaultValue={text(imported.category, categories[0])}
+                      options={categories}
+                    />
                     <Select
-                      label={t("Directory role")}
-                      value={vm.ad_role}
-                      options={['none', 'dc', 'member']}
-                      onChange={e => updateMachine(vm.key, { ad_role: e.target.value })} />
+                      label={t('authoring.difficulty')}
+                      name="difficulty"
+                      defaultValue={text(imported.difficulty, difficulties[0])}
+                      options={difficulties}
+                    />
                   </div>
-                  <button className="danger subtle small" type="button" disabled={!!editing} onClick={() => { setMachines(items => items.filter(item => item.key !== vm.key)); setNetworks(items => items.map(n => ({ ...n, machines: n.machines.filter(id => id !== vm.key) }))); setFlags(items => items.map(f => f.machine === vm.key ? { ...f, machine: '', user_specific: false } : f)); }}>{t("Remove machine")}</button>
-                </fieldset>)}
-                {!machines.length && <Empty title={t("No machines")}>{t("Add machines from your artifact library.")}</Empty>}
-              </Card>
-              <Card title={t("03 / Networks")} action={<button
-                className="secondary small"
-                type="button"
-                disabled={networks.length >= 10}
-                onClick={() => setNetworks(items => [...items, { key: key(), name: '', dmz: false, accessible: true, machines: [] }])}>{t("＋ Add network")}</button>}>
-                {networks.map((network, index) => <fieldset className="repeat-row" key={network.key}>
-                  <legend>{t("Network ")}{index + 1}
-                  </legend>
                   <Field
-                    label={t("Network name")}
-                    value={network.name}
-                    required
-                    pattern="[a-zA-Z0-9_\-]+"
-                    maxLength={50}
-                    onChange={e => updateNetwork(network.key, { name: e.target.value })} />
-                  <div className="button-row">
-                    <label className="check">
-                      <input type="checkbox" checked={network.accessible} onChange={e => updateNetwork(network.key, { accessible: e.target.checked })} />{t("Student accessible")}</label>
-                    <label className="check">
-                      <input type="checkbox" checked={network.dmz} onChange={e => updateNetwork(network.key, { dmz: e.target.checked })} />{t("DMZ")}</label>
-                  </div>
-                  <p className="muted">{t("Attach machines")}</p>
-                  <div className="checkbox-grid">
-                    {machines.map(vm => <label className="check" key={vm.key}>
-                      <input type="checkbox" checked={network.machines.includes(vm.key)} onChange={e => updateNetwork(network.key, { machines: e.target.checked ? [...network.machines, vm.key] : network.machines.filter(id => id !== vm.key) })} />
-                      {vm.name || 'Unnamed machine'}
-                    </label>)}
-                  </div>
-                  <button type="button" className="danger subtle small" onClick={() => setNetworks(items => items.filter(item => item.key !== network.key))}>{t("Remove network")}</button>
-                </fieldset>)}
-                {!networks.length && <Empty title={t("No networks")}>{t("Add a network and choose which machines belong to it.")}</Empty>}
-              </Card>
-              <Card title={t("04 / Flags")} action={<button
-                className="secondary small"
-                type="button"
-                disabled={flags.length >= 20}
-                onClick={() => setFlags(items => [...items, { key: key(), order_index: Math.max(-1,...items.map((flag,index)=>flag.order_index??index))+1, flag: '', description: '', points: 100, user_specific: false, machine: '' }])}>{t("＋ Add flag")}</button>}>
-                {flags.map((flag, index) => <fieldset className="repeat-row" key={flag.key}>
-                  <legend>{t("Flag ")}{index + 1}
-                  </legend>
-                  <Field
-                    label={t("Flag value")}
-                    type="password"
-                    autoComplete="new-password"
-                    value={flag.flag}
-                    required
-                    maxLength={255}
-                    onChange={e => updateFlag(flag.key, { flag: e.target.value })} />
-                  <Field
-                    label={t("Flag description")}
-                    value={flag.description}
+                    label={t('authoring.coverImageOptionalUpTo2Mib')}
+                    name="image"
+                    type="file"
+                    accept="image/png,image/jpeg,image/gif"
+                  />
+                  <Area
+                    label={t('authoring.generalHintOptional')}
+                    name="hint"
+                    defaultValue={text(imported.hint)}
                     maxLength={500}
-                    onChange={e => updateFlag(flag.key, { description: e.target.value })} />
-                  <div className="form-grid">
-                    <Field
-                      label={t("Points")}
-                      type="number"
-                      value={flag.points}
-                      min={1}
-                      max={1000}
-                      required
-                      onChange={e => updateFlag(flag.key, { points: number(e.target.value) })} />
-                    <Select
-                      label={t("Machine")}
-                      value={flag.machine}
-                      required={flag.user_specific}
-                      options={[['', 'No linked machine'], ...machines.map(vm => [vm.key, vm.name || 'Unnamed machine'] as [
-                        string,
-                        string
-                      ])]}
-                      onChange={e => updateFlag(flag.key, { machine: e.target.value })} />
+                  />
+                  <Area
+                    label={t('authoring.tutorSolution')}
+                    name="solution"
+                    defaultValue={text(imported.solution)}
+                    maxLength={2000}
+                    placeholder={t('authoring.theExplanationShownByTheServerOnceTheExercise')}
+                  />
+                </Card>
+                <Card
+                  title={t('authoring.sections.machines')}
+                  action={
+                    <button
+                      className="secondary small"
+                      type="button"
+                      disabled={!!editing || machines.length >= 20}
+                      onClick={() =>
+                        setMachines((items) => [
+                          ...items,
+                          {
+                            key: key(),
+                            name: '',
+                            ova_name: '',
+                            cores: 1,
+                            ram_gb: 1,
+                            domain_name: '',
+                            ad_role: 'none',
+                          },
+                        ])
+                      }
+                    >
+                      {t('authoring.addMachine')}
+                    </button>
+                  }
+                >
+                  {!ovaOptions.slice(1).length && (
+                    <p className="notice">
+                      {t('authoring.uploadAnArtifactIn') + ' '}
+                      <Link href="/upload-diskfile">{t('navigation.artifacts')}</Link>
+                      {' ' + t('authoring.beforeAddingAMachine')}
+                    </p>
+                  )}
+                  {machines.map((vm, index) => (
+                    <fieldset className="repeat-row" key={vm.key}>
+                      <legend>
+                        {t('authoring.machine') + ' '}
+                        {index + 1}
+                      </legend>
+                      <div className="form-grid">
+                        <Field
+                          label={t('authoring.machineName')}
+                          value={vm.name}
+                          pattern="[a-zA-Z0-9_\-]+"
+                          required
+                          maxLength={50}
+                          onChange={(e) => updateMachine(vm.key, { name: e.target.value })}
+                        />
+                        <Select
+                          label={t('authoring.ovaArtifact')}
+                          disabled={!!editing}
+                          required
+                          value={vm.ova_name}
+                          options={ovaOptions}
+                          onChange={(e) => updateMachine(vm.key, { ova_name: e.target.value })}
+                        />
+                        <Field
+                          label={t('authoring.cpuCores')}
+                          type="number"
+                          min={1}
+                          max={16}
+                          value={vm.cores}
+                          onChange={(e) => updateMachine(vm.key, { cores: number(e.target.value) })}
+                        />
+                        <Field
+                          label={t('authoring.memoryGib')}
+                          type="number"
+                          min={1}
+                          max={32}
+                          value={vm.ram_gb}
+                          onChange={(e) =>
+                            updateMachine(vm.key, { ram_gb: number(e.target.value) })
+                          }
+                        />
+                        <Field
+                          label={t('authoring.domainName')}
+                          required
+                          value={vm.domain_name}
+                          placeholder={t('authoring.portalLab')}
+                          maxLength={255}
+                          onChange={(e) => updateMachine(vm.key, { domain_name: e.target.value })}
+                        />
+                        <Select
+                          label={t('authoring.directoryRole')}
+                          value={vm.ad_role}
+                          options={['none', 'dc', 'member']}
+                          onChange={(e) => updateMachine(vm.key, { ad_role: e.target.value })}
+                        />
+                      </div>
+                      <button
+                        className="danger subtle small"
+                        type="button"
+                        disabled={!!editing}
+                        onClick={() => {
+                          setMachines((items) => items.filter((item) => item.key !== vm.key));
+                          setNetworks((items) =>
+                            items.map((n) => ({
+                              ...n,
+                              machines: n.machines.filter((id) => id !== vm.key),
+                            })),
+                          );
+                          setFlags((items) =>
+                            items.map((f) =>
+                              f.machine === vm.key
+                                ? { ...f, machine: '', user_specific: false }
+                                : f,
+                            ),
+                          );
+                        }}
+                      >
+                        {t('authoring.removeMachine')}
+                      </button>
+                    </fieldset>
+                  ))}
+                  {!machines.length && (
+                    <Empty title={t('authoring.noMachines')}>
+                      {t('authoring.addMachinesFromYourArtifactLibrary')}
+                    </Empty>
+                  )}
+                </Card>
+                <Card
+                  title={t('authoring.sections.networks')}
+                  action={
+                    <button
+                      className="secondary small"
+                      type="button"
+                      disabled={networks.length >= 10}
+                      onClick={() =>
+                        setNetworks((items) => [
+                          ...items,
+                          { key: key(), name: '', dmz: false, accessible: true, machines: [] },
+                        ])
+                      }
+                    >
+                      {t('authoring.addNetwork')}
+                    </button>
+                  }
+                >
+                  {networks.map((network, index) => (
+                    <fieldset className="repeat-row" key={network.key}>
+                      <legend>
+                        {t('authoring.network') + ' '}
+                        {index + 1}
+                      </legend>
+                      <Field
+                        label={t('authoring.networkName')}
+                        value={network.name}
+                        required
+                        pattern="[a-zA-Z0-9_\-]+"
+                        maxLength={50}
+                        onChange={(e) => updateNetwork(network.key, { name: e.target.value })}
+                      />
+                      <div className="button-row">
+                        <label className="check">
+                          <input
+                            type="checkbox"
+                            checked={network.accessible}
+                            onChange={(e) =>
+                              updateNetwork(network.key, { accessible: e.target.checked })
+                            }
+                          />
+                          {t('authoring.studentAccessible')}
+                        </label>
+                        <label className="check">
+                          <input
+                            type="checkbox"
+                            checked={network.dmz}
+                            onChange={(e) => updateNetwork(network.key, { dmz: e.target.checked })}
+                          />
+                          {t('authoring.dmz')}
+                        </label>
+                      </div>
+                      <p className="muted">{t('authoring.attachMachines')}</p>
+                      <div className="checkbox-grid">
+                        {machines.map((vm) => (
+                          <label className="check" key={vm.key}>
+                            <input
+                              type="checkbox"
+                              checked={network.machines.includes(vm.key)}
+                              onChange={(e) =>
+                                updateNetwork(network.key, {
+                                  machines: e.target.checked
+                                    ? [...network.machines, vm.key]
+                                    : network.machines.filter((id) => id !== vm.key),
+                                })
+                              }
+                            />
+                            {vm.name || 'Unnamed machine'}
+                          </label>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        className="danger subtle small"
+                        onClick={() =>
+                          setNetworks((items) => items.filter((item) => item.key !== network.key))
+                        }
+                      >
+                        {t('authoring.removeNetwork')}
+                      </button>
+                    </fieldset>
+                  ))}
+                  {!networks.length && (
+                    <Empty title={t('authoring.noNetworks')}>
+                      {t('authoring.addANetworkAndChooseWhichMachinesBelongTo')}
+                    </Empty>
+                  )}
+                </Card>
+                <Card
+                  title={t('authoring.sections.flags')}
+                  action={
+                    <button
+                      className="secondary small"
+                      type="button"
+                      disabled={flags.length >= 20}
+                      onClick={() =>
+                        setFlags((items) => [
+                          ...items,
+                          {
+                            key: key(),
+                            order_index:
+                              Math.max(
+                                -1,
+                                ...items.map((flag, index) => flag.order_index ?? index),
+                              ) + 1,
+                            flag: '',
+                            description: '',
+                            points: 100,
+                            user_specific: false,
+                            machine: '',
+                          },
+                        ])
+                      }
+                    >
+                      {t('authoring.addFlag')}
+                    </button>
+                  }
+                >
+                  {flags.map((flag, index) => (
+                    <fieldset className="repeat-row" key={flag.key}>
+                      <legend>
+                        {t('authoring.flag') + ' '}
+                        {index + 1}
+                      </legend>
+                      <Field
+                        label={t('authoring.flagValue')}
+                        type="password"
+                        autoComplete="new-password"
+                        value={flag.flag}
+                        required
+                        maxLength={255}
+                        onChange={(e) => updateFlag(flag.key, { flag: e.target.value })}
+                      />
+                      <Field
+                        label={t('authoring.flagDescription')}
+                        value={flag.description}
+                        maxLength={500}
+                        onChange={(e) => updateFlag(flag.key, { description: e.target.value })}
+                      />
+                      <div className="form-grid">
+                        <Field
+                          label={t('common.labels.points')}
+                          type="number"
+                          value={flag.points}
+                          min={1}
+                          max={1000}
+                          required
+                          onChange={(e) => updateFlag(flag.key, { points: number(e.target.value) })}
+                        />
+                        <Select
+                          label={t('authoring.machine')}
+                          value={flag.machine}
+                          required={flag.user_specific}
+                          options={[
+                            ['', 'No linked machine'],
+                            ...machines.map(
+                              (vm) => [vm.key, vm.name || 'Unnamed machine'] as [string, string],
+                            ),
+                          ]}
+                          onChange={(e) => updateFlag(flag.key, { machine: e.target.value })}
+                        />
+                      </div>
+                      <label className="check">
+                        <input
+                          type="checkbox"
+                          checked={flag.user_specific}
+                          onChange={(e) =>
+                            updateFlag(flag.key, { user_specific: e.target.checked })
+                          }
+                        />
+                        {t('authoring.generateAStudentSpecificFlag')}
+                      </label>
+                      <button
+                        type="button"
+                        className="danger subtle small"
+                        onClick={() =>
+                          setFlags((items) => items.filter((item) => item.key !== flag.key))
+                        }
+                      >
+                        {t('authoring.removeFlag')}
+                      </button>
+                    </fieldset>
+                  ))}
+                  {!flags.length && (
+                    <Empty title={t('authoring.noFlags')}>
+                      {t('authoring.addTheFlagsStudentsMustSubmit')}
+                    </Empty>
+                  )}
+                </Card>
+                <Card
+                  title={t('authoring.sections.hints')}
+                  action={
+                    <button
+                      className="secondary small"
+                      type="button"
+                      disabled={hints.length >= 10}
+                      onClick={() =>
+                        setHints((items) => [
+                          ...items,
+                          { key: key(), hint_text: '', unlock_points: 0 },
+                        ])
+                      }
+                    >
+                      {t('authoring.addHint')}
+                    </button>
+                  }
+                >
+                  {hints.map((hint, index) => (
+                    <fieldset className="repeat-row" key={hint.key}>
+                      <legend>
+                        {t('common.labels.hint') + ' '}
+                        {index + 1}
+                      </legend>
+                      <Area
+                        label={t('authoring.hintText')}
+                        value={hint.hint_text}
+                        required
+                        maxLength={500}
+                        onChange={(e) => updateHint(hint.key, { hint_text: e.target.value })}
+                      />
+                      <Field
+                        label={t('authoring.unlockAfterPointsEarned')}
+                        type="number"
+                        min={0}
+                        max={500}
+                        value={hint.unlock_points}
+                        onChange={(e) =>
+                          updateHint(hint.key, { unlock_points: number(e.target.value) })
+                        }
+                      />
+                      <button
+                        type="button"
+                        className="danger subtle small"
+                        onClick={() =>
+                          setHints((items) => items.filter((item) => item.key !== hint.key))
+                        }
+                      >
+                        {t('authoring.removeHint')}
+                      </button>
+                    </fieldset>
+                  ))}
+                  {!hints.length && (
+                    <p className="muted">
+                      {t('authoring.optionalHintsCanUnlockAsStudentsEarnPoints')}
+                    </p>
+                  )}
+                </Card>
+              </div>
+              <aside>
+                <NetworkPreview machines={machines} networks={networks} />
+                <Card title={t('common.labels.availability')}>
+                  <div className="summary-counts">
+                    <Stat label={t('authoring.machines')} value={machines.length} />
+                    <Stat label={t('common.labels.networks')} value={networks.length} />
+                    <Stat label={t('authoring.flags')} value={flags.length} />
+                    <Stat
+                      label={t('profile.totalPoints')}
+                      value={flags.reduce((total, flag) => total + flag.points, 0)}
+                    />
                   </div>
                   <label className="check">
-                    <input type="checkbox" checked={flag.user_specific} onChange={e => updateFlag(flag.key, { user_specific: e.target.checked })} />{t("Generate a student-specific flag")}</label>
-                  <button type="button" className="danger subtle small" onClick={() => setFlags(items => items.filter(item => item.key !== flag.key))}>{t("Remove flag")}</button>
-                </fieldset>)}
-                {!flags.length && <Empty title={t("No flags")}>{t("Add the flags students must submit.")}</Empty>}
-              </Card>
-              <Card title={t("05 / Progressive hints")} action={<button
-                className="secondary small"
-                type="button"
-                disabled={hints.length >= 10}
-                onClick={() => setHints(items => [...items, { key: key(), hint_text: '', unlock_points: 0 }])}>{t("＋ Add hint")}</button>}>
-                {hints.map((hint, index) => <fieldset className="repeat-row" key={hint.key}>
-                  <legend>{t("Hint ")}{index + 1}
-                  </legend>
-                  <Area
-                    label={t("Hint text")}
-                    value={hint.hint_text}
-                    required
-                    maxLength={500}
-                    onChange={e => updateHint(hint.key, { hint_text: e.target.value })} />
-                  <Field
-                    label={t("Unlock after points earned")}
-                    type="number"
-                    min={0}
-                    max={500}
-                    value={hint.unlock_points}
-                    onChange={e => updateHint(hint.key, { unlock_points: number(e.target.value) })} />
-                  <button type="button" className="danger subtle small" onClick={() => setHints(items => items.filter(item => item.key !== hint.key))}>{t("Remove hint")}</button>
-                </fieldset>)}
-                {!hints.length && <p className="muted">{t("Optional hints can unlock as students earn points.")}</p>}
-              </Card>
+                    <input
+                      type="checkbox"
+                      disabled={!!editing}
+                      name="isActive"
+                      defaultChecked={truth(imported.isActive)}
+                    />
+                    {t('authoring.makeAvailableToStudents')}
+                  </label>
+                  <p className="muted">
+                    {editing ? t('authoring.edit.publishHint') : t('authoring.create.draftHint')}
+                  </p>
+                  <button className="full" type="submit" disabled={action.busy}>
+                    {action.busy
+                      ? t('common.saving')
+                      : editing
+                        ? t('common.saveConfiguration')
+                        : t('common.createChallenge')}
+                  </button>
+                  {action.busy && (
+                    <p role="status">
+                      {editing
+                        ? t('authoring.edit.savingHint')
+                        : t('authoring.create.progressExplanation')}
+                    </p>
+                  )}
+                  <Notice error={action.error} />
+                </Card>
+              </aside>
             </div>
-            <aside>
-              <NetworkPreview machines={machines} networks={networks} />
-              <Card title={t("Availability")}>
-                <div className="summary-counts">
-                  <Stat label={t("Machines")} value={machines.length} />
-                  <Stat label={t("Networks")} value={networks.length} />
-                  <Stat label={t("Flags")} value={flags.length} />
-                  <Stat label={t("Total points")} value={flags.reduce((total, flag) => total + flag.points, 0)} />
-                </div>
-                <label className="check">
-                  <input type="checkbox" disabled={!!editing} name="isActive" defaultChecked={truth(imported.isActive)} />{t("Make available to students")}</label>
-                <p className="muted">{t(editing ? 'Save changes first, then use Publish saved challenge above to make them available.' : 'Leave this unchecked to create an inactive exercise for review.')}</p>
-                <button className="full" type="submit" disabled={action.busy}>
-                  {t(action.busy ? 'Saving…' : editing ? 'Save configuration' : 'Create challenge →')}
-                </button>
-                {action.busy && <p role="status">{t(editing ? 'Saving the configuration. The request will not be retried automatically.' : 'The server is creating templates. This can take several minutes; the request will not be retried automatically.')}</p>}
-                <Notice error={action.error} />
-              </Card>
-            </aside>
-          </div>
-        </fieldset>
-      </form>
-    </ResourceState>
-    {editing > 0 && poolOpen && <PoolEditor identifier={editing} onClose={()=>setPoolOpen(false)} onSaved={resource.reload}/>}
-  </>;
+          </fieldset>
+        </form>
+      </ResourceState>
+      {editing > 0 && poolOpen && (
+        <PoolEditor
+          identifier={editing}
+          onClose={() => setPoolOpen(false)}
+          onSaved={resource.reload}
+        />
+      )}
+    </>
+  );
 }

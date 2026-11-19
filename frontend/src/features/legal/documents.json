@@ -4,9 +4,7 @@
     {
       "tag": "h1",
       "attrs": {},
-      "children": [
-        "Impressum"
-      ]
+      "children": ["Impressum"]
     },
     "\n",
     {
@@ -14,9 +12,7 @@
       "attrs": {
         "id": "m46"
       },
-      "children": [
-        "Diensteanbieter"
-      ]
+      "children": ["Diensteanbieter"]
     },
     "\n",
     {
@@ -27,41 +23,31 @@
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Universität Heidelberg"
-          ]
+          "children": ["Universität Heidelberg"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Engineering Mathematics and Computing Lab"
-          ]
+          "children": ["Engineering Mathematics and Computing Lab"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Grabengasse 1"
-          ]
+          "children": ["Grabengasse 1"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "69117 Heidelberg"
-          ]
+          "children": ["69117 Heidelberg"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Germany"
-          ]
+          "children": ["Germany"]
         },
         "\n"
       ]
@@ -72,16 +58,12 @@
       "attrs": {
         "id": "m56"
       },
-      "children": [
-        "Kontaktmöglichkeiten"
-      ]
+      "children": ["Kontaktmöglichkeiten"]
     },
     {
       "tag": "p",
       "attrs": {},
-      "children": [
-        "Telefon: +49 6221 5414520"
-      ]
+      "children": ["Telefon: +49 6221 5414520"]
     },
     "\n\n",
     {
@@ -89,9 +71,7 @@
       "attrs": {
         "id": "m5234"
       },
-      "children": [
-        "Vorbehalt der Nutzung für Text und Data Mining"
-      ]
+      "children": ["Vorbehalt der Nutzung für Text und Data Mining"]
     },
     {
       "tag": "p",
@@ -106,9 +86,7 @@
       "attrs": {
         "id": "m65"
       },
-      "children": [
-        "Haftungs- und Schutzrechtshinweise"
-      ]
+      "children": ["Haftungs- und Schutzrechtshinweise"]
     },
     {
       "tag": "p",
@@ -145,9 +123,7 @@
     {
       "tag": "h2",
       "attrs": {},
-      "children": [
-        "Quellenhinweise"
-      ]
+      "children": ["Quellenhinweise"]
     },
     "\n",
     {
@@ -158,33 +134,25 @@
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "ChatGPT (gemeinfrei): \"Avatar 1\" - avatar1.png"
-          ]
+          "children": ["ChatGPT (gemeinfrei): \"Avatar 1\" - avatar1.png"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "ChatGPT (gemeinfrei): \"Avatar 2\" - avatar2.png"
-          ]
+          "children": ["ChatGPT (gemeinfrei): \"Avatar 2\" - avatar2.png"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "ChatGPT (gemeinfrei): \"Avatar 3\" - avatar3.png"
-          ]
+          "children": ["ChatGPT (gemeinfrei): \"Avatar 3\" - avatar3.png"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "ChatGPT (gemeinfrei): \"CTF Default Image\" - ctf-default.png"
-          ]
+          "children": ["ChatGPT (gemeinfrei): \"CTF Default Image\" - ctf-default.png"]
         },
         "\n    ",
         {
@@ -197,9 +165,7 @@
               "attrs": {
                 "href": "https://creativecommons.org/public-domain/cc0/"
               },
-              "children": [
-                "CC0 License"
-              ]
+              "children": ["CC0 License"]
             },
             "): \"User Avatar Profile\" - default-avatar.png"
           ]
@@ -215,9 +181,7 @@
               "attrs": {
                 "href": "https://creativecommons.org/public-domain/cc0/"
               },
-              "children": [
-                "CC0 License"
-              ]
+              "children": ["CC0 License"]
             },
             "): \"Sun SVG Vector\" - sun.svg"
           ]
@@ -233,9 +197,7 @@
               "attrs": {
                 "href": "https://creativecommons.org/public-domain/cc0/"
               },
-              "children": [
-                "CC0 License"
-              ]
+              "children": ["CC0 License"]
             },
             "): \"Crescent Moon SVG\" - moon.svg"
           ]
@@ -251,9 +213,7 @@
               "attrs": {
                 "href": "https://openfontlicense.org/"
               },
-              "children": [
-                "OFL License"
-              ]
+              "children": ["OFL License"]
             },
             "): \"Shuffle SVG Vector\" - shuffle-icon.png"
           ]
@@ -269,9 +229,7 @@
               "attrs": {
                 "href": "https://creativecommons.org/public-domain/cc0/"
               },
-              "children": [
-                "CC0 License"
-              ]
+              "children": ["CC0 License"]
             },
             "): \"achievement-sparkle\" - achievement.mp3"
           ]
@@ -287,9 +245,7 @@
               "attrs": {
                 "href": "https://creativecommons.org/public-domain/cc0/"
               },
-              "children": [
-                "CC0 License"
-              ]
+              "children": ["CC0 License"]
             },
             "): \"success 2\" - completion.mp3"
           ]
@@ -305,9 +261,7 @@
               "attrs": {
                 "href": "/assets/ui/fontawesome-license.txt"
               },
-              "children": [
-                "LICENSE.txt"
-              ]
+              "children": ["LICENSE.txt"]
             },
             "): fontawesome"
           ]
@@ -326,9 +280,7 @@
         {
           "tag": "strong",
           "attrs": {},
-          "children": [
-            "Datenschutzerklärung"
-          ]
+          "children": ["Datenschutzerklärung"]
         }
       ]
     },
@@ -340,9 +292,7 @@
         {
           "tag": "strong",
           "attrs": {},
-          "children": [
-            "Letzte Aktualisierung:"
-          ]
+          "children": ["Letzte Aktualisierung:"]
         },
         "15.10.2025"
       ]
@@ -355,9 +305,7 @@
         {
           "tag": "strong",
           "attrs": {},
-          "children": [
-            "Universität Heidelberg"
-          ]
+          "children": ["Universität Heidelberg"]
         },
         {
           "tag": "br",
@@ -368,9 +316,7 @@
         {
           "tag": "strong",
           "attrs": {},
-          "children": [
-            "Engineering Mathematics and Computing Lab"
-          ]
+          "children": ["Engineering Mathematics and Computing Lab"]
         }
       ]
     },
@@ -378,9 +324,7 @@
     {
       "tag": "h2",
       "attrs": {},
-      "children": [
-        "Einleitung"
-      ]
+      "children": ["Einleitung"]
     },
     "\n",
     {
@@ -391,25 +335,19 @@
         {
           "tag": "strong",
           "attrs": {},
-          "children": [
-            "Universität Heidelberg"
-          ]
+          "children": ["Universität Heidelberg"]
         },
         " und das\n",
         {
           "tag": "strong",
           "attrs": {},
-          "children": [
-            "Engineering Mathematics and Computing Lab"
-          ]
+          "children": ["Engineering Mathematics and Computing Lab"]
         },
         " („wir“, „uns“ oder „unser“)\npersonenbezogene Daten erhebt, verarbeitet und schützt, wenn Sie die Plattform\n",
         {
           "tag": "strong",
           "attrs": {},
-          "children": [
-            "CTF-Challenger"
-          ]
+          "children": ["CTF-Challenger"]
         },
         " („die Plattform“) nutzen.\n"
       ]
@@ -423,9 +361,7 @@
         {
           "tag": "strong",
           "attrs": {},
-          "children": [
-            "Universität Heidelberg"
-          ]
+          "children": ["Universität Heidelberg"]
         },
         ".\n"
       ]
@@ -442,17 +378,13 @@
     {
       "tag": "h2",
       "attrs": {},
-      "children": [
-        "Verantwortliche Stelle"
-      ]
+      "children": ["Verantwortliche Stelle"]
     },
     "\n",
     {
       "tag": "p",
       "attrs": {},
-      "children": [
-        "Verantwortlich für die Datenverarbeitung:"
-      ]
+      "children": ["Verantwortlich für die Datenverarbeitung:"]
     },
     "\n",
     {
@@ -467,9 +399,7 @@
             {
               "tag": "strong",
               "attrs": {},
-              "children": [
-                "Universität Heidelberg"
-              ]
+              "children": ["Universität Heidelberg"]
             }
           ]
         },
@@ -481,9 +411,7 @@
             {
               "tag": "strong",
               "attrs": {},
-              "children": [
-                "Engineering Mathematics and Computing Lab"
-              ]
+              "children": ["Engineering Mathematics and Computing Lab"]
             }
           ]
         },
@@ -491,33 +419,25 @@
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Grabengasse 1"
-          ]
+          "children": ["Grabengasse 1"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "69117 Heidelberg"
-          ]
+          "children": ["69117 Heidelberg"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Germany"
-          ]
+          "children": ["Germany"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Tel.: +49 6221 5414520"
-          ]
+          "children": ["Tel.: +49 6221 5414520"]
         },
         "\n"
       ]
@@ -526,17 +446,13 @@
     {
       "tag": "h2",
       "attrs": {},
-      "children": [
-        "Erhobene Daten"
-      ]
+      "children": ["Erhobene Daten"]
     },
     "\n\n",
     {
       "tag": "h3",
       "attrs": {},
-      "children": [
-        "Kontoinformationen"
-      ]
+      "children": ["Kontoinformationen"]
     },
     "\n",
     {
@@ -547,25 +463,19 @@
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Benutzername"
-          ]
+          "children": ["Benutzername"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Universitäre E-Mail-Adresse"
-          ]
+          "children": ["Universitäre E-Mail-Adresse"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Passwort (nur als sicherer Hashwert gespeichert)"
-          ]
+          "children": ["Passwort (nur als sicherer Hashwert gespeichert)"]
         },
         "\n"
       ]
@@ -574,9 +484,7 @@
     {
       "tag": "h3",
       "attrs": {},
-      "children": [
-        "Optionale Profildaten"
-      ]
+      "children": ["Optionale Profildaten"]
     },
     "\n",
     {
@@ -587,25 +495,19 @@
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Vollständiger Name (optional)"
-          ]
+          "children": ["Vollständiger Name (optional)"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Kurzbiografie oder Beschreibung"
-          ]
+          "children": ["Kurzbiografie oder Beschreibung"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Links zu externen Seiten (GitHub, Twitter, persönliche Homepage)"
-          ]
+          "children": ["Links zu externen Seiten (GitHub, Twitter, persönliche Homepage)"]
         },
         "\n"
       ]
@@ -614,9 +516,7 @@
     {
       "tag": "h3",
       "attrs": {},
-      "children": [
-        "Aktivitätsdaten"
-      ]
+      "children": ["Aktivitätsdaten"]
     },
     "\n",
     {
@@ -627,25 +527,19 @@
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Gestartete und abgeschlossene Challenges (mit Zeitstempeln)"
-          ]
+          "children": ["Gestartete und abgeschlossene Challenges (mit Zeitstempeln)"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Eingereichte Flags und erworbene Badges"
-          ]
+          "children": ["Eingereichte Flags und erworbene Badges"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Interaktionen mit virtuellen Maschinen und Challenges"
-          ]
+          "children": ["Interaktionen mit virtuellen Maschinen und Challenges"]
         },
         "\n"
       ]
@@ -654,9 +548,7 @@
     {
       "tag": "h3",
       "attrs": {},
-      "children": [
-        "Sicherheits- und Netzwerkdaten"
-      ]
+      "children": ["Sicherheits- und Netzwerkdaten"]
     },
     "\n",
     {
@@ -667,17 +559,13 @@
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Netzwerkverkehr innerhalb der Plattforminfrastruktur"
-          ]
+          "children": ["Netzwerkverkehr innerhalb der Plattforminfrastruktur"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Ausgeführte Befehle innerhalb virtueller Maschinen"
-          ]
+          "children": ["Ausgeführte Befehle innerhalb virtueller Maschinen"]
         },
         "\n"
       ]
@@ -686,25 +574,19 @@
     {
       "tag": "p",
       "attrs": {},
-      "children": [
-        "Diese Protokolle werden bis zu 3 Monate gespeichert."
-      ]
+      "children": ["Diese Protokolle werden bis zu 3 Monate gespeichert."]
     },
     "\n\n",
     {
       "tag": "h2",
       "attrs": {},
-      "children": [
-        "Zwecke der Datenverarbeitung"
-      ]
+      "children": ["Zwecke der Datenverarbeitung"]
     },
     "\n\n",
     {
       "tag": "h3",
       "attrs": {},
-      "children": [
-        "1. Betrieb der Plattform"
-      ]
+      "children": ["1. Betrieb der Plattform"]
     },
     "\n",
     {
@@ -715,17 +597,13 @@
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Verwaltung von Benutzerkonten und Authentifizierung"
-          ]
+          "children": ["Verwaltung von Benutzerkonten und Authentifizierung"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Durchführung und Bewertung von Challenges"
-          ]
+          "children": ["Durchführung und Bewertung von Challenges"]
         },
         "\n"
       ]
@@ -734,9 +612,7 @@
     {
       "tag": "h3",
       "attrs": {},
-      "children": [
-        "2. Sicherheit und Missbrauchsprävention"
-      ]
+      "children": ["2. Sicherheit und Missbrauchsprävention"]
     },
     "\n",
     {
@@ -747,17 +623,13 @@
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Erkennung und Vermeidung unbefugter Zugriffe"
-          ]
+          "children": ["Erkennung und Vermeidung unbefugter Zugriffe"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Untersuchung von Sicherheitsvorfällen"
-          ]
+          "children": ["Untersuchung von Sicherheitsvorfällen"]
         },
         "\n"
       ]
@@ -766,9 +638,7 @@
     {
       "tag": "h3",
       "attrs": {},
-      "children": [
-        "3. Lehre und Bewertung"
-      ]
+      "children": ["3. Lehre und Bewertung"]
     },
     "\n",
     {
@@ -779,17 +649,13 @@
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Unterstützung der Lehrenden bei der Leistungsbewertung"
-          ]
+          "children": ["Unterstützung der Lehrenden bei der Leistungsbewertung"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Erstellung von Analysen und Feedback für Lehrzwecke"
-          ]
+          "children": ["Erstellung von Analysen und Feedback für Lehrzwecke"]
         },
         "\n"
       ]
@@ -798,9 +664,7 @@
     {
       "tag": "h3",
       "attrs": {},
-      "children": [
-        "4. Forschung und Lehre"
-      ]
+      "children": ["4. Forschung und Lehre"]
     },
     "\n",
     {
@@ -819,9 +683,7 @@
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Förderung wissenschaftlicher Arbeiten im Bereich IT-Sicherheit"
-          ]
+          "children": ["Förderung wissenschaftlicher Arbeiten im Bereich IT-Sicherheit"]
         },
         "\n"
       ]
@@ -830,9 +692,7 @@
     {
       "tag": "h2",
       "attrs": {},
-      "children": [
-        "Rechtsgrundlagen der Verarbeitung"
-      ]
+      "children": ["Rechtsgrundlagen der Verarbeitung"]
     },
     "\n",
     {
@@ -878,9 +738,7 @@
     {
       "tag": "h2",
       "attrs": {},
-      "children": [
-        "Speicherdauer und Löschung"
-      ]
+      "children": ["Speicherdauer und Löschung"]
     },
     "\n",
     {
@@ -891,17 +749,13 @@
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Daten werden solange gespeichert, wie Ihr Konto aktiv ist."
-          ]
+          "children": ["Daten werden solange gespeichert, wie Ihr Konto aktiv ist."]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Sicherheits- und Netzwerkprotokolle werden maximal 3 Monate aufbewahrt."
-          ]
+          "children": ["Sicherheits- und Netzwerkprotokolle werden maximal 3 Monate aufbewahrt."]
         },
         "\n    ",
         {
@@ -926,25 +780,19 @@
     {
       "tag": "h2",
       "attrs": {},
-      "children": [
-        "Weitergabe von Daten"
-      ]
+      "children": ["Weitergabe von Daten"]
     },
     "\n",
     {
       "tag": "p",
       "attrs": {},
-      "children": [
-        "Es erfolgt keine Weitergabe personenbezogener Daten an Dritte."
-      ]
+      "children": ["Es erfolgt keine Weitergabe personenbezogener Daten an Dritte."]
     },
     "\n",
     {
       "tag": "p",
       "attrs": {},
-      "children": [
-        "Zugriff erhalten ausschließlich:"
-      ]
+      "children": ["Zugriff erhalten ausschließlich:"]
     },
     "\n",
     {
@@ -955,9 +803,7 @@
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Administrator*innen und IT-Personal der Universität Heidelberg"
-          ]
+          "children": ["Administrator*innen und IT-Personal der Universität Heidelberg"]
         },
         "\n    ",
         {
@@ -982,9 +828,7 @@
     {
       "tag": "h2",
       "attrs": {},
-      "children": [
-        "Nutzung für Forschung und Widerspruchsrecht"
-      ]
+      "children": ["Nutzung für Forschung und Widerspruchsrecht"]
     },
     "\n",
     {
@@ -1013,9 +857,7 @@
           "attrs": {
             "href": "mailto:vincent.heuveline@uni-heidelberg.de"
           },
-          "children": [
-            "vincent.heuveline@uni-heidelberg.de"
-          ]
+          "children": ["vincent.heuveline@uni-heidelberg.de"]
         },
         " kontaktieren.\nEin Widerspruch hat keine Auswirkungen auf Ihre Teilnahme an Lehrveranstaltungen oder Bewertungen.\n"
       ]
@@ -1024,17 +866,13 @@
     {
       "tag": "h2",
       "attrs": {},
-      "children": [
-        "Ihre Rechte nach DSGVO"
-      ]
+      "children": ["Ihre Rechte nach DSGVO"]
     },
     "\n",
     {
       "tag": "p",
       "attrs": {},
-      "children": [
-        "Sie haben folgende Rechte:"
-      ]
+      "children": ["Sie haben folgende Rechte:"]
     },
     "\n",
     {
@@ -1045,57 +883,43 @@
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Auskunftsrecht (Art. 15 DSGVO)"
-          ]
+          "children": ["Auskunftsrecht (Art. 15 DSGVO)"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Recht auf Berichtigung (Art. 16 DSGVO)"
-          ]
+          "children": ["Recht auf Berichtigung (Art. 16 DSGVO)"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Recht auf Löschung (Art. 17 DSGVO)"
-          ]
+          "children": ["Recht auf Löschung (Art. 17 DSGVO)"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Recht auf Einschränkung der Verarbeitung (Art. 18 DSGVO)"
-          ]
+          "children": ["Recht auf Einschränkung der Verarbeitung (Art. 18 DSGVO)"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Recht auf Datenübertragbarkeit (Art. 20 DSGVO)"
-          ]
+          "children": ["Recht auf Datenübertragbarkeit (Art. 20 DSGVO)"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Widerspruchsrecht (Art. 21 DSGVO)"
-          ]
+          "children": ["Widerspruchsrecht (Art. 21 DSGVO)"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Beschwerderecht bei einer Aufsichtsbehörde (Art. 77 DSGVO)"
-          ]
+          "children": ["Beschwerderecht bei einer Aufsichtsbehörde (Art. 77 DSGVO)"]
         },
         "\n"
       ]
@@ -1104,9 +928,7 @@
     {
       "tag": "p",
       "attrs": {},
-      "children": [
-        "Zuständige Aufsichtsbehörde (Beispiel):"
-      ]
+      "children": ["Zuständige Aufsichtsbehörde (Beispiel):"]
     },
     "\n",
     {
@@ -1130,9 +952,7 @@
               "attrs": {
                 "href": "https://www.baden-wuerttemberg.datenschutz.de/"
               },
-              "children": [
-                "baden-wuerttemberg.datenschutz.de"
-              ]
+              "children": ["baden-wuerttemberg.datenschutz.de"]
             }
           ]
         },
@@ -1143,9 +963,7 @@
     {
       "tag": "h2",
       "attrs": {},
-      "children": [
-        "Technische und organisatorische Maßnahmen"
-      ]
+      "children": ["Technische und organisatorische Maßnahmen"]
     },
     "\n",
     {
@@ -1164,33 +982,25 @@
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Verschlüsselte Kommunikation (HTTPS, VPN)"
-          ]
+          "children": ["Verschlüsselte Kommunikation (HTTPS, VPN)"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Sichere Passwort-Hashing-Verfahren"
-          ]
+          "children": ["Sichere Passwort-Hashing-Verfahren"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Zugriffsbeschränkung auf autorisierte Personen"
-          ]
+          "children": ["Zugriffsbeschränkung auf autorisierte Personen"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Regelmäßige System- und Sicherheitsprüfungen"
-          ]
+          "children": ["Regelmäßige System- und Sicherheitsprüfungen"]
         },
         "\n"
       ]
@@ -1199,17 +1009,13 @@
     {
       "tag": "p",
       "attrs": {},
-      "children": [
-        "Trotz aller Maßnahmen kann keine vollständige Sicherheit garantiert werden."
-      ]
+      "children": ["Trotz aller Maßnahmen kann keine vollständige Sicherheit garantiert werden."]
     },
     "\n\n",
     {
       "tag": "h2",
       "attrs": {},
-      "children": [
-        "Änderungen dieser Datenschutzerklärung"
-      ]
+      "children": ["Änderungen dieser Datenschutzerklärung"]
     },
     "\n",
     {
@@ -1223,17 +1029,13 @@
     {
       "tag": "h2",
       "attrs": {},
-      "children": [
-        "Kontakt"
-      ]
+      "children": ["Kontakt"]
     },
     "\n",
     {
       "tag": "p",
       "attrs": {},
-      "children": [
-        "Für Fragen, Anträge oder Datenschutzanliegen wenden Sie sich bitte an:"
-      ]
+      "children": ["Für Fragen, Anträge oder Datenschutzanliegen wenden Sie sich bitte an:"]
     },
     "\n",
     {
@@ -1244,57 +1046,43 @@
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Prof. Dr. Vincent Heuveline"
-          ]
+          "children": ["Prof. Dr. Vincent Heuveline"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Universität Heidelberg"
-          ]
+          "children": ["Universität Heidelberg"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Engineering Mathematics and Computing Lab"
-          ]
+          "children": ["Engineering Mathematics and Computing Lab"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Grabengasse 1"
-          ]
+          "children": ["Grabengasse 1"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "69117 Heidelberg"
-          ]
+          "children": ["69117 Heidelberg"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Germany"
-          ]
+          "children": ["Germany"]
         },
         "\n    ",
         {
           "tag": "li",
           "attrs": {},
-          "children": [
-            "Tel.: +49 6221 5414520"
-          ]
+          "children": ["Tel.: +49 6221 5414520"]
         },
         "\n"
       ]
@@ -1306,9 +1094,7 @@
     {
       "tag": "h1",
       "attrs": {},
-      "children": [
-        "Nutzungsbedingungen"
-      ]
+      "children": ["Nutzungsbedingungen"]
     },
     "\n    ",
     {
@@ -1319,9 +1105,7 @@
         {
           "tag": "span",
           "attrs": {},
-          "children": [
-            "20.10.2025"
-          ]
+          "children": ["20.10.2025"]
         }
       ]
     },
@@ -1336,9 +1120,7 @@
         {
           "tag": "h2",
           "attrs": {},
-          "children": [
-            "1. Einleitung"
-          ]
+          "children": ["1. Einleitung"]
         },
         "\n      ",
         {
@@ -1349,25 +1131,19 @@
             {
               "tag": "strong",
               "attrs": {},
-              "children": [
-                "CTF-Challenger"
-              ]
+              "children": ["CTF-Challenger"]
             },
             " (nachfolgend: „die Plattform“), betrieben von der\n        ",
             {
               "tag": "strong",
               "attrs": {},
-              "children": [
-                "Universität Heidelberg"
-              ]
+              "children": ["Universität Heidelberg"]
             },
             ", ",
             {
               "tag": "strong",
               "attrs": {},
-              "children": [
-                "Engineering Mathematics and Computing Lab"
-              ]
+              "children": ["Engineering Mathematics and Computing Lab"]
             },
             "\n        (nachfolgend: „wir“, „uns“ oder „unser“).\n      "
           ]
@@ -1389,9 +1165,7 @@
             {
               "tag": "strong",
               "attrs": {},
-              "children": [
-                "Universität Heidelberg"
-              ]
+              "children": ["Universität Heidelberg"]
             },
             " (z. B. Studierende,\n        Lehrende, autorisiertes Personal) für Lehr-, Übungs- und Forschungszwecke im Bereich IT-Sicherheit bereitgestellt.\n      "
           ]
@@ -1410,9 +1184,7 @@
         {
           "tag": "h2",
           "attrs": {},
-          "children": [
-            "2. Zugangsberechtigung und Registrierung"
-          ]
+          "children": ["2. Zugangsberechtigung und Registrierung"]
         },
         "\n      ",
         {
@@ -1423,9 +1195,7 @@
             {
               "tag": "strong",
               "attrs": {},
-              "children": [
-                "Universität Heidelberg"
-              ]
+              "children": ["Universität Heidelberg"]
             },
             " mit gültigen Hochschulzugangsdaten.\n      "
           ]
@@ -1476,9 +1246,7 @@
         {
           "tag": "h2",
           "attrs": {},
-          "children": [
-            "3. Erhebung und Verarbeitung personenbezogener Daten"
-          ]
+          "children": ["3. Erhebung und Verarbeitung personenbezogener Daten"]
         },
         "\n      ",
         {
@@ -1492,9 +1260,7 @@
         {
           "tag": "h3",
           "attrs": {},
-          "children": [
-            "3.1 Kategorien verarbeiteter Daten"
-          ]
+          "children": ["3.1 Kategorien verarbeiteter Daten"]
         },
         "\n      ",
         {
@@ -1509,9 +1275,7 @@
                 {
                   "tag": "strong",
                   "attrs": {},
-                  "children": [
-                    "Erforderliche Daten:"
-                  ]
+                  "children": ["Erforderliche Daten:"]
                 },
                 " Benutzername, universitäre E-Mail-Adresse, gehashte Passwörter."
               ]
@@ -1524,9 +1288,7 @@
                 {
                   "tag": "strong",
                   "attrs": {},
-                  "children": [
-                    "Optionale Profildaten:"
-                  ]
+                  "children": ["Optionale Profildaten:"]
                 },
                 " Name, Biografie, Links zu externen Webseiten (z. B. GitHub, Twitter)."
               ]
@@ -1539,9 +1301,7 @@
                 {
                   "tag": "strong",
                   "attrs": {},
-                  "children": [
-                    "Aktivitätsdaten:"
-                  ]
+                  "children": ["Aktivitätsdaten:"]
                 },
                 " Gestartete und abgeschlossene Challenges mit Zeitstempeln, eingereichte Flags, erworbene Badges."
               ]
@@ -1554,9 +1314,7 @@
                 {
                   "tag": "strong",
                   "attrs": {},
-                  "children": [
-                    "Sicherheits- und Systemprotokolle:"
-                  ]
+                  "children": ["Sicherheits- und Systemprotokolle:"]
                 },
                 " Aufzeichnungen über Netzwerkverkehr innerhalb der Plattform sowie Aktionen in bereitgestellten virtuellen Maschinen\n            (Aufbewahrung bis zu drei Monate, siehe Abschnitt 4 und 5)."
               ]
@@ -1568,9 +1326,7 @@
         {
           "tag": "h3",
           "attrs": {},
-          "children": [
-            "3.2 Zweck der Verarbeitung"
-          ]
+          "children": ["3.2 Zweck der Verarbeitung"]
         },
         "\n      ",
         {
@@ -1581,9 +1337,7 @@
             {
               "tag": "li",
               "attrs": {},
-              "children": [
-                "Betrieb, Wartung und Qualitäts-/Leistungsüberwachung der Plattform;"
-              ]
+              "children": ["Betrieb, Wartung und Qualitäts-/Leistungsüberwachung der Plattform;"]
             },
             "\n        ",
             {
@@ -1597,17 +1351,13 @@
             {
               "tag": "li",
               "attrs": {},
-              "children": [
-                "Unterstützung von Lehr- und Prüfungsabläufen;"
-              ]
+              "children": ["Unterstützung von Lehr- und Prüfungsabläufen;"]
             },
             "\n        ",
             {
               "tag": "li",
               "attrs": {},
-              "children": [
-                "Nutzung anonymisierter Daten für Forschungs- und Lehrzwecke."
-              ]
+              "children": ["Nutzung anonymisierter Daten für Forschungs- und Lehrzwecke."]
             },
             "\n      "
           ]
@@ -1616,9 +1366,7 @@
         {
           "tag": "h3",
           "attrs": {},
-          "children": [
-            "3.3 Forschung und Lehre — Anonymisierte Datennutzung"
-          ]
+          "children": ["3.3 Forschung und Lehre — Anonymisierte Datennutzung"]
         },
         "\n      ",
         {
@@ -1629,9 +1377,7 @@
             {
               "tag": "strong",
               "attrs": {},
-              "children": [
-                "vincent.heuveline@uni-heidelberg.de"
-              ]
+              "children": ["vincent.heuveline@uni-heidelberg.de"]
             },
             " widersprechen (Opt-out).\n      "
           ]
@@ -1650,9 +1396,7 @@
         {
           "tag": "h2",
           "attrs": {},
-          "children": [
-            "4. Aufbewahrung und Löschung von Daten"
-          ]
+          "children": ["4. Aufbewahrung und Löschung von Daten"]
         },
         "\n      ",
         {
@@ -1700,9 +1444,7 @@
         {
           "tag": "h2",
           "attrs": {},
-          "children": [
-            "5. Sicherheitsüberwachung"
-          ]
+          "children": ["5. Sicherheitsüberwachung"]
         },
         "\n      ",
         {
@@ -1750,9 +1492,7 @@
         {
           "tag": "h2",
           "attrs": {},
-          "children": [
-            "6. Zulässige Nutzung"
-          ]
+          "children": ["6. Zulässige Nutzung"]
         },
         "\n      ",
         {
@@ -1816,9 +1556,7 @@
         {
           "tag": "h2",
           "attrs": {},
-          "children": [
-            "7. Haftungsausschluss"
-          ]
+          "children": ["7. Haftungsausschluss"]
         },
         "\n      ",
         {
@@ -1837,9 +1575,7 @@
             {
               "tag": "strong",
               "attrs": {},
-              "children": [
-                "Universität Heidelberg"
-              ]
+              "children": ["Universität Heidelberg"]
             },
             " sowie deren Mitarbeitende haften nicht für:"
           ]
@@ -1912,9 +1648,7 @@
         {
           "tag": "h2",
           "attrs": {},
-          "children": [
-            "8. Urheberrecht und geistiges Eigentum"
-          ]
+          "children": ["8. Urheberrecht und geistiges Eigentum"]
         },
         "\n      ",
         {
@@ -1925,9 +1659,7 @@
             {
               "tag": "strong",
               "attrs": {},
-              "children": [
-                "Universität Heidelberg"
-              ]
+              "children": ["Universität Heidelberg"]
             },
             " oder der jeweiligen Rechteinhaberinnen und -inhaber und sind urheberrechtlich geschützt.\n      "
           ]
@@ -1954,9 +1686,7 @@
         {
           "tag": "h2",
           "attrs": {},
-          "children": [
-            "9. Anwendbares Recht und Gerichtsstand"
-          ]
+          "children": ["9. Anwendbares Recht und Gerichtsstand"]
         },
         "\n      ",
         {
@@ -1967,9 +1697,7 @@
             {
               "tag": "strong",
               "attrs": {},
-              "children": [
-                "Heidelberg, Baden-Württemberg"
-              ]
+              "children": ["Heidelberg, Baden-Württemberg"]
             },
             ".\n      "
           ]
@@ -1988,9 +1716,7 @@
         {
           "tag": "h2",
           "attrs": {},
-          "children": [
-            "10. Änderungen der Nutzungsbedingungen"
-          ]
+          "children": ["10. Änderungen der Nutzungsbedingungen"]
         },
         "\n      ",
         {
@@ -2014,9 +1740,7 @@
         {
           "tag": "h2",
           "attrs": {},
-          "children": [
-            "11. Kontakt"
-          ]
+          "children": ["11. Kontakt"]
         },
         "\n      ",
         {
@@ -2035,9 +1759,7 @@
             {
               "tag": "strong",
               "attrs": {},
-              "children": [
-                "Prof. Dr. Vincent Heuveline"
-              ]
+              "children": ["Prof. Dr. Vincent Heuveline"]
             },
             {
               "tag": "br",
@@ -2048,9 +1770,7 @@
             {
               "tag": "strong",
               "attrs": {},
-              "children": [
-                "Universität Heidelberg"
-              ]
+              "children": ["Universität Heidelberg"]
             },
             {
               "tag": "br",
@@ -2061,9 +1781,7 @@
             {
               "tag": "strong",
               "attrs": {},
-              "children": [
-                "Engineering Mathematics and Computing Lab"
-              ]
+              "children": ["Engineering Mathematics and Computing Lab"]
             },
             {
               "tag": "br",
@@ -2074,9 +1792,7 @@
             {
               "tag": "span",
               "attrs": {},
-              "children": [
-                "Grabengasse 1, 69117 Heidelberg"
-              ]
+              "children": ["Grabengasse 1, 69117 Heidelberg"]
             },
             {
               "tag": "br",
@@ -2089,9 +1805,7 @@
               "attrs": {
                 "href": "mailto:vincent.heuveline@uni-heidelberg.de"
               },
-              "children": [
-                "vincent.heuveline@uni-heidelberg.de"
-              ]
+              "children": ["vincent.heuveline@uni-heidelberg.de"]
             },
             "\n      "
           ]

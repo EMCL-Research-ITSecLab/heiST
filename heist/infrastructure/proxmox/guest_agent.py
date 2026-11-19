@@ -2,6 +2,7 @@ import base64
 import json
 import logging
 import os
+import secrets
 import socket
 import stat
 import threading
@@ -27,7 +28,6 @@ _DEFAULT_CONNECT_TIMEOUT: float = 5.0
 _DEFAULT_RECV_TIMEOUT: float = 10.0
 _DEFAULT_EXEC_TIMEOUT: float = 30.0
 _RECV_CHUNK: int = 4096
-_GREETING_TIMEOUT: float = 3.0
 _DEFAULT_SOCKET_WAIT_TIMEOUT: float = 120.0
 
 class GuestAgentError(Exception):
@@ -135,9 +135,12 @@ class _QEMUGATransport:
                 sock.settimeout(self._recv_timeout)
                 self._sock = sock
                 self._buf = b""
-                self._flush_greeting()
+                self._synchronize()
                 logger.debug("Connected to %s", self._path)
                 return
+            except GuestAgentError:
+                self.close()
+                raise
             except FileNotFoundError:
                 sock.close()
                 raise GASocketNotFoundError(f"Socket vanished: {self._path}")
@@ -191,30 +194,32 @@ class _QEMUGATransport:
     def connected(self) -> bool:
         return self._sock is not None
 
-    def _flush_greeting(self) -> None:
-        """Discard optional greeting line emitted on first connect."""
+    def _synchronize(self) -> None:
+        """Discard stale replies using the QGA synchronization sentinel.
+
+        A new socket connection can inherit replies from an earlier client.
+        A greeting read cannot establish which command a reply belongs to.
+        """
         assert self._sock is not None
-        deadline = time.monotonic() + _GREETING_TIMEOUT
-        try:
-            while time.monotonic() < deadline:
-                remaining = deadline - time.monotonic()
-                if remaining <= 0:
-                    break
-                self._sock.settimeout(min(remaining, _GREETING_TIMEOUT))
-                try:
-                    chunk = self._sock.recv(_RECV_CHUNK)
-                except socket.timeout:
-                    logger.debug("No greeting received from %s. Continuing.", self._path)
-                    return
-                if not chunk:
-                    return
-                self._buf += chunk
-                nl = self._buf.find(b"\n")
-                if nl != -1:
-                    self._buf = self._buf[nl + 1:]
-                    return
-        except OSError:
-            pass
+        token = secrets.randbits(63)
+        payload = {"execute": "guest-sync-delimited", "arguments": {"id": token}}
+        self._sock.sendall(b"\xff" + json.dumps(payload).encode() + b"\n")
+        deadline = time.monotonic() + self._recv_timeout
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                self.close()
+                raise GATimeoutError("Guest-agent synchronization timed out")
+            line = self._read_line(timeout=remaining)
+            # The sentinel also discards a partially delivered JSON object.
+            if b"\xff" not in line:
+                continue
+            try:
+                response = json.loads(line.rsplit(b"\xff", 1)[1])
+            except (ValueError, UnicodeDecodeError):
+                continue
+            if isinstance(response, dict) and type(response.get("return")) is int and response["return"] == token:
+                return
 
     def _read_line(self, timeout: Optional[float] = None) -> bytes:
         assert self._sock is not None
@@ -265,7 +270,8 @@ class _QEMUGATransport:
         if not self.connected:
             raise GANotRunningError("Transport is not connected.")
 
-        payload: Dict[str, Any] = {"execute": command}
+        request_id = secrets.token_hex(16)
+        payload: Dict[str, Any] = {"execute": command, "id": request_id}
         if arguments:
             payload["arguments"] = arguments
 
@@ -279,13 +285,21 @@ class _QEMUGATransport:
             self.close()
             raise GANotRunningError(f"Failed to send '{command}': {exc}") from exc
 
-        line = self._read_line(timeout=timeout)
-        logger.debug("<- %s", line.decode(errors="replace"))
-
-        try:
-            response = json.loads(line)
-        except json.JSONDecodeError as exc:
-            raise GuestAgentError(f"Non-JSON from qemu-ga: {line[:200]!r}") from exc
+        deadline = time.monotonic() + (timeout if timeout is not None else self._recv_timeout)
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                self.close()
+                raise GATimeoutError(f"Timed out waiting for '{command}' response")
+            line = self._read_line(timeout=remaining)
+            try:
+                response = json.loads(line)
+            except (ValueError, UnicodeDecodeError) as exc:
+                self.close()
+                raise GuestAgentError("Invalid JSON from qemu-ga") from exc
+            if isinstance(response, dict) and response.get("id") == request_id:
+                break
+            # Never accept a delayed response to another client's request.
 
         if "error" in response:
             err = response["error"]
@@ -440,6 +454,8 @@ class GuestAgent:
             args["env"] = [f"{k}={v}" for k, v in env.items()]
 
         result = self._call("guest-exec", args)
+        if not isinstance(result, dict) or type(result.get("pid")) is not int or result["pid"] <= 0:
+            raise GuestAgentError("Guest execution returned no valid process ID; command was not replayed")
         pid: int = result["pid"]
 
         deadline = time.monotonic() + timeout

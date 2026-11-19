@@ -15,6 +15,19 @@ class ManagementBrowserTests(BrowserFixture):
         self.visit(path)
         self.page.wait_for_function("!document.querySelector('main .loading')")
 
+    def test_challenge_column_sorting_applies_before_pagination(self):
+        self.responses['admin/challenges']['data']['challenges'] = [
+            {'id': i, 'name': f'Exercise {i}', 'category': 'web', 'active_deployments': i}
+            for i in range(25, 0, -1)]
+        self.settled('/manage-ctf')
+        table = self.page.locator('table').first
+        self.assertIn('Exercise 1', table.locator('tbody tr').first.inner_text())
+        table.get_by_role('button', name='Instances', exact=True).click()
+        table.get_by_role('button', name='Instances', exact=True).click()
+        self.assertEqual(table.get_by_role('columnheader', name='Instances').get_attribute('aria-sort'), 'descending')
+        self.assertIn('Exercise 25', table.locator('tbody tr').first.inner_text())
+        self.assertEqual(table.locator('tbody tr').count(), 20)
+
     def test_fresh_unverified_coverage_is_distinct_from_missing_or_stale_evidence(self):
         for status in ('unknown', 'stale', 'unavailable'):
             with self.subTest(status=status):

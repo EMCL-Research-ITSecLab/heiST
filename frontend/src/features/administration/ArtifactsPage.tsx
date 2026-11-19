@@ -4,7 +4,10 @@ import { request } from '../../lib/api.ts';
 import { number, payload, row, rows, text, type Row } from '../../lib/data.ts';
 import { useAction, useResource, useSession } from '../../lib/state.tsx';
 import { useArtifactUpload } from './useArtifactUpload.ts';
+import { SortableHeader } from '../../components/SortableHeader.tsx';
+import { useTableSort } from '../../lib/useTableSort.ts';
 export function Artifacts() {
+  const sorting = useTableSort<Row>({name: item => text(item.display_name ?? item.filename), os: item => text(item.guest_os), size: item => item.file_size == null && item.size == null ? null : number(item.file_size ?? item.size)}, 'name');
   const resource = useResource('/api/admin/artifacts', 10000), data = payload(resource.data), limits = row(data.limits), action = useAction();
   const session = useSession();
   const transfer = useArtifactUpload(session.user?.username ?? '', resource.reload);
@@ -69,14 +72,14 @@ export function Artifacts() {
           <table>
             <thead>
               <tr>
-                <th>Artifact</th>
-                <th>Operating system</th>
-                <th>Size</th>
+                <SortableHeader {...sorting.header('name', 'Artifact')} />
+                <SortableHeader {...sorting.header('os', 'Operating system')} />
+                <SortableHeader {...sorting.header('size', 'Size')} />
                 <th>Action</th>
               </tr>
             </thead>
             <tbody>
-              {items.map(item => <tr key={text(item.id)}>
+              {sorting.apply(items).map(item => <tr key={text(item.id)}>
                 <td>
                   <strong>
                     {text(item.display_name ?? item.filename)}

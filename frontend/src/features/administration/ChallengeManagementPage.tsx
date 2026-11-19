@@ -6,15 +6,19 @@ import { Link, useRouter } from '../../lib/router.tsx';
 import { useAction, useResource } from '../../lib/state.tsx';
 import { PoolEditor } from './PoolEditor.tsx';
 import { ExerciseHistoryPanel } from './ExerciseHistoryPanel.tsx';
+import { SortableHeader } from '../../components/SortableHeader.tsx';
+import { useTableSort } from '../../lib/useTableSort.ts';
 export function ManageChallenges() {
   const router=useRouter(), selected=number(new URLSearchParams(router.location.split('?')[1]).get('exercise'));
   const resource = useResource('/api/admin/challenges', 30000), data = payload(resource.data), stats = row(data.stats), action = useAction();
   const [search, setSearch] = useState(''), [state, setState] = useState('all'), [deleting, setDeleting] = useState<Row | null>(null), [force, setForce] = useState(false), [leader, setLeader] = useState<Row | null>(null);
   const [poolId,setPoolId] = useState(0);
-  const [category, setCategory] = useState('all'), [sort, setSort] = useState('name'), [page, setPage] = useState(1);
+  const [category, setCategory] = useState('all'), [page, setPage] = useState(1);
+  const sorting = useTableSort<Row>({name: c => text(c.name), category: c => text(c.category),
+    availability: c => truth(c.marked_for_deletion) ? 'Retired' : truth(c.is_active) ? 'Available' : 'Inactive',
+    instances: c => number(c.active_deployments)}, 'name');
   const filtered = rows(data.challenges).filter(c => text(c.name).toLowerCase().includes(search.toLowerCase()) && (state === 'all' || (state === 'active' ? truth(c.is_active) && !truth(c.marked_for_deletion) : state === 'retired' ? truth(c.marked_for_deletion) : !truth(c.is_active))));
-  const matching = filtered.filter(c => category === 'all' || text(c.category) === category)
-    .sort((a, b) => (sort === 'deployments' ? number(b.active_deployments) - number(a.active_deployments) : text(a.name).localeCompare(text(b.name))) || number(a.id) - number(b.id));
+  const matching = sorting.apply(filtered.filter(c => category === 'all' || text(c.category) === category));
   const totalPages = Math.max(1, Math.ceil(matching.length / 20)), currentPage = Math.min(page, totalPages);
   const challenges = matching.slice((currentPage - 1) * 20, currentPage * 20);
   return <>
@@ -44,7 +48,6 @@ export function ManageChallenges() {
             options={['all', 'active', 'inactive', 'retired']}
             onChange={e => { setState(e.target.value); setPage(1); }} />
           <Select label="Category" value={category} options={['all', ...categories]} onChange={e => { setCategory(e.target.value); setPage(1); }} />
-          <Select label="Sort challenges" value={sort} options={['name', 'deployments']} onChange={e => { setSort(e.target.value); setPage(1); }} />
           <button className="secondary" onClick={resource.reload}>Refresh ↻</button>
         </div>
         <p className="muted">{matching.length} matching exercises</p>
@@ -52,10 +55,9 @@ export function ManageChallenges() {
           <table>
             <thead>
               <tr>
-                <th>Challenge</th>
-                <th>Category</th>
-                <th>Availability</th>
-                <th>Instances</th>
+                {(['name', 'category', 'availability', 'instances'] as const).map((key, index) =>
+                  <SortableHeader key={key} {...sorting.header(key, ['Challenge', 'Category', 'Availability', 'Instances'][index])}
+                    onSort={() => { sorting.header(key, '').onSort(); setPage(1); }} />)}
                 <th>Actions</th>
               </tr>
             </thead>

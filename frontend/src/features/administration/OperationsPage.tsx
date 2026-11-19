@@ -1,13 +1,16 @@
 import { OperationJournalPanel } from './OperationJournalPanel.tsx';
 import { PlatformStatusPanel } from './PlatformStatusPanel.tsx';
 import { Badge, Card, Empty, PageTitle, ResourceState, Stat } from '../../components/ui.tsx';
-import { number, payload, row, rows, text, truth } from '../../lib/data.ts';
+import { number, payload, row, rows, text, truth, type Row } from '../../lib/data.ts';
+import { SortableHeader } from '../../components/SortableHeader.tsx';
+import { useTableSort } from '../../lib/useTableSort.ts';
 import { Link, useRouter } from '../../lib/router.tsx';
 import { useResource } from '../../lib/state.tsx';
 import { ManagementOverview } from './ManagementOverview.tsx';
 import { AdministratorAuditPanel } from './AdministratorAuditPanel.tsx';
 import { MaintenancePanel } from './MaintenancePanel.tsx';
 export function Operations() {
+  const sorting = useTableSort<Row>({name: c => text(c.name), availability: c => truth(c.marked_for_deletion) ? 'Retiring' : truth(c.is_active) ? 'Available' : 'Inactive', active: c => number(c.active_deployments), total: c => number(c.total_deployments), solves: c => number(c.solve_count)}, 'name');
   const router=useRouter(), query=new URLSearchParams(router.location.split('?')[1]);
   const selected=query.get('tab')??'overview';
   const tab=['overview','health','jobs','capacity','data','audit','maintenance'].includes(selected)?selected:'overview';
@@ -39,15 +42,12 @@ export function Operations() {
           <table>
             <thead>
               <tr>
-                <th>Exercise</th>
-                <th>Availability</th>
-                <th>Active deployments</th>
-                <th>Total deployments</th>
-                <th>Solves</th>
+                {['name', 'availability', 'active', 'total', 'solves'].map((key, index) =>
+                  <SortableHeader key={key} {...sorting.header(key, ['Exercise', 'Availability', 'Active deployments', 'Total deployments', 'Solves'][index])} />)}
               </tr>
             </thead>
             <tbody>
-              {challenges.map(c => <tr key={text(c.id)}>
+              {sorting.apply(challenges).map(c => <tr key={text(c.id)}>
                 <td>
                   <Link href={`/challenge?id=${number(c.id)}`}>
                     {text(c.name)}

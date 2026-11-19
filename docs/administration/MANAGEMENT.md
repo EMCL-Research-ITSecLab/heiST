@@ -86,6 +86,11 @@ Back up the database and registered image library independently.
 
 ### Editing an existing exercise
 
+Click column headings in challenge management, exercise availability and the
+artifact library to sort ascending or descending. The arrow and `aria-sort`
+indicate the current direction. Challenge sorting covers all matching results
+before pagination; filters and refreshes preserve the selected sort.
+
 Use **Manage challenges → Edit** for machine resources, directory
 roles, networks, flags and hints. The server permits this only while the
 exercise is paused, not retired, and has no remaining assigned, provisioning or

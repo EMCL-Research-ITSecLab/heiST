@@ -189,13 +189,14 @@ class Administration:
             pattern='%'+search.replace('\\','\\\\').replace('%','\\%').replace('_','\\_')+'%'
             cursor.execute('''SELECT c.id,c.challenge_template_id,t.name,c.lifecycle_state::text AS state,
                               c.expires_at,c.subnet::text AS subnet,c.pre_assigned_user_id,
-                              u.id AS user_id,u.username,
+                              u.id AS user_id,COALESCE(u.username,r.username) AS username,
                               (SELECT count(*) FROM public.machines m WHERE m.challenge_id=c.id) AS machines
                               FROM public.challenges c JOIN public.challenge_templates t ON t.id=c.challenge_template_id
                               LEFT JOIN public.users u ON u.running_challenge=c.id
+                              LEFT JOIN public.users r ON r.id=c.pre_assigned_user_id
                               WHERE (%s='all' OR c.lifecycle_state::text=%s)
                               AND (%s::bigint IS NULL OR c.challenge_template_id=%s)
-                              AND (t.name ILIKE %s OR COALESCE(u.username,'') ILIKE %s OR c.id::text ILIKE %s)
+                              AND (t.name ILIKE %s OR COALESCE(u.username,r.username,'') ILIKE %s OR c.id::text ILIKE %s)
                               ORDER BY c.id LIMIT 26 OFFSET %s''',(state,state,template_id,template_id,pattern,pattern,pattern,(page-1)*25))
             items=[dict(item) for item in cursor.fetchall()]
             return {'instances':items[:25],'has_more':len(items)>25,'page':page}
@@ -224,9 +225,10 @@ class Administration:
         with self.database(actor) as db, db.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute('''SELECT c.id,c.challenge_template_id,c.lifecycle_state::text AS state,c.expires_at,
                               (SELECT a.activated_at FROM public.instance_activations a WHERE a.challenge_id=c.id) AS activated_at,c.subnet::text AS subnet,
-                              t.name,c.pre_assigned_user_id,u.id AS user_id,u.username FROM public.challenges c
+                              t.name,c.pre_assigned_user_id,u.id AS user_id,COALESCE(u.username,r.username) AS username FROM public.challenges c
                               JOIN public.challenge_templates t ON t.id=c.challenge_template_id
-                              LEFT JOIN public.users u ON u.running_challenge=c.id WHERE c.id=%s''',(identifier,))
+                              LEFT JOIN public.users u ON u.running_challenge=c.id
+                              LEFT JOIN public.users r ON r.id=c.pre_assigned_user_id WHERE c.id=%s''',(identifier,))
             item=cursor.fetchone()
             if not item:raise AdminError('Instance not found',404)
             result=dict(item)

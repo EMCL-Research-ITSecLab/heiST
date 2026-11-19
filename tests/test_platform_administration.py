@@ -103,6 +103,17 @@ class PlatformAdministrationTests(unittest.TestCase):
         self.assertEqual(self.sql('SELECT running_challenge FROM users WHERE id=%s',(self.user_id,)),[(None,)])
         self.teardown.assert_not_called();self.launch.assert_not_called()
 
+    def test_reserved_provisioning_instance_displays_intended_user_without_early_assignment(self):
+        self.sql('UPDATE users SET running_challenge=NULL WHERE id=%s',(self.user_id,))
+        self.sql("UPDATE challenges SET lifecycle_state='PROVISIONING' WHERE id=%s",(self.instance,))
+        summary=next(item for item in self.service.instances(self.admin)['instances'] if item['id']==self.instance)
+        detail=self.service.instance(self.admin,self.instance)
+        self.assertEqual(summary['username'],self.username)
+        self.assertEqual(detail['username'],self.username)
+        self.assertEqual(summary['pre_assigned_user_id'],self.user_id)
+        self.assertIsNone(summary['user_id'])
+        self.assertIsNone(detail['user_id'])
+
     def test_remove_refuses_assigned_reserved_and_provisioning_instances(self):
         with self.assertRaises(AdminError):self.service.change_instance(self.admin,self.instance,'remove')
         self.sql('UPDATE users SET running_challenge=NULL WHERE id=%s',(self.user_id,))

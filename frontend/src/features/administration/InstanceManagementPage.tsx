@@ -31,7 +31,7 @@ export function ManageInstances() {
         {query.has('template_id') && <button className="secondary" onClick={() => update('template_id', '')}>Clear exercise filter</button>}</div>
       <ResourceState {...resource}>
         {rows(data.instances).length ? <div className="table-wrap"><table><thead><tr><th>Instance</th><th>Challenge</th><th>Student</th><th>State</th><th>Expires</th><th>Actions</th></tr></thead>
-          <tbody>{rows(data.instances).map(instance => <tr key={number(instance.id)}><td>{number(instance.id)}</td><td>{text(instance.name)}</td><td>{text(instance.username, 'Unassigned')}</td>
+          <tbody>{rows(data.instances).map(instance => <tr key={number(instance.id)}><td>{number(instance.id)}</td><td>{text(instance.name)}</td><td>{text(instance.username, instance.state === 'READY' && !instance.pre_assigned_user_id ? 'Warm spare' : 'Unassigned')}</td>
             <td><Badge>{text(instance.state)}</Badge></td><td>{text(instance.expires_at, 'Unavailable')}</td><td><div className="button-row">
               <button className="secondary small" onClick={() => update('instance', String(instance.id))}>Inspect</button>
               {instance.user_id ? <>{(['release', 'rebuild'] as const).map(kind => <button key={kind} className="secondary small" onClick={() => setPending({ instance: number(instance.id), kind })}>{kind === 'release' ? 'Release' : 'Rebuild'}</button>)}</>

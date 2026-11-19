@@ -18,7 +18,7 @@ export function InstanceDetailsPanel({ identifier, onClose, onAction }: { identi
     <button className="secondary small" onClick={onClose}>Close details</button>
   </div>}>
     <ResourceState {...resource}>
-      <p>{text(data.name)} · <Badge>{text(data.state)}</Badge> · {text(data.username, 'Unassigned')}</p>
+      <p>{text(data.name)} · <Badge>{text(data.state)}</Badge> · {text(data.username, data.state === 'READY' && !data.pre_assigned_user_id ? 'Warm spare' : 'Unassigned')}</p>
       <dl className="diagnostic-grid"><dt>Exercise</dt><dd><Link href={'/manage-ctf?exercise=' + number(data.challenge_template_id)}>#{number(data.challenge_template_id)}</Link></dd>
         <dt>Subnet</dt><dd>{text(data.subnet, 'Unavailable')}</dd><dt>Activated</dt><dd>{timestamp(data.activated_at)}</dd><dt>Expires</dt><dd>{timestamp(data.expires_at)}</dd></dl>
       <h3>Virtual machines</h3>

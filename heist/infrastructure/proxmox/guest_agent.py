@@ -112,6 +112,9 @@ class _QEMUGATransport:
         """Connect to the socket, optionally waiting for it to appear first."""
         import errno as _errno
 
+        # A socket can exist well before qemu-ga starts inside a cold guest.
+        # Retrying synchronization is safe: no guest command has been sent yet.
+        deadline = time.monotonic() + max(self._connect_timeout, wait_timeout or 0)
         if wait_timeout is not None:
             self.wait_for_socket(timeout=wait_timeout)
 
@@ -125,7 +128,6 @@ class _QEMUGATransport:
                 f"No r/w permission on {self._path}  (run as root)"
             )
 
-        deadline = time.monotonic() + self._connect_timeout
         last_exc: Optional[OSError] = None
         while time.monotonic() < deadline:
             sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -138,6 +140,12 @@ class _QEMUGATransport:
                 self._synchronize()
                 logger.debug("Connected to %s", self._path)
                 return
+            except (GATimeoutError, GANotRunningError):
+                self.close()
+                if wait_timeout is None or time.monotonic() >= deadline:
+                    raise
+                time.sleep(min(0.2, max(0, deadline - time.monotonic())))
+                continue
             except GuestAgentError:
                 self.close()
                 raise

@@ -58,3 +58,33 @@ class GuestTransportTests(unittest.TestCase):
                 with self.assertRaisesRegex(GuestAgentError, 'not replayed'):
                     agent._exec_socket(['/bin/true'], True, None, 1, .01, None)
                 agent._call.assert_called_once()
+
+    def test_cold_guest_retries_only_sync_within_socket_wait_budget(self):
+        transport = _QEMUGATransport(Path('/unused/test.qga'))
+        first, second = Mock(), Mock()
+        with patch.object(Path, 'exists', return_value=True), patch(
+            'heist.infrastructure.proxmox.guest_agent.os.access', return_value=True,
+        ), patch('heist.infrastructure.proxmox.guest_agent.socket.socket', side_effect=[first, second]), patch.object(
+            transport, '_synchronize', side_effect=[GATimeoutError('guest still booting'), None],
+        ) as sync, patch.object(transport, '_drain'), patch(
+            'heist.infrastructure.proxmox.guest_agent.time.sleep',
+        ):
+            transport.connect(wait_timeout=120)
+            self.assertEqual(sync.call_count, 2)
+            first.close.assert_called_once()
+            first.sendall.assert_not_called()
+            second.sendall.assert_not_called()
+            self.assertTrue(transport.connected)
+            transport.close()
+
+    def test_cold_guest_does_not_retry_without_boot_wait_opt_in(self):
+        transport = _QEMUGATransport(Path('/unused/test.qga'))
+        with patch.object(Path, 'exists', return_value=True), patch(
+            'heist.infrastructure.proxmox.guest_agent.os.access', return_value=True,
+        ), patch('heist.infrastructure.proxmox.guest_agent.socket.socket'), patch.object(
+            transport, '_synchronize', side_effect=GATimeoutError('not ready'),
+        ) as sync, patch.object(transport, '_drain'):
+            with self.assertRaises(GATimeoutError):
+                transport.connect()
+            sync.assert_called_once()
+            self.assertFalse(transport.connected)

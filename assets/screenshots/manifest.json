@@ -19,8 +19,8 @@
     "frontend/src/features/administration/AdministratorAuditPanel.tsx": "2c286ef05083f62fa0fe3f3b69da428891c2b892fe20ef8b622ac29ae7757d3b",
     "frontend/src/features/administration/AnnouncementManagementPage.tsx": "f124cc8f272c60591d840ed611b3948141f7f359a224670b2931f880deb98a00",
     "frontend/src/features/administration/ArtifactsPage.tsx": "05441570e206dfb6391ba1f7ea9cf86049d854c39840aaa92f8b205d85ce5243",
-    "frontend/src/features/administration/ChallengeEditorPage.tsx": "68f70c1a356ed0c93c0f25d867d70c4a01b46f845730704cacdc98d517e86fef",
-    "frontend/src/features/administration/ChallengeManagementPage.tsx": "c6fa64b5076cd0db0f00ccc5927d622aee38fdd64bc898ce19328768fd8ddfbd",
+    "frontend/src/features/administration/ChallengeEditorPage.tsx": "08dbaa57992f2379b1099e5a147c9492fcf4dc1119069ec22bdc25a2b976fe6b",
+    "frontend/src/features/administration/ChallengeManagementPage.tsx": "92ef6d6ea1448272d85e7ea1c7f047a1b495420733c7c904b0576b1771ca1eb5",
     "frontend/src/features/administration/ExerciseHistoryPanel.tsx": "df9a7d934e36bbf64b734dd840bcbf3baf18c6e5b8faf7b76a8f0e3f29cefe2a",
     "frontend/src/features/administration/InstanceActionDialog.tsx": "70e1cf58900b3c6704336692ac69177bfcd4fca21a574f5669b60fe0cb72c263",
     "frontend/src/features/administration/InstanceDetailsPanel.tsx": "c85f0224057a1010e960d90e9e0813fde400d2368a412a5628df8a9254da60cc",
@@ -201,8 +201,8 @@
         "height": 1000
       },
       "full_page": true,
-      "document_height": 1134,
-      "sha256": "2982c20d32843ff653ad369cd0d1e67ea0545bd915a4015ac04d048cc3299cf1"
+      "document_height": 1067,
+      "sha256": "abad55d702bab6bee1d05aeec982ea476388c256fe153c344f1b8a961c0efa93"
     },
     {
       "file": "create_challenge_light.png",
@@ -319,7 +319,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "f679e596b90fd3c0e484c8798e481236057ea708e8ec5437f66ecef1a0044169"
+      "sha256": "58f0bca5d838b5e4fe424cbbd847e511ea9173d40aedac360f8b5991a5e3be38"
     },
     {
       "file": "maintenance_light.png",
@@ -344,8 +344,8 @@
         "height": 1000
       },
       "full_page": true,
-      "document_height": 2463,
-      "sha256": "fc7de33fcb3fe31e0b499372f91d3db9ae700e43e68d0e413563c01e3c91cd40"
+      "document_height": 2396,
+      "sha256": "fefad3d0b64b469513dcbe3b456ab0d4e74910440f3d7666b5ee55bb318cce9f"
     },
     {
       "file": "monitoring_activity_light.png",
@@ -643,8 +643,8 @@
         "height": 1000
       },
       "full_page": true,
-      "document_height": 1134,
-      "sha256": "25278adbf5c39d68dd482dffeb86930e3bb09140bc23a106e5f4bc3e369e7a5b"
+      "document_height": 1067,
+      "sha256": "a49031a5fc5fbbf29625453253d93767fe02445d223a1f9b92869689bf15f860"
     },
     {
       "file": "create_challenge_dark.png",
@@ -786,8 +786,8 @@
         "height": 1000
       },
       "full_page": true,
-      "document_height": 2463,
-      "sha256": "335f4f8fc55f9fbd1f1e9b0e750522ef3da0e254805a89605d436f9e0f76be98"
+      "document_height": 2396,
+      "sha256": "c2f5e914303259b7bdc532f250b0573cb2000b05a489d30be5d211f87c404967"
     },
     {
       "file": "monitoring_activity_dark.png",
@@ -826,7 +826,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "67228384733b76143578ccf4e495250223da224a9cfa7d83f6a23274fb7a7e9c"
+      "sha256": "ad6cb8a4641e303aa204d4d6f7104ffa8d87dd7713fabd3efd5a3815dff5229a"
     },
     {
       "file": "instance_details_dark.png",

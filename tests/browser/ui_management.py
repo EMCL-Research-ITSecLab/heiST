@@ -100,7 +100,7 @@ class ManagementBrowserTests(BrowserFixture):
 
     def test_paused_configuration_editor_sends_structured_identity_preserving_definition(self):
         self.settled('/create-ctf?edit=4')
-        self.page.get_by_role('heading',name='Edit configuration',exact=True).wait_for()
+        self.page.get_by_role('heading',name='Edit challenge',exact=True).wait_for()
         machines=self.page.get_by_role('group',name='Machine 1',exact=True)
         self.assertTrue(self.page.get_by_role('button',name='Add machine',exact=False).is_disabled())
         self.assertTrue(machines.get_by_label('OVA artifact',exact=True).is_disabled())

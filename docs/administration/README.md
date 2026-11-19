@@ -113,7 +113,7 @@ The challenge editor includes a live SVG network preview and a textual connectio
 list. It updates after YAML import, edits, attachment changes and removals; DMZ
 and student-accessible networks are labelled. No graphing library is required.
 
-For an existing exercise, **Manage challenges → Configuration** opens the same
+For an existing exercise, **Manage challenges → Edit** opens the same
 topology editor. Drain its pool, finish or remove all instances, and pause it
 before saving. Machine and flag identities remain fixed; CPU/RAM, directory
 roles, networks, hints and unearned flag metadata can be updated. OVA replacement

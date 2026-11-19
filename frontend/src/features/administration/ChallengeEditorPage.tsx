@@ -103,7 +103,7 @@ export function CreateChallenge() {
   return <>
     <PageTitle
       eyebrow="ADMINISTRATION / CHALLENGES"
-      title={editing ? 'Edit configuration' : 'Create challenge'}
+      title={editing ? 'Edit challenge' : 'Create challenge'}
       description="Configure machines, networks and flags."
       action={<Link href="/manage-ctf">← Back to challenges</Link>} />
     <Notice error={action.error} message={action.message} />
@@ -325,7 +325,7 @@ export function CreateChallenge() {
                 </div>
                 <label className="check">
                   <input type="checkbox" disabled={!!editing} name="isActive" defaultChecked={truth(imported.isActive)} />Make available to students</label>
-                <p className="muted">{editing ? 'Configuration stays paused until you publish it from Edit.' : 'Leave this unchecked to create an inactive exercise for review.'}</p>
+                <p className="muted">{editing ? 'The challenge stays paused until you publish it from this editor.' : 'Leave this unchecked to create an inactive exercise for review.'}</p>
                 <button className="full" type="submit" disabled={action.busy}>
                   {action.busy ? 'Saving…' : editing ? 'Save configuration' : 'Create challenge →'}
                 </button>

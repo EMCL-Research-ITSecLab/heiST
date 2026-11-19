@@ -1,7 +1,7 @@
-import { useState, type FormEvent } from 'react';
-import { Area, Badge, Card, Confirm, Empty, Field, Notice, PageTitle, Pager, ResourceState, Select, Stat } from '../../components/ui.tsx';
+import { useState } from 'react';
+import { Badge, Card, Confirm, Empty, Field, Notice, PageTitle, Pager, ResourceState, Select, Stat } from '../../components/ui.tsx';
 import { request } from '../../lib/api.ts';
-import { categories, difficulties, number, payload, row, rows, text, truth, type Row } from '../../lib/data.ts';
+import { categories, number, payload, row, rows, text, truth, type Row } from '../../lib/data.ts';
 import { Link, useRouter } from '../../lib/router.tsx';
 import { useAction, useResource } from '../../lib/state.tsx';
 import { PoolEditor } from './PoolEditor.tsx';
@@ -9,7 +9,7 @@ import { ExerciseHistoryPanel } from './ExerciseHistoryPanel.tsx';
 export function ManageChallenges() {
   const router=useRouter(), selected=number(new URLSearchParams(router.location.split('?')[1]).get('exercise'));
   const resource = useResource('/api/admin/challenges', 30000), data = payload(resource.data), stats = row(data.stats), action = useAction();
-  const [search, setSearch] = useState(''), [state, setState] = useState('all'), [editing, setEditing] = useState<Row | null>(null), [deleting, setDeleting] = useState<Row | null>(null), [force, setForce] = useState(false), [leader, setLeader] = useState<Row | null>(null);
+  const [search, setSearch] = useState(''), [state, setState] = useState('all'), [deleting, setDeleting] = useState<Row | null>(null), [force, setForce] = useState(false), [leader, setLeader] = useState<Row | null>(null);
   const [poolId,setPoolId] = useState(0);
   const [category, setCategory] = useState('all'), [sort, setSort] = useState('name'), [page, setPage] = useState(1);
   const filtered = rows(data.challenges).filter(c => text(c.name).toLowerCase().includes(search.toLowerCase()) && (state === 'all' || (state === 'active' ? truth(c.is_active) && !truth(c.marked_for_deletion) : state === 'retired' ? truth(c.marked_for_deletion) : !truth(c.is_active))));
@@ -17,7 +17,6 @@ export function ManageChallenges() {
     .sort((a, b) => (sort === 'deployments' ? number(b.active_deployments) - number(a.active_deployments) : text(a.name).localeCompare(text(b.name))) || number(a.id) - number(b.id));
   const totalPages = Math.max(1, Math.ceil(matching.length / 20)), currentPage = Math.min(page, totalPages);
   const challenges = matching.slice((currentPage - 1) * 20, currentPage * 20);
-  async function edit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); const form = new FormData(event.currentTarget); form.set('isActive', form.has('isActive') ? 'true' : 'false'); await action.run(() => request('/api/admin/challenges/'+text(editing?.id), {method: 'PUT', body: Object.fromEntries(form)}), () => { setEditing(null); resource.reload(); }); }
   return <>
     <PageTitle
       eyebrow="ADMINISTRATION / CHALLENGES"
@@ -87,8 +86,9 @@ export function ManageChallenges() {
                 </td>
                 <td>
                   <div className="table-actions">
-                    <button className="secondary small" disabled={truth(c.marked_for_deletion)} onClick={() => setEditing(c)}>Edit</button>
-                    {!truth(c.marked_for_deletion) && <Link className="button secondary small" href={`/create-ctf?edit=${number(c.id)}`}>Configuration</Link>}
+                    {truth(c.marked_for_deletion)
+                      ? <button className="secondary small" disabled>Edit</button>
+                      : <Link className="button secondary small" href={`/create-ctf?edit=${number(c.id)}`}>Edit</Link>}
                     <button className="secondary small" onClick={()=>setPoolId(number(c.id))}>Configure pool</button>
                     <button className="secondary small" onClick={() => setLeader(c)}>Leaderboard</button>
                     <button className="secondary small" onClick={()=>router.navigate('/manage-ctf?exercise='+number(c.id))}>History</button>
@@ -105,42 +105,6 @@ export function ManageChallenges() {
     </ResourceState>
     {poolId>0&&<PoolEditor identifier={poolId} onClose={()=>setPoolId(0)} onSaved={resource.reload}/>}
     {selected>0&&<ExerciseHistoryPanel key={selected} identifier={selected} name={text(rows(data.challenges).find(item=>number(item.id)===selected)?.name,'Exercise #'+selected)} onClose={()=>router.navigate('/manage-ctf')}/>}
-    {editing && <Card title={`Edit ${text(editing.name)}`} className="editor-panel">
-      <form onSubmit={edit}>
-        <Field
-          label="Challenge name"
-          name="name"
-          defaultValue={text(editing.name)}
-          required
-          maxLength={100} />
-        <Area
-          label="Description"
-          name="description"
-          defaultValue={text(editing.description)}
-          maxLength={2000}
-          required />
-        <div className="form-grid">
-          <Select
-            label="Category"
-            name="category"
-            defaultValue={text(editing.category)}
-            options={categories} />
-          <Select
-            label="Difficulty"
-            name="difficulty"
-            defaultValue={text(editing.difficulty)}
-            options={difficulties} />
-        </div>
-        <Area label="General hint" name="hint" defaultValue={text(editing.hint)} />
-        <Area label="Tutor solution" name="solution" defaultValue={text(editing.solution)} />
-        <label className="check">
-          <input type="checkbox" name="isActive" defaultChecked={truth(editing.is_active)} />Available to students</label>
-        <div className="button-row">
-          <button disabled={action.busy}>Save changes</button>
-          <button type="button" className="secondary" onClick={() => setEditing(null)}>Cancel</button>
-        </div>
-      </form>
-    </Card>}
     {leader && <Leaderboard challenge={leader} onClose={() => setLeader(null)} />}
     {deleting && <Confirm
       title={force ? 'Permanently delete this challenge?' : 'Retire this challenge?'}

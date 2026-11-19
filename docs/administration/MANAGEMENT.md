@@ -86,7 +86,7 @@ Back up the database and registered image library independently.
 
 ### Editing an existing exercise
 
-Use **Manage challenges → Configuration** for machine resources, directory
+Use **Manage challenges → Edit** for machine resources, directory
 roles, networks, flags and hints. The server permits this only while the
 exercise is paused, not retired, and has no remaining assigned, provisioning or
 ready instances. Set its manual pool target to zero, wait for unused copies to

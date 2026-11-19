@@ -163,6 +163,37 @@ class ManagementBrowserTests(BrowserFixture):
         self.assertEqual(self.mutations[-1][0],'admin/grading/submissions')
         self.assertEqual(json.loads(self.mutations[-1][1])['user_id'],2)
 
+    def test_language_switch_preserves_editor_input_and_api_values(self):
+        self.settled('/create-ctf?edit=4')
+        self.page.get_by_label('Challenge name',exact=True).fill('Student-authored exercise title')
+        self.page.get_by_label('Language / Sprache',exact=True).select_option('de')
+        self.page.wait_for_function("document.documentElement.lang === 'de'")
+        self.assertEqual(self.page.get_by_label('Übungsname',exact=True).input_value(),'Student-authored exercise title')
+        self.assertEqual(self.page.get_by_label('Schwierigkeit',exact=True).input_value(),'medium')
+        self.assertEqual(self.page.get_by_label('Flag-Wert',exact=True).input_value(),'synthetic-private-value')
+        self.page.get_by_role('button',name='Konfiguration speichern',exact=True).click()
+        self.page.wait_for_url('**/manage-ctf')
+        definition=json.loads(self.mutations[-1][1])['definition']
+        self.assertEqual(definition['name'],'Student-authored exercise title')
+        self.assertEqual(definition['difficulty'],'medium')
+        self.assertEqual(definition['category'],'web')
+        self.assertEqual(definition['flags'][0]['flag'],'synthetic-private-value')
+        self.page.reload()
+        self.page.get_by_role('heading',name='Übungen verwalten',exact=True).wait_for()
+        self.assertEqual(self.page.get_by_label('Language / Sprache').input_value(),'de')
+        self.page.get_by_label('Language / Sprache').select_option('en')
+        self.page.get_by_role('heading',name='Manage challenges',exact=True).wait_for()
+
+    def test_german_pages_fit_phone_width_and_keep_authored_names(self):
+        self.page.set_viewport_size({'width':390,'height':844})
+        self.context.add_init_script("localStorage.setItem('heist-language','de')")
+        for route in ['/dashboard','/manage-ctf','/operations?tab=grading','/challenge?id=4']:
+            self.settled(route)
+            self.assertEqual(self.page.locator('html').get_attribute('lang'),'de')
+            self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),390)
+            self.assertEqual(self.page.locator('main [role=alert]').count(),0)
+        self.assertIn('The Glass Directory',self.page.get_by_role('main').inner_text())
+
     def test_paused_configuration_editor_sends_structured_identity_preserving_definition(self):
         self.settled('/create-ctf?edit=4')
         self.page.get_by_role('heading',name='Edit challenge',exact=True).wait_for()

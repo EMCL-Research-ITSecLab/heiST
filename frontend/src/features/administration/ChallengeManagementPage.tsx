@@ -1,3 +1,4 @@
+import {useI18n} from '../../lib/i18n.tsx';
 import { useState } from 'react';
 import { Badge, Card, Confirm, Empty, Field, Notice, PageTitle, Pager, ResourceState, Select, Stat } from '../../components/ui.tsx';
 import { request } from '../../lib/api.ts';
@@ -11,6 +12,7 @@ import { useTableSort } from '../../lib/useTableSort.ts';
 import { Overlay } from '../../components/Overlay.tsx';
 import { CreateChallenge } from './ChallengeEditorPage.tsx';
 export function ManageChallenges() {
+  const {t}=useI18n();
   const router=useRouter(), query=new URLSearchParams(router.location.split('?')[1]), selected=number(query.get('exercise')), editing=number(query.get('edit'));
   const resource = useResource('/api/admin/challenges', 30000), data = payload(resource.data), stats = row(data.stats), action = useAction();
   const [search, setSearch] = useState(''), [state, setState] = useState('all'), [deleting, setDeleting] = useState<Row | null>(null), [force, setForce] = useState(false), [leader, setLeader] = useState<Row | null>(null);
@@ -25,34 +27,34 @@ export function ManageChallenges() {
   const challenges = matching.slice((currentPage - 1) * 20, currentPage * 20);
   return <>
     <PageTitle
-      eyebrow="ADMINISTRATION / CHALLENGES"
-      title="Manage challenges"
-      description="Manage availability, content and the lifecycle of your exercises."
-      action={<Link className="button" href="/create-ctf">＋ Create challenge</Link>} />
+      eyebrow={t("ADMINISTRATION / CHALLENGES")}
+      title={t("Manage challenges")}
+      description={t("Manage availability, content and the lifecycle of your exercises.")}
+      action={<Link className="button" href="/create-ctf">{t("＋ Create challenge")}</Link>} />
     <Notice error={action.error} message={action.message} />
     <ResourceState {...resource}>
       <div className="stats-grid">
-        <Stat label="Challenges" value={stats.total_challenges ?? rows(data.challenges).length} />
-        <Stat label="Available" value={stats.active_challenges ?? rows(data.challenges).filter(c => truth(c.is_active)).length} />
-        <Stat label="Retired" value={rows(data.challenges).filter(c => truth(c.marked_for_deletion)).length} />
-        <Stat label="Running instances" value={stats.active_deployments} />
+        <Stat label={t("Challenges")} value={stats.total_challenges ?? rows(data.challenges).length} />
+        <Stat label={t("Available")} value={stats.active_challenges ?? rows(data.challenges).filter(c => truth(c.is_active)).length} />
+        <Stat label={t("Retired")} value={rows(data.challenges).filter(c => truth(c.marked_for_deletion)).length} />
+        <Stat label={t("Running instances")} value={stats.active_deployments} />
       </div>
       <Card>
         <div className="filter-bar">
           <Field
-            label="Find a challenge"
-            placeholder="Search by name…"
+            label={t("Find a challenge")}
+            placeholder={t("Search by name…")}
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }} />
           <Select
-            label="Availability"
+            label={t("Availability")}
             value={state}
             options={['all', 'active', 'inactive', 'retired']}
             onChange={e => { setState(e.target.value); setPage(1); }} />
-          <Select label="Category" value={category} options={['all', ...categories]} onChange={e => { setCategory(e.target.value); setPage(1); }} />
-          <button className="secondary" onClick={resource.reload}>Refresh ↻</button>
+          <Select label={t("Category")} value={category} options={['all', ...categories]} onChange={e => { setCategory(e.target.value); setPage(1); }} />
+          <button className="secondary" onClick={resource.reload}>{t("Refresh ↻")}</button>
         </div>
-        <p className="muted">{matching.length} matching exercises</p>
+        <p className="muted">{matching.length}{t(" matching exercises")}</p>
         {challenges.length ? <div className="table-wrap">
           <table>
             <thead>
@@ -60,7 +62,7 @@ export function ManageChallenges() {
                 {(['name', 'category', 'availability', 'instances'] as const).map((key, index) =>
                   <SortableHeader key={key} {...sorting.header(key, ['Challenge', 'Category', 'Availability', 'Instances'][index])}
                     onSort={() => { sorting.header(key, '').onSort(); setPage(1); }} />)}
-                <th>Actions</th>
+                <th>{t("Actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -82,7 +84,7 @@ export function ManageChallenges() {
                 </td>
                 <td>
                   <Badge tone={truth(c.marked_for_deletion) ? 'warning' : truth(c.is_active) ? 'active' : ''}>
-                    {truth(c.marked_for_deletion) ? 'Retired' : truth(c.is_active) ? 'Available' : 'Inactive'}
+                    {t(truth(c.marked_for_deletion) ? 'Retired' : truth(c.is_active) ? 'Available' : 'Inactive')}
                   </Badge>
                 </td>
                 <td>
@@ -91,34 +93,34 @@ export function ManageChallenges() {
                 <td>
                   <div className="table-actions">
                     {truth(c.marked_for_deletion)
-                      ? <button className="secondary small" disabled>Edit</button>
-                      : <Link className="button secondary small" href={`/manage-ctf?edit=${number(c.id)}`}>Edit</Link>}
-                    <button className="secondary small" onClick={()=>setPoolId(number(c.id))}>Configure pool</button>
-                    <button className="secondary small" onClick={() => setLeader(c)}>Leaderboard</button>
-                    <button className="secondary small" onClick={()=>router.navigate('/manage-ctf?exercise='+number(c.id))}>History</button>
-                    {truth(c.marked_for_deletion) ? <button className="secondary small" disabled={action.busy} onClick={() => void action.run(() => request('/api/admin/challenges/'+text(c.id)+'/restore', {method: 'POST', body: {}}), resource.reload)}>Restore</button> : <button className="danger subtle small" onClick={() => { setForce(false); setDeleting(c); }}>Retire</button>}
-                    <button className="danger subtle small" onClick={() => { setForce(true); setDeleting(c); }}>Delete</button>
+                      ? <button className="secondary small" disabled>{t("Edit")}</button>
+                      : <Link className="button secondary small" href={`/manage-ctf?edit=${number(c.id)}`}>{t("Edit")}</Link>}
+                    <button className="secondary small" onClick={()=>setPoolId(number(c.id))}>{t("Configure pool")}</button>
+                    <button className="secondary small" onClick={() => setLeader(c)}>{t("Leaderboard")}</button>
+                    <button className="secondary small" onClick={()=>router.navigate('/manage-ctf?exercise='+number(c.id))}>{t("History")}</button>
+                    {truth(c.marked_for_deletion) ? <button className="secondary small" disabled={action.busy} onClick={() => void action.run(() => request('/api/admin/challenges/'+text(c.id)+'/restore', {method: 'POST', body: {}}), resource.reload)}>{t("Restore")}</button> : <button className="danger subtle small" onClick={() => { setForce(false); setDeleting(c); }}>{t("Retire")}</button>}
+                    <button className="danger subtle small" onClick={() => { setForce(true); setDeleting(c); }}>{t("Delete")}</button>
                   </div>
                 </td>
               </tr>)}
             </tbody>
           </table>
-        </div> : <Empty title="No matching challenges" />}
+        </div> : <Empty title={t("No matching challenges")} />}
         <Pager page={currentPage} totalPages={totalPages} onPage={setPage} />
       </Card>
     </ResourceState>
     {poolId>0&&<PoolEditor identifier={poolId} onClose={()=>setPoolId(0)} onSaved={resource.reload}/>}
     {selected>0&&<ExerciseHistoryPanel key={selected} identifier={selected} name={text(rows(data.challenges).find(item=>number(item.id)===selected)?.name,'Exercise #'+selected)} onClose={()=>router.navigate('/manage-ctf')}/>}
-    {editing>0 && <Overlay title="Edit challenge" onClose={()=>router.navigate('/manage-ctf')}><CreateChallenge /></Overlay>}
-    {leader && <Overlay title="Leaderboard" onClose={()=>setLeader(null)}><Leaderboard challenge={leader} onClose={() => setLeader(null)} /></Overlay>}
+    {editing>0 && <Overlay title={t("Edit challenge")} onClose={()=>router.navigate('/manage-ctf')}><CreateChallenge /></Overlay>}
+    {leader && <Overlay title={t("Leaderboard")} onClose={()=>setLeader(null)}><Leaderboard challenge={leader} onClose={() => setLeader(null)} /></Overlay>}
     {deleting && <Confirm
-      title={force ? 'Permanently delete this challenge?' : 'Retire this challenge?'}
-      confirm={force ? 'Delete challenge and instances' : 'Retire challenge'}
+      title={t(force ? 'Permanently delete this challenge?' : 'Retire this challenge?')}
+      confirm={t(force ? 'Delete challenge and instances' : 'Retire challenge')}
       busy={action.busy}
       onClose={() => setDeleting(null)}
       onConfirm={() => void action.run(() => request('/api/admin/challenges/'+text(deleting.id), { method: 'DELETE', body: { force } }), () => { setDeleting(null); resource.reload(); })}>
       <p>
-        {force ? 'This removes the challenge and its instances. Exercise and grading data may be removed under the server’s retention rules. This cannot be undone from the console.' : 'The challenge will be marked for removal. The server will preserve or retire existing instances according to its lifecycle rules.'}
+        {t(force ? 'This removes the challenge and its instances. Exercise and grading data may be removed under the server’s retention rules. This cannot be undone from the console.' : 'The challenge will be marked for removal. The server will preserve or retire existing instances according to its lifecycle rules.')}
       </p>
       <strong>
         {text(deleting.name)}
@@ -131,16 +133,17 @@ function Leaderboard({ challenge, onClose }: {
   challenge: Row;
   onClose: () => void;
 }) {
+  const {t}=useI18n();
   const [page, setPage] = useState(1), resource = useResource(`/api/admin/challenges/${number(challenge.id)}/leaderboard?page=${page}`), data = payload(resource.data);
-  return <Card title={`Leaderboard · ${text(challenge.name)}`} action={<button className="secondary" onClick={onClose}>Close</button>}>
+  return <Card title={t('Leaderboard · {name}',{name:text(challenge.name)})} action={<button className="secondary" onClick={onClose}>{t("Close")}</button>}>
     <ResourceState {...resource}>
       <div className="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>Rank</th>
-              <th>Student</th>
-              <th>Points</th>
+              <th>{t("Rank")}</th>
+              <th>{t("Student")}</th>
+              <th>{t("Points")}</th>
             </tr>
           </thead>
           <tbody>

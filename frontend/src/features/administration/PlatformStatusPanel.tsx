@@ -1,3 +1,4 @@
+import {useI18n} from '../../lib/i18n.tsx';
 import { Badge, Card, ResourceState } from '../../components/ui.tsx';
 import { number, payload, row, rows, text, truth } from '../../lib/data.ts';
 import { useResource } from '../../lib/state.tsx';
@@ -23,47 +24,48 @@ function exportDiagnostics(data: Record<string, unknown>) {
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 export function PlatformStatusPanel() {
+  const {t}=useI18n();
   const resource = useResource('/api/admin/operations', 30000);
   const data = payload(resource.data), archive = row(data.archive), release = row(data.release);
   const storage = row(data.storage), lifecycle = row(data.lifecycle);
-  return <Card title="Platform diagnostics" action={<button className="secondary small" onClick={resource.reload}>Refresh diagnostics</button>}>
+  return <Card title={t("Platform diagnostics")} action={<button className="secondary small" onClick={resource.reload}>{t("Refresh diagnostics")}</button>}>
     <ResourceState {...resource}>
-      <p className="muted">Checked {timestamp(data.checked_at)}. Diagnostic data describes this host; exercise availability is listed below.</p>
+      <p className="muted">{t("Checked ")}{timestamp(data.checked_at)}{t(". Diagnostic data describes this host; exercise availability is listed below.")}</p>
       <div className="two-columns">
-        <section aria-label="Platform health">
-          <h3>Platform health</h3>
-          <p>Database <Badge tone={tone(text(data.database))}>{text(data.database, 'unknown')}</Badge></p>
-          <p>Maintenance mode <Badge tone={truth(data.maintenance) ? 'warning' : ''}>{truth(data.maintenance) ? 'On' : 'Off'}</Badge></p>
-          <p>Running source version: <strong>{text(data.source_version, 'unknown')}</strong></p>
-          <p>Last recorded release: <strong>{text(release.version, 'unknown')}</strong></p>
-          {text(release.commit) && <p className="muted">Commit <code>{text(release.commit)}</code></p>}
-          {text(release.active_transaction) && <p className="notice">Active maintenance transaction: <code>{text(release.active_transaction)}</code>. Inspect it with the release CLI before starting another rollout.</p>}
-          <p>Host root filesystem: {storage.used_percent === undefined ? 'Unknown' : `${number(storage.used_percent).toFixed(1)}% used · ${(number(storage.free_bytes) / 1024 ** 3).toFixed(1)} GiB free`}</p>
+        <section aria-label={t("Platform health")}>
+          <h3>{t("Platform health")}</h3>
+          <p>{t("Database ")}<Badge tone={tone(text(data.database))}>{text(data.database, 'unknown')}</Badge></p>
+          <p>{t("Maintenance mode ")}<Badge tone={truth(data.maintenance) ? 'warning' : ''}>{t(truth(data.maintenance) ? 'On' : 'Off')}</Badge></p>
+          <p>{t("Running source version: ")}<strong>{text(data.source_version, 'unknown')}</strong></p>
+          <p>{t("Last recorded release: ")}<strong>{text(release.version, 'unknown')}</strong></p>
+          {text(release.commit) && <p className="muted">{t("Commit ")}<code>{text(release.commit)}</code></p>}
+          {text(release.active_transaction) && <p className="notice">{t("Active maintenance transaction: ")}<code>{text(release.active_transaction)}</code>{t(". Inspect it with the release CLI before starting another rollout.")}</p>}
+          <p>{t("Host root filesystem: ")}{t(storage.used_percent === undefined ? 'Unknown' : `${number(storage.used_percent).toFixed(1)}% used · ${(number(storage.free_bytes) / 1024 ** 3).toFixed(1)} GiB free`)}</p>
         </section>
-        <section aria-label="Log archive status">
-          <h3>Log archive</h3>
-          <p>File archive receipt <Badge tone={tone(text(archive.status))}>{text(archive.status, 'unknown')}</Badge></p>
-          <p>Last successful run: {timestamp(archive.last_success_at)}</p>
-          <p className="muted">{archive.status === 'not configured' ? 'Configure the read-only archive receipt connection on the backend host.' : 'Receipts come from the separate archive VM. A stale or failed receipt requires investigation.'}</p>
+        <section aria-label={t("Log archive status")}>
+          <h3>{t("Log archive")}</h3>
+          <p>{t("File archive receipt ")}<Badge tone={tone(text(archive.status))}>{text(archive.status, 'unknown')}</Badge></p>
+          <p>{t("Last successful run: ")}{timestamp(archive.last_success_at)}</p>
+          <p className="muted">{t(archive.status === 'not configured' ? 'Configure the read-only archive receipt connection on the backend host.' : 'Receipts come from the separate archive VM. A stale or failed receipt requires investigation.')}</p>
           {Object.keys(row(archive.counters)).length > 0 && <dl className="summary-counts">
-            <div><dt>Verified files, latest run</dt><dd>{number(row(archive.counters).verified)}</dd></div>
-            <div><dt>Copied files, latest run</dt><dd>{number(row(archive.counters).copied)}</dd></div>
+            <div><dt>{t("Verified files, latest run")}</dt><dd>{number(row(archive.counters).verified)}</dd></div>
+            <div><dt>{t("Copied files, latest run")}</dt><dd>{number(row(archive.counters).copied)}</dd></div>
           </dl>}
         </section>
       </div>
       <MonitoringPanel value={data.monitoring} />
       <ActivityPanel />
       <div className="table-wrap">
-        <table aria-label="Platform services">
-          <thead><tr><th>Service</th><th>State</th><th>Detail</th></tr></thead>
+        <table aria-label={t("Platform services")}>
+          <thead><tr><th>{t("Service")}</th><th>{t("State")}</th><th>{t("Detail")}</th></tr></thead>
           <tbody>{rows(data.services).map(service => <tr key={text(service.unit)}>
             <td><code>{text(service.unit)}</code></td><td><Badge tone={tone(text(service.state))}>{text(service.state, 'unknown')}</Badge></td><td>{text(service.detail)}</td>
           </tr>)}</tbody>
         </table>
       </div>
-      <h3>Challenge instances across the platform</h3>
+      <h3>{t("Challenge instances across the platform")}</h3>
       <div className="button-row">{lifecycleStates.map(state => <span key={state}><Badge>{state.toLowerCase()}</Badge> {lifecycle[state] === undefined && data.database !== 'ready' ? 'unknown' : number(lifecycle[state])}</span>)}</div>
-      <div className="button-row"><button className="secondary small" disabled={resource.loading || Boolean(resource.error)} onClick={() => exportDiagnostics(data)}>Download diagnostics JSON</button></div>
+      <div className="button-row"><button className="secondary small" disabled={resource.loading || Boolean(resource.error)} onClick={() => exportDiagnostics(data)}>{t("Download diagnostics JSON")}</button></div>
     </ResourceState>
   </Card>;
 }

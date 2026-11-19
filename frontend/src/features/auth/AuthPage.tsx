@@ -1,3 +1,4 @@
+import {useI18n} from '../../lib/i18n.tsx';
 import { useState, type FormEvent } from 'react';
 import { Field, Notice } from '../../components/ui.tsx';
 import { post } from '../../lib/api.ts';
@@ -7,6 +8,7 @@ import { useAction, useSession } from '../../lib/state.tsx';
 export function AuthPage({ mode }: {
   mode: 'login' | 'signup' | 'reset-password';
 }) {
+  const {t}=useI18n();
   const session = useSession(), action = useAction(), router = useRouter();
   const [visible, setVisible] = useState(false);
   const signup = mode === 'signup', reset = mode === 'reset-password';
@@ -26,54 +28,54 @@ export function AuthPage({ mode }: {
   }
   return <div className="auth-layout">
     <section className="auth-form card">
-      <h1>{title}</h1>
-      {reset && <p className="muted">Change your password to continue.</p>}
+      <h1>{t(title)}</h1>
+      {reset && <p className="muted">{t("Change your password to continue.")}</p>}
       <Notice error={action.error} message={action.message} />
-      {signup && !session.registrationEnabled ? <p role="status">Registration is currently closed.</p> : <form onSubmit={submit}>
-        {!reset && <Field label="Username" name="username" autoComplete="username" required maxLength={50} />}
+      {signup && !session.registrationEnabled ? <p role="status">{t("Registration is currently closed.")}</p> : <form onSubmit={submit}>
+        {!reset && <Field label={t("Username")} name="username" autoComplete="username" required maxLength={50} />}
         {signup && <Field
-          label="Email address"
+          label={t("Email address")}
           name="email"
           type="email"
           autoComplete="email"
           required
           maxLength={254} />}
         {reset && <Field
-          label="Current password"
+          label={t("Current password")}
           name="current-password"
           type={visible ? 'text' : 'password'}
           autoComplete="current-password"
           required />}
         <Field
-          label={reset ? 'New password' : 'Password'}
+          label={t(reset ? 'New password' : 'Password')}
           name={reset ? 'new-password' : 'password'}
           type={visible ? 'text' : 'password'}
           autoComplete={signup || reset ? 'new-password' : 'current-password'}
           required
           minLength={signup || reset ? 8 : undefined} />
         {(signup || reset) && <Field
-          label="Confirm password"
+          label={t("Confirm password")}
           name="confirm-password"
           type={visible ? 'text' : 'password'}
           autoComplete="new-password"
           required />}
         {signup && <>
-          <Field label="Lecture code" name="lecture_token" type="password" autoComplete="off" required maxLength={256} />
+          <Field label={t("Lecture code")} name="lecture_token" type="password" autoComplete="off" required maxLength={256} />
           <label className="check legal-acceptance">
             <input type="checkbox" name="accept_legal" value="true" required />
-            <span>I accept the <a href={session.legal.terms_url} target="_blank" rel="noopener noreferrer">Terms of Service</a> and <a href={session.legal.privacy_url} target="_blank" rel="noopener noreferrer">privacy policy</a>.</span>
+            <span>{t("I accept the ")}<a href={session.legal.terms_url} target="_blank" rel="noopener noreferrer">{t("Terms of Service")}</a>{t(" and ")}<a href={session.legal.privacy_url} target="_blank" rel="noopener noreferrer">{t("privacy policy")}</a>.</span>
           </label>
         </>}
         <label className="check">
-          <input type="checkbox" checked={visible} onChange={e => setVisible(e.target.checked)} />Show passwords</label>
+          <input type="checkbox" checked={visible} onChange={e => setVisible(e.target.checked)} />{t("Show passwords")}</label>
         <button className="full" disabled={action.busy}>
-          {action.busy ? 'Please wait…' : signup ? 'Create account' : reset ? 'Save new password' : 'Sign in'}
+          {t(action.busy ? 'Please wait…' : signup ? 'Create account' : reset ? 'Save new password' : 'Sign in')}
           <span aria-hidden>→</span>
         </button>
       </form>}
       {!reset && <p className="auth-alternative">
-        {signup ? 'Have an account?' : 'No account?'} <Link href={signup ? '/login' : '/signup'}>
-          {signup ? 'Sign in' : 'Create an account'}
+        {t(signup ? 'Have an account?' : 'No account?')} <Link href={signup ? '/login' : '/signup'}>
+          {t(signup ? 'Sign in' : 'Create an account')}
         </Link>
       </p>}
     </section>

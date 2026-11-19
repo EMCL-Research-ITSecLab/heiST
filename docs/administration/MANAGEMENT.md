@@ -2,10 +2,15 @@
 
 The administrator console connects exercise definitions, users, instances,
 background operations and platform health. Open **Platform status** for its
-Overview, Health, Jobs, Capacity, Data, Audit and Maintenance views. Running
+Overview, Health, Jobs, Capacity, Data, Grading, Audit and Maintenance views. Running
 challenges and user management remain separate navigation entries with links
 from the overview. All administrator endpoints recheck the current database role;
 hiding a menu item is not an authorization boundary.
+
+Use **English / Deutsch** in the top bar to select the UI language. The choice
+persists in this browser and does not reset unsaved forms. Exercise content,
+commands, identifiers and reviewed legal documents retain their authored text.
+Translation maintenance is described in [UI languages](../development/TRANSLATIONS.md).
 
 ## Daily operation
 

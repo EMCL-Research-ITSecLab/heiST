@@ -35,6 +35,8 @@ PAGES = {
     'administrator_audit': ('/operations?tab=audit', 'admin'),
     'maintenance': ('/operations?tab=maintenance', 'admin'),
     'grading': ('/operations?tab=grading', 'admin'),
+    'german_dashboard': ('/dashboard', 'admin'),
+    'german_grading': ('/operations?tab=grading', 'admin'),
     'edit_challenge': ('/manage-ctf?edit=4', 'admin'),
     'exercise_history': ('/manage-ctf?exercise=4', 'admin'),
     'monitoring_activity': ('/operations?tab=health', 'admin'),
@@ -125,6 +127,9 @@ def capture(output):
                         fixture.page.get_by_role('table',name='Recent command and process events').wait_for()
                     if name == 'collapsed_navigation':
                         fixture.page.get_by_role('button',name='Toggle navigation').click()
+                    if name.startswith('german_'):
+                        fixture.page.get_by_label('Language / Sprache',exact=True).select_option('de')
+                        fixture.page.wait_for_function("document.documentElement.lang === 'de'")
                     fixture.page.evaluate('() => { document.activeElement?.blur(); window.scrollTo(0, 0); }')
                     fixture.page.evaluate("() => Promise.all([...document.images].map(image => {image.loading='eager';return image.decode();}))")
                     if fixture.errors or fixture.page.locator('main [role=alert]').count():raise RuntimeError('A documentation page failed to render: '+name)

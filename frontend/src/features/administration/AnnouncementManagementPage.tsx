@@ -1,18 +1,20 @@
+import {useI18n} from '../../lib/i18n.tsx';
 import { useState, type FormEvent } from 'react';
 import { Area, Badge, Card, Confirm, Empty, Field, Notice, PageTitle, Pager, ResourceState, Select } from '../../components/ui.tsx';
 import { request } from '../../lib/api.ts';
 import { date, number, payload, rows, text, type Row } from '../../lib/data.ts';
 import { useAction, useResource } from '../../lib/state.tsx';
 export function ManageAnnouncements() {
+  const {t}=useI18n();
   const [page, setPage] = useState(1), [editing, setEditing] = useState<Row | null>(null), [deleting, setDeleting] = useState<Row | null>(null);
   const resource = useResource(`/api/admin/announcements?page=${page}`), data = payload(resource.data), action = useAction();
   async function save(event: FormEvent<HTMLFormElement>) { event.preventDefault(); const body = Object.fromEntries(new FormData(event.currentTarget)); await action.run(() => request('/api/admin/announcements'+(editing?.id ? '/'+text(editing.id) : ''), { method: editing?.id ? 'PUT' : 'POST', body }), () => { setEditing(null); resource.reload(); }); }
   return <>
     <PageTitle
-      eyebrow="ADMINISTRATION / COMMUNICATION"
-      title="Manage announcements"
-      description="Share updates, events and maintenance notices with your students."
-      action={<button onClick={() => setEditing({})}>＋ New announcement</button>} />
+      eyebrow={t("ADMINISTRATION / COMMUNICATION")}
+      title={t("Manage announcements")}
+      description={t("Share updates, events and maintenance notices with your students.")}
+      action={<button onClick={() => setEditing({})}>{t("＋ New announcement")}</button>} />
     <Notice error={action.error} message={action.message} />
     <ResourceState {...resource}>
       <div className="news-list">
@@ -32,49 +34,49 @@ export function ManageAnnouncements() {
             {text(item.short_description)}
           </p>
           <div className="button-row">
-            <button className="secondary" onClick={() => setEditing(item)}>Edit</button>
-            <button className="danger subtle" onClick={() => setDeleting(item)}>Delete</button>
+            <button className="secondary" onClick={() => setEditing(item)}>{t("Edit")}</button>
+            <button className="danger subtle" onClick={() => setDeleting(item)}>{t("Delete")}</button>
           </div>
         </Card>)}
       </div>
-      {!rows(data.announcements).length && <Empty title="No announcements yet" />}
+      {!rows(data.announcements).length && <Empty title={t("No announcements yet")} />}
       <Pager page={page} totalPages={Math.ceil(number(data.total) / 10) || 1} onPage={setPage} />
     </ResourceState>
-    {editing && <Card title={editing.id ? 'Edit announcement' : 'New announcement'} className="editor-panel">
+    {editing && <Card title={t(editing.id ? 'Edit announcement' : 'New announcement')} className="editor-panel">
       <form onSubmit={save}>
-        <Field label="Title" name="title" defaultValue={text(editing.title)} maxLength={100} required />
+        <Field label={t("Title")} name="title" defaultValue={text(editing.title)} maxLength={100} required />
         <Area
-          label="Short description"
+          label={t("Short description")}
           name="short_description"
           defaultValue={text(editing.short_description)}
           maxLength={255} />
         <Area
-          label="Announcement"
+          label={t("Announcement")}
           name="content"
           defaultValue={text(editing.content)}
           maxLength={5000}
           required />
         <div className="form-grid">
           <Select
-            label="Category"
+            label={t("Category")}
             name="category"
             defaultValue={text(editing.category, 'general')}
             options={['general', 'updates', 'maintenance', 'events', 'security']} />
           <Select
-            label="Importance"
+            label={t("Importance")}
             name="importance"
             defaultValue={text(editing.importance, 'normal')}
             options={['normal', 'important', 'critical']} />
         </div>
         <div className="button-row">
-          <button disabled={action.busy}>Publish announcement</button>
-          <button type="button" className="secondary" onClick={() => setEditing(null)}>Cancel</button>
+          <button disabled={action.busy}>{t("Publish announcement")}</button>
+          <button type="button" className="secondary" onClick={() => setEditing(null)}>{t("Cancel")}</button>
         </div>
       </form>
     </Card>}
     {deleting && <Confirm
-      title="Delete this announcement?"
-      confirm="Delete announcement"
+      title={t("Delete this announcement?")}
+      confirm={t("Delete announcement")}
       busy={action.busy}
       onClose={() => setDeleting(null)}
       onConfirm={() => void action.run(() => request('/api/admin/announcements/'+text(deleting.id), { method: 'DELETE' }), () => { setDeleting(null); resource.reload(); })}>

@@ -7,58 +7,61 @@
   },
   "browser": "153.0.8010.12",
   "sources": {
-    "frontend/src/App.tsx": "c7ddf83ed11fca5a88077c682a1d6e89cd31aeb81a8e6e2cd8b746ab2e41e768",
+    "frontend/src/App.tsx": "b3161f80ae5cdc89d2e7f15960d5a99ec580ed61cfc4fed46c1b87bfee4df851",
     "frontend/src/components/AchievementIcon.tsx": "2467aad743689df5087b6211c4a305e7a6c0913f2b7196f8eb56450a545d4c90",
-    "frontend/src/components/AppShell.tsx": "46bbdbb7ea580c1462a01515e20af6d9b4d7721d890f6d61a9dc9d2fbceff317",
-    "frontend/src/components/NetworkPreview.tsx": "6b7d823726fe5be2f230f826f91792bcd1a11e4f3b9dc44ee36d531a4db45600",
-    "frontend/src/components/Overlay.tsx": "6ecd87445137c410d8c72573336a00de83cd873d73b325e5d7b25b2464e44542",
-    "frontend/src/components/SortableHeader.tsx": "ca6bade6fe4e1284c014c94a4938fd1e0c03895140dffc40daaefb30ca914914",
-    "frontend/src/components/ui.tsx": "5d07cdc3fbdfb9b893467f7c68322c45a2871714e4ee6eb3434cc3ff19c07e7b",
+    "frontend/src/components/AppShell.tsx": "4779e0b268a173848ff2338313b85f11f6b97394113631caf59e8a0a376a6252",
+    "frontend/src/components/NetworkPreview.tsx": "af9baefaedb19da64bc48af639a70ff5bac4f41e1be3e35c55325eb8b28b9d96",
+    "frontend/src/components/Overlay.tsx": "9f5c406c0fce19bcf269ab6aea42b78e9eb9b2eb14e41feecf89f32d6819b299",
+    "frontend/src/components/SortableHeader.tsx": "4e0935233c5a12034815f20bb262fbb9fd4410c4ab5e596459d9631a25fee0d7",
+    "frontend/src/components/ui.tsx": "d56de17643fa619e948c71bdad3e809aaf5b6548f3dd1cd0797d36fc8334ac02",
     "frontend/src/env.d.ts": "65996936fbb042915f7b74a200fcdde7e410f32a669b1ab9597cfaa4b0faddb5",
-    "frontend/src/features/account/ProfilePage.tsx": "25cce95e6e8db91a503d158a9c2f0492601a4fb4c71ef22735d1a423b79b0640",
-    "frontend/src/features/account/TrainingPreferencePanel.tsx": "344703282451370de824bd769328123d3ab1685df011a6b507806dba833773da",
-    "frontend/src/features/administration/ActivityPanel.tsx": "0705491445da3c369e24ffc2b6fe566d00e98bcaf9abc83d9220193cfae0fdd8",
-    "frontend/src/features/administration/AdministratorAuditPanel.tsx": "2c286ef05083f62fa0fe3f3b69da428891c2b892fe20ef8b622ac29ae7757d3b",
-    "frontend/src/features/administration/AnnouncementManagementPage.tsx": "f124cc8f272c60591d840ed611b3948141f7f359a224670b2931f880deb98a00",
-    "frontend/src/features/administration/ArtifactsPage.tsx": "bcab1f3a3c4587f25874c022d8c3c943e829dade7c0ee3682cbe2135f708bdab",
-    "frontend/src/features/administration/ChallengeEditorPage.tsx": "abcad07f9b6db0241011c1de7904162ce5a651ef0e4b024e29ec3785ef543788",
-    "frontend/src/features/administration/ChallengeManagementPage.tsx": "5ed2acb7fda3fbc9811b6a49300b9a7098207dfb6744b2821a91bb2d907b437b",
-    "frontend/src/features/administration/ExerciseHistoryPanel.tsx": "df9a7d934e36bbf64b734dd840bcbf3baf18c6e5b8faf7b76a8f0e3f29cefe2a",
-    "frontend/src/features/administration/GradingPanel.tsx": "e50161c4069e9296aefa8e4cb6d8ff9b96de311a9dd9bb36b2736edb755ebdcf",
-    "frontend/src/features/administration/InstanceActionDialog.tsx": "70e1cf58900b3c6704336692ac69177bfcd4fca21a574f5669b60fe0cb72c263",
-    "frontend/src/features/administration/InstanceDetailsPanel.tsx": "c85f0224057a1010e960d90e9e0813fde400d2368a412a5628df8a9254da60cc",
-    "frontend/src/features/administration/InstanceManagementPage.tsx": "af943edd14d8d9018788df1355969e0de727d05b8d20fb9f84148c0f6c53548b",
-    "frontend/src/features/administration/InstanceMonitoringPanel.tsx": "8d76525233d2c15e9053f009a562c88ecb0b93ed084ec214ee3c6413075ca1c7",
-    "frontend/src/features/administration/MaintenancePanel.tsx": "7d2dd3864ef25c5319ed6bfd43a16afd825979b4070f555d95ee646498a82ae1",
-    "frontend/src/features/administration/ManagementOverview.tsx": "494ea56aea637f66fa273caadce8beda57bf51f46e1fdd04be82af35fc552894",
-    "frontend/src/features/administration/MonitoringPanel.tsx": "3be7f7da0cdfe738d444299efb49ede8cb2a7aa54c0fa8526c610f526075208e",
-    "frontend/src/features/administration/OperationHistoryPanel.tsx": "af58319cf240c66e98dc7b393fa7ccc21cf6ae64339fafe939179d79d8574815",
-    "frontend/src/features/administration/OperationJournalPanel.tsx": "4452e7ec2d5b56e3c37d3ccc915f5847ae578126b2a425649b1cad6c113d1e4c",
-    "frontend/src/features/administration/OperationsPage.tsx": "9dd950c6cfe006edd2989bc9cca8de48cb0422404c82dd75ca7b1ebaeefe615a",
-    "frontend/src/features/administration/PlatformStatusPanel.tsx": "c353ff7ded370367ba46d40cae5d53020024fe7bf5a9f3b2ed055c815597e254",
-    "frontend/src/features/administration/PoolEditor.tsx": "42ea18f96d980e0c0191dbf97793fdfff64f2fd4ed415b7f196b01f8a1f0f641",
-    "frontend/src/features/administration/UserManagementPage.tsx": "95d63fc656050032db482598a05ab535f56827c98159f4eeacb36fa5e186d7f2",
+    "frontend/src/features/account/ProfilePage.tsx": "ad69bc79f1dca33d2162490157bfc7341d7a33605cdf2f68e7d65424e4070e7a",
+    "frontend/src/features/account/TrainingPreferencePanel.tsx": "128c0050554fa2fde6d7fa113c0a88b1b7e2ad2a72bdb9bc1803d4ba9878b44c",
+    "frontend/src/features/administration/ActivityPanel.tsx": "1c80ef7fe75f55c278b417f0f1548df3dbbc64847504775f920655fb754a8c94",
+    "frontend/src/features/administration/AdministratorAuditPanel.tsx": "96a8c9dfe8002097cf8243682c08690af9adad32de15652722b7c7ed9db91466",
+    "frontend/src/features/administration/AnnouncementManagementPage.tsx": "ca00f493e2b169bf49adf5a7d61919088fcf64e84c6ce5f136e865e179cd8a61",
+    "frontend/src/features/administration/ArtifactsPage.tsx": "8fa67fea9c8f43f8940a4555ac4bb5381f6a783772bb2593edbe5afc2163a69f",
+    "frontend/src/features/administration/ChallengeEditorPage.tsx": "14014a5989f9291f42b0c23d087011bb0298f245f2984b4fe3349946f5acf926",
+    "frontend/src/features/administration/ChallengeManagementPage.tsx": "2e9353fab80bf876f9d638c1f444c4159d8eb5c64fa96a3ef7180aa0e8cd0060",
+    "frontend/src/features/administration/ExerciseHistoryPanel.tsx": "6d49838b820eeb5312c7c08e81f1b0c21fbdafb44b157de65535c7220ceccdd8",
+    "frontend/src/features/administration/GradingPanel.tsx": "b73cb13cae1f2ea718e3f59bffbde1133509fbccd9493d43f977fc5189eb9401",
+    "frontend/src/features/administration/InstanceActionDialog.tsx": "6c1cbe7716077c8f042e06b716a5a16f3a5040ffddaa0233165651d87095f789",
+    "frontend/src/features/administration/InstanceDetailsPanel.tsx": "bc1eb5dd69acdd78a758b86b230a35d1de1afd8f6d9cefce77899ae3c016ed9a",
+    "frontend/src/features/administration/InstanceManagementPage.tsx": "6167a5f1abe7571fa4c44bfb8d876150485b7371ce0dc76ff928f24918ade9c5",
+    "frontend/src/features/administration/InstanceMonitoringPanel.tsx": "387f8912a4c5bdcda517ddc255de88490de072663494df98e80a7e2c1ff8ed81",
+    "frontend/src/features/administration/MaintenancePanel.tsx": "cab4889763c73303ce9a5511b6ac4ca1f8c361e201842483e5907fc7a61029c3",
+    "frontend/src/features/administration/ManagementOverview.tsx": "cedda7fef1e80594c80b2cfebfd433082743af9974ecfacaf696a93e6daf4657",
+    "frontend/src/features/administration/MonitoringPanel.tsx": "61a943556b8ced4975b0dce41ecf449edd526dd7fac8bc0e3cf93c72bfc98946",
+    "frontend/src/features/administration/OperationHistoryPanel.tsx": "ea8070c9ce7f1db85c9603f26683f3b78c662121dd59cb98a20970f0ffd7db19",
+    "frontend/src/features/administration/OperationJournalPanel.tsx": "6d4bc527e69e30d9df6853d73a37ac3d6ef1aa011db3acb6a866e7cbd0e4d0e8",
+    "frontend/src/features/administration/OperationsPage.tsx": "ca440dde22ff42acb3fe4965a0cd60d7f7ac887694bb1775405b0d0d856d4f1d",
+    "frontend/src/features/administration/PlatformStatusPanel.tsx": "0f88c5f12e381663be315bb49e030e29306c5b048dbd6a3f9fb3e9c2423a9dc3",
+    "frontend/src/features/administration/PoolEditor.tsx": "6fa79aace0fa6a843124861ee8c20e2aa262af2d5e523bce47993f6d1dd4b221",
+    "frontend/src/features/administration/UserManagementPage.tsx": "d89c2e18e705e70f9958739eeb514fae2b9b178a6d57e8aacab4dae86c454c6e",
     "frontend/src/features/administration/useArtifactUpload.ts": "1f1fff9299ea5309592c27cf9dcca6990a57a8d857ca5ab076b34e6efe3c46e0",
-    "frontend/src/features/auth/AuthPage.tsx": "9e4f90a6b5b86ae88d3bd23f405689ec6950f45f15af90da5faca55d589cf3b0",
-    "frontend/src/features/challenges/ChallengePage.tsx": "a7a394150c70e9178e00f938a07405c95c9893151e861c45eccb0fa0847d61f4",
-    "frontend/src/features/challenges/ExplorePage.tsx": "01914bf9cfe49679b662d9138ae80b171bfe5edf80f06aa553e838a2150746bc",
-    "frontend/src/features/community/FeedPage.tsx": "63f4eba5001ae14a718ea876031c4147cd6f5bb5eb3fe30e5480e4a255d9642d",
-    "frontend/src/features/dashboard/DashboardAnnouncements.tsx": "70b7df109616ba04a97bb529c79b454791525dbaef689b72fef9e2e2b65a028f",
-    "frontend/src/features/dashboard/DashboardPage.tsx": "8da70eebaa9ea807f8b4786d05f3c0e08fce15985253526b045afcc4005e3b51",
+    "frontend/src/features/auth/AuthPage.tsx": "2798489f1432264fce9eb8ef9b85fb4dcf99b0c1cec071fe11a3cb721cb79d0b",
+    "frontend/src/features/challenges/ChallengePage.tsx": "669148333b93b866017d1402ca15677c3f8f750a4c5c81f1837ab8482882fc6e",
+    "frontend/src/features/challenges/ExplorePage.tsx": "9a684254b91b32cd4face2088d4154303ff6c98668c0a21d31c966f2ed6d6667",
+    "frontend/src/features/community/FeedPage.tsx": "38d09fa6067b33011464ca1f181e3e8b1b51d3baa3121d52583a612fdb42e7fc",
+    "frontend/src/features/dashboard/DashboardAnnouncements.tsx": "6185cdc2ebc38ab3a1f4fdf93ffb251c1c17b7664c0442994f54ee40395be039",
+    "frontend/src/features/dashboard/DashboardPage.tsx": "e8aaf8e3073dc7e9dfb934eb6ee0278e1b00173c95aeb69ac43775988c8f04be",
     "frontend/src/features/legal/LegalPage.tsx": "80557c89f33cbf5b715b367bbedb93555417ff1bc5240ee26ec2a3df0ea6e75c",
     "frontend/src/features/legal/documents.json": "dad527c20d120b945228b17c531bd43dd5e0ec4e5b6b7ccaeb6a9dbf5d698711",
-    "frontend/src/features/welcome/LandingPage.tsx": "9cd429678ee22bbe373b0d918ab3c62308dbbad367fe1942417270c1c0188749",
+    "frontend/src/features/welcome/LandingPage.tsx": "5f92881a9096675585f9284588586292d36251b0dad4643c0335f385f83c916a",
     "frontend/src/lib/api.ts": "2a99e5d25d67916fbdea5c6829b5ce43b2a14016039055b18659c4f4113253c4",
     "frontend/src/lib/artwork.ts": "873f487133ca9a890160d2ca1fc62c24792786a6589a2701b9443edccad43639",
     "frontend/src/lib/data.ts": "6b7ec5acb0080f59835b17febf3a55055aca5c57197cb7496e8f931ba6225a50",
+    "frontend/src/lib/i18n.tsx": "59d1083c10773896f9c4dea6060a0aea8bb5989046727217947edb68d77a3938",
+    "frontend/src/lib/messages/de.ts": "4cc61879e81b0dcf5cfe396db31f452397078cf2e4b9e3906570c4e828dbdbc5",
     "frontend/src/lib/monitoring.ts": "89e463e91424e305b897e6c2f6f6ec437cf12ea4f3f2e60f6a2542493b2edfd8",
     "frontend/src/lib/router.tsx": "80bd96cf8ccdc18de7da5959083eeb4fcfe3c781170143ac212100278e3719c9",
     "frontend/src/lib/sorting.ts": "37663ac45d52772e05eef746a188c88191e1bc92e7e132e50944e7d3ba937b62",
     "frontend/src/lib/state.tsx": "6d9b1c819d9950a8a0be823c02b743bd01f1ccb11e8b220e60cc4ea6ca98d685",
     "frontend/src/lib/topology.ts": "ad63f9949027d4766e40f7f0f8cb787300559a32b45e2b6144dd2c239ed5515f",
+    "frontend/src/lib/translation.ts": "57f38cc25a3c4d0ddefeeb938568c64b81f4f6d63b13d6ebc51985d621eb8c1a",
     "frontend/src/lib/useTableSort.ts": "af014a9163ecd0ed0667ccf8b8c223692a17021fe61f6823235910b23c67ec65",
     "frontend/src/main.tsx": "21ab4d87f72005a7d9f181be87f86c2d43afe1204f828e4fa81404b68a374d6d",
-    "frontend/src/styles.css": "61ae06f23b7612c939bacec891055566f34c40a658e2ed5dd19a216778fe383c",
+    "frontend/src/styles.css": "2216cfcf9be2dcd63a03aa72b848778cf174b15d34039fdd696e4edca3e40754",
     "frontend/src/tokens.css": "1cdfa89e43d01db471d5a2cec396fce5eab023fe5d54124ba115462221a64ad2",
     "frontend/public/assets/avatars/avatar1.png": "717f6f904ed6a511681bd8f7f011699197d911b3119da3886c4baec251c8df2a",
     "frontend/public/assets/avatars/avatar2.png": "97c6ce9676506ada7ad86e1eab731c881798fa2732d526563246c37eb02c0b25",
@@ -76,7 +79,7 @@
     "frontend/package-lock.json": "d3b9d4d20cb2bd687f49797f4a646c9e6c86f2bad275475b7ce9bbedb23471cc",
     "tests/browser/support.py": "099c3504041496f053c771f010d1754cb783371a0c396eee78ccbb39bed36b46",
     "tests/browser/showcase_data.py": "be6f25b55ed6fcbd630d6e3ea23a04453a13c9d8c121e14dbd74689a3b6ff7e8",
-    "tools/testing/screenshots.py": "121c9a81777d785cb585b1a4410516682aa37c47f5f09a06c18609704bb7635e"
+    "tools/testing/screenshots.py": "f985a61d8a063bd6187ad7e8cc35687747ecc1abb83dc60693cc899ac98a9a2a"
   },
   "captures": [
     {
@@ -90,7 +93,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "84c171e8bb07f609cc208dadcc673ddb4c2235ccd74db1c2fa9ac286efdb7e6f"
+      "sha256": "6a133c239de161ed1e80d176ba20a62359ec067187716845238a25745f6c133b"
     },
     {
       "file": "dashboard_light.png",
@@ -103,7 +106,7 @@
       },
       "full_page": true,
       "document_height": 1515,
-      "sha256": "c2e3cc17bb148340f43c7ab5dfb0caef4ce263ccc2575d2a61f0c16435d81a89"
+      "sha256": "a1cba22308060b940f639f55df4fd7ed402308cff91df9e68a6c6e22052d66b6"
     },
     {
       "file": "explore_light.png",
@@ -116,7 +119,7 @@
       },
       "full_page": true,
       "document_height": 1024,
-      "sha256": "5c892071e684f12fe0e01a6cfb03a03a3db5cfe5367f90da3c27bd6ef54a424c"
+      "sha256": "1b53f16aecab242760b3ac7e08476b8957df0ed19a2ac8a1dc5181cb2895beef"
     },
     {
       "file": "deploy_challenge_light.png",
@@ -129,7 +132,7 @@
       },
       "full_page": true,
       "document_height": 1300,
-      "sha256": "f90dd55d03ee9a9a2601b9e668c067b159cf4ed7a8c44bb780b17e526f97e011"
+      "sha256": "38c76fe640c1acfc7b65823061750aa66c5d10dbbed1ab34a58211ed939cd4e2"
     },
     {
       "file": "profile_light.png",
@@ -142,7 +145,7 @@
       },
       "full_page": true,
       "document_height": 2253,
-      "sha256": "c2cfb2ed95084834753b2d9b1152e056727080d27c0fa8a67f66912f801c2391"
+      "sha256": "15a8fd890793a595d55d137b6ec2b406fa65c5d31ba85a20db427d3669c182c6"
     },
     {
       "file": "public_profile_light.png",
@@ -155,7 +158,7 @@
       },
       "full_page": true,
       "document_height": 1024,
-      "sha256": "562280aceebebfd556db4e8c452c6d39b5954131920bf98c1911562716ed0409"
+      "sha256": "9b140023bd7c168b4fa924397a995514a886d518c77661aac4b04092c3701e38"
     },
     {
       "file": "activity_light.png",
@@ -168,7 +171,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "059e056650d3c318365bf99e5a3a376cb2bab76656cdf87cac0fc38a8ac13993"
+      "sha256": "e2a3db73daf0cdaac2e68141aa42f7bf8cf4bf2b070115570432e18b7747d9e1"
     },
     {
       "file": "achievements_light.png",
@@ -181,7 +184,7 @@
       },
       "full_page": true,
       "document_height": 1294,
-      "sha256": "bf035e85425dca1854aae8aeb0d96af4fae5f0a323dde2b714452588dbbb5516"
+      "sha256": "2c478b1753469e1f559e398222212a7656c1df7d3b3d0ee2f9833828280afe21"
     },
     {
       "file": "announcements_light.png",
@@ -194,7 +197,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "41f0505e97f37ac4744be0eba02c186ca28e57d190c015d73c004a7d188ed6b2"
+      "sha256": "d49db156592e233da17605c92d6fa9f3fbf8e7a02a0a5c3326da1283eaceba70"
     },
     {
       "file": "manage_challenges_light.png",
@@ -207,7 +210,7 @@
       },
       "full_page": true,
       "document_height": 1067,
-      "sha256": "7789a584eb640449bf65ec5dfa2a2548339a9dc30db21554e2f80584b8a01c1d"
+      "sha256": "17df2cac3630d6a70cf259903c88080fb2fc07d6dbf42987264f0a68d113f938"
     },
     {
       "file": "create_challenge_light.png",
@@ -220,7 +223,7 @@
       },
       "full_page": true,
       "document_height": 4181,
-      "sha256": "dc789c79d23b7b8c31f225342dca5b45c975ad65924e916208c1c55a09990188"
+      "sha256": "0ba52b71d60013ebb27c8f6e212cd883d98d251c2363ca9555882a9bf0f571c4"
     },
     {
       "file": "artifacts_light.png",
@@ -233,7 +236,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "3113cd3b8b7ef9da712aa28f1a6f2d2b1203644f14d073072d0318e9df16f5e8"
+      "sha256": "36908bb8421c66d7057ffe4c7f0f45c015a88b8fa4fef0ef3f55caeb977966aa"
     },
     {
       "file": "manage_announcements_light.png",
@@ -246,7 +249,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "39b1380425731166ab14e00379b05ed76faac1f1f49554c60f89fe7f7fc897ed"
+      "sha256": "787e5a5afe30180774203e031ea82f68d5f9ff3e555e61b39df7ea0b56cfbcbe"
     },
     {
       "file": "operations_light.png",
@@ -259,7 +262,7 @@
       },
       "full_page": true,
       "document_height": 1558,
-      "sha256": "2c09e055993e5a33508583bb233efe3d2efceda3d30bf9a0b1201061572faaf4"
+      "sha256": "480bc0664ee901d7b405adcc8e4652ed703931c1ba15c30855c35199d60a3c7a"
     },
     {
       "file": "platform_health_light.png",
@@ -272,7 +275,7 @@
       },
       "full_page": true,
       "document_height": 1690,
-      "sha256": "23958e7de6c05286d14e9b9da3bf7b49c6d15abcf5abdda4931ac9c12319f53b"
+      "sha256": "22285570b442052b4f9e138d2e4819c994c405e4d20904a25fe4d582ed6b0c5a"
     },
     {
       "file": "operation_history_light.png",
@@ -285,7 +288,7 @@
       },
       "full_page": true,
       "document_height": 1399,
-      "sha256": "172b759709d547d4a79f2270ebc0eaec471a56dcf3bde71de6ae05e6e107f5ce"
+      "sha256": "7963a0cf35815a213c1bd6aa0bd104bcb2c2efe44dfaceeafc821830d0f19591"
     },
     {
       "file": "capacity_light.png",
@@ -298,7 +301,7 @@
       },
       "full_page": true,
       "document_height": 1378,
-      "sha256": "c19651ee0e8b3934d331cf47d20b5e04ab6924549fc8d074f1fa351b6ce38730"
+      "sha256": "7456071492b1ef16d4594519c40cccb18d38807c2bfa918731898946ca445671"
     },
     {
       "file": "data_governance_light.png",
@@ -311,7 +314,7 @@
       },
       "full_page": true,
       "document_height": 1072,
-      "sha256": "d205d346af5e2cc9852649895fdc976474c4917f5d994294e44b106b19589e12"
+      "sha256": "f118863688d6cebc0e33f59894ec28179d21ce3f33e3cd91399cb873e8e3c6bd"
     },
     {
       "file": "administrator_audit_light.png",
@@ -324,7 +327,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "863d0778d2b780c4bd58e61c78f7573aedcc57b76b5cc4765776f61748e18415"
+      "sha256": "5b9c793887988bd6a7ddd60567f03eee2d2b22b4ba6d4ed5823a14e07bc83686"
     },
     {
       "file": "maintenance_light.png",
@@ -337,7 +340,7 @@
       },
       "full_page": true,
       "document_height": 1021,
-      "sha256": "1b818f69618b07ab1196177615180a11f498be43a9da4221c1d10a46fa54d0c1"
+      "sha256": "39ad3fe19bc030cc9206ae0f838ee92f2dbc394699efa7d0cc47f714121ce5f3"
     },
     {
       "file": "grading_light.png",
@@ -350,7 +353,33 @@
       },
       "full_page": true,
       "document_height": 1322,
-      "sha256": "020bc261b1071862c88b408b31acf83bc2453a9025e0e040b1dad97854d45a24"
+      "sha256": "034d976290706b4b19438774f3abd7cc22f91b917dc2c2cf919488b633eeb4ed"
+    },
+    {
+      "file": "german_dashboard_light.png",
+      "route": "/dashboard",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": true,
+      "document_height": 1515,
+      "sha256": "60342fae2ea9f8bf11e374a882d28022b566ef5874564802f69177658e1fe7a2"
+    },
+    {
+      "file": "german_grading_light.png",
+      "route": "/operations?tab=grading",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": true,
+      "document_height": 1344,
+      "sha256": "da0800b0bf8a65b27531de5a57aaa55549feafa90ecbcb4fe2847467b28cec20"
     },
     {
       "file": "edit_challenge_light.png",
@@ -363,7 +392,7 @@
       },
       "full_page": true,
       "document_height": 1067,
-      "sha256": "c9bc8077d74526bd5ae1c3c2f80df298e53485609a0c74a4efd58f4b0b17d212"
+      "sha256": "5e7bfcdd0b7d4a194858526314bb705f492859462a3819b8d763de71fdee0456"
     },
     {
       "file": "exercise_history_light.png",
@@ -376,7 +405,7 @@
       },
       "full_page": true,
       "document_height": 2396,
-      "sha256": "3aa7b1922432822075a2af8ab9509786af8ba9cee2b088149783752d22aff235"
+      "sha256": "58b453988ce7d94bbec527f86d58ffbc2f255566f9b311908e1513872f985b76"
     },
     {
       "file": "monitoring_activity_light.png",
@@ -389,7 +418,7 @@
       },
       "full_page": true,
       "document_height": 2043,
-      "sha256": "e07a85a85402f14aac7e7187f44ab1b928e6cbc4a9b04233df6d6b3e54f6954f"
+      "sha256": "9415c9bf5637adc0c568114626d7218384c271047fbfffb94d860d4f245f6be5"
     },
     {
       "file": "users_light.png",
@@ -402,7 +431,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "cbb29ee7e119ec1e0749146c546c2a6296b0c08cf5e4cd021ec5e50206508a8d"
+      "sha256": "2c5eec513206298c210106f94474cfaf2835df4e0eb5f4a1c5d3891354e14379"
     },
     {
       "file": "instances_light.png",
@@ -415,7 +444,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "c202e15bfb8b71f0bb31682e2d2b749e944b92e7c03f9159af82ee11a9979250"
+      "sha256": "bab2d9e3b453b5262225ae95ff9d637cb8a9e73b1343ba62179e27729cef3bfe"
     },
     {
       "file": "instance_details_light.png",
@@ -428,7 +457,7 @@
       },
       "full_page": true,
       "document_height": 3239,
-      "sha256": "94c4b2b90bcab37170862950fca85283a211446ab39f5eb8aebe81bd5d5a50c7"
+      "sha256": "8eef57f8e6ed0354193351ea80b40c6af5c67d0944623a008b3ac8380daf21d6"
     },
     {
       "file": "login_light.png",
@@ -441,7 +470,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "a70189a094e5be90e86c0ddeff5536e05bf380f5299d650ba6ef779e28f2f047"
+      "sha256": "7838ee7915f5652ccce6d16b0a8d0207aea73efca5d2828d90e5e425e653f7f4"
     },
     {
       "file": "signup_light.png",
@@ -454,7 +483,7 @@
       },
       "full_page": true,
       "document_height": 1060,
-      "sha256": "30f5c4623e89bfb6dc1aff1154ee78b44d8e964cfc5aa55ab4c13d7e6e74a520"
+      "sha256": "5ff113c257d2896664e3fe00539a283e3b19d7e6c9083970fb6f743a0bc98e8f"
     },
     {
       "file": "reset_password_light.png",
@@ -467,7 +496,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "57bccfe32de8ed2b27f1b002e00617ed750f33eb71b36b2ef0a5fa51e5888039"
+      "sha256": "b2a8c7d01ba4b42989a60e008c32db3cf6a0136020322ee112d2cc72109e9e23"
     },
     {
       "file": "impressum_light.png",
@@ -480,7 +509,7 @@
       },
       "full_page": true,
       "document_height": 1622,
-      "sha256": "5c55501b0f5ae7ff0308f2f56035570ea3211d6298c006530b2fd6dcbfbb78e8"
+      "sha256": "044f01d80880633befb456bdb36f07bcbc965d3440fa021f2b0807b72392b097"
     },
     {
       "file": "privacy_light.png",
@@ -493,7 +522,7 @@
       },
       "full_page": true,
       "document_height": 3883,
-      "sha256": "6a46740d435edf96d195a673e150b490011595473326bf904418cba28150ff61"
+      "sha256": "43df54abec5fe8c827562d6ba3df9fb09362bdefb04549885fedebdad392c8d6"
     },
     {
       "file": "terms_light.png",
@@ -506,7 +535,7 @@
       },
       "full_page": true,
       "document_height": 3316,
-      "sha256": "ed83549e5c036075e14f0a9fce0a5beae48fb64ee7404f42904fce5845b4a0e6"
+      "sha256": "3d6d2d42118c6ba536f8e3590c175a5abc4fa4f6e8bbf470fc092389a2e17cbd"
     },
     {
       "file": "not_found_light.png",
@@ -519,7 +548,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "e6fab6c328b89589b1986392cbce4dd87c02d6105d4cbc271f0e0e97b6e60916"
+      "sha256": "4464151d7c5ee9fe4bf75bbe852ec2151e9bea68880def9834b7604b8eed455b"
     },
     {
       "file": "mobile_light.png",
@@ -532,7 +561,7 @@
       },
       "full_page": true,
       "document_height": 2202,
-      "sha256": "9a0eb10d51367933986549de680f2a8b379d19cec26d802434cad508d4c37f3a"
+      "sha256": "0a40ac43d8d7658a132581c09bd007e31d42f39907643cda05123153be592310"
     },
     {
       "file": "collapsed_navigation_light.png",
@@ -545,7 +574,7 @@
       },
       "full_page": true,
       "document_height": 1515,
-      "sha256": "b019e5c0e2fdbc841d0d3a59737714b538755a534a86823c8e551c212df84f91"
+      "sha256": "a56bb82f284c5b1806c0911a1c76b8c84bbb6b9a60254029e64d9a7e5e105fcd"
     },
     {
       "file": "landing_dark.png",
@@ -558,7 +587,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "67f91edd6617df2223317a80d48997617546b8e675ca839dc128afd501d25b45"
+      "sha256": "056dd5109a86b9e36ce4dc63b8bb4d4f9fbda6b79fbe088cc67e4c2c29bce027"
     },
     {
       "file": "dashboard_dark.png",
@@ -571,7 +600,7 @@
       },
       "full_page": true,
       "document_height": 1515,
-      "sha256": "761f45c9c0a1e2130203c9526cf6f11a901ebd6297cf5c3d4a49bb45073744af"
+      "sha256": "98b0c61040c0f4e15fc9cec9aa323b5b299741c02bf5b1c5b461a3044f3f24a5"
     },
     {
       "file": "explore_dark.png",
@@ -584,7 +613,7 @@
       },
       "full_page": true,
       "document_height": 1024,
-      "sha256": "12ccad06b7c25a9d58bc7703bfc17e45feb5fd3104ce1415aa26d6945d62b41e"
+      "sha256": "4b6001993e635e938a34f914bedaec4fad6d73986f34e102adcd028f72e0adae"
     },
     {
       "file": "deploy_challenge_dark.png",
@@ -597,7 +626,7 @@
       },
       "full_page": true,
       "document_height": 1300,
-      "sha256": "4d127501d47c18097fbfe27f22f4127a3bc5ab84e664ff064a3c5ed17e6c42c0"
+      "sha256": "1233d90d56410c182935e158cdf851fe5329950acafbcf4cebad79826a1822dd"
     },
     {
       "file": "profile_dark.png",
@@ -610,7 +639,7 @@
       },
       "full_page": true,
       "document_height": 2253,
-      "sha256": "d366db7accba56f1793999ac79c3fbfafd2b1c6aac4af69914e608ef6fdd9d95"
+      "sha256": "feee0a9116546abcab000550e92b07c52bbfae3f1df5d306b84182712362bba3"
     },
     {
       "file": "public_profile_dark.png",
@@ -623,7 +652,7 @@
       },
       "full_page": true,
       "document_height": 1024,
-      "sha256": "9444713e0fc6befaf6ec7d4b14897e03fabe75197b780c20954b6427af9e872f"
+      "sha256": "fb14de010ec790748fff010ba168282f95090243460542665507a53c19f2c255"
     },
     {
       "file": "activity_dark.png",
@@ -636,7 +665,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "a2aefdc02ecc9173e012747907bbbcacbf64e416b90cd96baa0f4bbb414e304b"
+      "sha256": "570c7cabdfbec46e61f40bf332887794ff9ad3e902f15c167de6ad8a26be7d1c"
     },
     {
       "file": "achievements_dark.png",
@@ -649,7 +678,7 @@
       },
       "full_page": true,
       "document_height": 1294,
-      "sha256": "7aa5a0ccc1086a3a06f528d66b169a9394c172aff575f3cdc2bcc5a86a20b810"
+      "sha256": "2da9648d0ce8eb888c8e202fc55f4e6da42ecf9b865fb32ee21798e588447221"
     },
     {
       "file": "announcements_dark.png",
@@ -662,7 +691,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "013226718af5edad98ecb3d3c268afd28d89a3717a760ce635b4661f16deded4"
+      "sha256": "7361a8546188690dc658d77aa937d183232612754716b02d35afca01daac3867"
     },
     {
       "file": "manage_challenges_dark.png",
@@ -675,7 +704,7 @@
       },
       "full_page": true,
       "document_height": 1067,
-      "sha256": "2a9de4e3445ad2e85e036932001fbd135fde470b706486be08b632b9c44ca330"
+      "sha256": "26c70d9998580111c50288e84a5bda354a1a3ae19610e6a182248517e20501bd"
     },
     {
       "file": "create_challenge_dark.png",
@@ -688,7 +717,7 @@
       },
       "full_page": true,
       "document_height": 4181,
-      "sha256": "37dbc8f26e882ab6ce9c1580cb5ce84239bd4d79b37379631aa813634c87f0fb"
+      "sha256": "fb11f7b0b3fe3d253b3f3543594fe8c8238ef8a708d040928b92ffd49efc87c4"
     },
     {
       "file": "artifacts_dark.png",
@@ -701,7 +730,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "bad384ce68c2b5569e2b2ae98cddc674050438a26c895404440c63855cb44eab"
+      "sha256": "98f1dbca35c9f1b679f3e24102baf6d955cc4d10882ed6e8d2b83d60d32f1570"
     },
     {
       "file": "manage_announcements_dark.png",
@@ -714,7 +743,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "4e60412ab4e86a5070a298bb5aaacde39280b9fc4d91f6d4d4863c1e0dcc6074"
+      "sha256": "5dfbd64134fdefeea158bf2b7815b33ba9b6aa85e770cc6ea51eabd1d05c99ac"
     },
     {
       "file": "operations_dark.png",
@@ -727,7 +756,7 @@
       },
       "full_page": true,
       "document_height": 1558,
-      "sha256": "7221ef17497a3c0aa53cb7edbc08e3525315c794ee72a59306231780334d3185"
+      "sha256": "2290a2002725f968eaea2857e262bf857fd9f8178f8c10ac792c627a6ff32c80"
     },
     {
       "file": "platform_health_dark.png",
@@ -740,7 +769,7 @@
       },
       "full_page": true,
       "document_height": 1690,
-      "sha256": "bc561727ee8e3568354bd8c08773b805ddc27ae0fbfacb224858fe590725077b"
+      "sha256": "840ba9689d4fd775d84d8e60793020b5cfd1dc63400891e3d7b9b178aa0535de"
     },
     {
       "file": "operation_history_dark.png",
@@ -753,7 +782,7 @@
       },
       "full_page": true,
       "document_height": 1399,
-      "sha256": "6e02b7995ce5eedc87af22d2cb24075d0bdff3ac17a9614139d25ef3002a5471"
+      "sha256": "5a98ad33586b0fc1c451e7c567ea03804b4b98c2dd775634530ba2a811c73537"
     },
     {
       "file": "capacity_dark.png",
@@ -766,7 +795,7 @@
       },
       "full_page": true,
       "document_height": 1378,
-      "sha256": "9973dd88b673dc2418f1fad91688eee0ac050825e6715d7d90169830b7192f90"
+      "sha256": "469fd061805f67d8bafe738459cad493450513885daa32f4f953cbafd3cf8bee"
     },
     {
       "file": "data_governance_dark.png",
@@ -779,7 +808,7 @@
       },
       "full_page": true,
       "document_height": 1072,
-      "sha256": "07421fbcb3e6a6f0ac82c74a754e2e363823772755cc9c50f7726deca11f3c46"
+      "sha256": "282e7cbbfe3eafc845354522c2ae47241442e5561458df6c4ceea6b5b42ddb05"
     },
     {
       "file": "administrator_audit_dark.png",
@@ -792,7 +821,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "a8bbe2c04254f37ba376e2757ce6aa9574157eced2863bacf23d08d8125d72cd"
+      "sha256": "3a028e61152f73e41e7995fed50cb350e96957a35147ef4124f492d6b3e350a4"
     },
     {
       "file": "maintenance_dark.png",
@@ -805,7 +834,7 @@
       },
       "full_page": true,
       "document_height": 1021,
-      "sha256": "f1cbc5bd4de6312814b427085e613b1b4096813445fbed1e0afe40d1b099cb5b"
+      "sha256": "10770ab6f99ac38e7d115fca0c577394220b548266f3d6c54abb2ae3842ba966"
     },
     {
       "file": "grading_dark.png",
@@ -818,7 +847,33 @@
       },
       "full_page": true,
       "document_height": 1322,
-      "sha256": "c2c9c6d5534285f690af2e7b036d589ff3e7d15868794207802cb6dbc64fe424"
+      "sha256": "27627f04a432c875d6f3302479c8cee24be1e2fb7288be93111d65c502e4d2f3"
+    },
+    {
+      "file": "german_dashboard_dark.png",
+      "route": "/dashboard",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": true,
+      "document_height": 1515,
+      "sha256": "c313ff7496951006d7b5838dcc68af9c0b0a30fc703546f6292f3a52a8fdbe20"
+    },
+    {
+      "file": "german_grading_dark.png",
+      "route": "/operations?tab=grading",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": true,
+      "document_height": 1344,
+      "sha256": "1ee1bcba9d30bb176a1c11ea04b12452d02004f7418625db97f28b4728eeef68"
     },
     {
       "file": "edit_challenge_dark.png",
@@ -831,7 +886,7 @@
       },
       "full_page": true,
       "document_height": 1067,
-      "sha256": "0ee70d92132551cae3abd35ec11ce3f97b309578300f8d81e4e4e3eaa8a00202"
+      "sha256": "eeacfce7a5b1adfc6e5c5540f8ec6822c442f439ea7f42a846f3325919c8dd83"
     },
     {
       "file": "exercise_history_dark.png",
@@ -844,7 +899,7 @@
       },
       "full_page": true,
       "document_height": 2396,
-      "sha256": "ff0b7c408dfa74ce9946419d8beeb36e84f47474546375e2cd1e29e31b03ee07"
+      "sha256": "e77079c822270d7d4459b0d9614645abace114a54c88dbdbc8b6b12de7308e85"
     },
     {
       "file": "monitoring_activity_dark.png",
@@ -857,7 +912,7 @@
       },
       "full_page": true,
       "document_height": 2043,
-      "sha256": "ec475a30fa6e115fc6345fe5c1280e0d3e578d605de5343d8031ad11951576f3"
+      "sha256": "f7f16c14a8550595db134ed4b5b90821099cdb5b466a42e73120f8fbba6bad30"
     },
     {
       "file": "users_dark.png",
@@ -870,7 +925,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "d046388c417fcaa6b0d452a29a4a62499104f2421a45d12b482ff5fa3e49164e"
+      "sha256": "3ed0bcf09115b30976ef911deebaf6a8c2a256aa0166ef45097cdc1254cda655"
     },
     {
       "file": "instances_dark.png",
@@ -883,7 +938,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "9c8c3518e12d7fb065d5fae52430e1705b74ec4dee746e4b3e855db739640dd7"
+      "sha256": "5af59a44c468a0c003e07b6d2f6e390b227c1263fe238daffceb27254f5c11d2"
     },
     {
       "file": "instance_details_dark.png",
@@ -896,7 +951,7 @@
       },
       "full_page": true,
       "document_height": 3239,
-      "sha256": "cd4d6c7616602bb8be6b9c3a3b693fac285e70985710f0c4011f5460319e6dad"
+      "sha256": "69132f2067b8c6bb572399f47c178d98a0d8898b042e6c9f6cc801df3e816e46"
     },
     {
       "file": "login_dark.png",
@@ -909,7 +964,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "a875f92fc2bfbb4a95eef24585f4ce0b9c373fcdae64f6404165aa5b4013af8c"
+      "sha256": "706e4bcade846db3820397f0c3d927360311b415ef9188d86de4ad0a4fec3ed5"
     },
     {
       "file": "signup_dark.png",
@@ -922,7 +977,7 @@
       },
       "full_page": true,
       "document_height": 1060,
-      "sha256": "11235875cae45d3abcc3022246764156f24682415f9de3e413ec25b360f56f57"
+      "sha256": "5c8ffd87e0ec1fc8676b452dcbdea2bb2f46c40f23c588a8ac57c300e2574624"
     },
     {
       "file": "reset_password_dark.png",
@@ -935,7 +990,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "7dcb0750b4a88c31fe19e42dd6ed5bd00883706b58a645adfd098fc1558ea087"
+      "sha256": "d7241b909c09faabbd8a859b35f70db4d948cc4e73c626d605f25ee84f04d765"
     },
     {
       "file": "impressum_dark.png",
@@ -948,7 +1003,7 @@
       },
       "full_page": true,
       "document_height": 1622,
-      "sha256": "fbfc8b789718140819e98a10633b80b76e8ac9744fd5e283c7394fff7e2738c9"
+      "sha256": "c82cbd9971645a3808a558a10204aa1cde89b6ca5d605f528e969558acdca9c2"
     },
     {
       "file": "privacy_dark.png",
@@ -961,7 +1016,7 @@
       },
       "full_page": true,
       "document_height": 3883,
-      "sha256": "c95f58a9e1fbad7f261c045f6142621584014658870804b2110fc9b487b546c0"
+      "sha256": "028cb2c8fb53301ac5d46baff69cac1e866db2cd9810c8815550a52129f6de2e"
     },
     {
       "file": "terms_dark.png",
@@ -974,7 +1029,7 @@
       },
       "full_page": true,
       "document_height": 3316,
-      "sha256": "10a576cfe6d1b5729d75acc9c0a427b727da337231aec424c11204f1b564f95f"
+      "sha256": "32042f4bb324a5cf63de60de648662568463d2f45a2d1c9cef9168c4482b8c6a"
     },
     {
       "file": "not_found_dark.png",
@@ -987,7 +1042,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "42030723f7dd0bee4b9997dc5e7e115bf95b5701dafc484fd5f8f886cacebef5"
+      "sha256": "430c408779ed38b16ab7bb39f8fbf4e92d36ea4f4e79a0168b02e7b72e8cc021"
     },
     {
       "file": "mobile_dark.png",
@@ -1000,7 +1055,7 @@
       },
       "full_page": true,
       "document_height": 2202,
-      "sha256": "ed80cc5882b8a36d2bee00873a66c428931d248cd187a0db2d50b7371432c4e3"
+      "sha256": "d651198f80e4700f89fd922a3ca399554344f8d938a15dffa59f096208160f0b"
     },
     {
       "file": "collapsed_navigation_dark.png",
@@ -1013,7 +1068,7 @@
       },
       "full_page": true,
       "document_height": 1515,
-      "sha256": "55510e4f308c783de2eb70aff4e13816f1edb82b0db170152e3b6a906882b46b"
+      "sha256": "629f4fe80b8fd4c4058f1fbe0a2728a30f55a3da2d4c3c5b30094a45c8542b25"
     }
   ]
 }

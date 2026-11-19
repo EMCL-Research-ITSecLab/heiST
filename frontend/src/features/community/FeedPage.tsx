@@ -1,3 +1,4 @@
+import {useI18n} from '../../lib/i18n.tsx';
 import { AchievementIcon } from '../../components/AchievementIcon.tsx';
 import { useState } from 'react';
 import { ActivityList, Badge, Card, Empty, PageTitle, Pager, ResourceState, Select, Stat } from '../../components/ui.tsx';
@@ -6,19 +7,20 @@ import { useResource } from '../../lib/state.tsx';
 export function Feed({ kind }: {
   kind: 'announcements' | 'activity' | 'badges';
 }) {
+  const {t}=useI18n();
   const [page, setPage] = useState(1), [range, setRange] = useState('all'), [filter, setFilter] = useState('all');
   const resource = useResource(`/api/${kind}?` + new URLSearchParams({ page: String(page), range, importance: filter, type: filter, category: 'all' }));
   const data = payload(resource.data), badges = rows(data.badges), stats = row(data.stats), items = rows(data.announcements ?? data.activities);
   return <>
-    <PageTitle eyebrow={kind === 'badges' ? 'YOUR ACHIEVEMENTS' : 'STAY IN THE LOOP'} title={kind === 'badges' ? 'Achievements' : kind === 'activity' ? 'Activity' : 'Announcements'} description={kind === 'badges' ? 'Earned achievements.' : kind === 'activity' ? 'Recent challenge activity.' : 'Platform news, upcoming events and maintenance notices.'} />
+    <PageTitle eyebrow={t(kind === 'badges' ? 'YOUR ACHIEVEMENTS' : 'STAY IN THE LOOP')} title={t(kind === 'badges' ? 'Achievements' : kind === 'activity' ? 'Activity' : 'Announcements')} description={t(kind === 'badges' ? 'Earned achievements.' : kind === 'activity' ? 'Recent challenge activity.' : 'Platform news, upcoming events and maintenance notices.')} />
     {kind !== 'badges' && <div className="filter-bar">
       <Select
-        label="Time period"
+        label={t("Time period")}
         value={range}
         options={['all', 'today', 'week', 'month', 'year']}
         onChange={e => { setRange(e.target.value); setPage(1); }} />
       <Select
-        label={kind === 'activity' ? 'Activity type' : 'Importance'}
+        label={t(kind === 'activity' ? 'Activity type' : 'Importance')}
         value={filter}
         options={kind === 'activity' ? ['all', 'solved', 'failed', 'active', 'badges'] : ['all', 'normal', 'important', 'critical']}
         onChange={e => { setFilter(e.target.value); setPage(1); }} />
@@ -26,8 +28,8 @@ export function Feed({ kind }: {
     <ResourceState {...resource}>
       {kind === 'badges' ? <>
         <div className="stats-grid">
-          <Stat label="Badges earned" value={stats.earned ?? stats.earned_badges} />
-          <Stat label="Available achievements" value={stats.total ?? badges.length} />
+          <Stat label={t("Badges earned")} value={stats.earned ?? stats.earned_badges} />
+          <Stat label={t("Available achievements")} value={stats.total ?? badges.length} />
         </div>
         <div className="feature-grid">
           {badges.map((badge, i) => <Card key={text(badge.id, String(i))} className={truth(badge.earned ?? badge.is_earned) ? 'earned' : ''}>
@@ -39,7 +41,7 @@ export function Feed({ kind }: {
               {text(badge.description)}
             </p>
             <Badge tone={truth(badge.earned ?? badge.is_earned) ? 'active' : ''}>
-              {truth(badge.earned ?? badge.is_earned) ? 'Earned' : 'In progress'}
+              {t(truth(badge.earned ?? badge.is_earned) ? 'Earned' : 'In progress')}
             </Badge>
           </Card>)}
         </div>
@@ -65,7 +67,7 @@ export function Feed({ kind }: {
             {text(item.content)}
           </p>
         </Card>)}
-      </div> : <Empty title="No announcements">There are no announcements matching these filters.</Empty>}
+      </div> : <Empty title={t("No announcements")}>{t("There are no announcements matching these filters.")}</Empty>}
       {kind !== 'badges' && <Pager page={page} totalPages={number(data.total_pages) || Math.ceil(number(data.total) / (number(data.per_page) || 10)) || 1} onPage={setPage} />}
     </ResourceState>
   </>;

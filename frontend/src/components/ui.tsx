@@ -1,3 +1,4 @@
+import {useI18n} from '../lib/i18n.tsx';
 import { useEffect, useId, useRef, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
 import { date, image, number, text, type Row } from '../lib/data.ts';
 import { Link } from '../lib/router.tsx';
@@ -7,11 +8,12 @@ export function PageTitle({ eyebrow = 'Your workspace', title, description, acti
   description?: string;
   action?: ReactNode;
 }) {
+  const {t}=useI18n();
   useEffect(() => { document.title = `${title} · heiST`; }, [title]);
   return <header className="page-title">
     <div>
       <p className="eyebrow">
-        {eyebrow}
+        {t(eyebrow)}
       </p>
       <h1>
         {title}
@@ -27,12 +29,13 @@ export function Notice({ error, message }: {
   error?: string;
   message?: string;
 }) {
+  const {t}=useI18n();
   return <>
     {error && <div className="notice error" role="alert">
-      {error}
+      {t(error)}
     </div>}
     {message && <div className="notice success" role="status">
-      {message}
+      {t(message)}
     </div>}
   </>;
 }
@@ -42,16 +45,17 @@ export function ResourceState({ loading, error, reload, children }: {
   reload: () => void;
   children: ReactNode;
 }) {
+  const {t}=useI18n();
   if (loading)
     return <div className="loading" role="status">
-      <span className="spinner" />Loading your workspace…</div>;
+      <span className="spinner" />{t("Loading your workspace…")}</div>;
   if (error)
     return <div className="empty" role="alert">
-      <h2>We couldn’t load this page</h2>
+      <h2>{t("We couldn’t load this page")}</h2>
       <p>
         {error}
       </p>
-      <button onClick={reload}>Try again</button>
+      <button onClick={reload}>{t("Try again")}</button>
     </div>;
   return <>
     {children}
@@ -108,17 +112,19 @@ export function Badge({ children, tone = '' }: {
   children: ReactNode;
   tone?: string;
 }) {
+  const {t}=useI18n();
   return <span className={`badge ${tone}`}>
-    {children}
+    {typeof children==='string'?t(children):children}
   </span>;
 }
 export function Field({ label, ...props }: InputHTMLAttributes<HTMLInputElement> & {
   label: string;
 }) {
+  const {t}=useI18n();
   const labelId = useId();
   return <label className="field">
     <span>
-      <span id={labelId}>{label}</span>
+      <span id={labelId}>{t(label)}</span>
       {props.required && <span aria-hidden> *</span>}
     </span>
     <input {...props} aria-labelledby={labelId} />
@@ -127,10 +133,11 @@ export function Field({ label, ...props }: InputHTMLAttributes<HTMLInputElement>
 export function Area({ label, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement> & {
   label: string;
 }) {
+  const {t}=useI18n();
   const labelId = useId();
   return <label className="field">
     <span id={labelId}>
-      {label}
+      {t(label)}
     </span>
     <textarea rows={4} {...props} aria-labelledby={labelId} />
   </label>;
@@ -142,6 +149,7 @@ export function Select({ label, options, ...props }: SelectHTMLAttributes<HTMLSe
     string
   ])[];
 }) {
+  const {t}=useI18n();
   const labelId = useId();
   return <label className="field">
     <span id={labelId}>
@@ -150,7 +158,7 @@ export function Select({ label, options, ...props }: SelectHTMLAttributes<HTMLSe
     <select {...props} aria-labelledby={labelId}>
       {options.map(option => {
         const [value, name] = Array.isArray(option) ? option : [option, option]; return <option key={value} value={value}>
-          {name}
+          {Array.isArray(option)?name:t(name)}
         </option>;
       })}
     </select>
@@ -161,11 +169,12 @@ export function Pager({ page, totalPages, onPage }: {
   totalPages: number;
   onPage: (page: number) => void;
 }) {
-  return <nav className="pager" aria-label="Pagination">
-    <button className="secondary" disabled={page <= 1} onClick={() => onPage(page - 1)}>← Previous</button>
-    <span>Page {page} of {Math.max(1, totalPages)}
+  const {t}=useI18n();
+  return <nav className="pager" aria-label={t("Pagination")}>
+    <button className="secondary" disabled={page <= 1} onClick={() => onPage(page - 1)}>{t("← Previous")}</button>
+    <span>{t("Page ")}{page}{t(" of ")}{Math.max(1, totalPages)}
     </span>
-    <button className="secondary" disabled={page >= totalPages} onClick={() => onPage(page + 1)}>Next →</button>
+    <button className="secondary" disabled={page >= totalPages} onClick={() => onPage(page + 1)}>{t("Next →")}</button>
   </nav>;
 }
 export function Confirm({ title, children, confirm, onClose, onConfirm, busy = false, disabled = false }: {
@@ -177,6 +186,7 @@ export function Confirm({ title, children, confirm, onClose, onConfirm, busy = f
   busy?: boolean;
   disabled?: boolean;
 }) {
+  const {t}=useI18n();
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const dialog = ref.current;
@@ -191,13 +201,13 @@ export function Confirm({ title, children, confirm, onClose, onConfirm, busy = f
       onClose();
   }} aria-labelledby="confirmation-title">
     <h2 id="confirmation-title">
-      {title}
+      {t(title)}
     </h2>
     {children}
     <div className="button-row">
-      <button className="secondary" disabled={busy} onClick={onClose}>Cancel</button>
+      <button className="secondary" disabled={busy} onClick={onClose}>{t("Cancel")}</button>
       <button className="danger" disabled={busy || disabled} onClick={onConfirm}>
-        {busy ? 'Working…' : confirm}
+        {t(busy ? 'Working…' : confirm)}
       </button>
     </div>
   </dialog>;
@@ -205,6 +215,7 @@ export function Confirm({ title, children, confirm, onClose, onConfirm, busy = f
 export function ChallengeCard({ challenge }: {
   challenge: Row;
 }) {
+  const {t}=useI18n();
   return <Link className="challenge-card" href={`/challenge?id=${number(challenge.id)}`}>
     <div className="challenge-image">
       <img
@@ -233,8 +244,8 @@ export function ChallengeCard({ challenge }: {
       </p>
       <div className="challenge-footer">
         <span>
-          {number(challenge.solved_count ?? challenge.solve_count)} solves</span>
-        <strong>Open lab ↗</strong>
+          {number(challenge.solved_count ?? challenge.solve_count)}{t(" solves")}</span>
+        <strong>{t("Open lab ↗")}</strong>
       </div>
     </div>
   </Link>;
@@ -242,6 +253,7 @@ export function ChallengeCard({ challenge }: {
 export function ActivityList({ items }: {
   items: Row[];
 }) {
+  const {t}=useI18n();
   return items.length ? <div className="list">
     {items.map((item, index) => <div className="list-item" key={text(item.id, String(index))}>
       <span className="activity-dot" />
@@ -257,5 +269,5 @@ export function ActivityList({ items }: {
         {text(item.time_ago) || date(item.created_at ?? item.started_at)}
       </small>
     </div>)}
-  </div> : <Empty title="Your next investigation starts here">Explore a challenge to begin building your activity history.</Empty>;
+  </div> : <Empty title={t("Your next investigation starts here")}>{t("Explore a challenge to begin building your activity history.")}</Empty>;
 }

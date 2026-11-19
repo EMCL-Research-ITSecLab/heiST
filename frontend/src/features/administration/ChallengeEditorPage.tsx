@@ -1,3 +1,4 @@
+import {useI18n} from '../../lib/i18n.tsx';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Area, Card, Empty, Field, Notice, PageTitle, ResourceState, Select, Stat } from '../../components/ui.tsx';
 import { NetworkPreview } from '../../components/NetworkPreview.tsx';
@@ -45,6 +46,7 @@ export function CreateChallenge() {
   return <ChallengeEditor key={editing} />;
 }
 function ChallengeEditor() {
+  const {t}=useI18n();
   const router = useRouter(), editing = number(new URLSearchParams(router.location.split('?')[1]).get('edit'));
   const resource = useResource(editing ? `/api/admin/challenges/${editing}/configuration` : '/api/admin/challenges/options'), action = useAction();
   const configuration = row(resource.data.data), blocked = !!editing && (truth(row(configuration.definition).isActive) || number(configuration.instances) > 0 || truth(configuration.retired));
@@ -54,7 +56,7 @@ function ChallengeEditor() {
   const ovaOptions: [
     string,
     string
-  ][] = [['', 'Select an artifact'], ...rows(resource.data.ovas).map(ova => [text(ova.filename ?? ova.name ?? ova.ova_name), text(ova.filename ?? ova.name ?? ova.ova_name)] as [
+  ][] = [['', t('Select an artifact')], ...rows(resource.data.ovas).map(ova => [text(ova.filename ?? ova.name ?? ova.ova_name), text(ova.filename ?? ova.name ?? ova.ova_name)] as [
     string,
     string
   ])];
@@ -107,125 +109,125 @@ function ChallengeEditor() {
   }
   return <>
     <PageTitle
-      eyebrow="ADMINISTRATION / CHALLENGES"
-      title={editing ? 'Edit challenge' : 'Create challenge'}
-      description="Configure machines, networks and flags."
-      action={<Link href="/manage-ctf">← Back to challenges</Link>} />
+      eyebrow={t("ADMINISTRATION / CHALLENGES")}
+      title={t(editing ? 'Edit challenge' : 'Create challenge')}
+      description={t("Configure machines, networks and flags.")}
+      action={<Link href="/manage-ctf">{t("← Back to challenges")}</Link>} />
     <Notice error={action.error} message={action.message} />
     <ResourceState {...resource}>
-      {editing > 0 && <Card title="Configuration readiness">
-        <p>{number(configuration.instances)} instances use this exercise. Configuration changes require a paused exercise with no remaining instances.</p>
-        <p className="muted">Set the pool to zero and wait for unused copies to drain and assigned labs to finish. Then pause the exercise. Machine images and earned flag identities are preserved.</p>
-        <div className="table-actions"><button className="secondary" onClick={()=>setPoolOpen(true)}>Configure pool</button>
-          <button className="secondary" onClick={resource.reload}>Reload configuration</button>
-          {truth(imported.isActive) && <button disabled={number(configuration.instances)>0 || action.busy} onClick={()=>void action.run(()=>request(`/api/admin/challenges/${editing}`,{method:'PUT',body:{...imported,isActive:false}}),resource.reload)}>Pause exercise</button>}</div>
-        {!truth(imported.isActive) && !truth(configuration.retired) && <button disabled={action.busy||resource.loading} onClick={()=>void action.run(()=>request(`/api/admin/challenges/${editing}`,{method:'PUT',body:{...imported,isActive:true}}),resource.reload)}>Publish saved challenge</button>}
+      {editing > 0 && <Card title={t("Configuration readiness")}>
+        <p>{number(configuration.instances)}{t(" instances use this exercise. Configuration changes require a paused exercise with no remaining instances.")}</p>
+        <p className="muted">{t("Set the pool to zero and wait for unused copies to drain and assigned labs to finish. Then pause the exercise. Machine images and earned flag identities are preserved.")}</p>
+        <div className="table-actions"><button className="secondary" onClick={()=>setPoolOpen(true)}>{t("Configure pool")}</button>
+          <button className="secondary" onClick={resource.reload}>{t("Reload configuration")}</button>
+          {truth(imported.isActive) && <button disabled={number(configuration.instances)>0 || action.busy} onClick={()=>void action.run(()=>request(`/api/admin/challenges/${editing}`,{method:'PUT',body:{...imported,isActive:false}}),resource.reload)}>{t("Pause exercise")}</button>}</div>
+        {!truth(imported.isActive) && !truth(configuration.retired) && <button disabled={action.busy||resource.loading} onClick={()=>void action.run(()=>request(`/api/admin/challenges/${editing}`,{method:'PUT',body:{...imported,isActive:true}}),resource.reload)}>{t("Publish saved challenge")}</button>}
       </Card>}
-      {!editing && <Card title="Import YAML">
-        <p className="muted">Import replaces the current form. It does not create a challenge.</p>
-        <Field label="YAML file" type="file" accept=".yaml,.yml" disabled={action.busy} onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; void importYaml(file); }} />
+      {!editing && <Card title={t("Import YAML")}>
+        <p className="muted">{t("Import replaces the current form. It does not create a challenge.")}</p>
+        <Field label={t("YAML file")} type="file" accept=".yaml,.yml" disabled={action.busy} onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; void importYaml(file); }} />
       </Card>}
       <form key={importVersion} onSubmit={submit}>
         <fieldset disabled={action.busy || blocked} className="editor-fieldset">
           <div className="editor-layout">
             <div>
-              <Card title="01 / The exercise">
+              <Card title={t("01 / The exercise")}>
                 <Field
-                  label="Challenge name"
+                  label={t("Challenge name")}
                   name="name"
                   defaultValue={text(imported.name)}
                   required
                   maxLength={100}
-                  placeholder="Challenge name"
+                  placeholder={t("Challenge name")}
                   pattern="[a-zA-Z0-9_\- ]+" />
                 <Area
-                  label="Description"
+                  label={t("Description")}
                   name="description"
                   defaultValue={text(imported.description)}
                   required
                   maxLength={2000}
-                  placeholder="Give students context, objectives and a starting point." />
+                  placeholder={t("Give students context, objectives and a starting point.")} />
                 <div className="form-grid">
-                  <Select label="Category" name="category" defaultValue={text(imported.category, categories[0])} options={categories} />
-                  <Select label="Difficulty" name="difficulty" defaultValue={text(imported.difficulty, difficulties[0])} options={difficulties} />
+                  <Select label={t("Category")} name="category" defaultValue={text(imported.category, categories[0])} options={categories} />
+                  <Select label={t("Difficulty")} name="difficulty" defaultValue={text(imported.difficulty, difficulties[0])} options={difficulties} />
                 </div>
                 <Field
-                  label="Cover image (optional, up to 2 MiB)"
+                  label={t("Cover image (optional, up to 2 MiB)")}
                   name="image"
                   type="file"
                   accept="image/png,image/jpeg,image/gif" />
-                <Area label="General hint (optional)" name="hint" defaultValue={text(imported.hint)} maxLength={500} />
+                <Area label={t("General hint (optional)")} name="hint" defaultValue={text(imported.hint)} maxLength={500} />
                 <Area
-                  label="Tutor solution"
+                  label={t("Tutor solution")}
                   name="solution"
                   defaultValue={text(imported.solution)}
                   maxLength={2000}
-                  placeholder="The explanation shown by the server once the exercise is solved." />
+                  placeholder={t("The explanation shown by the server once the exercise is solved.")} />
               </Card>
-              <Card title="02 / Machines" action={<button
+              <Card title={t("02 / Machines")} action={<button
                 className="secondary small"
                 type="button"
-                disabled={!!editing || machines.length >= 20} onClick={() => setMachines(items => [...items, { key: key(), name: '', ova_name: '', cores: 1, ram_gb: 1, domain_name: '', ad_role: 'none' }])}>＋ Add machine</button>}>
-                {!ovaOptions.slice(1).length && <p className="notice">Upload an artifact in <Link href="/upload-diskfile">Artifacts</Link> before adding a machine.</p>}
+                disabled={!!editing || machines.length >= 20} onClick={() => setMachines(items => [...items, { key: key(), name: '', ova_name: '', cores: 1, ram_gb: 1, domain_name: '', ad_role: 'none' }])}>{t("＋ Add machine")}</button>}>
+                {!ovaOptions.slice(1).length && <p className="notice">{t("Upload an artifact in ")}<Link href="/upload-diskfile">{t("Artifacts")}</Link>{t(" before adding a machine.")}</p>}
                 {machines.map((vm, index) => <fieldset className="repeat-row" key={vm.key}>
-                  <legend>Machine {index + 1}
+                  <legend>{t("Machine ")}{index + 1}
                   </legend>
                   <div className="form-grid">
                     <Field
-                      label="Machine name"
+                      label={t("Machine name")}
                       value={vm.name}
                       pattern="[a-zA-Z0-9_\-]+"
                       required
                       maxLength={50}
                       onChange={e => updateMachine(vm.key, { name: e.target.value })} />
                     <Select
-                      label="OVA artifact"
+                      label={t("OVA artifact")}
                       disabled={!!editing}
                       required
                       value={vm.ova_name}
                       options={ovaOptions}
                       onChange={e => updateMachine(vm.key, { ova_name: e.target.value })} />
                     <Field
-                      label="CPU cores"
+                      label={t("CPU cores")}
                       type="number"
                       min={1}
                       max={16}
                       value={vm.cores}
                       onChange={e => updateMachine(vm.key, { cores: number(e.target.value) })} />
                     <Field
-                      label="Memory (GiB)"
+                      label={t("Memory (GiB)")}
                       type="number"
                       min={1}
                       max={32}
                       value={vm.ram_gb}
                       onChange={e => updateMachine(vm.key, { ram_gb: number(e.target.value) })} />
                     <Field
-                      label="Domain name"
+                      label={t("Domain name")}
                       required
                       value={vm.domain_name}
-                      placeholder="portal.lab"
+                      placeholder={t("portal.lab")}
                       maxLength={255}
                       onChange={e => updateMachine(vm.key, { domain_name: e.target.value })} />
                     <Select
-                      label="Directory role"
+                      label={t("Directory role")}
                       value={vm.ad_role}
                       options={['none', 'dc', 'member']}
                       onChange={e => updateMachine(vm.key, { ad_role: e.target.value })} />
                   </div>
-                  <button className="danger subtle small" type="button" disabled={!!editing} onClick={() => { setMachines(items => items.filter(item => item.key !== vm.key)); setNetworks(items => items.map(n => ({ ...n, machines: n.machines.filter(id => id !== vm.key) }))); setFlags(items => items.map(f => f.machine === vm.key ? { ...f, machine: '', user_specific: false } : f)); }}>Remove machine</button>
+                  <button className="danger subtle small" type="button" disabled={!!editing} onClick={() => { setMachines(items => items.filter(item => item.key !== vm.key)); setNetworks(items => items.map(n => ({ ...n, machines: n.machines.filter(id => id !== vm.key) }))); setFlags(items => items.map(f => f.machine === vm.key ? { ...f, machine: '', user_specific: false } : f)); }}>{t("Remove machine")}</button>
                 </fieldset>)}
-                {!machines.length && <Empty title="No machines">Add machines from your artifact library.</Empty>}
+                {!machines.length && <Empty title={t("No machines")}>{t("Add machines from your artifact library.")}</Empty>}
               </Card>
-              <Card title="03 / Networks" action={<button
+              <Card title={t("03 / Networks")} action={<button
                 className="secondary small"
                 type="button"
                 disabled={networks.length >= 10}
-                onClick={() => setNetworks(items => [...items, { key: key(), name: '', dmz: false, accessible: true, machines: [] }])}>＋ Add network</button>}>
+                onClick={() => setNetworks(items => [...items, { key: key(), name: '', dmz: false, accessible: true, machines: [] }])}>{t("＋ Add network")}</button>}>
                 {networks.map((network, index) => <fieldset className="repeat-row" key={network.key}>
-                  <legend>Network {index + 1}
+                  <legend>{t("Network ")}{index + 1}
                   </legend>
                   <Field
-                    label="Network name"
+                    label={t("Network name")}
                     value={network.name}
                     required
                     pattern="[a-zA-Z0-9_\-]+"
@@ -233,31 +235,31 @@ function ChallengeEditor() {
                     onChange={e => updateNetwork(network.key, { name: e.target.value })} />
                   <div className="button-row">
                     <label className="check">
-                      <input type="checkbox" checked={network.accessible} onChange={e => updateNetwork(network.key, { accessible: e.target.checked })} />Student accessible</label>
+                      <input type="checkbox" checked={network.accessible} onChange={e => updateNetwork(network.key, { accessible: e.target.checked })} />{t("Student accessible")}</label>
                     <label className="check">
-                      <input type="checkbox" checked={network.dmz} onChange={e => updateNetwork(network.key, { dmz: e.target.checked })} />DMZ</label>
+                      <input type="checkbox" checked={network.dmz} onChange={e => updateNetwork(network.key, { dmz: e.target.checked })} />{t("DMZ")}</label>
                   </div>
-                  <p className="muted">Attach machines</p>
+                  <p className="muted">{t("Attach machines")}</p>
                   <div className="checkbox-grid">
                     {machines.map(vm => <label className="check" key={vm.key}>
                       <input type="checkbox" checked={network.machines.includes(vm.key)} onChange={e => updateNetwork(network.key, { machines: e.target.checked ? [...network.machines, vm.key] : network.machines.filter(id => id !== vm.key) })} />
                       {vm.name || 'Unnamed machine'}
                     </label>)}
                   </div>
-                  <button type="button" className="danger subtle small" onClick={() => setNetworks(items => items.filter(item => item.key !== network.key))}>Remove network</button>
+                  <button type="button" className="danger subtle small" onClick={() => setNetworks(items => items.filter(item => item.key !== network.key))}>{t("Remove network")}</button>
                 </fieldset>)}
-                {!networks.length && <Empty title="No networks">Add a network and choose which machines belong to it.</Empty>}
+                {!networks.length && <Empty title={t("No networks")}>{t("Add a network and choose which machines belong to it.")}</Empty>}
               </Card>
-              <Card title="04 / Flags" action={<button
+              <Card title={t("04 / Flags")} action={<button
                 className="secondary small"
                 type="button"
                 disabled={flags.length >= 20}
-                onClick={() => setFlags(items => [...items, { key: key(), order_index: Math.max(-1,...items.map((flag,index)=>flag.order_index??index))+1, flag: '', description: '', points: 100, user_specific: false, machine: '' }])}>＋ Add flag</button>}>
+                onClick={() => setFlags(items => [...items, { key: key(), order_index: Math.max(-1,...items.map((flag,index)=>flag.order_index??index))+1, flag: '', description: '', points: 100, user_specific: false, machine: '' }])}>{t("＋ Add flag")}</button>}>
                 {flags.map((flag, index) => <fieldset className="repeat-row" key={flag.key}>
-                  <legend>Flag {index + 1}
+                  <legend>{t("Flag ")}{index + 1}
                   </legend>
                   <Field
-                    label="Flag value"
+                    label={t("Flag value")}
                     type="password"
                     autoComplete="new-password"
                     value={flag.flag}
@@ -265,13 +267,13 @@ function ChallengeEditor() {
                     maxLength={255}
                     onChange={e => updateFlag(flag.key, { flag: e.target.value })} />
                   <Field
-                    label="Flag description"
+                    label={t("Flag description")}
                     value={flag.description}
                     maxLength={500}
                     onChange={e => updateFlag(flag.key, { description: e.target.value })} />
                   <div className="form-grid">
                     <Field
-                      label="Points"
+                      label={t("Points")}
                       type="number"
                       value={flag.points}
                       min={1}
@@ -279,7 +281,7 @@ function ChallengeEditor() {
                       required
                       onChange={e => updateFlag(flag.key, { points: number(e.target.value) })} />
                     <Select
-                      label="Machine"
+                      label={t("Machine")}
                       value={flag.machine}
                       required={flag.user_specific}
                       options={[['', 'No linked machine'], ...machines.map(vm => [vm.key, vm.name || 'Unnamed machine'] as [
@@ -289,53 +291,53 @@ function ChallengeEditor() {
                       onChange={e => updateFlag(flag.key, { machine: e.target.value })} />
                   </div>
                   <label className="check">
-                    <input type="checkbox" checked={flag.user_specific} onChange={e => updateFlag(flag.key, { user_specific: e.target.checked })} />Generate a student-specific flag</label>
-                  <button type="button" className="danger subtle small" onClick={() => setFlags(items => items.filter(item => item.key !== flag.key))}>Remove flag</button>
+                    <input type="checkbox" checked={flag.user_specific} onChange={e => updateFlag(flag.key, { user_specific: e.target.checked })} />{t("Generate a student-specific flag")}</label>
+                  <button type="button" className="danger subtle small" onClick={() => setFlags(items => items.filter(item => item.key !== flag.key))}>{t("Remove flag")}</button>
                 </fieldset>)}
-                {!flags.length && <Empty title="No flags">Add the flags students must submit.</Empty>}
+                {!flags.length && <Empty title={t("No flags")}>{t("Add the flags students must submit.")}</Empty>}
               </Card>
-              <Card title="05 / Progressive hints" action={<button
+              <Card title={t("05 / Progressive hints")} action={<button
                 className="secondary small"
                 type="button"
                 disabled={hints.length >= 10}
-                onClick={() => setHints(items => [...items, { key: key(), hint_text: '', unlock_points: 0 }])}>＋ Add hint</button>}>
+                onClick={() => setHints(items => [...items, { key: key(), hint_text: '', unlock_points: 0 }])}>{t("＋ Add hint")}</button>}>
                 {hints.map((hint, index) => <fieldset className="repeat-row" key={hint.key}>
-                  <legend>Hint {index + 1}
+                  <legend>{t("Hint ")}{index + 1}
                   </legend>
                   <Area
-                    label="Hint text"
+                    label={t("Hint text")}
                     value={hint.hint_text}
                     required
                     maxLength={500}
                     onChange={e => updateHint(hint.key, { hint_text: e.target.value })} />
                   <Field
-                    label="Unlock after points earned"
+                    label={t("Unlock after points earned")}
                     type="number"
                     min={0}
                     max={500}
                     value={hint.unlock_points}
                     onChange={e => updateHint(hint.key, { unlock_points: number(e.target.value) })} />
-                  <button type="button" className="danger subtle small" onClick={() => setHints(items => items.filter(item => item.key !== hint.key))}>Remove hint</button>
+                  <button type="button" className="danger subtle small" onClick={() => setHints(items => items.filter(item => item.key !== hint.key))}>{t("Remove hint")}</button>
                 </fieldset>)}
-                {!hints.length && <p className="muted">Optional hints can unlock as students earn points.</p>}
+                {!hints.length && <p className="muted">{t("Optional hints can unlock as students earn points.")}</p>}
               </Card>
             </div>
             <aside>
               <NetworkPreview machines={machines} networks={networks} />
-              <Card title="Availability">
+              <Card title={t("Availability")}>
                 <div className="summary-counts">
-                  <Stat label="Machines" value={machines.length} />
-                  <Stat label="Networks" value={networks.length} />
-                  <Stat label="Flags" value={flags.length} />
-                  <Stat label="Total points" value={flags.reduce((total, flag) => total + flag.points, 0)} />
+                  <Stat label={t("Machines")} value={machines.length} />
+                  <Stat label={t("Networks")} value={networks.length} />
+                  <Stat label={t("Flags")} value={flags.length} />
+                  <Stat label={t("Total points")} value={flags.reduce((total, flag) => total + flag.points, 0)} />
                 </div>
                 <label className="check">
-                  <input type="checkbox" disabled={!!editing} name="isActive" defaultChecked={truth(imported.isActive)} />Make available to students</label>
-                <p className="muted">{editing ? 'Save changes first, then use Publish saved challenge above to make them available.' : 'Leave this unchecked to create an inactive exercise for review.'}</p>
+                  <input type="checkbox" disabled={!!editing} name="isActive" defaultChecked={truth(imported.isActive)} />{t("Make available to students")}</label>
+                <p className="muted">{t(editing ? 'Save changes first, then use Publish saved challenge above to make them available.' : 'Leave this unchecked to create an inactive exercise for review.')}</p>
                 <button className="full" type="submit" disabled={action.busy}>
-                  {action.busy ? 'Saving…' : editing ? 'Save configuration' : 'Create challenge →'}
+                  {t(action.busy ? 'Saving…' : editing ? 'Save configuration' : 'Create challenge →')}
                 </button>
-                {action.busy && <p role="status">{editing ? 'Saving the configuration. The request will not be retried automatically.' : 'The server is creating templates. This can take several minutes; the request will not be retried automatically.'}</p>}
+                {action.busy && <p role="status">{t(editing ? 'Saving the configuration. The request will not be retried automatically.' : 'The server is creating templates. This can take several minutes; the request will not be retried automatically.')}</p>}
                 <Notice error={action.error} />
               </Card>
             </aside>

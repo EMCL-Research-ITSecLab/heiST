@@ -1,58 +1,60 @@
+import {useI18n} from '../../lib/i18n.tsx';
 import { DashboardAnnouncements } from './DashboardAnnouncements.tsx';
 import { ActivityList, Card, ChallengeCard, Empty, PageTitle, ResourceState, Stat } from '../../components/ui.tsx';
 import { number, payload, row, rows, text } from '../../lib/data.ts';
 import { Link } from '../../lib/router.tsx';
 import { useResource } from '../../lib/state.tsx';
 export function Dashboard() {
+  const {t}=useI18n();
   const resource = useResource('/api/dashboard', 30000), data = payload(resource.data), user = row(data.user), progress = row(data.progress), active = row(data.active_challenge), timeline = row(data.timeline);
   return <>
     <PageTitle
-      eyebrow="YOUR LEARNING WORKSPACE"
-      title="Dashboard"
-      action={<Link className="button" href="/explore">Explore challenges ↗</Link>} />
+      eyebrow={t("YOUR LEARNING WORKSPACE")}
+      title={t("Dashboard")}
+      action={<Link className="button" href="/explore">{t("Explore challenges ↗")}</Link>} />
     <ResourceState {...resource}>
       <DashboardAnnouncements announcements={rows(data.news)} />
       <div className="stats-grid">
-        <Stat label="Total points" value={user.points} />
-        <Stat label="Challenges solved" value={progress.solved} />
-        <Stat label="Success rate" value={`${number(progress.success_rate)}%`} />
-        <Stat label="Your rank" value={number(user.rank) ? '#' + text(user.rank) : '—'} />
+        <Stat label={t("Total points")} value={user.points} />
+        <Stat label={t("Challenges solved")} value={progress.solved} />
+        <Stat label={t("Success rate")} value={`${number(progress.success_rate)}%`} />
+        <Stat label={t("Your rank")} value={number(user.rank) ? '#' + text(user.rank) : '—'} />
       </div>
       {Object.keys(active).length > 0 && number(active.id ?? active.challenge_template_id) > 0 && <div className="active-banner">
         <span className="status-dot" />
         <div>
-          <strong>Your lab is ready when you are</strong>
+          <strong>{t("Your lab is ready when you are")}</strong>
           <p>
             {text(active.name ?? active.challenge_name)}
           </p>
         </div>
-        <Link className="button secondary" href={`/challenge?id=${number(active.challenge_template_id ?? active.id)}`}>Continue investigation →</Link>
+        <Link className="button secondary" href={`/challenge?id=${number(active.challenge_template_id ?? active.id)}`}>{t("Continue investigation →")}</Link>
       </div>}
       <div className="section-heading">
         <div>
-          <p className="eyebrow">KEEP YOUR CURIOSITY MOVING</p>
-          <h2>Your next challenge</h2>
+          <p className="eyebrow">{t("KEEP YOUR CURIOSITY MOVING")}</p>
+          <h2>{t("Your next challenge")}</h2>
         </div>
-        <Link href="/explore">View library →</Link>
+        <Link href="/explore">{t("View library →")}</Link>
       </div>
       <div className="challenge-grid">
         {rows(data.challenges).map(c => <ChallengeCard key={text(c.id)} challenge={c} />)}
       </div>
-      {rows(data.challenges).length === 0 && <Empty title="A fresh start">Browse the library to find your first investigation.</Empty>}
+      {rows(data.challenges).length === 0 && <Empty title={t("A fresh start")}>{t("Browse the library to find your first investigation.")}</Empty>}
       <div className="two-columns">
-        <Card title="Recent activity" action={<Link href="/activity">View all →</Link>}>
+        <Card title={t("Recent activity")} action={<Link href="/activity">{t("View all →")}</Link>}>
           <ActivityList items={rows(data.activity)} />
         </Card>
-        <Card title="Your learning rhythm">
-          <div className="bar-chart" aria-label="Points earned over time">
+        <Card title={t("Your learning rhythm")}>
+          <div className="bar-chart" aria-label={t("Points earned over time")}>
             {Array.isArray(timeline.points) && timeline.points.length ? timeline.points.map((point, i) => <div key={i}>
               <span style={{ height: `${Math.max(3, number(point) / Math.max(1, ...timeline.points as number[]) * 120)}px` }} title={`${text((timeline.labels as unknown[])?.[i])}: ${number(point)} points`} />
               <small>
                 {text((timeline.labels as unknown[])?.[i])}
               </small>
-            </div>) : <Empty title="Progress starts with practice">Your points will appear here as you solve challenges.</Empty>}
+            </div>) : <Empty title={t("Progress starts with practice")}>{t("Your points will appear here as you solve challenges.")}</Empty>}
           </div>
-          <Link href="/badges">Explore your achievements →</Link>
+          <Link href="/badges">{t("Explore your achievements →")}</Link>
         </Card>
       </div>
     </ResourceState>

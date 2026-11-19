@@ -1,3 +1,4 @@
+import {useI18n} from '../../lib/i18n.tsx';
 import { Confirm, Notice, ResourceState } from '../../components/ui.tsx';
 import { request } from '../../lib/api.ts';
 import { number, payload, text, truth, type Row } from '../../lib/data.ts';
@@ -15,6 +16,7 @@ const descriptions: Record<ManagedAction, string> = {
 };
 
 export function InstanceActionDialog({ selection, onClose, onComplete }: { selection: ActionSelection; onClose: () => void; onComplete: (result:Row) => void }) {
+  const {t}=useI18n();
   const query = new URLSearchParams({ action: selection.kind });
   if (selection.machineId) query.set('machine_id', String(selection.machineId));
   const resource = useResource(`/api/admin/instances/${selection.instance}/preview?${query}`), action = useAction();
@@ -30,17 +32,17 @@ export function InstanceActionDialog({ selection, onClose, onComplete }: { selec
       return result;
     }, onComplete);
   }
-  return <Confirm title={`Review ${selection.kind}`} confirm={selection.kind === 'shutdown' ? 'Shut down' : selection.kind.charAt(0).toUpperCase() + selection.kind.slice(1)}
+  return <Confirm title={t('Review {action}',{action:t(selection.kind==='shutdown'?'Shut down':selection.kind.charAt(0).toUpperCase()+selection.kind.slice(1))})} confirm={t(selection.kind === 'shutdown' ? 'Shut down' : selection.kind.charAt(0).toUpperCase() + selection.kind.slice(1))}
     busy={action.busy} disabled={!ready} onClose={onClose} onConfirm={() => void confirm()}>
     <Notice error={action.error} />
-    <p>{descriptions[selection.kind]}</p>
+    <p>{t(descriptions[selection.kind])}</p>
     <ResourceState {...resource}>
-      <p>Instance {selection.instance} · {text(data.name)} · {text(data.state)}</p>
-      <p>Affected VMs: {Array.isArray(data.machines) ? data.machines.map(number).join(', ') || 'None' : 'Unavailable'}</p>
-      <p>Affected networks: {Array.isArray(data.networks) ? data.networks.map(number).join(', ') || 'None' : 'Unavailable'}</p>
-      {truth(data.guest_changes_lost) && <p className="notice">Guest changes will be lost.</p>}
-      <p className="muted">The server rechecks this assignment before making changes. If it changed, refresh this preview.</p>
-      <p className="muted">Confirmation queues the operation. Progress and recovery are recorded in Jobs.</p>
+      <p>{t("Instance ")}{selection.instance} · {text(data.name)} · {text(data.state)}</p>
+      <p>{t("Affected VMs: ")}{Array.isArray(data.machines) ? data.machines.map(number).join(', ') || 'None' : 'Unavailable'}</p>
+      <p>{t("Affected networks: ")}{Array.isArray(data.networks) ? data.networks.map(number).join(', ') || 'None' : 'Unavailable'}</p>
+      {truth(data.guest_changes_lost) && <p className="notice">{t("Guest changes will be lost.")}</p>}
+      <p className="muted">{t("The server rechecks this assignment before making changes. If it changed, refresh this preview.")}</p>
+      <p className="muted">{t("Confirmation queues the operation. Progress and recovery are recorded in Jobs.")}</p>
     </ResourceState>
   </Confirm>;
 }

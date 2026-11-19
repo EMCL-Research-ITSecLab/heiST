@@ -40,7 +40,7 @@ the edited resources and networks work on Proxmox.
 
 ## Screenshot gallery
 
-[Open the complete gallery](../../assets/screenshots/README.md): 72 full-page
+[Open the complete gallery](../../assets/screenshots/README.md): 76 full-page
 captures cover every canonical view in both themes, plus phone navigation,
 collapsed desktop navigation and expanded instance diagnostics. Achievements shows
 all nine synthetic badges. Editor captures contain multiple networks and include

@@ -1,3 +1,4 @@
+import {useI18n} from '../../lib/i18n.tsx';
 import { Badge } from '../../components/ui.tsx';
 import { number, row, rows, text } from '../../lib/data.ts';
 import { healthTone } from '../../lib/monitoring.ts';
@@ -8,12 +9,13 @@ function timestamp(value: unknown) {
 }
 
 export function InstanceMonitoringPanel({ value }: { value: unknown }) {
+  const {t}=useI18n();
   const data = row(value);
-  return <section aria-label="Challenge monitoring">
-    <h3>Challenge monitoring <Badge>{text(data.status, 'unknown')}</Badge></h3>
-    <p className="muted">Collected {timestamp(data.checked_at)}. Agent state is matched by VM ID. Command delivery and this instance's network coverage remain unverified.</p>
-    {rows(data.machines).length > 0 && <div className="table-wrap"><table aria-label="Challenge monitoring agents">
-      <thead><tr><th>VM</th><th>VM state</th><th>Agent</th><th>Last seen</th></tr></thead>
+  return <section aria-label={t("Challenge monitoring")}>
+    <h3>{t("Challenge monitoring ")}<Badge>{text(data.status, 'unknown')}</Badge></h3>
+    <p className="muted">{t("Collected ")}{timestamp(data.checked_at)}{t(". Agent state is matched by VM ID. Command delivery and this instance's network coverage remain unverified.")}</p>
+    {rows(data.machines).length > 0 && <div className="table-wrap"><table aria-label={t("Challenge monitoring agents")}>
+      <thead><tr><th>{t("VM")}</th><th>{t("VM state")}</th><th>{t("Agent")}</th><th>{t("Last seen")}</th></tr></thead>
       <tbody>{rows(data.machines).map(machine => {
         const state = text(machine.agent_status, 'unknown');
         const tone = machine.vm_status !== 'running' ? 'warning' : state === 'active' ? 'active' : ['missing', 'disconnected', 'stale'].includes(state) ? 'critical' : 'warning';
@@ -21,7 +23,7 @@ export function InstanceMonitoringPanel({ value }: { value: unknown }) {
           <td><Badge tone={tone}>{state}</Badge></td><td>{timestamp(machine.last_keepalive)}</td></tr>;
       })}</tbody>
     </table></div>}
-    {rows(data.sensors).length > 0 && <><h4>Shared platform sensors</h4><div className="button-row">
+    {rows(data.sensors).length > 0 && <><h4>{t("Shared platform sensors")}</h4><div className="button-row">
       {rows(data.sensors).map(sensor => <span key={text(sensor.id)}>{text(sensor.label)} <Badge tone={healthTone(text(sensor.state))}>{text(sensor.state)}</Badge></span>)}
     </div></>}
   </section>;

@@ -1,3 +1,4 @@
+import {LanguageProvider,useI18n} from './lib/i18n.tsx';
 import { ManageUsers } from './features/administration/UserManagementPage.tsx';
 import { ManageInstances } from './features/administration/InstanceManagementPage.tsx';
 import { useEffect } from 'react';
@@ -27,8 +28,10 @@ export const routes = [
 ] as const;
 function Redirect({ to }: {
   to: string;
-}) { const router = useRouter(); useEffect(() => router.navigate(to, true), [to]); return <div className="loading" role="status">Loading…</div>; }
+}) {
+  const {t}=useI18n(); const router = useRouter(); useEffect(() => router.navigate(to, true), [to]); return <div className="loading" role="status">{t("Loading…")}</div>; }
 function RouteContent() {
+  const {t}=useI18n();
   const { location } = useRouter(), session = useSession(), path = location.split('?')[0].replace(/\/$/, '') || '/';
   let publicProfile: string | undefined;
   try {
@@ -40,14 +43,14 @@ function RouteContent() {
   if (path === '/impressum' || path === '/privacy-policy' || path === '/terms-of-service') return <LegalPage kind={path.slice(1) as 'impressum' | 'privacy-policy' | 'terms-of-service'} />;
   if (session.loading)
     return <div className="loading" role="status">
-      <span className="spinner" />Loading…</div>;
+      <span className="spinner" />{t("Loading…")}</div>;
   if (session.error)
     return <div className="empty" role="alert">
-      <h1>Connection failed</h1>
+      <h1>{t("Connection failed")}</h1>
       <p>
         {session.error}
       </p>
-      <button onClick={() => void session.refresh()}>Try again</button>
+      <button onClick={() => void session.refresh()}>{t("Try again")}</button>
     </div>;
   if (session.user?.passwordChange && path !== '/reset-password')
     return <Redirect to="/reset-password" />;
@@ -55,10 +58,10 @@ function RouteContent() {
     return <Redirect to={'/login?next=' + encodeURIComponent(location)} />;
   if (route?.[1] === 'admin' && !session.user?.admin)
     return <div className="empty">
-      <p className="eyebrow">ADMINISTRATION</p>
-      <h1>Administrator access required</h1>
-      <p>Your account does not have permission to manage the platform.</p>
-      <Link className="button" href="/dashboard">Dashboard</Link>
+      <p className="eyebrow">{t("ADMINISTRATION")}</p>
+      <h1>{t("Administrator access required")}</h1>
+      <p>{t("Your account does not have permission to manage the platform.")}</p>
+      <Link className="button" href="/dashboard">{t("Dashboard")}</Link>
     </div>;
   if (publicProfile)
     return <Profile key={path} username={publicProfile} />;
@@ -84,18 +87,18 @@ function RouteContent() {
     case '/operations': return <Operations />;
     default: return <div className="empty">
       <p className="eyebrow">404</p>
-      <h1>Page not found</h1>
-      <p>This page does not exist.</p>
-      <Link className="button" href="/explore">Challenges</Link>
+      <h1>{t("Page not found")}</h1>
+      <p>{t("This page does not exist.")}</p>
+      <Link className="button" href="/explore">{t("Challenges")}</Link>
     </div>;
   }
 }
 export default function App() {
-  return <RouterProvider>
+  return <LanguageProvider><RouterProvider>
     <SessionProvider>
       <AppShell>
         <RouteContent />
       </AppShell>
     </SessionProvider>
-  </RouterProvider>;
+  </RouterProvider></LanguageProvider>;
 }

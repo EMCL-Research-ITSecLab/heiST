@@ -69,7 +69,7 @@ pending its separate acceptance. See [updates and recovery](docs/administration/
 
 ## Using the new workspace
 
-[Browse all 72 full-page screenshots](assets/screenshots/README.md), including achievements, account pages and administrator controls. [Documentation index](docs/README.md).
+[Browse all 76 full-page screenshots](assets/screenshots/README.md), including German views, achievements, account pages and administrator controls. [Documentation index](docs/README.md).
 
 The screenshots below show the actual production UI build with deterministic,
 synthetic demonstration records. They are not screenshots of production data.

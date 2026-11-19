@@ -928,6 +928,7 @@ th .table-sort:focus-visible { outline:2px solid var(--ink); outline-offset:4px 
 
 dialog.management-overlay { width:min(1200px, calc(100vw - 32px)); max-width:1200px; max-height:90dvh; overflow-y:auto }
 .overlay-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; position:sticky; top:0; background:var(--surface); z-index:2; padding-bottom:12px }
+.language-select { width:auto; max-width:100px; min-height:34px; padding:7px; font:inherit; font-size:12px; flex-shrink:0; border:1px solid var(--line); border-radius:8px; background:var(--surface); color:var(--ink) }
 
 td small {
   display:block;

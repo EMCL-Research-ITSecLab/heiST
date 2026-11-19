@@ -206,3 +206,9 @@ def resolve_job(identifier):
     return internal().request('admin_job_resolve',{'actor_id':actor['id'],'job_id':identifier,
         'reason':text(data.get('reason'),name='Recovery checks',minimum=10,maximum=500),
         'confirmation':text(data.get('confirmation'),name='Operation ID',minimum=32,maximum=32)})
+
+
+@blueprint.get('/admin/pools/<identifier>')
+def pool_details(identifier):
+    actor=require_admin()
+    return internal().request('admin_pool_details',{'actor_id':actor['id'],'template_id':positive_id(identifier,'exercise identifier')})

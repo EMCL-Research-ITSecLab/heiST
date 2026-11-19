@@ -167,7 +167,7 @@ def fetch_machines(challenge_template, db_conn):
 
     with db_conn.cursor() as cursor:
         cursor.execute(
-            "SELECT mt.id, df.guest_os, mt.ad_role "
+            "SELECT mt.id, df.guest_os, mt.ad_role, mt.cores, mt.ram_gb "
             "FROM machine_templates mt "
             "JOIN disk_files df ON df.id = mt.disk_file_id "
             "WHERE mt.challenge_template_id = %s",
@@ -182,6 +182,8 @@ def fetch_machines(challenge_template, db_conn):
             print(f"[Debug] Adding machine template {machine_id} (guest_os={guest_os}, ad_role={ad_role}) to challenge", flush=True)
             machine_template = MachineTemplate(machine_template_id=machine_id, challenge_template=challenge_template)
             machine_template.set_guest_os(guest_os)
+            machine_template.set_cores(row[3])
+            machine_template.set_ram(row[4] * 1024)
             machine_template.set_ad_role(ad_role)
 
             # Add machine template to challenge template

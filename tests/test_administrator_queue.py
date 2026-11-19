@@ -103,10 +103,11 @@ class AdministratorQueueTests(unittest.TestCase):
         self.assertEqual(self.service.instances(self.admin,state='READY',template_id=self.template)['instances'],[])
         self.assertEqual(self.service.instances(self.admin,search='%')['instances'],[])
 
-    def test_pool_policy_uses_revision_and_requires_publish_readiness(self):
-        with self.assertRaises(AdminError):self.service.set_pool(self.admin,self.template,2,True,0)
+    def test_pool_policy_uses_revision_and_stages_inactive_targets(self):
+        staged=self.service.set_pool(self.admin,self.template,2,True,0)
+        self.assertEqual(staged['application'],'waiting_for_publication')
         self.sql('UPDATE challenge_templates SET is_active=TRUE,ready_to_launch=TRUE WHERE id=%s',(self.template,))
-        result=self.service.set_pool(self.admin,self.template,2,True,0)
+        result=self.service.set_pool(self.admin,self.template,2,True,staged['revision'])
         self.assertEqual(result['application'],'pending_pool_manager')
         with self.assertRaises(AdminError):self.service.set_pool(self.admin,self.template,3,True,0)
         from heist.platform.pools.manager import PoolManager

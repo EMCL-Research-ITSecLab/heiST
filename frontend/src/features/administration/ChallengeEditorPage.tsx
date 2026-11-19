@@ -1,11 +1,13 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Area, Card, Empty, Field, Notice, PageTitle, ResourceState, Select, Stat } from '../../components/ui.tsx';
 import { NetworkPreview } from '../../components/NetworkPreview.tsx';
 import { request } from '../../lib/api.ts';
 import { categories, difficulties, number, row, rows, text, truth, type Row } from '../../lib/data.ts';
 import { Link, useRouter } from '../../lib/router.tsx';
+import { PoolEditor } from './PoolEditor.tsx';
 import { useAction, useResource } from '../../lib/state.tsx';
 type Machine = {
+  id?: number;
   key: string;
   name: string;
   ova_name: string;
@@ -22,6 +24,8 @@ type Network = {
   machines: string[];
 };
 type Flag = {
+  id?: number;
+  order_index?: number;
   key: string;
   flag: string;
   description: string;
@@ -36,7 +40,10 @@ type Hint = {
 };
 const key = () => crypto.randomUUID();
 export function CreateChallenge() {
-  const resource = useResource('/api/admin/challenges/options'), action = useAction(), router = useRouter();
+  const router = useRouter(), editing = number(new URLSearchParams(router.location.split('?')[1]).get('edit'));
+  const resource = useResource(editing ? `/api/admin/challenges/${editing}/configuration` : '/api/admin/challenges/options'), action = useAction();
+  const configuration = row(resource.data.data), blocked = !!editing && (truth(row(configuration.definition).isActive) || number(configuration.instances) > 0 || truth(configuration.retired));
+  const [poolOpen,setPoolOpen] = useState(false);
   const [machines, setMachines] = useState<Machine[]>([]), [networks, setNetworks] = useState<Network[]>([]), [flags, setFlags] = useState<Flag[]>([]), [hints, setHints] = useState<Hint[]>([]);
   const [imported, setImported] = useState<Row>({}), [importVersion, setImportVersion] = useState(0);
   const ovaOptions: [
@@ -56,17 +63,20 @@ export function CreateChallenge() {
       if (file.size > 256 * 1024) throw new Error('YAML file must be at most 256 KiB');
       return {...await request('/api/admin/challenges/import-yaml', {method: 'POST', body: {yaml: await file.text()}}), message: 'YAML imported. Review the form before creating the challenge.'};
     }, result => {
-      const value = row(result.data);
-      const nextMachines = rows(value.vms).map(vm => ({key: key(), name: text(vm.name), ova_name: text(vm.ova_name), cores: number(vm.cores), ram_gb: number(vm.ram_gb), domain_name: text(vm.domain_name), ad_role: text(vm.ad_role)}));
+      loadDefinition(row(result.data));
+    });
+  }
+  function loadDefinition(value: Row) {
+      const nextMachines = rows(value.vms).map(vm => ({key: key(), id: number(vm.id) || undefined, name: text(vm.name), ova_name: text(vm.ova_name), cores: number(vm.cores), ram_gb: number(vm.ram_gb), domain_name: text(vm.domain_name), ad_role: text(vm.ad_role)}));
       const machineKey = (name: unknown) => nextMachines.find(vm => vm.name === name)?.key ?? '';
       setMachines(nextMachines);
       setNetworks(rows(value.subnets).map(net => ({key: key(), name: text(net.name), dmz: truth(net.dmz), accessible: truth(net.accessible), machines: (Array.isArray(net.attached_vms) ? net.attached_vms : []).map(machineKey)})));
-      setFlags(rows(value.flags).map(flag => ({key: key(), flag: text(flag.flag), description: text(flag.description), points: number(flag.points), user_specific: truth(flag.user_specific), machine: machineKey(flag.vm_name)})));
+      setFlags(rows(value.flags).map(flag => ({key: key(), id: number(flag.id) || undefined, order_index: number(flag.order_index), flag: text(flag.flag), description: text(flag.description), points: number(flag.points), user_specific: truth(flag.user_specific), machine: machineKey(flag.vm_name)})));
       setHints(rows(value.hints).map(hint => ({key: key(), hint_text: text(hint.hint_text), unlock_points: number(hint.unlock_points)})));
       setImported(value);
       setImportVersion(version => version + 1);
-    });
   }
+  useEffect(() => { if (editing && resource.data.data) loadDefinition(row(row(resource.data.data).definition)); }, [resource.data,editing]);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -75,27 +85,42 @@ export function CreateChallenge() {
       return void action.run(async () => { throw new Error('Add at least one machine, network and flag. Every machine needs a unique name.'); });
     if (networks.some(network => !network.machines.length))
       return void action.run(async () => { throw new Error('Attach at least one machine to every network.'); });
-    form.set('isActive', form.has('isActive') ? 'true' : 'false');
-    form.set('vms', JSON.stringify(machines.map(({ key: _, ...vm }) => vm)));
-    form.set('subnets', JSON.stringify(networks.map(network => ({ name: network.name, dmz: network.dmz, accessible: network.accessible, attached_vms: network.machines.map(id => machines.find(vm => vm.key === id)?.name).filter(Boolean) }))));
-    form.set('flags', JSON.stringify(flags.map((flag, index) => ({ flag: flag.flag, description: flag.description, points: flag.points, order_index: index, user_specific: flag.user_specific, vm_name: machines.find(vm => vm.key === flag.machine)?.name ?? null }))));
-    form.set('hints', JSON.stringify(hints.map((hint, index) => ({ hint_text: hint.hint_text, unlock_points: hint.unlock_points, order_index: index }))));
-    await action.run(() => request('/api/admin/challenges', {method: 'POST', body: form}), () => router.navigate('/manage-ctf'));
+    form.set('isActive', !editing && form.has('isActive') ? 'true' : 'false');
+    const machineDefinitions=machines.map(({ key: _, ...vm }) => vm);
+    const subnetDefinitions=networks.map(network => ({ name: network.name, dmz: network.dmz, accessible: network.accessible, attached_vms: network.machines.map(id => machines.find(vm => vm.key === id)?.name).filter(Boolean) }));
+    const flagDefinitions=flags.map((flag, index) => ({ id: flag.id, flag: flag.flag, description: flag.description, points: flag.points, order_index: flag.order_index ?? index, user_specific: flag.user_specific, vm_name: machines.find(vm => vm.key === flag.machine)?.name ?? null }));
+    const hintDefinitions=hints.map((hint, index) => ({ hint_text: hint.hint_text, unlock_points: hint.unlock_points, order_index: index }));
+    form.set('vms', JSON.stringify(machineDefinitions));
+    form.set('subnets', JSON.stringify(subnetDefinitions));
+    form.set('flags', JSON.stringify(flagDefinitions));
+    form.set('hints', JSON.stringify(hintDefinitions));
+    const editableDefinition: Row={...Object.fromEntries(form),isActive:false,vms:machineDefinitions,subnets:subnetDefinitions,flags:flagDefinitions,hints:hintDefinitions};
+    delete editableDefinition.image;
+    await action.run(() => editing
+      ? request(`/api/admin/challenges/${editing}/configuration`, {method:'PUT',body:{expected:configuration.fingerprint,definition:editableDefinition}})
+      : request('/api/admin/challenges', {method: 'POST', body: form}), () => router.navigate('/manage-ctf'));
   }
   return <>
     <PageTitle
-      eyebrow="ADMINISTRATION / NEW CHALLENGE"
-      title="Create challenge"
+      eyebrow="ADMINISTRATION / CHALLENGES"
+      title={editing ? 'Edit configuration' : 'Create challenge'}
       description="Configure machines, networks and flags."
       action={<Link href="/manage-ctf">← Back to challenges</Link>} />
     <Notice error={action.error} message={action.message} />
     <ResourceState {...resource}>
-      <Card title="Import YAML">
+      {editing && <Card title="Configuration readiness">
+        <p>{number(configuration.instances)} instances use this exercise. Configuration changes require a paused exercise with no remaining instances.</p>
+        <p className="muted">Set the pool to zero and wait for unused copies to drain and assigned labs to finish. Then pause the exercise. Machine images and earned flag identities are preserved.</p>
+        <div className="table-actions"><button className="secondary" onClick={()=>setPoolOpen(true)}>Configure pool</button>
+          <button className="secondary" onClick={resource.reload}>Reload configuration</button>
+          {truth(imported.isActive) && <button disabled={number(configuration.instances)>0 || action.busy} onClick={()=>void action.run(()=>request(`/api/admin/challenges/${editing}`,{method:'PUT',body:{...imported,isActive:false}}),resource.reload)}>Pause exercise</button>}</div>
+      </Card>}
+      {!editing && <Card title="Import YAML">
         <p className="muted">Import replaces the current form. It does not create a challenge.</p>
         <Field label="YAML file" type="file" accept=".yaml,.yml" disabled={action.busy} onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; void importYaml(file); }} />
-      </Card>
+      </Card>}
       <form key={importVersion} onSubmit={submit}>
-        <fieldset disabled={action.busy} className="editor-fieldset">
+        <fieldset disabled={action.busy || blocked} className="editor-fieldset">
           <div className="editor-layout">
             <div>
               <Card title="01 / The exercise">
@@ -134,8 +159,7 @@ export function CreateChallenge() {
               <Card title="02 / Machines" action={<button
                 className="secondary small"
                 type="button"
-                disabled={machines.length >= 20}
-                onClick={() => setMachines(items => [...items, { key: key(), name: '', ova_name: '', cores: 1, ram_gb: 1, domain_name: '', ad_role: 'none' }])}>＋ Add machine</button>}>
+                disabled={!!editing || machines.length >= 20} onClick={() => setMachines(items => [...items, { key: key(), name: '', ova_name: '', cores: 1, ram_gb: 1, domain_name: '', ad_role: 'none' }])}>＋ Add machine</button>}>
                 {!ovaOptions.slice(1).length && <p className="notice">Upload an artifact in <Link href="/upload-diskfile">Artifacts</Link> before adding a machine.</p>}
                 {machines.map((vm, index) => <fieldset className="repeat-row" key={vm.key}>
                   <legend>Machine {index + 1}
@@ -150,6 +174,7 @@ export function CreateChallenge() {
                       onChange={e => updateMachine(vm.key, { name: e.target.value })} />
                     <Select
                       label="OVA artifact"
+                      disabled={!!editing}
                       required
                       value={vm.ova_name}
                       options={ovaOptions}
@@ -181,7 +206,7 @@ export function CreateChallenge() {
                       options={['none', 'dc', 'member']}
                       onChange={e => updateMachine(vm.key, { ad_role: e.target.value })} />
                   </div>
-                  <button className="danger subtle small" type="button" onClick={() => { setMachines(items => items.filter(item => item.key !== vm.key)); setNetworks(items => items.map(n => ({ ...n, machines: n.machines.filter(id => id !== vm.key) }))); setFlags(items => items.map(f => f.machine === vm.key ? { ...f, machine: '', user_specific: false } : f)); }}>Remove machine</button>
+                  <button className="danger subtle small" type="button" disabled={!!editing} onClick={() => { setMachines(items => items.filter(item => item.key !== vm.key)); setNetworks(items => items.map(n => ({ ...n, machines: n.machines.filter(id => id !== vm.key) }))); setFlags(items => items.map(f => f.machine === vm.key ? { ...f, machine: '', user_specific: false } : f)); }}>Remove machine</button>
                 </fieldset>)}
                 {!machines.length && <Empty title="No machines">Add machines from your artifact library.</Empty>}
               </Card>
@@ -221,7 +246,7 @@ export function CreateChallenge() {
                 className="secondary small"
                 type="button"
                 disabled={flags.length >= 20}
-                onClick={() => setFlags(items => [...items, { key: key(), flag: '', description: '', points: 100, user_specific: false, machine: '' }])}>＋ Add flag</button>}>
+                onClick={() => setFlags(items => [...items, { key: key(), order_index: Math.max(-1,...items.map((flag,index)=>flag.order_index??index))+1, flag: '', description: '', points: 100, user_specific: false, machine: '' }])}>＋ Add flag</button>}>
                 {flags.map((flag, index) => <fieldset className="repeat-row" key={flag.key}>
                   <legend>Flag {index + 1}
                   </legend>
@@ -299,12 +324,12 @@ export function CreateChallenge() {
                   <Stat label="Total points" value={flags.reduce((total, flag) => total + flag.points, 0)} />
                 </div>
                 <label className="check">
-                  <input type="checkbox" name="isActive" defaultChecked={truth(imported.isActive)} />Make available to students</label>
-                <p className="muted">Leave this unchecked to create an inactive exercise for review.</p>
+                  <input type="checkbox" disabled={!!editing} name="isActive" defaultChecked={truth(imported.isActive)} />Make available to students</label>
+                <p className="muted">{editing ? 'Configuration stays paused until you publish it from Edit.' : 'Leave this unchecked to create an inactive exercise for review.'}</p>
                 <button className="full" type="submit" disabled={action.busy}>
-                  {action.busy ? 'Creating the environment…' : 'Create challenge →'}
+                  {action.busy ? 'Saving…' : editing ? 'Save configuration' : 'Create challenge →'}
                 </button>
-                {action.busy && <p role="status">The server is creating templates. This can take several minutes; the request will not be retried automatically.</p>}
+                {action.busy && <p role="status">{editing ? 'Saving the configuration. The request will not be retried automatically.' : 'The server is creating templates. This can take several minutes; the request will not be retried automatically.'}</p>}
                 <Notice error={action.error} />
               </Card>
             </aside>
@@ -312,5 +337,6 @@ export function CreateChallenge() {
         </fieldset>
       </form>
     </ResourceState>
+    {editing > 0 && poolOpen && <PoolEditor identifier={editing} onClose={()=>setPoolOpen(false)} onSaved={resource.reload}/>}
   </>;
 }

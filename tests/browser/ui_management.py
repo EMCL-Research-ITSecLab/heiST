@@ -98,6 +98,38 @@ class ManagementBrowserTests(BrowserFixture):
         self.assertEqual(self.mutations[-1][0],'admin/pools/4')
         self.assertEqual(json.loads(self.mutations[-1][1]),{'size':2,'enabled':True,'expected_revision':0})
 
+    def test_paused_configuration_editor_sends_structured_identity_preserving_definition(self):
+        self.settled('/create-ctf?edit=4')
+        self.page.get_by_role('heading',name='Edit configuration',exact=True).wait_for()
+        machines=self.page.get_by_role('group',name='Machine 1',exact=True)
+        self.assertTrue(self.page.get_by_role('button',name='Add machine',exact=False).is_disabled())
+        self.assertTrue(machines.get_by_label('OVA artifact',exact=True).is_disabled())
+        machines.get_by_label('CPU cores',exact=True).fill('3')
+        machines.get_by_label('Memory (GiB)',exact=True).fill('4')
+        self.page.get_by_role('button',name='Add network',exact=False).click()
+        network=self.page.get_by_role('group',name='Network 2',exact=True)
+        network.get_by_label('Network name',exact=True).fill('internal')
+        network.get_by_label('Student accessible',exact=True).uncheck()
+        network.get_by_label('DMZ',exact=True).check()
+        network.get_by_label('directory',exact=True).check()
+        self.page.get_by_role('button',name='Save configuration',exact=True).click()
+        self.page.wait_for_url('**/manage-ctf')
+        endpoint,body,_=self.mutations[-1]
+        self.assertEqual(endpoint,'admin/challenges/4/configuration')
+        value=json.loads(body)
+        self.assertEqual(value['expected'],'f'*64)
+        definition=value['definition']
+        self.assertIsInstance(definition['vms'],list)
+        self.assertIsInstance(definition['subnets'],list)
+        self.assertIsInstance(definition['flags'],list)
+        self.assertIsInstance(definition['hints'],list)
+        self.assertEqual(definition['vms'][0]['id'],41)
+        self.assertEqual((definition['vms'][0]['cores'],definition['vms'][0]['ram_gb']),(3,4))
+        self.assertEqual(definition['flags'][0]['id'],401)
+        self.assertEqual(definition['subnets'][1],{'name':'internal','dmz':True,'accessible':False,'attached_vms':['directory']})
+        self.assertFalse(definition['isActive'])
+        self.assertNotIn('image',definition)
+
     def test_revision_inspection_keeps_flag_values_out_of_rendered_page(self):
         self.settled('/manage-ctf?exercise=4')
         self.page.get_by_role('button',name='Inspect revision',exact=True).click()

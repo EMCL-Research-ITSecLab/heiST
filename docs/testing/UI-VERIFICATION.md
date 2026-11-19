@@ -31,6 +31,13 @@ These checks catch specified regressions; they are not a complete accessibility
 audit or a guarantee that every design is attractive. Review the gallery at actual
 size, including long text, empty, loading, error and destructive-confirmation states.
 
+The administrator workflow suite also opens an existing paused exercise, keeps
+its machine/flag IDs and OVA selection fixed, changes CPU/RAM and topology, and
+asserts that the browser sends structured arrays plus the last observed
+fingerprint. Pool dialogs validate 0–10 copies and revisioned writes. These are
+UI/API contract checks; a real inactive launch remains required to prove that
+the edited resources and networks work on Proxmox.
+
 ## Screenshot gallery
 
 [Open the complete gallery](../../assets/screenshots/README.md): 68 full-page

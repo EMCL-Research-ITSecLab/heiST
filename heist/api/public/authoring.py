@@ -245,3 +245,15 @@ def clone_revision(identifier,revision):
         if len(machine.get('domain_names',[]))>1:raise ApiError('This legacy revision has multiple domains per VM and requires manual authoring',409)
     data={**data,'name':body().get('name'),'isActive':False}
     return create_definition(user,data,None)
+
+
+@blueprint.route('/admin/challenges/<identifier>/configuration',methods=['GET','PUT'])
+def configuration(identifier):
+    user=require_admin();value=owned_template(user,identifier)
+    arguments={'actor_id':user['id'],'template_id':value['id']}
+    if request.method=='GET':
+        result=internal().request('admin_configuration',arguments)
+        result['ovas']=[{**item,'filename':item['display_name']} for item in repository().call('get_user_available_disk_files',user['id'])]
+        return result
+    submitted=body()
+    return internal().request('admin_configuration_change',{**arguments,'definition':submitted.get('definition'),'expected':submitted.get('expected')})

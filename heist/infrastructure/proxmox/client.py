@@ -63,7 +63,7 @@ def clone_vm_api_call(machine_template, machine):
     target=make_api_call('GET',f'api2/json/nodes/{node}/qemu/{machine.id}/config').get('data')
     if not isinstance(target,dict) or target.get('tags')!=source.get('tags'):
         raise RuntimeError('Cloned VM identity is not confirmed')
-    make_api_call('PUT',f'api2/json/nodes/{node}/qemu/{machine.id}/config',{'tags':ownership_tags(machine.id,target.get('tags',''))})
+    make_api_call('PUT',f'api2/json/nodes/{node}/qemu/{machine.id}/config',{'tags':ownership_tags(machine.id,target.get('tags','')),'cores':machine_template.cores,'memory':machine_template.ram})
     require_vm_ownership(machine)
     return response
 

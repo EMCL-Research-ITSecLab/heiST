@@ -49,6 +49,21 @@ class Administration:
             values=[dict(row) for row in cursor.fetchall()]
         return {'events':values[:25],'has_more':len(values)>25,'page':page}
 
+    def exercise_definition(self,actor,template):
+        from .challenges.editing import load
+        return load(self,actor,template)
+
+    def update_exercise_definition(self,actor,template,value,expected,*,request_id=None):
+        from .challenges.editing import update
+        return update(self,actor,template,value,expected,request_id=request_id)
+
+    def pool_policy(self,actor,template):
+        with self.database(actor) as db,db.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute("SELECT c.id,c.name,c.is_active,c.ready_to_launch,c.marked_for_deletion,\n                COALESCE(p.enabled,FALSE) AS pool_override,COALESCE(p.size,6) AS pool_size,COALESCE(p.revision,0) AS pool_revision,\n                (SELECT count(*) FROM public.challenges i WHERE i.challenge_template_id=c.id AND i.lifecycle_state='READY' AND i.pre_assigned_user_id IS NULL) AS ready_pool,\n                (SELECT COALESCE(sum(ram_gb),0) FROM public.machine_templates m WHERE m.challenge_template_id=c.id) AS ram_per_instance\n                FROM public.challenge_templates c LEFT JOIN public.pool_overrides p ON p.challenge_template_id=c.id WHERE c.id=%s", (template,))
+            value=cursor.fetchone()
+            if not value:raise AdminError('Exercise not found',404)
+            return dict(value)
+
     def set_pool(self,actor,template,size,enabled,expected_revision,*,request_id=None):
         if type(size) is not int or not 0<=size<=10 or type(enabled) is not bool or type(expected_revision) is not int or expected_revision<0:
             raise AdminError('Choose a pool target between 0 and 10',400)
@@ -57,7 +72,7 @@ class Administration:
                 cursor.execute('SELECT is_active,ready_to_launch,marked_for_deletion FROM public.challenge_templates WHERE id=%s FOR UPDATE',(template,))
                 item=cursor.fetchone()
                 if not item:raise AdminError('Exercise not found',404)
-                if enabled and size>0 and (not item[0] or not item[1] or item[2]):raise AdminError('Publish an import-ready exercise before preparing a pool')
+                if enabled and size>0 and item[2]:raise AdminError('Restore the exercise before configuring a nonzero pool')
                 cursor.execute('SELECT revision FROM public.pool_overrides WHERE challenge_template_id=%s FOR UPDATE',(template,))
                 old=cursor.fetchone()
                 if (old[0] if old else 0)!=expected_revision:raise AdminError('Pool policy changed; refresh before saving')
@@ -68,7 +83,8 @@ class Administration:
                                   revision=pool_overrides.revision+1,updated_at=clock_timestamp(),updated_by=EXCLUDED.updated_by
                                   RETURNING revision''',(template,enabled,size,actor))
                 revision=cursor.fetchone()[0]
-            return {'template_id':template,'size':size,'enabled':enabled,'revision':revision,'application':'pending_pool_manager'}
+            return {'template_id':template,'size':size,'enabled':enabled,'revision':revision,'application':'pending_pool_manager' if item[0] and item[1] else 'waiting_for_publication'}
+        with self.database(actor):pass
         return self.journal.execute('pool',template,'admin_pool_override',{'actor':actor,'size':size,'enabled':enabled,'expected_revision':expected_revision},change,request_id=request_id)
 
     def job_history(self,actor,scope,identifier):

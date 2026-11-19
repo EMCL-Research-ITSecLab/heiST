@@ -84,6 +84,23 @@ not preserve OVA bytes or guest disks, and deleting an exercise removes its full
 configuration snapshots. The separate metadata audit retains deletion events.
 Back up the database and registered image library independently.
 
+### Editing an existing exercise
+
+Use **Manage challenges → Configuration** for machine resources, directory
+roles, networks, flags and hints. The server permits this only while the
+exercise is paused, not retired, and has no remaining assigned, provisioning or
+ready instances. Set its manual pool target to zero, wait for unused copies to
+drain and active labs to finish, then pause it. A fingerprint prevents saving
+over another administrator's change.
+
+Existing machine and flag identities are preserved. CPU, RAM, names, directory
+roles and network membership may change, but an edit cannot add or remove a VM
+or replace its OVA. Use **Clone as draft** when the machine/image set must
+change. Flags that have already been earned keep their verifier, points,
+student-specific setting and machine assignment. Resource edits are applied to
+new clones; existing instances are never rewritten. Publish only after a fresh
+inactive launch verifies boot, network topology, flag injection and grading.
+
 ## DNS in isolated exercises
 
 Guests use the DNS resolver on their own scenario link by default. Public DNS
@@ -148,12 +165,14 @@ configured guest allocations. Missing or impossible host measurements remain
 unavailable. The root filesystem is not a complete inventory of Proxmox storage
 pools. Configured vCPUs and RAM are not actual utilization measurements.
 
-Each exercise can use its existing forecasting policy or an explicit ready-copy
-target from 0 to 10. Saving a policy requires the last observed revision, so
-concurrent administrator changes cannot silently overwrite each other. Nonzero
-targets require a published, import-ready exercise. The pool manager applies
-targets asynchronously. Assigned instances remain unchanged. Displayed RAM
-estimates do not reserve capacity or guarantee immediate availability.
+Each exercise can use forecasting with a minimum of six ready copies or an
+explicit ready-copy target from 0 to 10. Saving a policy requires the last
+observed revision, so concurrent administrator changes cannot silently overwrite
+each other. A policy may be staged while an exercise is inactive or still being
+imported; preparation starts only after it is published and import-ready. The
+pool manager applies targets asynchronously. Assigned instances remain unchanged.
+Displayed RAM estimates do not reserve capacity or guarantee immediate
+availability. Use zero to drain unused copies before configuration work.
 
 ## Audit, privacy and maintenance
 

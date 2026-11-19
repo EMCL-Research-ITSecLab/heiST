@@ -7,9 +7,9 @@ from heist.config import DatabaseSettings
 
 
 class PoolConnectionRecoveryTests(unittest.TestCase):
-    def test_new_manager_keeps_one_implicit_warm_spare(self):
+    def test_new_manager_keeps_six_implicit_warm_spares(self):
         manager = PoolManager()
-        self.assertEqual(manager.minimal_pool_size, 1)
+        self.assertEqual(manager.minimal_pool_size, 6)
 
     def test_constructing_the_manager_does_not_keep_database_connections(self):
         with patch('heist.infrastructure.database.get_db_connection') as connect:

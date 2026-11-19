@@ -4,11 +4,13 @@ import { request } from '../../lib/api.ts';
 import { categories, difficulties, number, payload, row, rows, text, truth, type Row } from '../../lib/data.ts';
 import { Link, useRouter } from '../../lib/router.tsx';
 import { useAction, useResource } from '../../lib/state.tsx';
+import { PoolEditor } from './PoolEditor.tsx';
 import { ExerciseHistoryPanel } from './ExerciseHistoryPanel.tsx';
 export function ManageChallenges() {
   const router=useRouter(), selected=number(new URLSearchParams(router.location.split('?')[1]).get('exercise'));
   const resource = useResource('/api/admin/challenges', 30000), data = payload(resource.data), stats = row(data.stats), action = useAction();
   const [search, setSearch] = useState(''), [state, setState] = useState('all'), [editing, setEditing] = useState<Row | null>(null), [deleting, setDeleting] = useState<Row | null>(null), [force, setForce] = useState(false), [leader, setLeader] = useState<Row | null>(null);
+  const [poolId,setPoolId] = useState(0);
   const [category, setCategory] = useState('all'), [sort, setSort] = useState('name'), [page, setPage] = useState(1);
   const filtered = rows(data.challenges).filter(c => text(c.name).toLowerCase().includes(search.toLowerCase()) && (state === 'all' || (state === 'active' ? truth(c.is_active) && !truth(c.marked_for_deletion) : state === 'retired' ? truth(c.marked_for_deletion) : !truth(c.is_active))));
   const matching = filtered.filter(c => category === 'all' || text(c.category) === category)
@@ -86,6 +88,8 @@ export function ManageChallenges() {
                 <td>
                   <div className="table-actions">
                     <button className="secondary small" disabled={truth(c.marked_for_deletion)} onClick={() => setEditing(c)}>Edit</button>
+                    {!truth(c.marked_for_deletion) && <Link className="button secondary small" href={`/create-ctf?edit=${number(c.id)}`}>Configuration</Link>}
+                    <button className="secondary small" onClick={()=>setPoolId(number(c.id))}>Configure pool</button>
                     <button className="secondary small" onClick={() => setLeader(c)}>Leaderboard</button>
                     <button className="secondary small" onClick={()=>router.navigate('/manage-ctf?exercise='+number(c.id))}>History</button>
                     {truth(c.marked_for_deletion) ? <button className="secondary small" disabled={action.busy} onClick={() => void action.run(() => request('/api/admin/challenges/'+text(c.id)+'/restore', {method: 'POST', body: {}}), resource.reload)}>Restore</button> : <button className="danger subtle small" onClick={() => { setForce(false); setDeleting(c); }}>Retire</button>}
@@ -99,6 +103,7 @@ export function ManageChallenges() {
         <Pager page={currentPage} totalPages={totalPages} onPage={setPage} />
       </Card>
     </ResourceState>
+    {poolId>0&&<PoolEditor identifier={poolId} onClose={()=>setPoolId(0)} onSaved={resource.reload}/>}
     {selected>0&&<ExerciseHistoryPanel key={selected} identifier={selected} name={text(rows(data.challenges).find(item=>number(item.id)===selected)?.name,'Exercise #'+selected)} onClose={()=>router.navigate('/manage-ctf')}/>}
     {editing && <Card title={`Edit ${text(editing.name)}`} className="editor-panel">
       <form onSubmit={edit}>

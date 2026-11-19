@@ -1,14 +1,15 @@
 import { useState } from 'react';
-import { Badge, Card, Confirm, Field, Notice, ResourceState, Stat } from '../../components/ui.tsx';
+import { Badge, Card, Notice, ResourceState, Stat } from '../../components/ui.tsx';
 import { request } from '../../lib/api.ts';
 import { number, payload, row, rows, text, truth, type Row } from '../../lib/data.ts';
 import { Link } from '../../lib/router.tsx';
+import { PoolEditor } from './PoolEditor.tsx';
 import { useAction, useResource } from '../../lib/state.tsx';
 
 export function ManagementOverview({ view = 'overview' }: { view?: 'overview' | 'capacity' | 'data' }) {
   const resource = useResource('/api/admin/overview', 30000), data = payload(resource.data);
   const counts = row(data.counts), host = row(data.host), training = row(data.training);
-  const action=useAction(),[pool,setPool]=useState<Row|null>(null),[poolSize,setPoolSize]=useState(0),[manual,setManual]=useState(false);
+  const action=useAction(),[pool,setPool]=useState<Row|null>(null);
   const gib = (value: unknown) => (number(value) / 1024 ** 3).toFixed(1) + ' GiB';
   return <><Notice error={action.error} message={action.message}/><ResourceState {...resource}>
     {view === 'overview' && <>
@@ -42,7 +43,7 @@ export function ManagementOverview({ view = 'overview' }: { view?: 'overview' | 
         <div className="table-wrap"><table><thead><tr><th>Exercise</th><th>Ready copies</th><th>Policy</th><th>RAM per copy</th><th>Action</th></tr></thead>
           <tbody>{rows(data.exercises).map(exercise=><tr key={number(exercise.id)}><td>{text(exercise.name)}</td><td>{number(exercise.ready_pool)}</td>
             <td>{truth(exercise.pool_override)?'Manual: '+number(exercise.pool_size):'Forecast'}</td><td>{number(exercise.ram_per_instance)} GiB</td>
-            <td><button className="secondary small" onClick={()=>{action.clear();setPool(exercise);setPoolSize(number(exercise.pool_size));setManual(truth(exercise.pool_override));}}>Configure pool</button></td></tr>)}</tbody></table></div>
+            <td><button className="secondary small" onClick={()=>{action.clear();setPool(exercise);}}>Configure pool</button></td></tr>)}</tbody></table></div>
       </Card>
     </>}
     {view === 'data' && <>
@@ -57,15 +58,7 @@ export function ManagementOverview({ view = 'overview' }: { view?: 'overview' | 
         <p className="muted">Account changes recheck administrator authority and are journalled. Student access to administrator routes remains denied.</p>
       </Card>
     </>}
-  </ResourceState>{pool&&<Confirm title="Configure ready-instance pool" confirm="Save pool policy" busy={action.busy}
-    disabled={!Number.isInteger(poolSize)||poolSize<0||poolSize>10} onClose={()=>setPool(null)} onConfirm={()=>void action.run(()=>request('/api/admin/pools/'+number(pool.id),
-      {method:'POST',body:{size:poolSize,enabled:manual,expected_revision:number(pool.pool_revision)}}),()=>{setPool(null);resource.reload();})}>
-    <Notice error={action.error}/><p>{text(pool.name)}</p>
-    <label className="check"><input type="checkbox" checked={manual} onChange={event=>setManual(event.target.checked)}/>Use a manual pool target</label>
-    <Field label="Ready copies" type="number" min={0} max={10} value={poolSize} disabled={!manual} onChange={event=>setPoolSize(Number(event.target.value))}/>
-    <p>{manual?`${poolSize} copies require about ${poolSize*number(pool.ram_per_instance)} GiB of configured guest RAM.`:'Resume the existing forecast policy.'}</p>
-    <p className="muted">Only published, import-ready exercises can prepare a nonzero manual pool. The target does not guarantee host capacity or immediate availability.</p>
-  </Confirm>}</>;
+  </ResourceState>{pool&&<PoolEditor identifier={number(pool.id)} onClose={()=>setPool(null)} onSaved={resource.reload}/>}</>;
 }
 
 function AttentionPanel() {

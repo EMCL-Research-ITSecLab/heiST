@@ -80,7 +80,7 @@ class PoolManager:
     PoolManager class to manage the hot pool of challenges.
     """
 
-    def __init__(self, minimal_pool_size=1, maximal_pool_size=10, check_interval_seconds=10):
+    def __init__(self, minimal_pool_size=6, maximal_pool_size=10, check_interval_seconds=10):
         print("[POOL] Initializing PoolManager")
 
         self.running_warmups = {}     # thread_id -> challenge_template_id
@@ -404,9 +404,9 @@ if __name__ == "__main__":
 
     print("[MAIN] Monitoring machine ready, starting PoolManager")
 
-    # Keep one READY spare for every active exercise. The administration UI
-    # distinguishes this intentional warm spare from a student reservation.
-    pool_manager = PoolManager(minimal_pool_size=1, maximal_pool_size=10, check_interval_seconds=5)
+    # Keep six READY spares for every active exercise unless a revisioned
+    # per-exercise override selects a different target.
+    pool_manager = PoolManager(minimal_pool_size=6, maximal_pool_size=10, check_interval_seconds=5)
     pool_manager.start()
 
     print("[MAIN] PoolManager started, entering idle loop")

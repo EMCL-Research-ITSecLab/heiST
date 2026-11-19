@@ -115,7 +115,7 @@ class LayoutTests(BrowserFixture):
         for theme in ('light', 'dark'):
             self.page.evaluate('(theme) => document.documentElement.dataset.theme = theme', theme)
             self.page.evaluate('() => Promise.all(document.getAnimations().map(animation => animation.finished))')
-            failures = self.page.evaluate("""() => {
+            failures = self.page.evaluate(r"""() => {
               const rgb = value => value.match(/[\d.]+/g).map(Number);
               const luminance = value => rgb(value).slice(0, 3).map(n => {
                 n /= 255; return n <= .04045 ? n / 12.92 : ((n + .055) / 1.055) ** 2.4;

@@ -16,13 +16,15 @@ The [management runbook](../administration/MANAGEMENT.md) describes the operatio
 contracts. Portable tests cover current-role checks, server-derived scope,
 assignment fingerprints, target membership, durable enqueue/cancel/reconcile,
 uncertain outcomes, restart recovery, pool revision conflicts, immutable exercise
-history and unavailable image identities. Tests use real disposable PostgreSQL
-for database functions, transactions and privilege boundaries.
+history, editable paused topology, preserved machine/earned-flag identities,
+clone CPU/RAM application and unavailable image identities. Tests use real
+disposable PostgreSQL for database functions, transactions and privilege
+boundaries.
 
 `tests.browser.ui_management` exercises the built React UI with synthetic HTTP
 fixtures: VM preview/queue acknowledgement, blocked confirmation, cancellation,
-typed reconciliation, bounded pool policy, revision inspection and unknown
-maintenance evidence. Run it together with smoke/layout tests using
+typed reconciliation, staged bounded pool policy, structured configuration edits,
+revision inspection and unknown maintenance evidence. Run it together with smoke/layout tests using
 `make test-ui-browser` or the source-bound `tools.verification` browser suite.
 These fixtures do not validate real VM effects.
 

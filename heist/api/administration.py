@@ -46,6 +46,19 @@ def blueprint(factory):
     @routes.get('/admin/maintenance')
     def maintenance():return run(lambda service,data:service.maintenance(identifier(data.get('actor_id'))))
 
+    @routes.get('/admin/pools/details')
+    def pool_details():
+        return run(lambda service,data:service.pool_policy(identifier(data.get('actor_id')),identifier(data.get('template_id'))))
+
+    @routes.get('/admin/challenges/configuration')
+    def configuration():
+        return run(lambda service,data:service.exercise_definition(identifier(data.get('actor_id')),identifier(data.get('template_id'))))
+
+    @routes.post('/admin/challenges/configuration')
+    def change_configuration():
+        return run(lambda service,data:service.update_exercise_definition(identifier(data.get('actor_id')),identifier(data.get('template_id')),
+            data.get('definition'),fingerprint(data),request_id=Journal.request_id(request.headers.get('Idempotency-Key'))))
+
     @routes.post('/admin/pools/manage')
     def pool():
         return run(lambda service,data:service.set_pool(identifier(data.get('actor_id')),identifier(data.get('template_id')),data.get('size'),data.get('enabled'),

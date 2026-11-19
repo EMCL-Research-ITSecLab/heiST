@@ -11,6 +11,9 @@ import requests
 from .errors import ApiError
 
 OPERATIONS = {
+    'admin_pool_details':('GET','/admin/pools/details',15),
+    'admin_configuration':('GET','/admin/challenges/configuration',15),
+    'admin_configuration_change':('POST','/admin/challenges/configuration',30),
     'admin_overview':('GET','/admin/overview',15),
     'admin_audit':('GET','/admin/audit',15),
     'admin_maintenance':('GET','/admin/maintenance',15),

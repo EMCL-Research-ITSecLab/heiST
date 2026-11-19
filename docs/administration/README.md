@@ -113,6 +113,14 @@ The challenge editor includes a live SVG network preview and a textual connectio
 list. It updates after YAML import, edits, attachment changes and removals; DMZ
 and student-accessible networks are labelled. No graphing library is required.
 
+For an existing exercise, **Manage challenges → Configuration** opens the same
+topology editor. Drain its pool, finish or remove all instances, and pause it
+before saving. Machine and flag identities remain fixed; CPU/RAM, directory
+roles, networks, hints and unearned flag metadata can be updated. OVA replacement
+or VM membership changes require **Clone as draft**. Configure the exercise's
+ready-instance pool separately; policies can be staged before publication and
+take effect only when the exercise is published and import-ready.
+
 To refresh the bundled pages, download verified HTTPS snapshots as `impressum.html`
 and `privacy-policy.html` and `terms-of-service.html`, then run
 `python tools/maintenance/import_legal_pages.py --source-directory DIRECTORY`.

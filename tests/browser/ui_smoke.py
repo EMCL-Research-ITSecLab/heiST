@@ -193,6 +193,7 @@ class BrowserTests(BrowserFixture):
     def test_challenge_editor_submits_structured_existing_api_contract(self):
         self.role = 'admin'
         self.visit('/create-ctf')
+        self.assertFalse(self.page.locator('main').evaluate("el => [...el.childNodes].some(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim() === '0')"))
         self.page.get_by_label('Challenge name').fill('Fixture investigation')
         self.page.get_by_label('Description', exact=True).fill('A disposable browser fixture')
         self.page.get_by_role('button', name='Add machine').click()

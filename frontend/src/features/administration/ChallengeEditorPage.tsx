@@ -108,7 +108,7 @@ export function CreateChallenge() {
       action={<Link href="/manage-ctf">← Back to challenges</Link>} />
     <Notice error={action.error} message={action.message} />
     <ResourceState {...resource}>
-      {editing && <Card title="Configuration readiness">
+      {editing > 0 && <Card title="Configuration readiness">
         <p>{number(configuration.instances)} instances use this exercise. Configuration changes require a paused exercise with no remaining instances.</p>
         <p className="muted">Set the pool to zero and wait for unused copies to drain and assigned labs to finish. Then pause the exercise. Machine images and earned flag identities are preserved.</p>
         <div className="table-actions"><button className="secondary" onClick={()=>setPoolOpen(true)}>Configure pool</button>

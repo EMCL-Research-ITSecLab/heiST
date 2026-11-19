@@ -48,6 +48,21 @@ WAZUH_ENROLLMENT_PASSWORD = os.getenv("WAZUH_ENROLLMENT_PASSWORD")
 
 DNSMASQ_INSTANCES_DIR = "/etc/dnsmasq-instances/"
 
+WINDOWS_LOGON_PRIVACY_COMMAND = (
+    "$policy='HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System'; "
+    "New-Item -Path $policy -Force | Out-Null; "
+    "New-ItemProperty -Path $policy -Name DontDisplayLastUserName -PropertyType DWord -Value 1 -Force | Out-Null; "
+    "$logon='HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Authentication\\LogonUI'; "
+    "if (Test-Path $logon) { "
+    "Set-ItemProperty -Path $logon -Name LastLoggedOnUser -Value ''; "
+    "Set-ItemProperty -Path $logon -Name LastLoggedOnSAMUser -Value '' }; "
+    "$winlogon='HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon'; "
+    "if (Test-Path $winlogon) { "
+    "Remove-ItemProperty -Path $winlogon -Name DefaultUserName -ErrorAction SilentlyContinue; "
+    "Remove-ItemProperty -Path $winlogon -Name DefaultDomainName -ErrorAction SilentlyContinue; "
+    "Set-ItemProperty -Path $winlogon -Name AutoAdminLogon -Value '0' -ErrorAction SilentlyContinue }"
+)
+
 
 def warmup_challenge(pre_assigned_user_id, challenge_template_id, vpn_monitoring_device, dmz_monitoring_device):
     with template_guard(challenge_template_id, shared=True):
@@ -458,6 +473,8 @@ def configure_ipv6_and_wazuh_windows(machine, manager_ip="fd12:3456:789a:1::101"
     try:
         with GuestAgent(vmid=machine.id, windows=True) as ga:
 
+            hide_windows_last_logged_on_user(ga, machine.id)
+
             result = ga.exec(
                 ["powershell.exe", "-ExecutionPolicy", "Bypass", "-Command", ipv6_cmd],
                 capture_output=True,
@@ -500,6 +517,21 @@ def configure_ipv6_and_wazuh_windows(machine, manager_ip="fd12:3456:789a:1::101"
         None,
         VM_ID=machine.id
     )
+
+
+def hide_windows_last_logged_on_user(ga, machine_id):
+    """Never expose or preselect a base-image administrator at challenge login."""
+    result = ga.exec(
+        ["powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
+         "-Command", WINDOWS_LOGON_PRIVACY_COMMAND],
+        capture_output=True,
+        timeout=30,
+    )
+    if result.exit_code != 0:
+        raise RuntimeError(
+            f"LogonUI privacy configuration failed on Windows VM {machine_id} "
+            f"(exit={result.exit_code}): {result.stderr.strip()!r}"
+        )
 
 
 def generate_mac_address(machine_id, local_network_id, local_connection_id):

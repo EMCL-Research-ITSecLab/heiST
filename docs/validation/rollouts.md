@@ -2,6 +2,28 @@
 
 ## Current acceptance scope
 
+On 2026-11-19 a backend-only launch correction `c1cf811` repaired Exercise 1
+provisioning. A newer pool warmup override called the older DNS helper without
+its required argument. The helper now accepts the configured, normally empty
+fallback. The QGA client synchronizes a newly connected stream and correlates
+replies to request IDs instead of accepting stale replies as execution results.
+Initial synchronization uses the existing cold-boot wait allowance; ambiguous
+mutating commands are not replayed.
+
+All 663 strict backend tests passed with zero skips, using disposable PostgreSQL
+with password authentication and opted-in network isolation tests. Production
+acceptance verified cold preparation to READY, an ordinary-user launch with a
+3599-second countdown, a replacement READY spare while that lab remained active,
+and removal of the test account and instance. All three assigned monitoring agents
+were active; directory/archive DNS resolved in approximately 4 ms combined.
+Existing student accounts, grades, flag definitions and the unrelated warm spare
+were verified unchanged. The five bounded delivery proofs were renewed for this
+backend revision. All 93 monitoring checks had no failures or unknown states;
+Proxmox storage retained a capacity warning at 89.6% data usage. The browser
+application stayed at `8568026`; no schema or credential changes were made.
+Private deployment checkpoints and acceptance receipts are retained separately.
+This code repair does not certify full-platform upgrade/rollback or fresh installs.
+
 On 2026-11-16 the five delivery checks became unknown because their 24-hour
 proofs expired. Repeating all five bounded positive/negative/recovery probes
 passed and renewed the proofs. A separate off-host systemd service/timer now

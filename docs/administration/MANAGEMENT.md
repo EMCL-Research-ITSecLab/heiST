@@ -108,6 +108,39 @@ and renew the appropriate lease or apply a reversible per-link resolver repair.
 Exclude the dedicated monitoring NIC. Do not reset an exercise merely to repair
 DNS, and do not replace dynamic addresses with static template addresses.
 
+## Investigating launches and pool preparation
+
+Check both workers when launches fail or the warm pool stays empty:
+
+```sh
+systemctl status backend.service pool_manager.service
+journalctl -u backend.service -u pool_manager.service --since '15 minutes ago'
+systemctl show backend.service pool_manager.service -p ExecStart -p DropInPaths -p BindReadOnlyPaths
+```
+
+The Git revision alone does not describe a service with versioned entry points or
+read-only source mounts. Check that those scripts and their imported helpers come
+from compatible revisions. In particular, the isolated DNS helper accepts an
+omitted fallback argument and reads the explicit, normally empty
+`CHALLENGE_DNS_FALLBACK` setting. A mismatched signature stops every preparation
+before guest configuration.
+
+Temporarily disable the affected exercise's launch readiness before investigating
+a repeated failure. Preserve assigned instances. Let active Proxmox operations
+and cleanup finish before restarting the pool; interrupted `PROVISIONING` rows
+require reconciliation with the actual VMs, networks and operation journal.
+Never mark them ready or delete database rows just to silence recovery checks.
+
+Guest-agent sockets can appear before the guest agent starts. The client uses
+its boot-wait allowance for initial synchronization, discards stale channel data,
+and matches subsequent responses to request IDs. A missing execution PID is an
+error, not permission to execute the command again. Only observational requests
+may reconnect and retry after an ambiguous response.
+
+After a repair, verify an actual ordinary-user launch, its countdown, a replacement
+warm spare while that lab remains active, and cleanup of the operator's test
+account and instance. An active worker service alone does not prove this path.
+
 ## Capacity and pool policy
 
 **Capacity** distinguishes measured host CPU, RAM and root-filesystem usage from

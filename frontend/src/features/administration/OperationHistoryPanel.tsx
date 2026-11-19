@@ -8,7 +8,7 @@ import { Link } from '../../lib/router.tsx';
 export function OperationHistoryPanel({ scope, identifier }: { scope: string; identifier: number }) {
   const resource = useResource('/api/admin/jobs/' + encodeURIComponent(scope) + '/' + identifier, 10000);
   const data = payload(resource.data);
-  const action=useAction(),[pending,setPending]=useState<{id:string;kind:'cancel'|'resolve'}|null>(null);
+  const action=useAction(),[pending,setPending]=useState<{id:string;kind:'cancel'|'resolve'|'reconcile'}|null>(null);
   const [reason,setReason]=useState(''),[confirmation,setConfirmation]=useState('');
   return <><Card title={`${scope} ${identifier} · operation history`} action={<button className="secondary small" onClick={resource.reload}>Refresh history</button>}>
     <Notice error={action.error} message={action.message}/>
@@ -28,14 +28,14 @@ export function OperationHistoryPanel({ scope, identifier }: { scope: string; id
         </dl>
         <ol>{rows(operation.events).map((event, index) => <li key={index}>{timestamp(event.at)} · {text(event.stage).replaceAll('_', ' ')}</li>)}</ol>
         {operation.state === 'NEEDS_REVIEW' && <p className="notice">Check the actual resources before reconciliation. Retrying an uncertain operation can repeat infrastructure changes.</p>}
-        {truth(operation.managed_queue)&&['QUEUED','NEEDS_REVIEW'].includes(text(operation.state))&&<button className="secondary small" onClick={()=>{
-          action.clear();setReason('');setConfirmation('');setPending({id:text(operation.id),kind:operation.state==='QUEUED'?'cancel':'resolve'});
+        {((truth(operation.managed_queue)&&operation.state==='QUEUED') || (operation.state==='NEEDS_REVIEW' && (truth(operation.managed_queue)||row(data.current).id===operation.id)))&&<button className="secondary small" onClick={()=>{
+          action.clear();setReason('');setConfirmation('');setPending({id:text(operation.id),kind:operation.state==='QUEUED'?'cancel':truth(operation.managed_queue)?'resolve':'reconcile'});
         }}>{operation.state==='QUEUED'?'Cancel queued operation':'Record reconciliation'}</button>}
       </details>) : <p>No operation history recorded.</p>}
     </ResourceState>
   </Card>{pending&&<Confirm title={pending.kind==='cancel'?'Cancel queued operation':'Record reconciliation'} confirm={pending.kind==='cancel'?'Cancel operation':'Mark reconciled'} busy={action.busy}
-    disabled={pending.kind==='resolve'&&(reason.trim().length<10||confirmation!==pending.id)} onClose={()=>setPending(null)} onConfirm={()=>void action.run(()=>request('/api/admin/jobs/'+pending.id+'/'+pending.kind,
-      {method:'POST',body:pending.kind==='resolve'?{reason,confirmation}:{}}),()=>{setPending(null);resource.reload();})}>
+    disabled={pending.kind!=='cancel'&&(reason.trim().length<10||confirmation!==pending.id)} onClose={()=>setPending(null)} onConfirm={()=>void action.run(()=>request(pending.kind==='reconcile'?`/api/admin/jobs/${scope}/${identifier}/reconcile`:'/api/admin/jobs/'+pending.id+'/'+pending.kind,
+      {method:'POST',body:pending.kind!=='cancel'?{reason,confirmation,job_id:pending.id}:{}}),()=>{setPending(null);resource.reload();})}>
     <Notice error={action.error}/><p><code>{pending.id}</code></p>
     {pending.kind==='cancel'?<p>Cancel only if this operation has not started. The server rejects cancellation after execution begins.</p>:<>
       <p>Independently inspect assignment, VM, network and monitoring state first. This records your recovery checks and permits future operations; it does not repeat or undo the failed action.</p>

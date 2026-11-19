@@ -21,6 +21,7 @@ OPERATIONS = {
     'admin_job_history':('GET','/admin/jobs/history',15),
     'admin_job_cancel':('POST','/admin/jobs/cancel',15),
     'admin_job_resolve':('POST','/admin/jobs/resolve',15),
+    'admin_job_reconcile':('POST','/admin/jobs/reconcile',15),
     'admin_preview':('GET','/admin/instances/preview',60),
     'admin_vm_change':('POST','/admin/instances/machines/manage',100),
     'admin_activity':('GET','/admin/monitoring/activity',15),

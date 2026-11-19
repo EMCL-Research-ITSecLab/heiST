@@ -115,7 +115,7 @@ class Journal:
                         value['state'] = 'NEEDS_REVIEW'
             except BlockingIOError:
                 pass
-        return {key: value[key] for key in ('id', 'scope', 'resource', 'action', 'state', 'started','actor','stage','finished') if key in value}
+        return {key: value[key] for key in ('id', 'scope', 'resource', 'action', 'state', 'started','actor','stage','finished','resolved_by','resolved_at') if key in value}
 
     def history(self,scope,identifier,limit=50):
         """Bounded metadata only: results, request bodies and error logs stay private."""
@@ -134,14 +134,14 @@ class Journal:
             try:
                 value=json.loads(path.read_bytes())
                 if value.get('scope')!=scope or value.get('resource')!=identifier or value.get('id')!=path.stem:continue
-                item={key:value[key] for key in ('id','scope','resource','action','state','started','actor','stage','finished') if key in value}
+                item={key:value[key] for key in ('id','scope','resource','action','state','started','actor','stage','finished','resolved_by','resolved_at') if key in value}
                 if current and current.get('id')==item['id']:item.update(current)
                 item['events']=[{'stage':e['stage'],'at':e['at']} for e in value.get('events',[])[:64]]
                 records.append(item)
             except (OSError,ValueError,TypeError,KeyError):continue
         return {'operations':records,'truncated':len(paths)>limit,'current':current}
 
-    def resolve(self, scope, identifier, operation_id, reason):
+    def resolve(self, scope, identifier, operation_id, reason, *, actor=None):
         """Local maintenance action after independent resource reconciliation."""
         self.request_id(operation_id)
         if not isinstance(reason, str) or not 10 <= len(reason.strip()) <= 500:
@@ -153,5 +153,6 @@ class Journal:
             if value['id'] != operation_id or value['state'] not in ('RUNNING', 'NEEDS_REVIEW'):
                 raise RecoveryRequired('The current unresolved operation does not match')
             value.update(state='RESOLVED', resolution=reason.strip(), resolved_at=datetime.now(timezone.utc).isoformat())
+            if actor is not None:value['resolved_by']=actor
             write_json(directory/(operation_id+'.json'), value)
             write_json(current, value)

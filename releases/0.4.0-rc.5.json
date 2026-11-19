@@ -85,6 +85,11 @@
       "id": "0015_pool_overrides",
       "path": "releases/migrations/0015_pool_overrides.sql",
       "sha256": "f410f926b82945dd4ac2728c7320d280d0ee41aa06a87bbe80a8487872c0bb62"
+    },
+    {
+      "id": "0016_administrator_grading",
+      "path": "releases/migrations/0016_administrator_grading.sql",
+      "sha256": "1ac81ef69ca612cb72345997d7f46f36e62ed986368eb3efa85e2bdc41e0c4b7"
     }
   ],
   "protected_tables": [

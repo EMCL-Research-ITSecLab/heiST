@@ -70,6 +70,7 @@ class WebDatabaseTests(unittest.TestCase):
                     cursor.execute((root/'releases/migrations/0013_administrator_requests.sql').read_text())
                     cursor.execute((root/'releases/migrations/0014_exercise_revisions.sql').read_text())
                     cursor.execute((root/'releases/migrations/0015_pool_overrides.sql').read_text())
+                    cursor.execute((root/'releases/migrations/0016_administrator_grading.sql').read_text())
                     cursor.execute("INSERT INTO public.vpn_static_ips(vpn_static_ip) SELECT ('10.64.0.'||n)::inet FROM generate_series(2,250) n ON CONFLICT DO NOTHING")
             cls.api_settings = {**cls.settings, 'user': cls.role, 'password': cls.password}
         except BaseException:

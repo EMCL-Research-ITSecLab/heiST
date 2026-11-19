@@ -9,11 +9,12 @@ import { useResource } from '../../lib/state.tsx';
 import { ManagementOverview } from './ManagementOverview.tsx';
 import { AdministratorAuditPanel } from './AdministratorAuditPanel.tsx';
 import { MaintenancePanel } from './MaintenancePanel.tsx';
+import { GradingPanel } from './GradingPanel.tsx';
 export function Operations() {
   const sorting = useTableSort<Row>({name: c => text(c.name), availability: c => truth(c.marked_for_deletion) ? 'Retiring' : truth(c.is_active) ? 'Available' : 'Inactive', active: c => number(c.active_deployments), total: c => number(c.total_deployments), solves: c => number(c.solve_count)}, 'name');
   const router=useRouter(), query=new URLSearchParams(router.location.split('?')[1]);
   const selected=query.get('tab')??'overview';
-  const tab=['overview','health','jobs','capacity','data','audit','maintenance'].includes(selected)?selected:'overview';
+  const tab=['overview','health','jobs','capacity','data','grading','audit','maintenance'].includes(selected)?selected:'overview';
   const resource = useResource('/api/admin/challenges', 15000), data = payload(resource.data), stats = row(data.stats), challenges = rows(data.challenges);
   return <>
     <PageTitle
@@ -21,7 +22,7 @@ export function Operations() {
       title="Platform status"
       description="Availability and deployment activity for the exercises you manage."
       action={<button className="secondary" onClick={resource.reload}>Refresh ↻</button>} />
-    <nav aria-label="Management views" className="button-row">{['overview','health','jobs','capacity','data','audit','maintenance'].map(name=><Link key={name} className={'button '+(tab===name?'':'secondary')}
+    <nav aria-label="Management views" className="button-row">{['overview','health','jobs','capacity','data','grading','audit','maintenance'].map(name=><Link key={name} className={'button '+(tab===name?'':'secondary')}
       aria-current={tab===name?'page':undefined} href={'/operations?tab='+name}>{name.charAt(0).toUpperCase()+name.slice(1)}</Link>)}</nav>
     {tab==='overview'&&<ManagementOverview/>}
     {tab==='health'&&<PlatformStatusPanel/>}
@@ -30,6 +31,7 @@ export function Operations() {
     {tab==='data'&&<ManagementOverview view="data"/>}
     {tab==='audit'&&<AdministratorAuditPanel/>}
     {tab==='maintenance'&&<MaintenancePanel/>}
+    {tab==='grading'&&<GradingPanel/>}
     {tab==='overview'&&<ResourceState {...resource}>
       <div className="stats-grid">
         <Stat label="Managed challenges" value={stats.total_challenges ?? challenges.length} />

@@ -24,6 +24,8 @@ Full-page captures in both themes, using synthetic records. Click a file to insp
 | Data Governance | [Light](data_governance_light.png) | [Dark](data_governance_dark.png) |
 | Administrator Audit | [Light](administrator_audit_light.png) | [Dark](administrator_audit_dark.png) |
 | Maintenance | [Light](maintenance_light.png) | [Dark](maintenance_dark.png) |
+| Grading | [Light](grading_light.png) | [Dark](grading_dark.png) |
+| Edit Challenge | [Light](edit_challenge_light.png) | [Dark](edit_challenge_dark.png) |
 | Exercise History | [Light](exercise_history_light.png) | [Dark](exercise_history_dark.png) |
 | Monitoring Activity | [Light](monitoring_activity_light.png) | [Dark](monitoring_activity_dark.png) |
 | Users | [Light](users_light.png) | [Dark](users_dark.png) |

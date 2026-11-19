@@ -50,6 +50,18 @@ class PlatformAdministrationTests(unittest.TestCase):
         if changed:self.sql("UPDATE challenges SET lifecycle_state='EXPIRED',pre_assigned_user_id=NULL WHERE id=%s",(expected_challenge_id,))
         return bool(changed)
 
+    def test_native_operation_reconciliation_checks_role_state_and_receipt(self):
+        operation='d'*32
+        with self.assertRaises(RuntimeError):
+            self.journal.execute('user',self.user_id,'launch_challenge',{},lambda: (_ for _ in ()).throw(RuntimeError('uncertain')),request_id=operation)
+        reason='Assignment, VM and network state independently inspected'
+        with self.assertRaises(AdminError):self.service.reconcile_operation(self.user_id,'user',self.user_id,operation,reason,operation)
+        with self.assertRaises(AdminError):self.service.reconcile_operation(self.admin,'user',self.user_id,operation,reason,'e'*32)
+        result=self.service.reconcile_operation(self.admin,'user',self.user_id,operation,reason,operation)
+        self.assertEqual(result['state'],'RESOLVED')
+        self.assertEqual(self.journal.inspect('user',self.user_id)['resolved_by'],self.admin)
+        with self.assertRaises(AdminError):self.service.reconcile_operation(self.admin,'user',self.user_id,operation,reason,operation)
+
     def test_users_are_admin_only_search_is_literal_and_secrets_are_excluded(self):
         with self.assertRaises(AdminError) as rejected:self.service.users(self.user_id)
         self.assertEqual(rejected.exception.status,403)

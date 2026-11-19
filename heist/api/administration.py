@@ -77,6 +77,11 @@ def blueprint(factory):
         from heist.platform.jobs.administrator import AdministratorQueue
         return run(lambda service,data:AdministratorQueue(service).cancel(identifier(data.get('actor_id')),data.get('job_id')))
 
+    @routes.post('/admin/jobs/reconcile')
+    def reconcile():
+        return run(lambda service,data:service.reconcile_operation(identifier(data.get('actor_id')),data.get('scope'),
+            identifier(data.get('resource')),data.get('job_id'),data.get('reason'),data.get('confirmation')))
+
     @routes.post('/admin/jobs/resolve')
     def resolve_job():
         from heist.platform.jobs.administrator import AdministratorQueue

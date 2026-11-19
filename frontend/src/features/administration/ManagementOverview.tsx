@@ -75,7 +75,7 @@ function AttentionPanel() {
         {!failed.length && <p>No failed checks in the current monitoring receipt.</p>}
         {uncertain.length > 0 && <p>{uncertain.length} checks need verification. <Link href="/operations?tab=health">Review evidence</Link></p>}
       </>}
-      {archive.status !== 'success' && <p className="notice">Archive delivery: {text(archive.status, 'unverified')}. <Link href="/operations?tab=health">Inspect backup and archive status</Link></p>}
+      {archive.status !== 'success' && <p className="notice">{archive.status==='running'?'Archive transfer in progress. Delivery is confirmed when the job finishes.':'Archive delivery: '+text(archive.status, 'unverified')+'.'} <Link href="/operations?tab=health">Inspect backup and archive status</Link></p>}
     </ResourceState>
     <ResourceState {...jobs}>{rows(payload(jobs.data).jobs).filter(job=>job.state==='NEEDS_REVIEW').map(job => <p key={text(job.id)} className="notice">Operation {text(job.action)} requires reconciliation. <Link href={`/operations?tab=jobs&scope=${text(job.scope)}&resource=${number(job.resource)}`}>Inspect {text(job.scope)} {number(job.resource)}</Link></p>)}</ResourceState>
   </Card>;

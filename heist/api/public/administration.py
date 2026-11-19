@@ -208,6 +208,18 @@ def resolve_job(identifier):
         'confirmation':text(data.get('confirmation'),name='Operation ID',minimum=32,maximum=32)})
 
 
+@blueprint.post('/admin/jobs/<scope>/<resource>/reconcile')
+def reconcile(scope,resource):
+    actor=require_admin();rate_limit('admin-job-resolve',str(actor['id']),10)
+    data=body()
+    return internal().request('admin_job_reconcile',{'actor_id':actor['id'],
+        'scope':choice(scope,('user','template','pool','artifact','instance'),'operation scope'),
+        'resource':positive_id(resource,'resource identifier'),
+        'job_id':text(data.get('job_id'),name='Operation ID',minimum=32,maximum=32),
+        'reason':text(data.get('reason'),name='Recovery checks',minimum=10,maximum=500),
+        'confirmation':text(data.get('confirmation'),name='Operation ID',minimum=32,maximum=32)})
+
+
 @blueprint.get('/admin/pools/<identifier>')
 def pool_details(identifier):
     actor=require_admin()

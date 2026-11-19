@@ -100,6 +100,17 @@ class Administration:
         records=sorted(merged.values(),key=lambda item:item.get('started',''),reverse=True)
         return {'operations':records[:50],'truncated':history['truncated'] or len(records)>50,'current':history.get('current')}
 
+    def reconcile_operation(self,actor,scope,identifier,operation_id,reason,confirmation):
+        if confirmation!=operation_id or not isinstance(reason,str) or not 10<=len(reason.strip())<=500:
+            raise AdminError('Record recovery checks and type the operation ID',400)
+        self.journal.request_id(operation_id)
+        with self.database(actor):
+            current=self.operation(scope,identifier)
+            if not current or current.get('id')!=operation_id or current.get('state')!='NEEDS_REVIEW':
+                raise AdminError('Only the current operation needing review can be reconciled')
+            self.journal.resolve(scope,identifier,operation_id,reason.strip(),actor=actor)
+        return {'job_id':operation_id,'state':'RESOLVED'}
+
     @contextmanager
     def database(self, actor):
         db = self.connect()

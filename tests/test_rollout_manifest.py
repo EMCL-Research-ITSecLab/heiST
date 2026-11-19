@@ -191,7 +191,7 @@ class PublishedBrowserUpdateContractTests(unittest.TestCase):
         current=json.loads((root/'releases/0.4.0-rc.5.json').read_text())
         self.assertEqual(current['migrations'][:len(previous['migrations'])],previous['migrations'])
         self.assertEqual([item['id'] for item in current['migrations'][len(previous['migrations']):]],
-                         ['0013_administrator_requests','0014_exercise_revisions','0015_pool_overrides'])
+                         ['0013_administrator_requests','0014_exercise_revisions','0015_pool_overrides','0016_administrator_grading'])
         self.assertTrue(set(previous['supported_from'])<=set(current['supported_from']))
         for migration in current['migrations']:
             self.assertEqual(hashlib.sha256((root/migration['path']).read_bytes()).hexdigest(),migration['sha256'])

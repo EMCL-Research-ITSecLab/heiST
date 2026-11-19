@@ -81,7 +81,7 @@ def award_badges(user_id, template):
     return result
 
 
-def submit_flag(user, template, submitted):
+def submit_flag(user, template, submitted, *, administrator=None, reason=None):
     flag = text(submitted, name='Flag', minimum=1, maximum=4096).strip()
     if not flag:
         raise ApiError('Enter a flag')
@@ -111,6 +111,8 @@ def submit_flag(user, template, submitted):
             else:
                 repo.call('create_new_completed_attempt', user['id'], template['id'], record['id'])
         badges = award_badges(user['id'], template) if complete else []
+        if administrator is not None:
+            repo.call('web_admin_record_submission',administrator,user['id'],template['id'],record['id'],reason)
     return {'success': True, 'message': 'Flag accepted! You earned '+str(record['points'])+' points!', 'badges': badges, 'is_complete': complete}
 
 

@@ -1,5 +1,6 @@
 """Administrator workflows against the built UI and synthetic HTTP fixtures."""
 import json
+from copy import deepcopy
 
 from tests.browser.support import BrowserFixture
 from tests.browser.showcase_data import responses
@@ -110,6 +111,57 @@ class ManagementBrowserTests(BrowserFixture):
         dialog.wait_for(state='detached')
         self.assertEqual(self.mutations[-1][0],'admin/pools/4')
         self.assertEqual(json.loads(self.mutations[-1][1]),{'size':2,'enabled':True,'expected_revision':0})
+
+    def test_edit_overlay_reloads_all_fields_when_switching_exercises(self):
+        other=deepcopy(self.responses['admin/challenges/4/configuration'])
+        other['data']['definition'].update(name='Second exercise',description='Different description',hint='Different hint')
+        other['data']['definition']['vms'][0]['name']='second-machine'
+        self.responses['admin/challenges/5/configuration']=other
+        self.settled('/create-ctf?edit=4')
+        self.page.get_by_label('Challenge name',exact=True).fill('Unsaved first exercise')
+        self.page.evaluate("() => {history.pushState({}, '', '/create-ctf?edit=5'); window.dispatchEvent(new PopStateEvent('popstate'));}")
+        self.page.wait_for_function("document.querySelector('[name=name]')?.value === 'Second exercise'")
+        self.assertEqual(self.page.get_by_label('General hint (optional)',exact=True).input_value(),'Different hint')
+        self.assertEqual(self.page.get_by_role('group',name='Machine 1',exact=True).get_by_label('Machine name',exact=True).input_value(),'second-machine')
+        for identifier,name in [(4,'The Glass Directory'),(5,'Second exercise'),(4,'The Glass Directory')]:
+            self.settled(f'/manage-ctf?edit={identifier}')
+            dialog=self.page.get_by_role('dialog')
+            dialog.get_by_label('Challenge name',exact=True).wait_for()
+            self.assertEqual(dialog.get_by_label('Challenge name',exact=True).input_value(),name)
+            self.assertLessEqual(dialog.evaluate('el => el.getBoundingClientRect().height'),self.page.viewport_size['height'])
+            dialog.get_by_role('button',name='Close',exact=True).click()
+            dialog.wait_for(state='detached')
+        self.settled('/manage-ctf')
+        self.page.get_by_role('button',name='Leaderboard',exact=True).first.click()
+        self.page.get_by_role('dialog').wait_for()
+        self.page.keyboard.press('Escape')
+        self.assertEqual(self.page.get_by_role('dialog').count(),0)
+
+    def test_native_review_receipt_has_guarded_reconciliation_workflow(self):
+        operation={'id':'c'*32,'scope':'user','resource':1,'action':'launch_challenge','state':'NEEDS_REVIEW','started':'2026-11-19T09:00:00Z'}
+        self.responses['admin/jobs/user/1']={'success':True,'data':{'current':operation,'operations':[operation]}}
+        self.settled('/operations?tab=jobs&scope=user&resource=1')
+        self.page.locator('summary').filter(has_text='launch_challenge').click()
+        self.page.get_by_role('button',name='Record reconciliation',exact=True).click()
+        dialog=self.page.get_by_role('dialog')
+        self.assertTrue(dialog.get_by_role('button',name='Mark reconciled').is_disabled())
+        dialog.get_by_label('Recovery checks',exact=True).fill('Confirmed assignment and virtual machine state')
+        dialog.get_by_label('Type operation ID',exact=True).fill('c'*32)
+        dialog.get_by_role('button',name='Mark reconciled').click()
+        dialog.wait_for(state='detached')
+        self.assertEqual(self.mutations[-1][0],'admin/jobs/user/1/reconcile')
+
+    def test_assisted_grading_uses_explicit_student_and_reason(self):
+        self.settled('/operations?tab=grading')
+        self.page.get_by_label('Grading challenge',exact=True).select_option('4')
+        self.page.get_by_label('Student user ID',exact=True).fill('2')
+        self.page.get_by_label('Student username confirmation',exact=True).fill('student2')
+        self.page.get_by_label('Student flag',exact=True).fill('synthetic-test-flag')
+        self.page.get_by_label('Reason for assisted submission',exact=True).fill('Student reported browser submission failure')
+        self.page.get_by_role('button',name='Submit for student',exact=True).click()
+        self.page.wait_for_function("document.querySelector('input[type=password]').value === ''")
+        self.assertEqual(self.mutations[-1][0],'admin/grading/submissions')
+        self.assertEqual(json.loads(self.mutations[-1][1])['user_id'],2)
 
     def test_paused_configuration_editor_sends_structured_identity_preserving_definition(self):
         self.settled('/create-ctf?edit=4')

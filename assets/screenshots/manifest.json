@@ -11,6 +11,7 @@
     "frontend/src/components/AchievementIcon.tsx": "2467aad743689df5087b6211c4a305e7a6c0913f2b7196f8eb56450a545d4c90",
     "frontend/src/components/AppShell.tsx": "46bbdbb7ea580c1462a01515e20af6d9b4d7721d890f6d61a9dc9d2fbceff317",
     "frontend/src/components/NetworkPreview.tsx": "6b7d823726fe5be2f230f826f91792bcd1a11e4f3b9dc44ee36d531a4db45600",
+    "frontend/src/components/Overlay.tsx": "6ecd87445137c410d8c72573336a00de83cd873d73b325e5d7b25b2464e44542",
     "frontend/src/components/SortableHeader.tsx": "ca6bade6fe4e1284c014c94a4938fd1e0c03895140dffc40daaefb30ca914914",
     "frontend/src/components/ui.tsx": "5d07cdc3fbdfb9b893467f7c68322c45a2871714e4ee6eb3434cc3ff19c07e7b",
     "frontend/src/env.d.ts": "65996936fbb042915f7b74a200fcdde7e410f32a669b1ab9597cfaa4b0faddb5",
@@ -20,19 +21,20 @@
     "frontend/src/features/administration/AdministratorAuditPanel.tsx": "2c286ef05083f62fa0fe3f3b69da428891c2b892fe20ef8b622ac29ae7757d3b",
     "frontend/src/features/administration/AnnouncementManagementPage.tsx": "f124cc8f272c60591d840ed611b3948141f7f359a224670b2931f880deb98a00",
     "frontend/src/features/administration/ArtifactsPage.tsx": "bcab1f3a3c4587f25874c022d8c3c943e829dade7c0ee3682cbe2135f708bdab",
-    "frontend/src/features/administration/ChallengeEditorPage.tsx": "08dbaa57992f2379b1099e5a147c9492fcf4dc1119069ec22bdc25a2b976fe6b",
-    "frontend/src/features/administration/ChallengeManagementPage.tsx": "c226d23016c417829130e483ae6e77256294cbb2d9b7e311eeeb26d1a050b2ac",
+    "frontend/src/features/administration/ChallengeEditorPage.tsx": "abcad07f9b6db0241011c1de7904162ce5a651ef0e4b024e29ec3785ef543788",
+    "frontend/src/features/administration/ChallengeManagementPage.tsx": "5ed2acb7fda3fbc9811b6a49300b9a7098207dfb6744b2821a91bb2d907b437b",
     "frontend/src/features/administration/ExerciseHistoryPanel.tsx": "df9a7d934e36bbf64b734dd840bcbf3baf18c6e5b8faf7b76a8f0e3f29cefe2a",
+    "frontend/src/features/administration/GradingPanel.tsx": "e50161c4069e9296aefa8e4cb6d8ff9b96de311a9dd9bb36b2736edb755ebdcf",
     "frontend/src/features/administration/InstanceActionDialog.tsx": "70e1cf58900b3c6704336692ac69177bfcd4fca21a574f5669b60fe0cb72c263",
     "frontend/src/features/administration/InstanceDetailsPanel.tsx": "c85f0224057a1010e960d90e9e0813fde400d2368a412a5628df8a9254da60cc",
     "frontend/src/features/administration/InstanceManagementPage.tsx": "af943edd14d8d9018788df1355969e0de727d05b8d20fb9f84148c0f6c53548b",
     "frontend/src/features/administration/InstanceMonitoringPanel.tsx": "8d76525233d2c15e9053f009a562c88ecb0b93ed084ec214ee3c6413075ca1c7",
     "frontend/src/features/administration/MaintenancePanel.tsx": "7d2dd3864ef25c5319ed6bfd43a16afd825979b4070f555d95ee646498a82ae1",
-    "frontend/src/features/administration/ManagementOverview.tsx": "ec927ca40fb0af8beec2f5c13f9d11c67522f0db896bd9d1170549443018fbaf",
+    "frontend/src/features/administration/ManagementOverview.tsx": "494ea56aea637f66fa273caadce8beda57bf51f46e1fdd04be82af35fc552894",
     "frontend/src/features/administration/MonitoringPanel.tsx": "3be7f7da0cdfe738d444299efb49ede8cb2a7aa54c0fa8526c610f526075208e",
-    "frontend/src/features/administration/OperationHistoryPanel.tsx": "2bc6a1645359e9b737470426ac65f5480761190ef592a902d5e47310088637fe",
+    "frontend/src/features/administration/OperationHistoryPanel.tsx": "af58319cf240c66e98dc7b393fa7ccc21cf6ae64339fafe939179d79d8574815",
     "frontend/src/features/administration/OperationJournalPanel.tsx": "4452e7ec2d5b56e3c37d3ccc915f5847ae578126b2a425649b1cad6c113d1e4c",
-    "frontend/src/features/administration/OperationsPage.tsx": "caa3477e624ea538e1c1aea927a414e07e6f7fe2977359bc46a060f950ff077f",
+    "frontend/src/features/administration/OperationsPage.tsx": "9dd950c6cfe006edd2989bc9cca8de48cb0422404c82dd75ca7b1ebaeefe615a",
     "frontend/src/features/administration/PlatformStatusPanel.tsx": "c353ff7ded370367ba46d40cae5d53020024fe7bf5a9f3b2ed055c815597e254",
     "frontend/src/features/administration/PoolEditor.tsx": "42ea18f96d980e0c0191dbf97793fdfff64f2fd4ed415b7f196b01f8a1f0f641",
     "frontend/src/features/administration/UserManagementPage.tsx": "95d63fc656050032db482598a05ab535f56827c98159f4eeacb36fa5e186d7f2",
@@ -56,7 +58,7 @@
     "frontend/src/lib/topology.ts": "ad63f9949027d4766e40f7f0f8cb787300559a32b45e2b6144dd2c239ed5515f",
     "frontend/src/lib/useTableSort.ts": "af014a9163ecd0ed0667ccf8b8c223692a17021fe61f6823235910b23c67ec65",
     "frontend/src/main.tsx": "21ab4d87f72005a7d9f181be87f86c2d43afe1204f828e4fa81404b68a374d6d",
-    "frontend/src/styles.css": "68a6ea537d0e347f25cb7d7f0779c8141d132c2a604b47858597dc772b4001a3",
+    "frontend/src/styles.css": "61ae06f23b7612c939bacec891055566f34c40a658e2ed5dd19a216778fe383c",
     "frontend/src/tokens.css": "1cdfa89e43d01db471d5a2cec396fce5eab023fe5d54124ba115462221a64ad2",
     "frontend/public/assets/avatars/avatar1.png": "717f6f904ed6a511681bd8f7f011699197d911b3119da3886c4baec251c8df2a",
     "frontend/public/assets/avatars/avatar2.png": "97c6ce9676506ada7ad86e1eab731c881798fa2732d526563246c37eb02c0b25",
@@ -74,7 +76,7 @@
     "frontend/package-lock.json": "d3b9d4d20cb2bd687f49797f4a646c9e6c86f2bad275475b7ce9bbedb23471cc",
     "tests/browser/support.py": "099c3504041496f053c771f010d1754cb783371a0c396eee78ccbb39bed36b46",
     "tests/browser/showcase_data.py": "be6f25b55ed6fcbd630d6e3ea23a04453a13c9d8c121e14dbd74689a3b6ff7e8",
-    "tools/testing/screenshots.py": "6a16c7f498de3a5759dc2f3961f0c5eb2718648efd865f848410b4e87ed18c4b"
+    "tools/testing/screenshots.py": "121c9a81777d785cb585b1a4410516682aa37c47f5f09a06c18609704bb7635e"
   },
   "captures": [
     {
@@ -257,7 +259,7 @@
       },
       "full_page": true,
       "document_height": 1558,
-      "sha256": "fb18e7d5c36161a710080dc66b74db99e1fac377a78395926d008feea032522e"
+      "sha256": "2c09e055993e5a33508583bb233efe3d2efceda3d30bf9a0b1201061572faaf4"
     },
     {
       "file": "platform_health_light.png",
@@ -270,7 +272,7 @@
       },
       "full_page": true,
       "document_height": 1690,
-      "sha256": "3b42fa066e0669e4a1ec120f4f3950aea151a3d541d2e4ac685763e2c6190d36"
+      "sha256": "23958e7de6c05286d14e9b9da3bf7b49c6d15abcf5abdda4931ac9c12319f53b"
     },
     {
       "file": "operation_history_light.png",
@@ -283,7 +285,7 @@
       },
       "full_page": true,
       "document_height": 1399,
-      "sha256": "e84b7eeb49949d8d142ceca5ec7ce8211a7c51e01700f57b70003856bda31526"
+      "sha256": "172b759709d547d4a79f2270ebc0eaec471a56dcf3bde71de6ae05e6e107f5ce"
     },
     {
       "file": "capacity_light.png",
@@ -296,7 +298,7 @@
       },
       "full_page": true,
       "document_height": 1378,
-      "sha256": "6543fdc6443cb1cc3dbbd72bbc32c8346653ce4a2b0cc3bbf9e5409339f8aa88"
+      "sha256": "c19651ee0e8b3934d331cf47d20b5e04ab6924549fc8d074f1fa351b6ce38730"
     },
     {
       "file": "data_governance_light.png",
@@ -309,7 +311,7 @@
       },
       "full_page": true,
       "document_height": 1072,
-      "sha256": "d8c68957bcf0e78f895d6bca3e461fabb907e86a06ecad39a406ab0b31e8ae80"
+      "sha256": "d205d346af5e2cc9852649895fdc976474c4917f5d994294e44b106b19589e12"
     },
     {
       "file": "administrator_audit_light.png",
@@ -322,7 +324,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "f679e596b90fd3c0e484c8798e481236057ea708e8ec5437f66ecef1a0044169"
+      "sha256": "863d0778d2b780c4bd58e61c78f7573aedcc57b76b5cc4765776f61748e18415"
     },
     {
       "file": "maintenance_light.png",
@@ -335,7 +337,33 @@
       },
       "full_page": true,
       "document_height": 1021,
-      "sha256": "17dfe0c58a34c93ffb271377881564e3bb369057df7cd9ce95781e7f045c104e"
+      "sha256": "1b818f69618b07ab1196177615180a11f498be43a9da4221c1d10a46fa54d0c1"
+    },
+    {
+      "file": "grading_light.png",
+      "route": "/operations?tab=grading",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": true,
+      "document_height": 1322,
+      "sha256": "020bc261b1071862c88b408b31acf83bc2453a9025e0e040b1dad97854d45a24"
+    },
+    {
+      "file": "edit_challenge_light.png",
+      "route": "/manage-ctf?edit=4",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": true,
+      "document_height": 1067,
+      "sha256": "c9bc8077d74526bd5ae1c3c2f80df298e53485609a0c74a4efd58f4b0b17d212"
     },
     {
       "file": "exercise_history_light.png",
@@ -361,7 +389,7 @@
       },
       "full_page": true,
       "document_height": 2043,
-      "sha256": "38038f97a5fa521dcd003f394f11805ffd8db69b7ca7e80e3aa45c4f94d28bca"
+      "sha256": "e07a85a85402f14aac7e7187f44ab1b928e6cbc4a9b04233df6d6b3e54f6954f"
     },
     {
       "file": "users_light.png",
@@ -387,7 +415,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "89b838994f326dcef1aff4a537ca88a7cdbb0a55a7af6a377194d638cdfd41a5"
+      "sha256": "c202e15bfb8b71f0bb31682e2d2b749e944b92e7c03f9159af82ee11a9979250"
     },
     {
       "file": "instance_details_light.png",
@@ -699,7 +727,7 @@
       },
       "full_page": true,
       "document_height": 1558,
-      "sha256": "172c9692f1536e7d8d24a4b6f6ffe8dfeeb4313c18ab644a6d748e1b310960ba"
+      "sha256": "7221ef17497a3c0aa53cb7edbc08e3525315c794ee72a59306231780334d3185"
     },
     {
       "file": "platform_health_dark.png",
@@ -712,7 +740,7 @@
       },
       "full_page": true,
       "document_height": 1690,
-      "sha256": "2e846248a87598368d842c0f620d5e9329db25dd465466bd669950217f5ed16a"
+      "sha256": "bc561727ee8e3568354bd8c08773b805ddc27ae0fbfacb224858fe590725077b"
     },
     {
       "file": "operation_history_dark.png",
@@ -725,7 +753,7 @@
       },
       "full_page": true,
       "document_height": 1399,
-      "sha256": "d00f1ac2a569adca8e8e25b8ce0d18629582f86db126a582ce08ac0af2832a29"
+      "sha256": "6e02b7995ce5eedc87af22d2cb24075d0bdff3ac17a9614139d25ef3002a5471"
     },
     {
       "file": "capacity_dark.png",
@@ -738,7 +766,7 @@
       },
       "full_page": true,
       "document_height": 1378,
-      "sha256": "f3d9ced57f19300db2c6d332afbbf62e212265e386f8676e2de326ba3ef90640"
+      "sha256": "9973dd88b673dc2418f1fad91688eee0ac050825e6715d7d90169830b7192f90"
     },
     {
       "file": "data_governance_dark.png",
@@ -751,7 +779,7 @@
       },
       "full_page": true,
       "document_height": 1072,
-      "sha256": "8deab1c1595d10ed4cb9e3adddf18725218bd1c9d3f3f6c2b3ed03adf3e5eeec"
+      "sha256": "07421fbcb3e6a6f0ac82c74a754e2e363823772755cc9c50f7726deca11f3c46"
     },
     {
       "file": "administrator_audit_dark.png",
@@ -764,7 +792,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "449006904f3ab5f582d2566c260d49891ab7a9cfad7ebd8651c941440ba69185"
+      "sha256": "a8bbe2c04254f37ba376e2757ce6aa9574157eced2863bacf23d08d8125d72cd"
     },
     {
       "file": "maintenance_dark.png",
@@ -777,7 +805,33 @@
       },
       "full_page": true,
       "document_height": 1021,
-      "sha256": "5c68a2768d8809b1a015e81623510d66a6c6f61a88c1a8fd10daab6670fbc0d6"
+      "sha256": "f1cbc5bd4de6312814b427085e613b1b4096813445fbed1e0afe40d1b099cb5b"
+    },
+    {
+      "file": "grading_dark.png",
+      "route": "/operations?tab=grading",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": true,
+      "document_height": 1322,
+      "sha256": "c2c9c6d5534285f690af2e7b036d589ff3e7d15868794207802cb6dbc64fe424"
+    },
+    {
+      "file": "edit_challenge_dark.png",
+      "route": "/manage-ctf?edit=4",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": true,
+      "document_height": 1067,
+      "sha256": "0ee70d92132551cae3abd35ec11ce3f97b309578300f8d81e4e4e3eaa8a00202"
     },
     {
       "file": "exercise_history_dark.png",
@@ -803,7 +857,7 @@
       },
       "full_page": true,
       "document_height": 2043,
-      "sha256": "15245242fe39aebf1355fd9fe565acb1d6a7d665acc8f7b320696c6341bf46dd"
+      "sha256": "ec475a30fa6e115fc6345fe5c1280e0d3e578d605de5343d8031ad11951576f3"
     },
     {
       "file": "users_dark.png",
@@ -816,7 +870,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "6a0d588ee77b33d7244e3efaedda3a0281947f79f6b6f01fb833575e843eec98"
+      "sha256": "d046388c417fcaa6b0d452a29a4a62499104f2421a45d12b482ff5fa3e49164e"
     },
     {
       "file": "instances_dark.png",
@@ -829,7 +883,7 @@
       },
       "full_page": true,
       "document_height": 1000,
-      "sha256": "ad6cb8a4641e303aa204d4d6f7104ffa8d87dd7713fabd3efd5a3815dff5229a"
+      "sha256": "9c8c3518e12d7fb065d5fae52430e1705b74ec4dee746e4b3e855db739640dd7"
     },
     {
       "file": "instance_details_dark.png",

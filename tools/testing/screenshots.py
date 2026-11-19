@@ -34,6 +34,8 @@ PAGES = {
     'data_governance': ('/operations?tab=data', 'admin'),
     'administrator_audit': ('/operations?tab=audit', 'admin'),
     'maintenance': ('/operations?tab=maintenance', 'admin'),
+    'grading': ('/operations?tab=grading', 'admin'),
+    'edit_challenge': ('/manage-ctf?edit=4', 'admin'),
     'exercise_history': ('/manage-ctf?exercise=4', 'admin'),
     'monitoring_activity': ('/operations?tab=health', 'admin'),
     'users': ('/manage-users','admin'),

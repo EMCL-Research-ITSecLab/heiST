@@ -40,6 +40,11 @@ type Hint = {
 };
 const key = () => crypto.randomUUID();
 export function CreateChallenge() {
+  const router = useRouter();
+  const editing = number(new URLSearchParams(router.location.split('?')[1]).get('edit'));
+  return <ChallengeEditor key={editing} />;
+}
+function ChallengeEditor() {
   const router = useRouter(), editing = number(new URLSearchParams(router.location.split('?')[1]).get('edit'));
   const resource = useResource(editing ? `/api/admin/challenges/${editing}/configuration` : '/api/admin/challenges/options'), action = useAction();
   const configuration = row(resource.data.data), blocked = !!editing && (truth(row(configuration.definition).isActive) || number(configuration.instances) > 0 || truth(configuration.retired));
@@ -114,6 +119,7 @@ export function CreateChallenge() {
         <div className="table-actions"><button className="secondary" onClick={()=>setPoolOpen(true)}>Configure pool</button>
           <button className="secondary" onClick={resource.reload}>Reload configuration</button>
           {truth(imported.isActive) && <button disabled={number(configuration.instances)>0 || action.busy} onClick={()=>void action.run(()=>request(`/api/admin/challenges/${editing}`,{method:'PUT',body:{...imported,isActive:false}}),resource.reload)}>Pause exercise</button>}</div>
+        {!truth(imported.isActive) && !truth(configuration.retired) && <button disabled={action.busy||resource.loading} onClick={()=>void action.run(()=>request(`/api/admin/challenges/${editing}`,{method:'PUT',body:{...imported,isActive:true}}),resource.reload)}>Publish saved challenge</button>}
       </Card>}
       {!editing && <Card title="Import YAML">
         <p className="muted">Import replaces the current form. It does not create a challenge.</p>
@@ -325,7 +331,7 @@ export function CreateChallenge() {
                 </div>
                 <label className="check">
                   <input type="checkbox" disabled={!!editing} name="isActive" defaultChecked={truth(imported.isActive)} />Make available to students</label>
-                <p className="muted">{editing ? 'The challenge stays paused until you publish it from this editor.' : 'Leave this unchecked to create an inactive exercise for review.'}</p>
+                <p className="muted">{editing ? 'Save changes first, then use Publish saved challenge above to make them available.' : 'Leave this unchecked to create an inactive exercise for review.'}</p>
                 <button className="full" type="submit" disabled={action.busy}>
                   {action.busy ? 'Saving…' : editing ? 'Save configuration' : 'Create challenge →'}
                 </button>

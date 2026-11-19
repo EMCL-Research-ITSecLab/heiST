@@ -64,9 +64,37 @@ unassigned instance. One worker owns the deployment's filesystem lease. On worke
 restart, interrupted RUNNING rows become NEEDS_REVIEW. They are never replayed.
 The browser's **Record reconciliation** requires recovery notes and the exact
 operation ID. Do not include secrets. This acknowledges independently completed
-checks; it neither retries nor undoes infrastructure changes. Legacy journal
-operations still use `bin/heist jobs status/resolve` on the host. Concurrent
+checks; it neither retries nor undoes infrastructure changes. The same UI now
+supports the current native journal operation, including `launch_challenge`,
+after it enters NEEDS_REVIEW. Running operations and stale history entries
+cannot be reconciled through this action. The receipt records the administrator.
+`bin/heist jobs status/resolve` remains available on the host. Concurrent
 multi-host queue workers are not supported by this single-Proxmox-host design.
+
+## Grading and Moodle export
+
+Open **Platform status → Grading**. Select an exercise, enter the student's user
+ID and username, the recovered flag and a reason of 10–500 characters. Assisted
+submissions use the student verifier, including personal flags and duplicate
+protection. Accepted grading and administrator attribution commit in one
+transaction. No flag secret is stored in the administrator audit table.
+
+**Export submissions CSV** exports accepted submission records for the selected
+exercise, or all exercises if none is selected. It includes student identifiers,
+flag IDs, points, completion times and assisted-submission attribution. It does
+not export flag secrets or rejected guesses.
+
+**Export Moodle grades** requires one exercise and emits Username, Email address
+and Grade (total points, deduplicated by flag). In Moodle's CSV grade import,
+map Username or Email address to the matching student identifier and Grade to
+the intended grade item. Set that item's maximum to the exercise total; this
+export does not convert points to a different grading scale. Students with no
+accepted flags are omitted, so existing Moodle grades are not overwritten with
+zero. CSV spreadsheet-formula prefixes are escaped. Exports are administrator
+only, rate limited and marked no-store; protect downloaded student records.
+
+Schema migration `0016_administrator_grading` must be installed together with
+the new API before using grading or exports. The rollout manifest includes it.
 
 ## Exercise configuration history
 
@@ -85,6 +113,11 @@ configuration snapshots. The separate metadata audit retains deletion events.
 Back up the database and registered image library independently.
 
 ### Editing an existing exercise
+
+Edit and Leaderboard open in scrollable overlays. Close or press Escape to
+return to the table. Switching exercise IDs resets the complete editor,
+including imported metadata, machines, networks, flags and hints. Save paused
+configuration changes before using **Publish saved challenge**.
 
 Click column headings in challenge management, exercise availability and the
 artifact library to sort ascending or descending. The arrow and `aria-sort`

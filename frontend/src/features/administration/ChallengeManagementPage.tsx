@@ -8,8 +8,10 @@ import { PoolEditor } from './PoolEditor.tsx';
 import { ExerciseHistoryPanel } from './ExerciseHistoryPanel.tsx';
 import { SortableHeader } from '../../components/SortableHeader.tsx';
 import { useTableSort } from '../../lib/useTableSort.ts';
+import { Overlay } from '../../components/Overlay.tsx';
+import { CreateChallenge } from './ChallengeEditorPage.tsx';
 export function ManageChallenges() {
-  const router=useRouter(), selected=number(new URLSearchParams(router.location.split('?')[1]).get('exercise'));
+  const router=useRouter(), query=new URLSearchParams(router.location.split('?')[1]), selected=number(query.get('exercise')), editing=number(query.get('edit'));
   const resource = useResource('/api/admin/challenges', 30000), data = payload(resource.data), stats = row(data.stats), action = useAction();
   const [search, setSearch] = useState(''), [state, setState] = useState('all'), [deleting, setDeleting] = useState<Row | null>(null), [force, setForce] = useState(false), [leader, setLeader] = useState<Row | null>(null);
   const [poolId,setPoolId] = useState(0);
@@ -90,7 +92,7 @@ export function ManageChallenges() {
                   <div className="table-actions">
                     {truth(c.marked_for_deletion)
                       ? <button className="secondary small" disabled>Edit</button>
-                      : <Link className="button secondary small" href={`/create-ctf?edit=${number(c.id)}`}>Edit</Link>}
+                      : <Link className="button secondary small" href={`/manage-ctf?edit=${number(c.id)}`}>Edit</Link>}
                     <button className="secondary small" onClick={()=>setPoolId(number(c.id))}>Configure pool</button>
                     <button className="secondary small" onClick={() => setLeader(c)}>Leaderboard</button>
                     <button className="secondary small" onClick={()=>router.navigate('/manage-ctf?exercise='+number(c.id))}>History</button>
@@ -107,7 +109,8 @@ export function ManageChallenges() {
     </ResourceState>
     {poolId>0&&<PoolEditor identifier={poolId} onClose={()=>setPoolId(0)} onSaved={resource.reload}/>}
     {selected>0&&<ExerciseHistoryPanel key={selected} identifier={selected} name={text(rows(data.challenges).find(item=>number(item.id)===selected)?.name,'Exercise #'+selected)} onClose={()=>router.navigate('/manage-ctf')}/>}
-    {leader && <Leaderboard challenge={leader} onClose={() => setLeader(null)} />}
+    {editing>0 && <Overlay title="Edit challenge" onClose={()=>router.navigate('/manage-ctf')}><CreateChallenge /></Overlay>}
+    {leader && <Overlay title="Leaderboard" onClose={()=>setLeader(null)}><Leaderboard challenge={leader} onClose={() => setLeader(null)} /></Overlay>}
     {deleting && <Confirm
       title={force ? 'Permanently delete this challenge?' : 'Retire this challenge?'}
       confirm={force ? 'Delete challenge and instances' : 'Retire challenge'}

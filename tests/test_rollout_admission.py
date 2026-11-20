@@ -13,6 +13,19 @@ from heist.rollout.admission import CHECKS,configuration_fingerprint,require
 
 
 class AdmissionTests(unittest.TestCase):
+    def test_challenge_backup_optout_is_bound_without_invalidating_legacy_default(self):
+        from dataclasses import asdict
+        import hashlib
+        values=asdict(self.config)
+        for name in ('acceptance_receipt','acceptance_sha256','backup_challenge_templates','reviewed_browser_baseline'):values.pop(name,None)
+        expected=hashlib.sha256(json.dumps(values,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+        self.assertEqual(configuration_fingerprint(self.config),expected)
+        self.assertNotEqual(configuration_fingerprint(replace(self.config,backup_challenge_templates=False)),expected)
+        with self.assertRaisesRegex(ValueError,'boolean'):replace(self.config,backup_challenge_templates='false')
+        split=replace(self.config,reviewed_browser_baseline={'backend':'a'*40,'browser':'b'*40})
+        self.assertNotEqual(configuration_fingerprint(split),expected)
+        with self.assertRaisesRegex(ValueError,'exact backend/browser'):replace(self.config,reviewed_browser_baseline={'browser':'x'})
+
     def setUp(self):
         temporary=tempfile.TemporaryDirectory();self.addCleanup(temporary.cleanup)
         self.root=Path(temporary.name);self.root.chmod(0o700)

@@ -1,5 +1,7 @@
 {
   "schema": 1,
+  "backup_challenge_templates": true,
+  "reviewed_browser_baseline": {},
   "installation": "/root/heiST",
   "state_directory": "/var/lib/heist",
   "backup_directory": "/mnt/heist-backups",

@@ -17,6 +17,9 @@ def configuration_fingerprint(config):
     values=asdict(config)
     # Avoid a circular checksum between the report and the file referring to it.
     for name in ('acceptance_receipt','acceptance_sha256'):values.pop(name,None)
+    # Preserve existing fingerprints for the original, full-backup policy.
+    if values.get('backup_challenge_templates') is True:values.pop('backup_challenge_templates')
+    if not values.get('reviewed_browser_baseline'):values.pop('reviewed_browser_baseline',None)
     return hashlib.sha256(json.dumps(values,sort_keys=True,separators=(',',':')).encode()).hexdigest()
 
 

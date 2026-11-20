@@ -259,7 +259,7 @@ class PVE:
         template_configurations={}
         self.readonly_template_backups={}
         for identifier,item in templates.items():
-            if not item.get('absent'):
+            if not item.get('absent') and getattr(self.config,'backup_challenge_templates',True):
                 configuration=self.template_configuration(SimpleNamespace(vmid=int(identifier)))
                 template_configurations[identifier]=configuration
                 capacity+=disk_capacity(configuration)
@@ -285,7 +285,7 @@ class PVE:
         self.config.vm('web').ssh.run(['sh','-c','command -v '+commands+' >/dev/null'])
         if browser:
             from .browser_deployment import verify_guest
-            verify_guest(self,plan.source)
+            verify_guest(self,self.browser_source(plan.source))
         else:
             before = {name: hashlib.sha256(blob(self.installation, plan.source, 'webserver/html/' + name)).hexdigest()
                       for name in plan.web_before if name != 'composer.lock'}
@@ -450,7 +450,8 @@ class PVE:
         from .identifiers import preserve
         transaction.save(id_watermarks=preserve(self.database,self.state/'id-watermarks.json'))
         templates=self.template_catalogue()
-        transaction.save(template_catalogue=templates)
+        transaction.save(template_catalogue=templates,
+                         backup_challenge_templates=getattr(self.config,'backup_challenge_templates',True))
         from .image_checkpoint import create
         library=self.environment.get('HEIST_ARTIFACT_LIBRARY','/var/lib/vz/import')
         transaction.save(image_checkpoint=create(library,directory/'image-library'))
@@ -480,7 +481,8 @@ class PVE:
             if self.is_running(vm):raise RuntimeError('VM did not shut down cleanly: '+role)
         snapshots={}
         template_vms=[SimpleNamespace(role='template-'+identifier,vmid=int(identifier))
-                      for identifier,item in templates.items() if not item.get('absent')]
+                      for identifier,item in templates.items() if not item.get('absent')
+                      and transaction.data['backup_challenge_templates']]
         for vm in (*self.config.vms,*template_vms):
             archive=self.checkpoint_vm(transaction,vm,directory)
             if vm.role.startswith('template-'):
@@ -628,11 +630,15 @@ class PVE:
     def verify_web_runtime(self, transaction):
         if self.browser_runtime_active():
             from .browser_deployment import verify_guest
-            verify_guest(self, revision(self.installation, 'HEAD'))
+            verify_guest(self, self.browser_source(revision(self.installation, 'HEAD')))
             return
         hashes = transaction.data.get('resume_web_runtime', transaction.data.get('web_runtime'))
         if hashes:
             self.remote(self.config.vm('web'), web.VERIFY_RUNTIME, {'hashes': hashes})
+
+    def browser_source(self,backend_source):
+        baseline=getattr(self.config,'reviewed_browser_baseline',{})
+        return baseline['browser'] if baseline.get('backend')==backend_source else backend_source
 
     def verify_source(self, transaction, *, target):
         expected = transaction.plan.target if target else transaction.plan.source
@@ -693,7 +699,10 @@ class PVE:
         template_catalogue=checkpoint.data.get('template_catalogue',{})
         template_vms=[SimpleNamespace(role='template-'+identifier,vmid=int(identifier))
                       for identifier,item in template_catalogue.items() if not item.get('absent')]
-        expected={vm.role for vm in (*self.config.vms,*template_vms)}
+        backup_templates=checkpoint.data.get('backup_challenge_templates',True)
+        if type(backup_templates) is not bool:raise RuntimeError('Invalid checkpoint template backup policy')
+        restore_vms=(*self.config.vms,*(template_vms if backup_templates else []))
+        expected={vm.role for vm in restore_vms}
         if set(snapshots)!=expected:raise RuntimeError('Checkpoint is incomplete')
         # Validate every archive before stopping/replacing any infrastructure VM.
         for item in snapshots.values():
@@ -703,9 +712,15 @@ class PVE:
             from .template_checkpoint import require_same_vm
             present={item['vmid'] for item in self.request('GET','/nodes/'+self.node+'/qemu',None)}
             for vm in template_vms:
+                if not backup_templates and vm.vmid not in present:
+                    raise RuntimeError('Unbacked challenge template is missing; restore requires operator recovery')
                 if vm.vmid in present:
                     if self.is_running(vm):raise RuntimeError('Refusing to overwrite a running template VM')
                     require_same_vm(self.template_configuration(vm),template_catalogue[str(vm.vmid)])
+                    if not backup_templates:
+                        from .template_checkpoint import identity
+                        if identity(self.template_configuration(vm))!=template_catalogue[str(vm.vmid)]:
+                            raise RuntimeError('Unbacked challenge template changed; restore requires operator recovery')
         retained={key:item for key,item in transaction.data.get('template_catalogue',{}).items()
                   if not item.get('absent') and template_catalogue.get(key,{}).get('absent',key not in template_catalogue)}
         if retained:
@@ -745,7 +760,7 @@ class PVE:
         for vm in self.config.vms:
             if self.is_running(vm):self.command(['qm','shutdown',vm.vmid,'--timeout','180'],timeout=210)
             if self.is_running(vm):raise RuntimeError('Refusing to overwrite a live VM')
-        for vm in (*self.config.vms,*template_vms):
+        for vm in restore_vms:
             self.tasks.run(transaction,'restore-'+checkpoint.path.name+'-'+vm.role,'/nodes/'+self.node+'/qemu',
                 {'archive':snapshots[vm.role]['path'],'vmid':vm.vmid,'force':1})
         if checkpoint.data.get('image_checkpoint'):

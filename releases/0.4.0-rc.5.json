@@ -2,6 +2,7 @@
   "schema": 3,
   "version": "0.4.0-rc.5",
   "supported_from": [
+    "c1cf81150b6e91373ceac39a26f6e682da059d29",
     "1bf6c026a9c6ce9ff6e00de9453496779c0e8043",
     "e9dc593f71fbcb80e83cbd0cc34493739177ad46",
     "2dc7a767bb46db0432a918fb85ed8f9c5e1a722c",

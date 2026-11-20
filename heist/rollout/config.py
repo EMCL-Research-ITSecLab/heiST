@@ -45,8 +45,20 @@ class Deployment:
     reviewed_web_files: dict[str,str] = field(default_factory=dict)
     acceptance_receipt: str | None = None
     acceptance_sha256: str | None = None
+    backup_challenge_templates: bool = True
+    reviewed_browser_baseline: dict[str,str] = field(default_factory=dict)
 
     def __post_init__(self):
+        if type(self.backup_challenge_templates) is not bool:
+            raise ValueError('Challenge template backup policy must be boolean')
+        if not isinstance(self.reviewed_browser_baseline,dict):
+            raise ValueError('Reviewed browser baseline must be an object')
+        if self.reviewed_browser_baseline:
+            import re
+            if (set(self.reviewed_browser_baseline)!={'backend','browser'} or
+                    any(not isinstance(value,str) or not re.fullmatch('[a-f0-9]{40}',value)
+                        for value in self.reviewed_browser_baseline.values())):
+                raise ValueError('Bind a reviewed browser baseline to exact backend/browser commits')
         from .source_overrides import validate,validate_web
         validate(self.reviewed_source_files)
         validate_web(self.reviewed_web_files)

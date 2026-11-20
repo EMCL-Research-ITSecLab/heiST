@@ -1,5 +1,65 @@
 # Scheduled maintenance updates
 
+## Running an update with nohup
+
+The operator can start a prepared, immutable release without keeping an SSH
+terminal open. Use a **separate target-release checkout**, a reviewed deployment
+configuration and a plan from `upgrade plan`. The launcher never fetches source,
+changes the backup policy, retries an update or bypasses production admission.
+
+```sh
+cd /root/heist-release-runner-TARGET
+umask 077
+nohup /root/heiST/.venv/bin/python -u -m heist.rollout.launcher \
+  --config /root/heist-rollout-TARGET/deployment.json \
+  --plan /root/heist-rollout-TARGET/plan.json \
+  --logs /root/heist-rollout-TARGET/logs \
+  > /root/heist-rollout-TARGET/nohup.log 2>&1 < /dev/null &
+```
+
+`logs/latest.json` identifies the newest private run directory. It contains a
+timestamped `rollout.log`, atomic `status.json`, and the config/plan hashes in
+`request.json`. `status.json` records the real child exit code and PID. The
+launcher also saves `platform-status.json` after the child exits; transaction
+`failure-*.log` files remain in the normal platform state directory. Startup
+failures retain `launcher-error.log`. The outer `nohup.log` captures failures
+that happen before a private run directory can be created. Keep logs private;
+they may contain operational details.
+
+Use `--check-only` to validate only runner/config/plan integrity without starting
+maintenance. This does **not** certify admission, platform health or available
+backup storage. An exit code of zero from the background shell only confirms
+process launch; check the run status for the actual deployment result. Do not
+start a second apply after an error. Inspect the transaction first; the existing
+`upgrade resume` recovery is available through `--action resume` after review.
+
+For a rollout that deliberately omits **challenge VM/template archives**, set
+`backup_challenge_templates: false` in the reviewed deployment JSON **before
+planning**. The default remains true. This policy is included in the admission
+fingerprint and recorded in the checkpoint. Infrastructure VMs (web, database,
+monitoring), the PostgreSQL dump, source images, code and host configuration are
+still backed up. Existing normal admission and mounted-backup-volume requirements
+remain in effect. Student instances are drained under the existing lifecycle
+rules, not archived. The launcher does not kill assigned student instances.
+
+When template archives are omitted, rollback preserves the existing stopped
+templates and verifies their complete recorded configuration identities. It
+refuses before infrastructure replacement if a template is missing, running,
+replaced or changed. Such templates require independent operator recovery;
+there is no template disk recovery copy from this update.
+
+An installation with separately corrected backend and browser versions may bind
+`reviewed_browser_baseline: {"backend": "FULL_COMMIT", "browser": "FULL_COMMIT"}`
+in its reviewed configuration. This mapping applies only to that exact backend
+baseline, including its recovery verification, and is admission-bound. Other
+source revisions still require matching browser source. Empty/default settings
+preserve prior admission fingerprints.
+
+The current production baseline is backend `c1cf81150b6e91373ceac39a26f6e682da059d29`
+and browser `8568026fb430e3a5935ce414ecf9567b96b02d30`. Declaring compatibility in
+the release manifest is not a passing production-clone rehearsal. An earlier
+release-specific operator exception must never be reused for a new target.
+
 The Flask target has **not yet completed production acceptance**.
 `bin/install` refuses before provisioning. Protocol 3 requires a private,
 checksum-bound production-clone acceptance report before maintenance; no passing

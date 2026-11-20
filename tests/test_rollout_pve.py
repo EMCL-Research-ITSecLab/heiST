@@ -12,6 +12,40 @@ from heist.rollout.pve import PVE
 
 
 class RestoreIdentityTests(unittest.TestCase):
+    def test_reviewed_split_browser_baseline_applies_only_to_exact_backend_source(self):
+        adapter=PVE.__new__(PVE)
+        adapter.config=SimpleNamespace(reviewed_browser_baseline={'backend':'a'*40,'browser':'b'*40})
+        self.assertEqual(adapter.browser_source('a'*40),'b'*40)
+        self.assertEqual(adapter.browser_source('c'*40),'c'*40)
+        adapter.config=SimpleNamespace()
+        self.assertEqual(adapter.browser_source('a'*40),'a'*40)
+
+    def test_template_backup_optout_restores_only_infrastructure_and_checks_unchanged_templates(self):
+        from heist.rollout.template_checkpoint import identity
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);archive=root/'archive.vma.zst';archive.write_bytes(b'archive')
+            plan=Plan(1,'/fixture','old','new','0.2.0','manifest','sha','config',(),(),())
+            snapshots={role:{'path':str(archive),'bytes':7,'sha256':hashlib.sha256(b'archive').hexdigest()} for role in ('web','database','monitoring')}
+            saved={'template':'1','name':'exercise-template','smbios1':'uuid=5898f7b2-d8bd-42e0-a43e-d90f0f7d19b6'}
+            transaction=Transaction(root/'journal',{'plan':plan.to_dict(),'snapshots':snapshots,'backup_challenge_templates':False,
+                'template_catalogue':{'123':identity(saved)},'host_services':{},'web_services':{},'protected_hashes':{}})
+            transaction.path.mkdir()
+            adapter=PVE.__new__(PVE);adapter.node='pve'
+            vms=[SimpleNamespace(role=role,vmid=1000+i) for i,role in enumerate(snapshots)]
+            adapter.config=SimpleNamespace(vms=vms,vm=lambda role:next(vm for vm in vms if vm.role==role))
+            adapter.tasks=Mock();adapter.request=Mock(return_value=[{'vmid':123}]);adapter.is_running=Mock(return_value=False)
+            adapter.template_configuration=Mock(return_value=saved)
+            for name in ('_host_guard','command','_checkout','start_vms','remote'):setattr(adapter,name,Mock())
+            adapter.restore(transaction)
+            self.assertEqual(len(adapter.tasks.run.call_args_list),3)
+            self.assertFalse(any('template-' in call.args[1] for call in adapter.tasks.run.call_args_list))
+            adapter._host_guard.reset_mock();adapter.command.reset_mock();adapter.tasks.reset_mock()
+            adapter.template_configuration.return_value={**saved,'net0':'virtio,bridge=changed'}
+            with self.assertRaisesRegex(RuntimeError,'Unbacked challenge template changed'):adapter.restore(transaction)
+            adapter._host_guard.assert_not_called();adapter.command.assert_not_called();adapter.tasks.run.assert_not_called()
+            adapter.request.return_value=[]
+            with self.assertRaisesRegex(RuntimeError,'template is missing'):adapter.restore(transaction)
+
     def test_infrastructure_capacity_is_resolved_without_changing_vm_configuration(self):
         adapter=PVE.__new__(PVE);adapter.node='pve'
         original={'name':'WebServer','sata0':'local-lvm:vm-1000-disk-0'}

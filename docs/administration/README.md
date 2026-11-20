@@ -33,7 +33,7 @@ contain no credentials, raw SSH output, student records or checkpoint paths.
 The browser does not execute shell commands or initiate production rollback.
 Update, rollback and destructive recovery use the reviewed CLI/runbooks and the
 scheduled maintenance window. See [updates](UPDATES.md),
-[archive VM setup](LOG-ARCHIVING.md) and [release verification](../testing/TEST-CONCEPT.md).
+[archive VM setup](LOG-ARCHIVING.md), [VPN transport](VPN.md) and [release verification](../testing/TEST-CONCEPT.md).
 
 The browser uses React and the Flask API. PHP is removed from the source tree;
 installed appliances still require the reviewed runtime deployment and recovery

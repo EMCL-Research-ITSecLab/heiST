@@ -1,0 +1,15 @@
+[Unit]
+Description=heiST challenge VPN TCP packet sizing
+After=network-pre.target netfilter-persistent.service
+Before=openvpn@server.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /usr/local/lib/heist/vpn_transport.py apply
+ExecStop=/usr/bin/python3 /usr/local/lib/heist/vpn_transport.py remove
+RemainAfterExit=yes
+TimeoutStartSec=30
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

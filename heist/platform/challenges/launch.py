@@ -1,4 +1,6 @@
-from heist.infrastructure.network.firewall import install_network_input_filter
+from heist.infrastructure.network.firewall import (
+    install_network_input_filter, install_user_dns_filter, remove_user_dns_filter,
+)
 import threading
 from heist.infrastructure.guests.linux_dhcp import add_user_route, renew_linux_entrypoints
 import shlex
@@ -715,6 +717,10 @@ def add_iptables_rules(challenge, user_vpn_ip, vpn_monitoring_device, dmz_monito
 
         # Replace the owned host-input policy before any legacy router drops.
         install_network_input_filter(network.host_device, network.router_ip)
+        if network.accessible:
+            install_user_dns_filter(network.host_device, network.router_ip, user_vpn_ip)
+        else:
+            remove_user_dns_filter(network.host_device)
 
         # Set up qdisc
         subprocess.run(["tc", "qdisc", "add", "dev", network.host_device, "clsact"], check=False)

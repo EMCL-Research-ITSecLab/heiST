@@ -146,6 +146,17 @@ inactive launch verifies boot, network topology, flag injection and grading.
 
 ## DNS in isolated exercises
 
+An owner connecting through the VPN must be able to query the resolver on an
+accessible scenario link over UDP and TCP port 53. These requests terminate on
+the host (`INPUT`), so guest `FORWARD` permissions alone are insufficient.
+The launch policy grants only the owner's VPN /32 address access to that link's
+resolver /32; stopping the user or removing/reassigning the link revokes it.
+Host management and other users' resolvers remain blocked.
+
+If `dig @RESOLVER lab-hostname A` times out, check the VPN route and the host's
+owner-specific DNS permission before changing client DNS configuration. A
+successful query on the host alone does not verify the VPN-to-resolver path.
+
 Guests use the DNS resolver on their own scenario link by default. Public DNS
 fallback is no longer advertised implicitly: `.heist.test` is private, and
 unreachable public resolvers can make the guest's resolver spend many seconds

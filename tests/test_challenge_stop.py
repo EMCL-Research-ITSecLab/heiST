@@ -11,14 +11,17 @@ class ChallengeFirewallTests(unittest.TestCase):
         rules = '\n'.join(('-P INPUT ACCEPT', '-A FORWARD -s 10.64.0.2/32 -j ACCEPT',
                            '-A FORWARD -d 10.64.0.20/32 -j ACCEPT', '-A FORWARD -s 10.64.0.0/24 -j ACCEPT',
                            '-A INPUT -m comment --comment "10.64.0.2 -A keep" -j ACCEPT',
-                           '-A FORWARD ! -s 10.64.0.2/32 -j DROP', '-A FORWARD -d 10.64.0.2/32 -j ACCEPT'))
+                           '-A FORWARD ! -s 10.64.0.2/32 -j DROP', '-A FORWARD -d 10.64.0.2/32 -j ACCEPT',
+                           '-A HEIST_UDNS_vrt0001741 -s 10.64.0.2/32 -d 10.128.0.49/32 -p udp --dport 53 -j ACCEPT',
+                           '-A HEIST_UDNS_vrt0001741 -s 10.64.0.20/32 -d 10.128.0.49/32 -p udp --dport 53 -j ACCEPT'))
         run = Mock(return_value=Mock(stdout=rules))
         with patch.object(stop.subprocess, 'run', run):
             stop.remove_user_iptables_rules('10.64.0.2')
         calls = [item.args[0] for item in run.call_args_list]
         self.assertEqual(calls, [['sudo', 'iptables', '-S'],
                                ['sudo', 'iptables', '-D', 'FORWARD', '-s', '10.64.0.2/32', '-j', 'ACCEPT'],
-                               ['sudo', 'iptables', '-D', 'FORWARD', '-d', '10.64.0.2/32', '-j', 'ACCEPT']])
+                               ['sudo', 'iptables', '-D', 'FORWARD', '-d', '10.64.0.2/32', '-j', 'ACCEPT'],
+                               ['sudo', 'iptables', '-D', 'HEIST_UDNS_vrt0001741', '-s', '10.64.0.2/32', '-d', '10.128.0.49/32', '-p', 'udp', '--dport', '53', '-j', 'ACCEPT']])
         self.assertTrue(all(item.kwargs['check'] and item.kwargs['timeout'] == 15 for item in run.call_args_list))
 
     def test_failed_listing_and_invalid_address_cannot_be_treated_as_success(self):

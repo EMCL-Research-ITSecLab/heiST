@@ -43,6 +43,7 @@ def install_network_input_filter(bridge, router, *, run=subprocess.run):
 
 
 def remove_network_input_filter(bridge, *, run=subprocess.run):
+    remove_user_dns_filter(bridge, run=run)
     chain = chain_name(bridge)
     for binary in ('iptables', 'ip6tables'):
         if not inspect(run, binary, '-S', chain):
@@ -53,3 +54,43 @@ def remove_network_input_filter(bridge, *, run=subprocess.run):
         lines += ['-F ' + chain, '-X ' + chain, 'COMMIT', '']
         run([binary + '-restore', '-w', '10', '--noflush'], input='\n'.join(lines),
             capture_output=True, text=True, check=True)
+
+
+def user_dns_chain_name(bridge):
+    chain_name(bridge)
+    return 'HEIST_UDNS_' + bridge
+
+
+def install_user_dns_filter(bridge, router, user_ip, *, run=subprocess.run):
+    """Allow a lab owner to query its edge resolver, ahead of the VPN INPUT drop.
+
+    The fixed jump contains no owner address. Replacing the owned chain removes
+    every previous owner/router permission when a bridge is reused. The normal
+    user-stop cleanup also removes these exact /32 rules from the chain.
+    """
+    chain = user_dns_chain_name(bridge)
+    router = str(ipaddress.IPv4Address(router))
+    user_ip = str(ipaddress.IPv4Address(user_ip))
+    exists = inspect(run, 'iptables', '-S', chain)
+    present = exists and inspect(run, 'iptables', '-C', 'INPUT', '-i', 'tun0', '-j', chain)
+    lines = ['*filter', ':' + chain + ' - [0:0]', '-F ' + chain]
+    lines += [f'-A {chain} -s {user_ip}/32 -d {router}/32 -p {protocol} --dport 53 -j ACCEPT'
+              for protocol in ('udp', 'tcp')]
+    lines.append(f'-A {chain} -j RETURN')
+    if present:
+        lines.append(f'-D INPUT -i tun0 -j {chain}')
+    lines += [f'-I INPUT 1 -i tun0 -j {chain}', 'COMMIT', '']
+    run(['iptables-restore', '-w', '10', '--noflush'], input='\n'.join(lines),
+        capture_output=True, text=True, check=True)
+
+
+def remove_user_dns_filter(bridge, *, run=subprocess.run):
+    chain = user_dns_chain_name(bridge)
+    if not inspect(run, 'iptables', '-S', chain):
+        return
+    lines = ['*filter']
+    if inspect(run, 'iptables', '-C', 'INPUT', '-i', 'tun0', '-j', chain):
+        lines.append(f'-D INPUT -i tun0 -j {chain}')
+    lines += ['-F ' + chain, '-X ' + chain, 'COMMIT', '']
+    run(['iptables-restore', '-w', '10', '--noflush'], input='\n'.join(lines),
+        capture_output=True, text=True, check=True)

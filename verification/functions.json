@@ -1483,5 +1483,25 @@
       "tests.test_archive_logs.ArchiveServiceTests.test_dated_directories_are_traversed_but_links_are_not"
     ],
     "rationale": "Checks dated rotation directories are visited and symlink entries are excluded."
+  },
+  "heist/infrastructure/network/firewall.py::user_dns_chain_name": {
+    "tests": [
+      "tests.test_network_input.NetworkInputTests.test_vpn_dns_invalid_bridge_or_addresses_fail_before_commands"
+    ],
+    "rationale": "Rejects infrastructure bridges and invalid addresses before firewall commands; only generated challenge bridges own VPN DNS chains."
+  },
+  "heist/infrastructure/network/firewall.py::install_user_dns_filter": {
+    "tests": [
+      "tests.test_network_input.NetworkInputTests.test_vpn_dns_permission_is_exact_owner_and_resolver_only",
+      "tests.test_vpn_dns.VpnDnsPacketTests.test_owner_dns_works_without_cross_user_or_host_access"
+    ],
+    "rationale": "Checks exact /32 UDP/TCP DNS scope and real namespace packets: owner success, cross-user and other-resolver denial, host-management denial, and previous-owner revocation."
+  },
+  "heist/infrastructure/network/firewall.py::remove_user_dns_filter": {
+    "tests": [
+      "tests.test_network_input.NetworkInputTests.test_vpn_dns_owned_chain_removal_is_idempotent",
+      "tests.test_vpn_dns.VpnDnsPacketTests.test_owner_dns_works_without_cross_user_or_host_access"
+    ],
+    "rationale": "Checks idempotent owned-chain cleanup and real DNS denial after permission removal, preserving the global VPN host-input drop."
   }
 }

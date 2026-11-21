@@ -911,7 +911,8 @@ def start_dnsmasq_process(network, attempts=5, retry_delay=1.0):
 
     last_error = ""
     for attempt in range(1, attempts + 1):
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        from heist.infrastructure.network.dnsmasq_process import start
+        result = start(cmd)
         if result.returncode == 0:
             print(f"[Info] dnsmasq started for network {network.id} on {network.host_device} "
                   f"(attempt {attempt})", flush=True)

@@ -49,3 +49,18 @@ That removes only its chain and jumps. Preserve the helper file until the unit
 has stopped. The isolated `tests.test_vpn_transport` regression reproduces a
 bidirectional size black hole, verifies a CA-validated HTTPS upload and response,
 checks repeated application, and verifies removal restores the failure.
+
+## Lab DNS/DHCP service ownership
+
+Each challenge dnsmasq runs in its own transient `heist-dnsmasq-vrt….service`
+unit. Restarting the API or pool manager must not stop these units. Merely
+forking or creating a new process session does not escape a systemd cgroup.
+The unit uses the existing per-bridge configuration, lease and log files; it
+has no restart policy so teardown cannot resurrect a removed network. Startup
+waits for the daemon's PID file. Teardown still validates process identity and
+uses a PID descriptor before signalling the owned daemon.
+
+After an update, verify DNS replies on assigned resolvers as well as backend
+health. A running API does not prove that a lab's DHCP or DNS is available.
+Inspect `/proc/PID/cgroup` to confirm a daemon belongs to its own unit rather
+than `backend.service` or `pool_manager.service`.

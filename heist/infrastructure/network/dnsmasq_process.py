@@ -3,6 +3,8 @@ import os
 from pathlib import Path
 import select
 import signal
+import re
+import subprocess
 
 
 def stop(pidfile, timeout=5):
@@ -47,3 +49,24 @@ def stop(pidfile, timeout=5):
         return True
     finally:
         os.close(handle)
+
+
+def start(command, *, run=subprocess.run):
+    """Give each daemon its own service cgroup, independent of API/pool workers.
+
+    A detached POSIX process still belongs to its caller's systemd cgroup.
+    Type=forking waits for dnsmasq's PID file before reporting startup success.
+    No automatic restart: explicit teardown must not resurrect a removed lab.
+    """
+    paths = [argument.removeprefix('--pid-file=') for argument in command
+             if argument.startswith('--pid-file=')]
+    if len(paths) != 1:
+        raise ValueError('Expected one owned dnsmasq PID file')
+    path = Path(paths[0])
+    match = re.fullmatch(r'dnsmasq_(vrt[0-9a-fA-F]{1,12})\.pid', path.name)
+    if not path.is_absolute() or not match or not command or Path(command[0]).name != 'dnsmasq':
+        raise ValueError('Expected a generated challenge dnsmasq command')
+    return run(['systemd-run', '--quiet', '--collect',
+                '--unit=heist-dnsmasq-' + match.group(1), '--service-type=forking',
+                '--property=PIDFile=' + str(path), *command],
+               capture_output=True, text=True, timeout=15)

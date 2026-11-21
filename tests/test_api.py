@@ -114,3 +114,23 @@ class APITests(TestCase):
         self.assertEqual(self.request('/health/ready', method='GET').status_code, 503)
         self.connect.assert_not_called()
         self.assertEqual(self.request('/health/live', method='GET').status_code, 200)
+
+    def test_cleaned_failed_launch_allows_new_request_but_keeps_failure_history(self):
+        self.launch.side_effect = RuntimeError('failed launch')
+        with self.assertLogs(self.app.logger,level='ERROR'):
+            self.assertEqual(self.request(json={'user_id':7,'challenge_template_id':2}).status_code,500)
+        self.launch.side_effect = None
+        self.db.cursor.return_value.__enter__.return_value.fetchone.return_value=(True,)
+        self.assertEqual(self.request(json={'user_id':7,'challenge_template_id':2}).status_code,200)
+        from heist.platform.jobs.journal import Journal
+        history=Journal(self.app.config['OPERATION_DIRECTORY']).history('user',7)
+        self.assertEqual({job['state'] for job in history['operations']},{'NEEDS_REVIEW','SUCCEEDED'})
+        self.assertEqual(self.launch.call_count,2)
+
+    def test_failed_launch_with_remaining_resources_still_blocks_retry(self):
+        self.launch.side_effect=RuntimeError('failed launch')
+        with self.assertLogs(self.app.logger,level='ERROR'):
+            self.assertEqual(self.request(json={'user_id':7,'challenge_template_id':2}).status_code,500)
+        self.db.cursor.return_value.__enter__.return_value.fetchone.return_value=(False,)
+        self.assertEqual(self.request(json={'user_id':7,'challenge_template_id':2}).status_code,409)
+        self.assertEqual(self.launch.call_count,1)

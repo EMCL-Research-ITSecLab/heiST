@@ -90,8 +90,13 @@ def create_app(config=None, services=None):
                     scope = 'user' if name in ('launch_challenge', 'stop_challenge') else 'template'
                     identifier = values[1] if name == 'launch_challenge' else values[0]
                     journal = Journal(application.config['OPERATION_DIRECTORY'])
+                    retry_review = None
+                    if name == 'launch_challenge':
+                        from heist.platform.jobs.launch_retry import can_retry_launch
+                        retry_review = lambda previous: can_retry_launch(identifier, previous, connect=connection)
                     result = journal.execute(scope, identifier, name, request.get_json(),
-                                             lambda: service(name)(*values), request_id=operation_id)
+                                             lambda: service(name)(*values), request_id=operation_id,
+                                             retry_review=retry_review)
                 else:
                     result = service(name)(*values)
             if download:

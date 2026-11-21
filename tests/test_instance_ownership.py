@@ -30,6 +30,7 @@ class InstanceOwnershipTests(unittest.TestCase):
                 CREATE TABLE challenges (
                     id bigint PRIMARY KEY, challenge_template_id bigint,
                     subnet inet, lifecycle_state text, pre_assigned_user_id bigint);
+                CREATE TABLE administrator_requests (scope text, resource bigint, state text);
                 INSERT INTO users VALUES (1, NULL), (2, NULL);
                 INSERT INTO challenges VALUES
                     (10, 5, '10.128.0.0/28', 'READY', 1),
@@ -137,3 +138,33 @@ class InstanceOwnershipTests(unittest.TestCase):
                 cursor.execute(self.migration())
             cursor.execute('ROLLBACK')
         self.assertEqual(self.rows(), [(1, 10), (2, 10)])
+
+    def test_reviewed_launch_retry_requires_completed_cleanup(self):
+        from heist.platform.jobs.launch_retry import can_retry_launch
+        previous={'scope':'user','resource':1,'action':'launch_challenge','state':'NEEDS_REVIEW'}
+        def allowed():
+            return can_retry_launch(1,previous,connect=self.connect)
+        self.assertFalse(allowed(), 'An existing reservation still blocks retry')
+        with self.connection.cursor() as cursor:
+            cursor.execute('UPDATE challenges SET pre_assigned_user_id=NULL')
+        self.assertTrue(allowed())
+        with self.connection.cursor() as cursor:
+            cursor.execute('UPDATE users SET running_challenge=10 WHERE id=1')
+        self.assertFalse(allowed())
+        with self.connection.cursor() as cursor:
+            cursor.execute('UPDATE users SET running_challenge=NULL WHERE id=1')
+            cursor.execute("UPDATE challenges SET pre_assigned_user_id=1,lifecycle_state='EXPIRED' WHERE id=10")
+        self.assertFalse(allowed(), 'Expired resources must finish teardown first')
+        with self.connection.cursor() as cursor:
+            cursor.execute('DELETE FROM challenges WHERE id=10')
+        for state in ('QUEUED','RUNNING','NEEDS_REVIEW'):
+            with self.connection.cursor() as cursor:
+                cursor.execute('DELETE FROM administrator_requests')
+                cursor.execute("INSERT INTO administrator_requests VALUES ('user',1,%s)",(state,))
+            self.assertFalse(allowed())
+        with self.connection.cursor() as cursor:
+            cursor.execute("UPDATE administrator_requests SET state='SUCCEEDED'")
+        self.assertTrue(allowed())
+        for action in ('stop_challenge','admin_remove'):
+            self.assertFalse(can_retry_launch(1,{**previous,'action':action},connect=self.connect))
+        self.assertFalse(can_retry_launch(999,{**previous,'resource':999},connect=self.connect))

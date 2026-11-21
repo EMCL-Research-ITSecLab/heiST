@@ -255,3 +255,15 @@ Full-platform installation, upgrade, failure recovery, newer-data rollback and
 reboot acceptance remain separate release gates. See [updates](UPDATES.md) and
 the [test concept](../testing/TEST-CONCEPT.md). Do not deploy an unverified
 candidate simply because its console renders correctly.
+
+
+## Retrying a failed launch
+
+A failed launch remains `NEEDS_REVIEW` in administrator history. Once teardown
+has removed every instance reserved for that user, there is no active assignment,
+and no unresolved administrator job exists, a new launch request may proceed.
+The check runs under the user operation lease. The old receipt records which
+new request unblocked it; it is not replayed or relabelled as successful.
+A running operation, remaining resources, database failure, or uncertain
+administrator action still prevents overlapping work. Reusing the failed
+request's idempotency key remains blocked; a retry uses a new request ID.

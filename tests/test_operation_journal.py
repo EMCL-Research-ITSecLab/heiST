@@ -97,3 +97,35 @@ class OperationJournalTests(unittest.TestCase):
             self.execute(effect)
         effect.assert_called_once()
         self.assertTrue(self.journal.execute('user',1,'launch',{'id':2},lambda:True))
+
+    def test_verified_review_retry_preserves_failure_and_never_replays_old_identity(self):
+        with self.assertRaises(RuntimeError):
+            self.execute(Mock(side_effect=RuntimeError('failed launch')))
+        effect = Mock(return_value=True)
+        new_id = 'b'*32
+        checker = Mock(return_value=True)
+        self.assertTrue(self.journal.execute('user',1,'launch',{'id':2},effect,
+                                            request_id=new_id,retry_review=checker))
+        old = json.loads((self.root/'user-1'/(self.identifier+'.json')).read_text())
+        self.assertEqual(old['state'],'NEEDS_REVIEW')
+        self.assertEqual(old['retry_unblocked_by'],new_id)
+        checker.assert_called_once()
+        with self.assertRaises(RecoveryRequired):
+            self.execute(effect,retry_review=checker)
+        effect.assert_called_once()
+
+    def test_failed_cleanup_check_and_running_receipt_still_block_new_work(self):
+        with self.assertRaises(RuntimeError):
+            self.execute(Mock(side_effect=RuntimeError('failed launch')))
+        effect = Mock()
+        with self.assertRaises(RecoveryRequired):
+            self.journal.execute('user',1,'launch',{},effect,retry_review=lambda previous:False)
+        with self.assertRaises(OSError):
+            self.journal.execute('user',1,'launch',{},effect,retry_review=Mock(side_effect=OSError('database unavailable')))
+        current=self.root/'user-1/current.json'
+        data=json.loads(current.read_text());data['state']='RUNNING';current.write_text(json.dumps(data))
+        checker=Mock(return_value=True)
+        with self.assertRaises(RecoveryRequired):
+            self.journal.execute('user',1,'launch',{},effect,retry_review=checker)
+        checker.assert_not_called()
+        effect.assert_not_called()

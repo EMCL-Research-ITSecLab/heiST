@@ -39,7 +39,7 @@ class Journal:
             raise ValueError('Invalid operation identifier')
         return value
 
-    def execute(self, scope, identifier, action, payload, function, *, request_id=None, with_progress=False):
+    def execute(self, scope, identifier, action, payload, function, *, request_id=None, with_progress=False, retry_review=None):
         request_id = self.request_id(request_id)
         if not isinstance(action, str) or not re.fullmatch('[a-z_]{1,64}', action):
             raise ValueError('Invalid operation action')
@@ -60,7 +60,14 @@ class Journal:
             if current.exists():
                 previous = json.loads(current.read_text())
                 if previous['state'] in ('RUNNING', 'NEEDS_REVIEW'):
-                    raise RecoveryRequired('An earlier operation requires reconciliation')
+                    # Only the caller can verify domain cleanup. Keep the old
+                    # failure visible; permit a NEW request, never replay it.
+                    if (previous['state'] != 'NEEDS_REVIEW' or retry_review is None
+                            or retry_review(previous) is not True):
+                        raise RecoveryRequired('An earlier operation requires reconciliation')
+                    previous['retry_unblocked_at'] = datetime.now(timezone.utc).isoformat()
+                    previous['retry_unblocked_by'] = request_id
+                    write_json(directory/(previous['id']+'.json'), previous)
             value = {'schema': 1, 'id': request_id, 'scope': scope, 'resource': identifier,
                      'action': action, 'fingerprint': fingerprint, 'state': 'RUNNING',
                      'started': datetime.now(timezone.utc).isoformat()}
@@ -115,7 +122,7 @@ class Journal:
                         value['state'] = 'NEEDS_REVIEW'
             except BlockingIOError:
                 pass
-        return {key: value[key] for key in ('id', 'scope', 'resource', 'action', 'state', 'started','actor','stage','finished','resolved_by','resolved_at') if key in value}
+        return {key: value[key] for key in ('id', 'scope', 'resource', 'action', 'state', 'started','actor','stage','finished','resolved_by','resolved_at','retry_unblocked_at','retry_unblocked_by') if key in value}
 
     def history(self,scope,identifier,limit=50):
         """Bounded metadata only: results, request bodies and error logs stay private."""
@@ -134,7 +141,7 @@ class Journal:
             try:
                 value=json.loads(path.read_bytes())
                 if value.get('scope')!=scope or value.get('resource')!=identifier or value.get('id')!=path.stem:continue
-                item={key:value[key] for key in ('id','scope','resource','action','state','started','actor','stage','finished','resolved_by','resolved_at') if key in value}
+                item={key:value[key] for key in ('id','scope','resource','action','state','started','actor','stage','finished','resolved_by','resolved_at','retry_unblocked_at','retry_unblocked_by') if key in value}
                 if current and current.get('id')==item['id']:item.update(current)
                 item['events']=[{'stage':e['stage'],'at':e['at']} for e in value.get('events',[])[:64]]
                 records.append(item)

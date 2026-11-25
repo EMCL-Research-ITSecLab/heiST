@@ -6,16 +6,10 @@ import { request } from '../../lib/api.ts';
 import { date, number, payload, row, rows, text, truth } from '../../lib/data.ts';
 import { Link, useRouter } from '../../lib/router.tsx';
 import { useAction, useResource } from '../../lib/state.tsx';
+import { useTableView } from '../../lib/useTableView.tsx';
+import { SortableHeader } from '../../components/SortableHeader.tsx';
 
-export function ExerciseHistoryPanel({
-  identifier,
-  name,
-  onClose,
-}: {
-  identifier: number;
-  name: string;
-  onClose: () => void;
-}) {
+export function ExerciseHistoryPanel({ identifier, name }: { identifier: number; name: string }) {
   const { t } = useI18n();
   const resource = useResource('/api/admin/challenges/' + identifier + '/revisions'),
     data = payload(resource.data),
@@ -24,15 +18,29 @@ export function ExerciseHistoryPanel({
   const [selected, setSelected] = useState<number | null>(null),
     [clone, setClone] = useState<number | null>(null),
     [draftName, setDraftName] = useState('');
+  const revisions = useTableView(
+    rows(data.revisions),
+    [
+      { key: 'revision', label: t('audit.revision'), value: (item) => number(item.id) },
+      { key: 'recorded', label: t('authoring.recorded'), value: (item) => text(item.recorded_at) },
+      { key: 'actor', label: t('audit.administrator'), value: (item) => text(item.actor) },
+      {
+        key: 'state',
+        label: t('common.labels.state'),
+        value: (item) => (truth(item.is_active) ? t('common.published') : t('common.inactive')),
+      },
+      {
+        key: 'definition',
+        label: t('authoring.definition'),
+        value: (item) =>
+          `${number(item.machines)} ${number(item.networks)} ${text(item.fingerprint)}`,
+      },
+    ],
+    '',
+    { loadedRowsOnly: truth(data.has_more) },
+  );
   return (
-    <Card
-      title={t('authoring.history.title', { name })}
-      action={
-        <button className="secondary small" onClick={onClose}>
-          {t('authoring.closeHistory')}
-        </button>
-      }
-    >
+    <Card title={t('authoring.history.title', { name })}>
       <Notice error={action.error} message={action.message} />
       <p>{t('authoring.history.snapshotExplanation')}</p>
       <button
@@ -56,63 +64,64 @@ export function ExerciseHistoryPanel({
           <p className="notice">{t('authoring.showingTheLatest50Configurations')}</p>
         )}
         {rows(data.revisions).length ? (
-          <div className="table-wrap">
-            <table aria-label={t('authoring.exerciseConfigurationHistory')}>
-              <thead>
-                <tr>
-                  <th>{t('audit.revision')}</th>
-                  <th>{t('authoring.recorded')}</th>
-                  <th>{t('audit.administrator')}</th>
-                  <th>{t('common.labels.state')}</th>
-                  <th>{t('authoring.definition')}</th>
-                  <th>{t('common.labels.actions')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows(data.revisions).map((revision) => (
-                  <tr key={number(revision.id)}>
-                    <td>#{number(revision.id)}</td>
-                    <td>{date(revision.recorded_at)}</td>
-                    <td>{text(revision.actor, 'Deleted account')}</td>
-                    <td>
-                      <Badge>
-                        {truth(revision.is_active) ? t('common.published') : t('common.inactive')}
-                      </Badge>
-                    </td>
-                    <td>
-                      {number(revision.machines)}
-                      {' ' + t('authoring.vms') + ' '}
-                      {number(revision.networks)}
-                      {' ' + t('authoring.networksLabel')}
-                      <small>
-                        {t('authoring.sha256') + ' '}
-                        <code>{text(revision.fingerprint)}</code>
-                      </small>
-                    </td>
-                    <td>
-                      <div className="button-row">
-                        <button
-                          className="secondary small"
-                          onClick={() => setSelected(number(revision.id))}
-                        >
-                          {t('authoring.inspectRevision')}
-                        </button>
-                        <button
-                          className="secondary small"
-                          onClick={() => {
-                            action.clear();
-                            setClone(number(revision.id));
-                            setDraftName((name + ' copy').slice(0, 100));
-                          }}
-                        >
-                          {t('authoring.cloneAsDraft')}
-                        </button>
-                      </div>
-                    </td>
+          <div>
+            {revisions.controls}
+            <div className="table-wrap">
+              <table aria-label={t('authoring.exerciseConfigurationHistory')}>
+                <thead>
+                  <tr>
+                    {['revision', 'recorded', 'actor', 'state', 'definition'].map((key) => (
+                      <SortableHeader key={key} {...revisions.header(key)} />
+                    ))}
+                    <th>{t('common.labels.actions')}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {revisions.items.map((revision) => (
+                    <tr key={number(revision.id)}>
+                      <td>#{number(revision.id)}</td>
+                      <td>{date(revision.recorded_at)}</td>
+                      <td>{text(revision.actor, 'Deleted account')}</td>
+                      <td>
+                        <Badge>
+                          {truth(revision.is_active) ? t('common.published') : t('common.inactive')}
+                        </Badge>
+                      </td>
+                      <td>
+                        {number(revision.machines)}
+                        {' ' + t('authoring.vms') + ' '}
+                        {number(revision.networks)}
+                        {' ' + t('authoring.networksLabel')}
+                        <small>
+                          {t('authoring.sha256') + ' '}
+                          <code>{text(revision.fingerprint)}</code>
+                        </small>
+                      </td>
+                      <td>
+                        <div className="button-row">
+                          <button
+                            className="secondary small"
+                            onClick={() => setSelected(number(revision.id))}
+                          >
+                            {t('authoring.inspectRevision')}
+                          </button>
+                          <button
+                            className="secondary small"
+                            onClick={() => {
+                              action.clear();
+                              setClone(number(revision.id));
+                              setDraftName((name + ' copy').slice(0, 100));
+                            }}
+                          >
+                            {t('authoring.cloneAsDraft')}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : (
           <p>{t('authoring.history.emptyDescription')}</p>
@@ -161,6 +170,16 @@ function RevisionDetails({ identifier, revision }: { identifier: number; revisio
     definition = row(payload(resource.data).definition);
   const machines = rows(definition.vms),
     networks = rows(definition.subnets);
+  const machineTable = useTableView(machines, [
+    { key: 'vm', label: t('monitoring.vm'), value: (item) => text(item.name) },
+    { key: 'image', label: t('authoring.image'), value: (item) => text(item.ova_name) },
+    {
+      key: 'resources',
+      label: t('common.labels.resources'),
+      value: (item) => number(item.cores) * 1000 + number(item.ram_gb),
+    },
+    { key: 'domain', label: t('authoring.domain'), value: (item) => text(item.domain_name) },
+  ]);
   return (
     <ResourceState {...resource}>
       <Card title={t('authoring.history.revisionTitle', { id: revision })}>
@@ -168,18 +187,18 @@ function RevisionDetails({ identifier, revision }: { identifier: number; revisio
           {text(definition.name)} · {text(definition.category)} · {text(definition.difficulty)}
         </p>
         <p>{text(definition.description)}</p>
+        {machineTable.controls}
         <div className="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>{t('monitoring.vm')}</th>
-                <th>{t('authoring.image')}</th>
-                <th>{t('common.labels.resources')}</th>
-                <th>{t('authoring.domain')}</th>
+                {['vm', 'image', 'resources', 'domain'].map((key) => (
+                  <SortableHeader key={key} {...machineTable.header(key)} />
+                ))}
               </tr>
             </thead>
             <tbody>
-              {machines.map((vm) => (
+              {machineTable.items.map((vm) => (
                 <tr key={text(vm.name)}>
                   <td>{text(vm.name)}</td>
                   <td>

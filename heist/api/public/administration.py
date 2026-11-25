@@ -100,7 +100,10 @@ def users():
     actor=require_admin()
     page,_,_=pagination(25)
     search=text(request.args.get('search',''),name='Search',maximum=100)
-    return internal().request('admin_users',{'actor_id':actor['id'],'page':page,'search':search})
+    role=choice(request.args.get('role','all'),('all','admin','student'),'user role')
+    sort=choice(request.args.get('sort','user'),('user','role','sessions','instance','last_login'),'user sort')
+    order=choice(request.args.get('order','asc'),('asc','desc'),'sort order')
+    return internal().request('admin_users',{'actor_id':actor['id'],'page':page,'search':search,'role':role,'sort':sort,'order':order})
 
 
 @blueprint.post('/admin/users/<identifier>')
@@ -124,7 +127,9 @@ def instances():
     page,_,_=pagination(25)
     data={'actor_id':actor['id'],'page':page,
           'search':text(request.args.get('search',''),name='Search',maximum=100),
-          'state':choice(request.args.get('state','all'),('all','PROVISIONING','READY','ASSIGNED','ACTIVE','EXPIRED','TERMINATING'),'instance state')}
+          'state':choice(request.args.get('state','all'),('all','PROVISIONING','READY','ASSIGNED','ACTIVE','EXPIRED','TERMINATING'),'instance state'),
+          'sort':choice(request.args.get('sort','instance'),('instance','challenge','student','state','expires'),'instance sort'),
+          'order':choice(request.args.get('order','asc'),('asc','desc'),'sort order')}
     if 'template_id' in request.args:data['template_id']=positive_id(request.args['template_id'],'exercise identifier')
     return internal().request('admin_instances',data)
 

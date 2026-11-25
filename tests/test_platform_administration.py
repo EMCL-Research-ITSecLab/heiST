@@ -72,6 +72,23 @@ class PlatformAdministrationTests(unittest.TestCase):
         self.sql('UPDATE users SET is_admin=FALSE WHERE id=%s',(self.admin,))
         with self.assertRaises(AdminError):self.service.instances(self.admin)
 
+    def test_user_sorting_and_invalid_columns(self):
+        names=['sort_z_'+self.username,'sort_a_'+self.username]
+        for name in names:
+            self.sql("SELECT id FROM api.create_user(%s,%s,%s,%s,'127.0.0.1')",
+                     (name,name+'@example.invalid',self.old_hash,self.legacy_salt))
+        ascending=[item['username'] for item in self.service.users(self.admin,'sort_',sort='user')['users']]
+        descending=[item['username'] for item in self.service.users(self.admin,'sort_',sort='user',order='desc')['users']]
+        self.assertEqual(ascending,sorted(names))
+        self.assertEqual(descending,list(reversed(ascending)))
+        self.assertTrue(all(item['is_admin'] for item in self.service.users(self.admin,role='admin')['users']))
+        self.assertTrue(all(not item['is_admin'] for item in self.service.users(self.admin,role='student')['users']))
+        with self.assertRaises(AdminError):self.service.users(self.admin,sort='username; DROP TABLE users')
+
+    def test_instance_ordering_is_validated_before_query(self):
+        self.assertEqual(self.service.instances(self.admin,search=self.username,sort='instance',order='desc')['instances'][0]['id'],self.instance)
+        with self.assertRaises(AdminError):self.service.instances(self.admin,sort='id; DROP TABLE challenges')
+
     def test_role_changes_revoke_sessions_are_idempotent_and_cannot_change_self(self):
         result=self.service.change_user(self.admin,self.user_id,'role',self.username,administrator=True,request_id='a'*32)
         self.assertTrue(result['sessions_revoked'])

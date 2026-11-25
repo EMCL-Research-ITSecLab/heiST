@@ -5,6 +5,8 @@ import { number, payload, row, rows, text, truth, type Row } from '../../lib/dat
 import { Link } from '../../lib/router.tsx';
 import { PoolEditor } from './PoolEditor.tsx';
 import { useAction, useResource } from '../../lib/state.tsx';
+import { useTableView } from '../../lib/useTableView.tsx';
+import { SortableHeader } from '../../components/SortableHeader.tsx';
 
 export function ManagementOverview({
   view = 'overview',
@@ -19,6 +21,56 @@ export function ManagementOverview({
     training = row(data.training);
   const action = useAction(),
     [pool, setPool] = useState<Row | null>(null);
+  const exercises = rows(data.exercises);
+  const readiness = useTableView<Row>(
+    exercises,
+    [
+      { key: 'name', label: t('common.labels.exercise'), value: (item) => text(item.name) },
+      { key: 'owner', label: t('common.labels.owner'), value: (item) => text(item.owner) },
+      {
+        key: 'availability',
+        label: t('common.labels.availability'),
+        value: (item) =>
+          truth(item.marked_for_deletion)
+            ? t('authoring.retired')
+            : truth(item.is_active)
+              ? t('common.published')
+              : t('common.draft'),
+      },
+      {
+        key: 'import',
+        label: t('overview.import'),
+        value: (item) => (truth(item.ready_to_launch) ? t('common.ready') : t('common.notReady')),
+      },
+      { key: 'vms', label: t('overview.vms'), value: (item) => number(item.machines) },
+      {
+        key: 'instances',
+        label: t('common.labels.instances'),
+        value: (item) => number(item.instances),
+      },
+    ],
+    '',
+    { loadedRowsOnly: truth(data.exercises_truncated) },
+  );
+  const pools = useTableView<Row>(
+    exercises,
+    [
+      { key: 'name', label: t('common.labels.exercise'), value: (item) => text(item.name) },
+      { key: 'ready', label: t('overview.readyCopies'), value: (item) => number(item.ready_pool) },
+      {
+        key: 'policy',
+        label: t('overview.policy'),
+        value: (item) => (truth(item.pool_override) ? 'Manual' : 'Forecast'),
+      },
+      {
+        key: 'ram',
+        label: t('overview.ramPerCopy'),
+        value: (item) => number(item.ram_per_instance),
+      },
+    ],
+    '',
+    { loadedRowsOnly: truth(data.exercises_truncated) },
+  );
   const gib = (value: unknown) => (number(value) / 1024 ** 3).toFixed(1) + ' GiB';
   return (
     <>
@@ -37,20 +89,20 @@ export function ManagementOverview({
               {truth(data.exercises_truncated) && (
                 <p className="notice">{t('overview.exerciseLimitHint')}</p>
               )}
+              {readiness.controls}
               <div className="table-wrap">
                 <table>
                   <thead>
                     <tr>
-                      <th>{t('common.labels.exercise')}</th>
-                      <th>{t('common.labels.owner')}</th>
-                      <th>{t('common.labels.availability')}</th>
-                      <th>{t('overview.import')}</th>
-                      <th>{t('overview.vms')}</th>
-                      <th>{t('common.labels.instances')}</th>
+                      {['name', 'owner', 'availability', 'import', 'vms', 'instances'].map(
+                        (key) => (
+                          <SortableHeader key={key} {...readiness.header(key)} />
+                        ),
+                      )}
                     </tr>
                   </thead>
                   <tbody>
-                    {rows(data.exercises).map((exercise) => (
+                    {readiness.items.map((exercise) => (
                       <tr key={number(exercise.id)}>
                         <td>
                           <Link href={'/manage-ctf?exercise=' + number(exercise.id)}>
@@ -138,19 +190,19 @@ export function ManagementOverview({
             </Card>
             <Card title={t('overview.readyInstancePools')}>
               <p>{t('pools.manualTargetExplanation')}</p>
+              {pools.controls}
               <div className="table-wrap">
                 <table>
                   <thead>
                     <tr>
-                      <th>{t('common.labels.exercise')}</th>
-                      <th>{t('overview.readyCopies')}</th>
-                      <th>{t('overview.policy')}</th>
-                      <th>{t('overview.ramPerCopy')}</th>
+                      {['name', 'ready', 'policy', 'ram'].map((key) => (
+                        <SortableHeader key={key} {...pools.header(key)} />
+                      ))}
                       <th>{t('common.labels.action')}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {rows(data.exercises).map((exercise) => (
+                    {pools.items.map((exercise) => (
                       <tr key={number(exercise.id)}>
                         <td>{text(exercise.name)}</td>
                         <td>{number(exercise.ready_pool)}</td>

@@ -1,4 +1,6 @@
 import { useI18n } from '../../lib/i18n.tsx';
+import { useTableView } from '../../lib/useTableView.tsx';
+import { SortableHeader } from '../../components/SortableHeader.tsx';
 import { useEffect, useState, type FormEvent } from 'react';
 import {
   Badge,
@@ -23,8 +25,14 @@ export function Challenge() {
     action = useAction();
   const [flag, setFlag] = useState(''),
     [confirm, setConfirm] = useState(false),
-    [tick, setTick] = useState(0);
+    [tick, setTick] = useState(0),
+    [copyStatus, setCopyStatus] = useState<{ index: number; failed: boolean } | null>(null);
   const running = text(status.challenge_status) === 'running';
+  const leaderboard = useTableView(rows(challenge.leaderboard), [
+    { key: 'rank', label: t('authoring.rank'), value: (item) => number(item.rank) },
+    { key: 'user', label: t('challenge.investigator'), value: (item) => text(item.username) },
+    { key: 'time', label: t('common.labels.time'), value: (item) => number(item.total_seconds) },
+  ]);
   const timingReady = challenge.timing_ready !== false && challenge.remaining_seconds != null;
   useEffect(() => {
     const timer = window.setInterval(() => setTick((v) => v + 1), 1000);
@@ -33,7 +41,38 @@ export function Challenge() {
   useEffect(() => {
     setTick(0);
   }, [resource.data]);
+  useEffect(() => {
+    if (!copyStatus || copyStatus.failed) return;
+    const timeout = window.setTimeout(() => setCopyStatus(null), 2500);
+    return () => window.clearTimeout(timeout);
+  }, [copyStatus]);
   const remaining = Math.max(0, number(challenge.remaining_seconds) - tick);
+  async function copyAddress(value: string, index: number) {
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard API unavailable');
+      await navigator.clipboard.writeText(value);
+      setCopyStatus({ index, failed: false });
+    } catch {
+      const field = document.createElement('textarea');
+      const focused = document.activeElement as HTMLElement | null;
+      field.value = value;
+      field.readOnly = true;
+      field.style.position = 'fixed';
+      field.style.opacity = '0';
+      document.body.appendChild(field);
+      let copied = false;
+      try {
+        field.select();
+        copied = document.execCommand('copy');
+      } catch {
+        copied = false;
+      } finally {
+        field.remove();
+        focused?.focus();
+      }
+      setCopyStatus({ index, failed: !copied });
+    }
+  }
   async function operate(name: string, fields = {}) {
     await action.run(
       () => post('challenge', { action: name, challenge_id: id, ...fields }),
@@ -139,18 +178,19 @@ export function Challenge() {
               </Card>
             )}
             <Card title={t('authoring.leaderboard')}>
+              {leaderboard.controls}
               {rows(challenge.leaderboard).length ? (
                 <div className="table-wrap">
                   <table>
                     <thead>
                       <tr>
-                        <th>{t('authoring.rank')}</th>
-                        <th>{t('challenge.investigator')}</th>
-                        <th>{t('common.labels.time')}</th>
+                        {['rank', 'user', 'time'].map((key) => (
+                          <SortableHeader key={key} {...leaderboard.header(key)} />
+                        ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {rows(challenge.leaderboard).map((entry, i) => (
+                      {leaderboard.items.map((entry, i) => (
                         <tr key={i}>
                           <td>{number(entry.rank) || i + 1}</td>
                           <td>
@@ -211,13 +251,38 @@ export function Challenge() {
                   <div className="connection-info">
                     <strong>{t('challenge.connectionDetails')}</strong>
                     {(Array.isArray(challenge.entrypoints) ? challenge.entrypoints : []).map(
-                      (entry, i) => (
-                        <code key={i}>
-                          {typeof entry === 'string'
+                      (entry, i) => {
+                        const address =
+                          typeof entry === 'string'
                             ? entry
-                            : text(row(entry).subnet ?? row(entry).ip ?? row(entry).address)}
-                        </code>
-                      ),
+                            : text(row(entry).subnet ?? row(entry).ip ?? row(entry).address);
+                        return (
+                          <div className="connection-entry" key={i}>
+                            <code>{address}</code>
+                            <button
+                              type="button"
+                              className="secondary small"
+                              aria-label={t(
+                                copyStatus?.index === i && !copyStatus.failed
+                                  ? 'challenge.copiedAddressLabel'
+                                  : 'challenge.copyAddressLabel',
+                                { address },
+                              )}
+                              aria-live="polite"
+                              onClick={() => void copyAddress(address, i)}
+                            >
+                              {copyStatus?.index === i && !copyStatus.failed
+                                ? t('challenge.copiedAddress')
+                                : t('challenge.copyAddress')}
+                            </button>
+                          </div>
+                        );
+                      },
+                    )}
+                    {copyStatus?.failed && (
+                      <p className="muted" role="alert">
+                        {t('challenge.copyAddressFailed')}
+                      </p>
                     )}
                   </div>
                 </>

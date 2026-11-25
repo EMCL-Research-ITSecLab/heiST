@@ -6,7 +6,7 @@ import json
 import tempfile
 from pathlib import Path
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from tests import test_web_auth as authentication
 from tests.test_challenge_definition import exercise
@@ -172,6 +172,19 @@ class AuthoringTests(unittest.TestCase):
         self.assertEqual(result.status_code, 200, result.json)
         self.platform.request.assert_called_once_with('delete_templates', {'challenge_id': identifier})
         self.assertIsNone(self.repo.call('get_challenge_template_details', identifier, one=True))
+
+    def test_admin_leaderboard_returns_more_than_ten_entries(self):
+        identifier = self.create()
+        entries = [{'username': 'student'+str(index), 'rank': index+1} for index in range(12)]
+        with patch('heist.api.public.authoring.repository') as repository:
+            repo = repository.return_value
+            repo.call.side_effect = lambda function,*args,**kwargs: (
+                {'id': identifier, 'creator_id': self.user_id}
+                if function == 'get_challenge_template_details' else entries)
+            response = self.request('admin/challenges/'+str(identifier)+'/leaderboard')
+        self.assertEqual(response.status_code, 200, response.json)
+        self.assertEqual(len(response.json['data']['leaderboard']), 12)
+        repo.call.assert_any_call('get_challenge_leaderboard', identifier, None, 0)
 
     def test_failed_permanent_delete_keeps_definition_retired_and_grades_available(self):
         identifier = self.create()

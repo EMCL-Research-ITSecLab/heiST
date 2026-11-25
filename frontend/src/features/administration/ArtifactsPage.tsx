@@ -16,18 +16,9 @@ import { number, payload, row, rows, text, type Row } from '../../lib/data.ts';
 import { useAction, useResource, useSession } from '../../lib/state.tsx';
 import { useArtifactUpload } from './useArtifactUpload.ts';
 import { SortableHeader } from '../../components/SortableHeader.tsx';
-import { useTableSort } from '../../lib/useTableSort.ts';
+import { useTableView } from '../../lib/useTableView.tsx';
 export function Artifacts() {
   const { t } = useI18n();
-  const sorting = useTableSort<Row>(
-    {
-      name: (item) => text(item.display_name ?? item.filename),
-      os: (item) => text(item.guest_os),
-      size: (item) =>
-        item.file_size == null && item.size == null ? null : number(item.file_size ?? item.size),
-    },
-    'name',
-  );
   const resource = useResource('/api/admin/artifacts', 10000),
     data = payload(resource.data),
     limits = row(data.limits),
@@ -39,6 +30,32 @@ export function Artifacts() {
     [deleting, setDeleting] = useState<Row | null>(null);
   const items = rows(data.ovas),
     pending = rows(data.uploads);
+  const library = useTableView<Row>(
+    items,
+    [
+      {
+        key: 'name',
+        label: t('artifacts.artifact'),
+        value: (item) => text(item.display_name ?? item.filename),
+      },
+      {
+        key: 'os',
+        label: t('artifacts.guestOperatingSystem'),
+        value: (item) => text(item.guest_os),
+      },
+      {
+        key: 'size',
+        label: t('tables.size'),
+        value: (item) =>
+          item.file_size == null && item.size == null ? null : number(item.file_size ?? item.size),
+      },
+    ],
+    'name',
+  );
+  const transfers = useTableView<Row>(pending, [
+    { key: 'name', label: t('artifacts.artifact'), value: (item) => text(item.name) },
+    { key: 'status', label: t('common.labels.status'), value: (item) => text(item.state) },
+  ]);
   const { busy, progress, phase } = transfer;
   function upload(event: FormEvent) {
     event.preventDefault();
@@ -109,17 +126,18 @@ export function Artifacts() {
       </Card>
       {pending.length > 0 && (
         <Card title={t('artifacts.transfersAndValidation')}>
+          {transfers.controls}
           <div className="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>{t('artifacts.artifact')}</th>
-                  <th>{t('common.labels.status')}</th>
+                  <SortableHeader {...transfers.header('name')} />
+                  <SortableHeader {...transfers.header('status')} />
                   <th>{t('common.labels.action')}</th>
                 </tr>
               </thead>
               <tbody>
-                {pending.map((item) => (
+                {transfers.items.map((item) => (
                   <tr key={text(item.id)}>
                     <td>{text(item.name)}</td>
                     <td>
@@ -178,19 +196,20 @@ export function Artifacts() {
             </button>
           }
         >
+          {library.controls}
           {items.length ? (
             <div className="table-wrap">
               <table>
                 <thead>
                   <tr>
-                    <SortableHeader {...sorting.header('name', 'Artifact')} />
-                    <SortableHeader {...sorting.header('os', 'Operating system')} />
-                    <SortableHeader {...sorting.header('size', 'Size')} />
+                    <SortableHeader {...library.header('name')} />
+                    <SortableHeader {...library.header('os')} />
+                    <SortableHeader {...library.header('size')} />
                     <th>{t('common.labels.action')}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {sorting.apply(items).map((item) => (
+                  {library.items.map((item) => (
                     <tr key={text(item.id)}>
                       <td>
                         <strong>{text(item.display_name ?? item.filename)}</strong>

@@ -3,6 +3,8 @@ import { Badge, Card, ResourceState } from '../../components/ui.tsx';
 import { number, payload, row, rows, text, truth } from '../../lib/data.ts';
 import { Link } from '../../lib/router.tsx';
 import { useResource } from '../../lib/state.tsx';
+import { useTableView } from '../../lib/useTableView.tsx';
+import { SortableHeader } from '../../components/SortableHeader.tsx';
 
 export function MaintenancePanel() {
   const { t } = useI18n();
@@ -10,6 +12,21 @@ export function MaintenancePanel() {
     data = payload(resource.data),
     release = row(data.release),
     acceptance = row(data.acceptance);
+  const transactions = useTableView(rows(data.transactions), [
+    { key: 'id', label: t('maintenance.transaction'), value: (item) => text(item.id) },
+    { key: 'version', label: t('common.labels.version'), value: (item) => text(item.version) },
+    { key: 'phase', label: t('maintenance.phase'), value: (item) => text(item.phase) },
+    {
+      key: 'checkpoint',
+      label: t('maintenance.checkpointRecorded'),
+      value: (item) => (truth(item.checkpoint_recorded) ? t('common.yes') : t('common.no')),
+    },
+    {
+      key: 'committed',
+      label: t('maintenance.committed'),
+      value: (item) => (truth(item.committed) ? t('common.yes') : t('common.no')),
+    },
+  ]);
   return (
     <ResourceState {...resource}>
       <Card
@@ -61,20 +78,19 @@ export function MaintenancePanel() {
           <p className="notice">{t('maintenance.releaseTransactionHistoryCouldNotBeRead')}</p>
         )}
         {truth(data.truncated) && <p className="notice">{t('maintenance.historyLimitHint')}</p>}
+        {transactions.controls}
         {rows(data.transactions).length ? (
           <div className="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>{t('maintenance.transaction')}</th>
-                  <th>{t('common.labels.version')}</th>
-                  <th>{t('maintenance.phase')}</th>
-                  <th>{t('maintenance.checkpointRecorded')}</th>
-                  <th>{t('maintenance.committed')}</th>
+                  {['id', 'version', 'phase', 'checkpoint', 'committed'].map((key) => (
+                    <SortableHeader key={key} {...transactions.header(key)} />
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {rows(data.transactions).map((transaction) => (
+                {transactions.items.map((transaction) => (
                   <tr key={text(transaction.id)}>
                     <td>
                       <code>{text(transaction.id)}</code>

@@ -20,7 +20,7 @@ import { useAction, useResource } from '../../lib/state.tsx';
 import { PoolEditor } from './PoolEditor.tsx';
 import { ExerciseHistoryPanel } from './ExerciseHistoryPanel.tsx';
 import { SortableHeader } from '../../components/SortableHeader.tsx';
-import { useTableSort } from '../../lib/useTableSort.ts';
+import { useTableView } from '../../lib/useTableView.tsx';
 import { Overlay } from '../../components/Overlay.tsx';
 import { CreateChallenge } from './ChallengeEditorPage.tsx';
 export function ManageChallenges() {
@@ -41,16 +41,6 @@ export function ManageChallenges() {
   const [poolId, setPoolId] = useState(0);
   const [category, setCategory] = useState('all'),
     [page, setPage] = useState(1);
-  const sorting = useTableSort<Row>(
-    {
-      name: (c) => text(c.name),
-      category: (c) => text(c.category),
-      availability: (c) =>
-        truth(c.marked_for_deletion) ? 'Retired' : truth(c.is_active) ? 'Available' : 'Inactive',
-      instances: (c) => number(c.active_deployments),
-    },
-    'name',
-  );
   const filtered = rows(data.challenges).filter(
     (c) =>
       text(c.name).toLowerCase().includes(search.toLowerCase()) &&
@@ -61,9 +51,31 @@ export function ManageChallenges() {
             ? truth(c.marked_for_deletion)
             : !truth(c.is_active))),
   );
-  const matching = sorting.apply(
+  const table = useTableView<Row>(
     filtered.filter((c) => category === 'all' || text(c.category) === category),
+    [
+      { key: 'name', label: t('common.labels.challenge'), value: (c) => text(c.name) },
+      { key: 'category', label: t('common.labels.category'), value: (c) => text(c.category) },
+      {
+        key: 'availability',
+        label: t('common.labels.availability'),
+        value: (c) =>
+          truth(c.marked_for_deletion)
+            ? t('authoring.retired')
+            : truth(c.is_active)
+              ? t('authoring.available')
+              : t('common.inactive'),
+      },
+      {
+        key: 'instances',
+        label: t('common.labels.instances'),
+        value: (c) => number(c.active_deployments),
+      },
+    ],
+    'name',
+    { search: false },
   );
+  const matching = table.items;
   const totalPages = Math.max(1, Math.ceil(matching.length / 20)),
     currentPage = Math.min(page, totalPages);
   const challenges = matching.slice((currentPage - 1) * 20, currentPage * 20);
@@ -132,6 +144,7 @@ export function ManageChallenges() {
               {t('artifacts.refresh')}
             </button>
           </div>
+          {table.controls}
           <p className="muted">
             {matching.length}
             {' ' + t('authoring.matchingExercises')}
@@ -141,26 +154,16 @@ export function ManageChallenges() {
               <table>
                 <thead>
                   <tr>
-                    {(['name', 'category', 'availability', 'instances'] as const).map(
-                      (key, index) => (
-                        <SortableHeader
-                          key={key}
-                          {...sorting.header(
-                            key,
-                            [
-                              t('common.labels.challenge'),
-                              t('common.labels.category'),
-                              t('common.labels.availability'),
-                              t('common.labels.instances'),
-                            ][index],
-                          )}
-                          onSort={() => {
-                            sorting.header(key, '').onSort();
-                            setPage(1);
-                          }}
-                        />
-                      ),
-                    )}
+                    {(['name', 'category', 'availability', 'instances'] as const).map((key) => (
+                      <SortableHeader
+                        key={key}
+                        {...table.header(key)}
+                        onSort={() => {
+                          table.header(key).onSort();
+                          setPage(1);
+                        }}
+                      />
+                    ))}
                     <th>{t('common.labels.actions')}</th>
                   </tr>
                 </thead>
@@ -279,15 +282,16 @@ export function ManageChallenges() {
         <PoolEditor identifier={poolId} onClose={() => setPoolId(0)} onSaved={resource.reload} />
       )}
       {selected > 0 && (
-        <ExerciseHistoryPanel
-          key={selected}
-          identifier={selected}
-          name={text(
-            rows(data.challenges).find((item) => number(item.id) === selected)?.name,
-            'Exercise #' + selected,
-          )}
-          onClose={() => router.navigate('/manage-ctf')}
-        />
+        <Overlay title={t('authoring.history')} onClose={() => router.navigate('/manage-ctf')}>
+          <ExerciseHistoryPanel
+            key={selected}
+            identifier={selected}
+            name={text(
+              rows(data.challenges).find((item) => number(item.id) === selected)?.name,
+              'Exercise #' + selected,
+            )}
+          />
+        </Overlay>
       )}
       {editing > 0 && (
         <Overlay title={t('authoring.edit.title')} onClose={() => router.navigate('/manage-ctf')}>
@@ -296,7 +300,7 @@ export function ManageChallenges() {
       )}
       {leader && (
         <Overlay title={t('authoring.leaderboard')} onClose={() => setLeader(null)}>
-          <Leaderboard challenge={leader} onClose={() => setLeader(null)} />
+          <Leaderboard challenge={leader} />
         </Overlay>
       )}
       {deleting && (
@@ -329,34 +333,34 @@ export function ManageChallenges() {
     </>
   );
 }
-function Leaderboard({ challenge, onClose }: { challenge: Row; onClose: () => void }) {
+function Leaderboard({ challenge }: { challenge: Row }) {
   const { t } = useI18n();
-  const [page, setPage] = useState(1),
-    resource = useResource(
-      `/api/admin/challenges/${number(challenge.id)}/leaderboard?page=${page}`,
-    ),
+  const resource = useResource(`/api/admin/challenges/${number(challenge.id)}/leaderboard`),
     data = payload(resource.data);
+  const table = useTableView(rows(data.leaderboard), [
+    { key: 'rank', label: t('authoring.rank'), value: (item) => number(item.rank) },
+    { key: 'student', label: t('authoring.student'), value: (item) => text(item.username) },
+    {
+      key: 'points',
+      label: t('common.labels.points'),
+      value: (item) => number(item.total_points ?? item.points),
+    },
+  ]);
   return (
-    <Card
-      title={t('authoring.leaderboard.title', { name: text(challenge.name) })}
-      action={
-        <button className="secondary" onClick={onClose}>
-          {t('common.actions.close')}
-        </button>
-      }
-    >
+    <Card title={t('authoring.leaderboard.title', { name: text(challenge.name) })}>
       <ResourceState {...resource}>
+        {table.controls}
         <div className="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>{t('authoring.rank')}</th>
-                <th>{t('authoring.student')}</th>
-                <th>{t('common.labels.points')}</th>
+                {['rank', 'student', 'points'].map((key) => (
+                  <SortableHeader key={key} {...table.header(key)} />
+                ))}
               </tr>
             </thead>
             <tbody>
-              {rows(data.leaderboard).map((entry, i) => (
+              {table.items.map((entry, i) => (
                 <tr key={i}>
                   <td>{text(entry.rank)}</td>
                   <td>
@@ -370,11 +374,6 @@ function Leaderboard({ challenge, onClose }: { challenge: Row; onClose: () => vo
             </tbody>
           </table>
         </div>
-        <Pager
-          page={page}
-          totalPages={Math.ceil(number(data.total_entries) / 10) || 1}
-          onPage={setPage}
-        />
       </ResourceState>
     </Card>
   );

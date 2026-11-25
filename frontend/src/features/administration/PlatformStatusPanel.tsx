@@ -4,6 +4,8 @@ import { number, payload, row, rows, text, truth } from '../../lib/data.ts';
 import { useResource } from '../../lib/state.tsx';
 import { MonitoringPanel } from './MonitoringPanel.tsx';
 import { ActivityPanel } from './ActivityPanel.tsx';
+import { useTableView } from '../../lib/useTableView.tsx';
+import { SortableHeader } from '../../components/SortableHeader.tsx';
 
 const lifecycleStates = ['PROVISIONING', 'READY', 'ASSIGNED', 'ACTIVE', 'EXPIRED', 'TERMINATING'];
 function tone(state: string) {
@@ -33,6 +35,11 @@ export function PlatformStatusPanel() {
     release = row(data.release);
   const storage = row(data.storage),
     lifecycle = row(data.lifecycle);
+  const services = useTableView(rows(data.services), [
+    { key: 'service', label: t('common.labels.service'), value: (item) => text(item.unit) },
+    { key: 'state', label: t('common.labels.state'), value: (item) => text(item.state) },
+    { key: 'detail', label: t('platform.detail'), value: (item) => text(item.detail) },
+  ]);
   return (
     <Card
       title={t('platform.platformDiagnostics')}
@@ -120,17 +127,18 @@ export function PlatformStatusPanel() {
         </div>
         <MonitoringPanel value={data.monitoring} />
         <ActivityPanel />
+        {services.controls}
         <div className="table-wrap">
           <table aria-label={t('platform.platformServices')}>
             <thead>
               <tr>
-                <th>{t('common.labels.service')}</th>
-                <th>{t('common.labels.state')}</th>
-                <th>{t('platform.detail')}</th>
+                {['service', 'state', 'detail'].map((key) => (
+                  <SortableHeader key={key} {...services.header(key)} />
+                ))}
               </tr>
             </thead>
             <tbody>
-              {rows(data.services).map((service) => (
+              {services.items.map((service) => (
                 <tr key={text(service.unit)}>
                   <td>
                     <code>{text(service.unit)}</code>

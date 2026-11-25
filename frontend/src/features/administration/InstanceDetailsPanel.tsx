@@ -8,6 +8,8 @@ import { InstanceMonitoringPanel } from './InstanceMonitoringPanel.tsx';
 import { ActivityPanel } from './ActivityPanel.tsx';
 import { OperationHistoryPanel } from './OperationHistoryPanel.tsx';
 import { managedActionLabels, type ActionSelection } from './InstanceActionDialog.tsx';
+import { useTableView } from '../../lib/useTableView.tsx';
+import { SortableHeader } from '../../components/SortableHeader.tsx';
 
 export function InstanceDetailsPanel({
   identifier,
@@ -24,6 +26,21 @@ export function InstanceDetailsPanel({
   const machines = rows(data.machines),
     networks = rows(data.networks),
     connections = rows(data.connections);
+  const machineTable = useTableView(machines, [
+    { key: 'vm', label: t('monitoring.vm'), value: (item) => text(item.name) },
+    { key: 'state', label: t('common.labels.state'), value: (item) => text(item.status) },
+    {
+      key: 'resources',
+      label: t('common.labels.resources'),
+      value: (item) => number(item.cores) * 1000 + number(item.ram_gb),
+    },
+  ]);
+  const addresses = useTableView(connections, [
+    { key: 'vm', label: t('monitoring.vm'), value: (item) => number(item.machine_id) },
+    { key: 'network', label: t('authoring.network'), value: (item) => number(item.network_id) },
+    { key: 'address', label: t('instances.address'), value: (item) => text(item.address) },
+    { key: 'mac', label: t('instances.mac'), value: (item) => text(item.mac) },
+  ]);
   const controlsAllowed = ['READY', 'ASSIGNED', 'ACTIVE'].includes(text(data.state));
   const operation = row(data.operation);
   return (
@@ -63,18 +80,19 @@ export function InstanceDetailsPanel({
           <dd>{timestamp(data.expires_at)}</dd>
         </dl>
         <h3>{t('instances.virtualMachines')}</h3>
+        {machineTable.controls}
         <div className="table-wrap">
           <table aria-label={t('instances.instanceVirtualMachines')}>
             <thead>
               <tr>
-                <th>{t('monitoring.vm')}</th>
-                <th>{t('common.labels.state')}</th>
-                <th>{t('common.labels.resources')}</th>
+                {['vm', 'state', 'resources'].map((key) => (
+                  <SortableHeader key={key} {...machineTable.header(key)} />
+                ))}
                 <th>{t('common.labels.actions')}</th>
               </tr>
             </thead>
             <tbody>
-              {machines.map((vm) => (
+              {machineTable.items.map((vm) => (
                 <tr key={number(vm.id)}>
                   <td>
                     {text(vm.name)}{' '}
@@ -115,32 +133,34 @@ export function InstanceDetailsPanel({
             </tbody>
           </table>
         </div>
-        <NetworkPreview
-          machines={machines.map((vm) => ({ key: String(vm.id), name: text(vm.name) }))}
-          networks={networks.map((network) => ({
-            key: String(network.id),
-            name: text(network.name),
-            accessible: truth(network.accessible),
-            dmz: truth(network.is_dmz),
-            machines: connections
-              .filter((connection) => connection.network_id === network.id)
-              .map((connection) => String(connection.machine_id)),
-          }))}
-        />
+        <div className="instance-network-preview">
+          <NetworkPreview
+            machines={machines.map((vm) => ({ key: String(vm.id), name: text(vm.name) }))}
+            networks={networks.map((network) => ({
+              key: String(network.id),
+              name: text(network.name),
+              accessible: truth(network.accessible),
+              dmz: truth(network.is_dmz),
+              machines: connections
+                .filter((connection) => connection.network_id === network.id)
+                .map((connection) => String(connection.machine_id)),
+            }))}
+          />
+        </div>
         <details>
           <summary>{t('instances.networkAddresses')}</summary>
+          {addresses.controls}
           <div className="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>{t('monitoring.vm')}</th>
-                  <th>{t('authoring.network')}</th>
-                  <th>{t('instances.address')}</th>
-                  <th>{t('instances.mac')}</th>
+                  {['vm', 'network', 'address', 'mac'].map((key) => (
+                    <SortableHeader key={key} {...addresses.header(key)} />
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {connections.map((connection, index) => (
+                {addresses.items.map((connection, index) => (
                   <tr key={index}>
                     <td>{number(connection.machine_id)}</td>
                     <td>{number(connection.network_id)}</td>

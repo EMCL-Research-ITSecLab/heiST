@@ -1,12 +1,9 @@
 """Exercise definition authoring and owner-scoped administrator management."""
-import math
-
 from flask import Blueprint, current_app, request
 
 from heist.platform.challenges.definition import DefinitionError, definition, metadata
 from .context import body, internal, rate_limit, repository, require_admin
 from .errors import ApiError
-from .learning import pagination
 from .media import MAX_BYTES, remove_owned_image, save_image
 from .validation import positive_id
 
@@ -173,11 +170,9 @@ def restore(identifier):
 def leaderboard(identifier):
     user = require_admin()
     value = owned_template(user, identifier)
-    page, size, offset = pagination(10)
     repo = repository()
-    total = repo.scalar('get_total_leaderboard_entries_for_author', value['id'])
-    return {'success': True, 'data': {'leaderboard': repo.call('get_challenge_leaderboard', value['id'], size, offset),
-            'total': total, 'total_pages': max(1, math.ceil(total/size)), 'page': page}}
+    entries = repo.call('get_challenge_leaderboard', value['id'], None, 0)
+    return {'success': True, 'data': {'leaderboard': entries, 'total': len(entries)}}
 
 
 @blueprint.delete('/admin/challenges/<identifier>')

@@ -129,14 +129,20 @@ class Administration:
         finally:
             db.close()
 
-    def users(self, actor, search='', page=1):
+    def users(self, actor, search='', page=1, *, role='all', sort='user', order='asc'):
+        columns={'user':'u.username','role':'u.is_admin','sessions':'sessions',
+                 'instance':'u.running_challenge','last_login':'u.last_login'}
+        if not isinstance(sort,str) or not isinstance(order,str) or sort not in columns or order not in ('asc','desc') or role not in ('all','admin','student'):
+            raise AdminError('Invalid user sort',400)
+        ordering=columns[sort]+' '+order.upper()+' NULLS LAST, u.id ASC'
         with self.database(actor) as db, db.cursor(cursor_factory=RealDictCursor) as cursor:
             pattern = '%'+search.replace('\\','\\\\').replace('%','\\%').replace('_','\\_')+'%'
             cursor.execute('''SELECT id,username,email,is_admin,password_reset,created_at,last_login,
                               running_challenge,host(vpn_static_ip) AS vpn_ip,
                               (SELECT count(*) FROM public.web_sessions s WHERE s.user_id=u.id AND s.expires_at>CURRENT_TIMESTAMP) AS sessions
-                              FROM public.users u WHERE username ILIKE %s OR email ILIKE %s
-                              ORDER BY id LIMIT 26 OFFSET %s''', (pattern, pattern, (page-1)*25))
+                              FROM public.users u WHERE (username ILIKE %s OR email ILIKE %s)
+                              AND (%s='all' OR u.is_admin=%s)
+                              ORDER BY '''+ordering+' LIMIT 26 OFFSET %s', (pattern, pattern, role, role=='admin', (page-1)*25))
             items = [dict(item) for item in cursor.fetchall()]
             for item in items[:25]:item['operation']=self.operation('user',item['id'])
             return {'users':items[:25], 'has_more':len(items)>25, 'page':page}
@@ -209,9 +215,14 @@ class Administration:
         offset=(page-1)*25
         return {'jobs':records[offset:offset+25],'page':page,'has_more':len(records)>offset+25,'truncated':len(entries)>5000 or len(queued)>500}
 
-    def instances(self, actor, page=1, search='', state='all', template_id=None):
+    def instances(self, actor, page=1, search='', state='all', template_id=None, *, sort='instance', order='asc'):
+        columns={'instance':'c.id','challenge':'t.name','student':'COALESCE(u.username,r.username)',
+                 'state':'c.lifecycle_state','expires':'c.expires_at'}
         if state not in ('all','PROVISIONING','READY','ASSIGNED','ACTIVE','EXPIRED','TERMINATING') or not isinstance(search,str) or len(search)>100:
             raise AdminError('Invalid instance filter',400)
+        if not isinstance(sort,str) or not isinstance(order,str) or sort not in columns or order not in ('asc','desc'):
+            raise AdminError('Invalid instance sort',400)
+        ordering=columns[sort]+' '+order.upper()+' NULLS LAST, c.id ASC'
         with self.database(actor) as db, db.cursor(cursor_factory=RealDictCursor) as cursor:
             pattern='%'+search.replace('\\','\\\\').replace('%','\\%').replace('_','\\_')+'%'
             cursor.execute('''SELECT c.id,c.challenge_template_id,t.name,c.lifecycle_state::text AS state,
@@ -224,7 +235,7 @@ class Administration:
                               WHERE (%s='all' OR c.lifecycle_state::text=%s)
                               AND (%s::bigint IS NULL OR c.challenge_template_id=%s)
                               AND (t.name ILIKE %s OR COALESCE(u.username,r.username,'') ILIKE %s OR c.id::text ILIKE %s)
-                              ORDER BY c.id LIMIT 26 OFFSET %s''',(state,state,template_id,template_id,pattern,pattern,pattern,(page-1)*25))
+                              ORDER BY '''+ordering+' LIMIT 26 OFFSET %s',(state,state,template_id,template_id,pattern,pattern,pattern,(page-1)*25))
             items=[dict(item) for item in cursor.fetchall()]
             return {'instances':items[:25],'has_more':len(items)>25,'page':page}
 

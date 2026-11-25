@@ -9,11 +9,15 @@ import {
   Notice,
   PageTitle,
   ResourceState,
+  Select,
 } from '../../components/ui.tsx';
 import { Link } from '../../lib/router.tsx';
 import { request } from '../../lib/api.ts';
 import { date, number, payload, row, rows, text, truth, type Row } from '../../lib/data.ts';
 import { useAction, useResource, useSession } from '../../lib/state.tsx';
+import { SortableHeader } from '../../components/SortableHeader.tsx';
+
+type UserSort = 'user' | 'role' | 'sessions' | 'instance' | 'last_login';
 
 type UserAction = 'role' | 'password' | 'revoke_sessions';
 type Selection = { user: Row; kind: UserAction };
@@ -23,14 +27,34 @@ export function ManageUsers() {
   const session = useSession();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [role, setRole] = useState('all');
+  const [sort, setSort] = useState<{ key: UserSort; descending: boolean }>({
+    key: 'user',
+    descending: false,
+  });
   const [selected, setSelected] = useState<Selection | null>(null);
   const [confirmation, setConfirmation] = useState('');
   const [password, setPassword] = useState('');
   const resource = useResource(
-    '/api/admin/users?' + new URLSearchParams({ search, page: String(page) }),
+    '/api/admin/users?' +
+      new URLSearchParams({
+        search,
+        page: String(page),
+        role,
+        sort: sort.key,
+        order: sort.descending ? 'desc' : 'asc',
+      }),
   );
   const data = payload(resource.data);
   const action = useAction();
+
+  function sortBy(key: UserSort) {
+    setSort((previous) => ({
+      key,
+      descending: previous.key === key && !previous.descending,
+    }));
+    setPage(1);
+  }
 
   function choose(user: Row, kind: UserAction) {
     action.clear();
@@ -72,16 +96,31 @@ export function ManageUsers() {
       />
       <Notice error={action.error} message={action.message} />
       <Card>
-        <Field
-          label={t('users.findAUser')}
-          value={search}
-          maxLength={100}
-          placeholder={t('users.usernameOrEmail')}
-          onChange={(event) => {
-            setSearch(event.target.value);
-            setPage(1);
-          }}
-        />
+        <div className="filter-bar">
+          <Field
+            label={t('users.findAUser')}
+            value={search}
+            maxLength={100}
+            placeholder={t('users.usernameOrEmail')}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPage(1);
+            }}
+          />
+          <Select
+            label={t('common.labels.role')}
+            value={role}
+            options={[
+              ['all', t('common.all')],
+              ['admin', t('audit.administrator')],
+              ['student', t('authoring.student')],
+            ]}
+            onChange={(event) => {
+              setRole(event.target.value);
+              setPage(1);
+            }}
+          />
+        </div>
       </Card>
       <ResourceState {...resource}>
         <Card title={t('overview.accounts')}>
@@ -90,11 +129,23 @@ export function ManageUsers() {
               <table>
                 <thead>
                   <tr>
-                    <th>{t('common.labels.user')}</th>
-                    <th>{t('common.labels.role')}</th>
-                    <th>{t('users.sessions')}</th>
-                    <th>{t('instances.instance')}</th>
-                    <th>{t('users.lastSignIn')}</th>
+                    {(
+                      [
+                        ['user', t('common.labels.user')],
+                        ['role', t('common.labels.role')],
+                        ['sessions', t('users.sessions')],
+                        ['instance', t('instances.instance')],
+                        ['last_login', t('users.lastSignIn')],
+                      ] as const
+                    ).map(([key, label]) => (
+                      <SortableHeader
+                        key={key}
+                        label={label}
+                        active={sort.key === key}
+                        descending={sort.descending}
+                        onSort={() => sortBy(key)}
+                      />
+                    ))}
                     <th>{t('common.labels.actions')}</th>
                   </tr>
                 </thead>

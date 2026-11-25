@@ -4,7 +4,7 @@ import { PlatformStatusPanel } from './PlatformStatusPanel.tsx';
 import { Badge, Card, Empty, PageTitle, ResourceState, Stat } from '../../components/ui.tsx';
 import { number, payload, row, rows, text, truth, type Row } from '../../lib/data.ts';
 import { SortableHeader } from '../../components/SortableHeader.tsx';
-import { useTableSort } from '../../lib/useTableSort.ts';
+import { useTableView } from '../../lib/useTableView.tsx';
 import { Link, useRouter } from '../../lib/router.tsx';
 import { useResource } from '../../lib/state.tsx';
 import { ManagementOverview } from './ManagementOverview.tsx';
@@ -23,17 +23,6 @@ const managementTabs = [
 ] as const;
 export function Operations() {
   const { t } = useI18n();
-  const sorting = useTableSort<Row>(
-    {
-      name: (c) => text(c.name),
-      availability: (c) =>
-        truth(c.marked_for_deletion) ? 'Retiring' : truth(c.is_active) ? 'Available' : 'Inactive',
-      active: (c) => number(c.active_deployments),
-      total: (c) => number(c.total_deployments),
-      solves: (c) => number(c.solve_count),
-    },
-    'name',
-  );
   const router = useRouter(),
     query = new URLSearchParams(router.location.split('?')[1]);
   const selected = query.get('tab') ?? 'overview';
@@ -53,6 +42,30 @@ export function Operations() {
     data = payload(resource.data),
     stats = row(data.stats),
     challenges = rows(data.challenges);
+  const table = useTableView<Row>(challenges, [
+    { key: 'name', label: t('common.labels.exercise'), value: (c) => text(c.name) },
+    {
+      key: 'availability',
+      label: t('common.labels.availability'),
+      value: (c) =>
+        truth(c.marked_for_deletion)
+          ? t('common.retiring')
+          : truth(c.is_active)
+            ? t('authoring.available')
+            : t('common.inactive'),
+    },
+    {
+      key: 'active',
+      label: t('operations.activeDeployments'),
+      value: (c) => number(c.active_deployments),
+    },
+    {
+      key: 'total',
+      label: t('operations.totalDeployments'),
+      value: (c) => number(c.total_deployments),
+    },
+    { key: 'solves', label: t('operations.solves'), value: (c) => number(c.solve_count) },
+  ]);
   return (
     <>
       <PageTitle
@@ -107,30 +120,19 @@ export function Operations() {
             title={t('operations.exerciseAvailability')}
             action={<Link href="/manage-ctf">{t('operations.manageChallenges')}</Link>}
           >
+            {table.controls}
             {challenges.length ? (
               <div className="table-wrap">
                 <table>
                   <thead>
                     <tr>
-                      {['name', 'availability', 'active', 'total', 'solves'].map((key, index) => (
-                        <SortableHeader
-                          key={key}
-                          {...sorting.header(
-                            key,
-                            [
-                              t('common.labels.exercise'),
-                              t('common.labels.availability'),
-                              t('operations.activeDeployments'),
-                              t('operations.totalDeployments'),
-                              t('operations.solves'),
-                            ][index],
-                          )}
-                        />
+                      {['name', 'availability', 'active', 'total', 'solves'].map((key) => (
+                        <SortableHeader key={key} {...table.header(key)} />
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {sorting.apply(challenges).map((c) => (
+                    {table.items.map((c) => (
                       <tr key={text(c.id)}>
                         <td>
                           <Link href={`/challenge?id=${number(c.id)}`}>{text(c.name)}</Link>

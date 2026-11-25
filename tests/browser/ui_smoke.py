@@ -9,6 +9,28 @@ from tests.browser.support import BrowserFixture
 
 
 class BrowserTests(BrowserFixture):
+    def test_running_challenge_cidr_copies_to_clipboard(self):
+        if self.browser.browser_type.name != 'chromium':
+            self.skipTest('Clipboard read and write permissions are tested in Chromium')
+        from tests.browser.showcase_data import responses
+        self.role='student';self.responses=responses()
+        self.context.grant_permissions(['clipboard-read','clipboard-write'])
+        self.visit('/challenge?id=4')
+        button=self.page.get_by_role('button',name='Copy 10.10.42.0/24')
+        button.click()
+        self.page.get_by_role('button',name='Copied 10.10.42.0/24').wait_for()
+        self.assertEqual(self.page.evaluate('navigator.clipboard.readText()'),'10.10.42.0/24')
+        self.assertEqual(self.page.locator('.connection-entry code').last.inner_text(),'10.10.42.0/24')
+        flag=self.page.get_by_label('Flag',exact=True)
+        flag.focus();self.page.keyboard.press('Control+V')
+        self.assertEqual(flag.input_value(),'10.10.42.0/24')
+        self.page.evaluate("() => { navigator.clipboard.writeText = () => Promise.reject(new Error('blocked')); }")
+        self.page.get_by_role('button',name='Copy https://portal.identity.lab').click()
+        self.page.get_by_role('button',name='Copied https://portal.identity.lab').wait_for()
+        self.assertEqual(self.page.evaluate('navigator.clipboard.readText()'),'https://portal.identity.lab')
+        self.page.set_viewport_size({'width':320,'height':900})
+        self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),320)
+
     def test_initial_launch_waits_for_real_deadline_and_updates_without_navigation(self):
         self.role='student'
         state={'started':False,'activated':False,'launches':0}

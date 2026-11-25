@@ -2,10 +2,17 @@ import { useI18n } from '../../lib/i18n.tsx';
 import { Badge } from '../../components/ui.tsx';
 import { text } from '../../lib/data.ts';
 import { healthTone, monitoringView } from '../../lib/monitoring.ts';
+import { useTableView } from '../../lib/useTableView.tsx';
+import { SortableHeader } from '../../components/SortableHeader.tsx';
 
 export function MonitoringPanel({ value }: { value: unknown }) {
   const { t } = useI18n();
   const health = monitoringView(value);
+  const checks = useTableView(health.checks, [
+    { key: 'check', label: t('monitoring.check'), value: (item) => text(item.label) },
+    { key: 'state', label: t('common.labels.state'), value: (item) => text(item.state) },
+    { key: 'evidence', label: t('monitoring.evidence'), value: (item) => text(item.summary) },
+  ]);
   const at = new Date(text(health.checkedAt));
   return (
     <section aria-label={t('monitoring.platformMonitoring')}>
@@ -38,20 +45,18 @@ export function MonitoringPanel({ value }: { value: unknown }) {
             {t('monitoring.monitoringChecks')}
             {health.checks.length})
           </summary>
+          {checks.controls}
           <div className="table-wrap">
             <table aria-label={t('monitoring.platformMonitoringChecks')}>
               <thead>
                 <tr>
-                  <th>{t('monitoring.check')}</th>
-                  <th>
-                    {t('common.labels.state')}
-                    {health.historical ? ' ' + t('common.previousCollection') : ''}
-                  </th>
-                  <th>{t('monitoring.evidence')}</th>
+                  {['check', 'state', 'evidence'].map((key) => (
+                    <SortableHeader key={key} {...checks.header(key)} />
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {health.checks.map((check) => (
+                {checks.items.map((check) => (
                   <tr key={text(check.id)}>
                     <td>{text(check.label)}</td>
                     <td>

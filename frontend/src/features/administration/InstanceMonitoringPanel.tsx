@@ -2,6 +2,8 @@ import { useI18n } from '../../lib/i18n.tsx';
 import { Badge } from '../../components/ui.tsx';
 import { number, row, rows, text } from '../../lib/data.ts';
 import { healthTone } from '../../lib/monitoring.ts';
+import { useTableView } from '../../lib/useTableView.tsx';
+import { SortableHeader } from '../../components/SortableHeader.tsx';
 
 function timestamp(value: unknown) {
   const date = new Date(text(value));
@@ -11,6 +13,12 @@ function timestamp(value: unknown) {
 export function InstanceMonitoringPanel({ value }: { value: unknown }) {
   const { t } = useI18n();
   const data = row(value);
+  const machines = useTableView(rows(data.machines), [
+    { key: 'vm', label: t('monitoring.vm'), value: (item) => number(item.machine_id) },
+    { key: 'state', label: t('monitoring.vmState'), value: (item) => text(item.vm_status) },
+    { key: 'agent', label: t('monitoring.agent'), value: (item) => text(item.agent_status) },
+    { key: 'last', label: t('monitoring.lastSeen'), value: (item) => text(item.last_keepalive) },
+  ]);
   return (
     <section aria-label={t('monitoring.challengeMonitoring')}>
       <h3>
@@ -23,40 +31,42 @@ export function InstanceMonitoringPanel({ value }: { value: unknown }) {
         {t('monitoring.agentCoverageCaveat')}
       </p>
       {rows(data.machines).length > 0 && (
-        <div className="table-wrap">
-          <table aria-label={t('monitoring.challengeMonitoringAgents')}>
-            <thead>
-              <tr>
-                <th>{t('monitoring.vm')}</th>
-                <th>{t('monitoring.vmState')}</th>
-                <th>{t('monitoring.agent')}</th>
-                <th>{t('monitoring.lastSeen')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows(data.machines).map((machine) => {
-                const state = text(machine.agent_status, 'unknown');
-                const tone =
-                  machine.vm_status !== 'running'
-                    ? 'warning'
-                    : state === 'active'
-                      ? 'active'
-                      : ['missing', 'disconnected', 'stale'].includes(state)
-                        ? 'critical'
-                        : 'warning';
-                return (
-                  <tr key={number(machine.machine_id)}>
-                    <td>{number(machine.machine_id)}</td>
-                    <td>{text(machine.vm_status)}</td>
-                    <td>
-                      <Badge tone={tone}>{state}</Badge>
-                    </td>
-                    <td>{timestamp(machine.last_keepalive)}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div>
+          {machines.controls}
+          <div className="table-wrap">
+            <table aria-label={t('monitoring.challengeMonitoringAgents')}>
+              <thead>
+                <tr>
+                  {['vm', 'state', 'agent', 'last'].map((key) => (
+                    <SortableHeader key={key} {...machines.header(key)} />
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {machines.items.map((machine) => {
+                  const state = text(machine.agent_status, 'unknown');
+                  const tone =
+                    machine.vm_status !== 'running'
+                      ? 'warning'
+                      : state === 'active'
+                        ? 'active'
+                        : ['missing', 'disconnected', 'stale'].includes(state)
+                          ? 'critical'
+                          : 'warning';
+                  return (
+                    <tr key={number(machine.machine_id)}>
+                      <td>{number(machine.machine_id)}</td>
+                      <td>{text(machine.vm_status)}</td>
+                      <td>
+                        <Badge tone={tone}>{state}</Badge>
+                      </td>
+                      <td>{timestamp(machine.last_keepalive)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
       {rows(data.sensors).length > 0 && (

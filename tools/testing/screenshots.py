@@ -120,6 +120,14 @@ def capture(output):
                     if name == 'exercise_history':
                         fixture.page.get_by_role('button',name='Inspect revision',exact=True).click()
                         fixture.page.get_by_role('heading',name='Revision 1',exact=True).wait_for()
+                    if name in ('edit_challenge', 'exercise_history'):
+                        fixture.page.locator('dialog.management-overlay .topology-scroll').evaluate_all(
+                            "elements => elements.forEach(element => { element.style.maxHeight = 'none'; element.style.overflow = 'visible'; })")
+                        dialog_height = fixture.page.locator('dialog.management-overlay').evaluate('dialog => dialog.scrollHeight')
+                        viewport['height'] = max(viewport['height'], (dialog_height * 10 + 8) // 9 + 120)
+                        fixture.page.set_viewport_size(viewport)
+                        if fixture.page.locator('dialog.management-overlay').evaluate('dialog => dialog.scrollHeight > dialog.clientHeight'):
+                            raise RuntimeError('Documentation dialog is clipped: '+name)
                     if name == 'operation_history':
                         fixture.page.get_by_text('admin_rebuild',exact=False).last.click()
                     if name in ('instance_details', 'monitoring_activity'):

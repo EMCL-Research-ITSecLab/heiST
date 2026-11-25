@@ -1,5 +1,14 @@
 /** Stable semantic identifiers for all interface messages. */
 export const english = {
+  'tables.allValues': 'All values',
+  'tables.anyColumn': 'Any column',
+  'tables.filterBy': 'Filter by',
+  'tables.search': 'Search table',
+  'tables.value': 'Value',
+  'tables.size': 'Size',
+  'tables.loadedRowsOnly': 'These controls apply to the loaded rows on this page.',
+  'tables.results': '{shown} of {total} rows',
+  'tables.clear': 'Clear table filters',
   'announcements.administrationCommunication': 'ADMINISTRATION / COMMUNICATION',
   'announcements.announcement': 'Announcement',
   'announcements.dashboardAnnouncements': 'Dashboard announcements',
@@ -198,6 +207,11 @@ export const english = {
   'capacity.allocationCaveat':
     'Configured totals include stopped VMs. They are allocations, not live utilization or a guarantee that another challenge fits.',
   'challenge.connectionDetails': 'Connection details',
+  'challenge.copyAddress': 'Copy',
+  'challenge.copiedAddress': 'Copied',
+  'challenge.copyAddressLabel': 'Copy {address}',
+  'challenge.copiedAddressLabel': 'Copied {address}',
+  'challenge.copyAddressFailed': 'Copy failed. Select the address and copy it manually.',
   'challenge.enterTheFlagYouFound': 'Enter the flag you found',
   'challenge.environment.connectionHint':
     'Connect through your heiST VPN to access the isolated lab.',

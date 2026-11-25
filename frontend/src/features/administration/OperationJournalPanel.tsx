@@ -5,6 +5,8 @@ import { timestamp, number, payload, rows, text, truth } from '../../lib/data.ts
 import { useResource } from '../../lib/state.tsx';
 import { Link, useRouter } from '../../lib/router.tsx';
 import { OperationHistoryPanel } from './OperationHistoryPanel.tsx';
+import { useTableView } from '../../lib/useTableView.tsx';
+import { SortableHeader } from '../../components/SortableHeader.tsx';
 
 export function OperationJournalPanel() {
   const { t } = useI18n();
@@ -19,6 +21,19 @@ export function OperationJournalPanel() {
     15000,
   );
   const data = payload(resource.data);
+  const jobs = useTableView(
+    rows(data.jobs),
+    [
+      { key: 'scope', label: t('common.labels.scope'), value: (item) => text(item.scope) },
+      { key: 'resource', label: t('instances.resource'), value: (item) => number(item.resource) },
+      { key: 'action', label: t('common.labels.action'), value: (item) => text(item.action) },
+      { key: 'state', label: t('common.labels.state'), value: (item) => text(item.state) },
+      { key: 'stage', label: t('operations.stage'), value: (item) => text(item.stage) },
+      { key: 'started', label: t('operations.started'), value: (item) => text(item.started) },
+    ],
+    '',
+    { loadedRowsOnly: true },
+  );
   return (
     <>
       <Card
@@ -50,22 +65,20 @@ export function OperationJournalPanel() {
         />
         <ResourceState {...resource}>
           {truth(data.truncated) && <p className="notice">{t('operations.registryScanLimit')}</p>}
+          {jobs.controls}
           {rows(data.jobs).length ? (
             <div className="table-wrap">
               <table>
                 <thead>
                   <tr>
-                    <th>{t('common.labels.scope')}</th>
-                    <th>{t('instances.resource')}</th>
-                    <th>{t('common.labels.action')}</th>
-                    <th>{t('common.labels.state')}</th>
-                    <th>{t('operations.stage')}</th>
-                    <th>{t('operations.started')}</th>
+                    {['scope', 'resource', 'action', 'state', 'stage', 'started'].map((key) => (
+                      <SortableHeader key={key} {...jobs.header(key)} />
+                    ))}
                     <th>{t('authoring.history')}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {rows(data.jobs).map((job) => (
+                  {jobs.items.map((job) => (
                     <tr key={text(job.id) || text(job.scope) + ':' + number(job.resource)}>
                       <td>{text(job.scope)}</td>
                       <td>{number(job.resource)}</td>

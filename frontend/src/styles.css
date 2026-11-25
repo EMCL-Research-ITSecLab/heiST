@@ -737,6 +737,10 @@ main {
   margin: 0;
   min-width: 130px;
 }
+.table-scope-note {
+  flex-basis: 100%;
+  margin: 0;
+}
 
 .view-label {
   font: 9px var(--mono);
@@ -1089,6 +1093,20 @@ progress {
   background: var(--subtle);
   font-size: 11px;
   overflow-wrap: anywhere;
+  min-width: 0;
+  flex: 1;
+  user-select: all;
+}
+
+.connection-entry {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  min-width: 0;
+}
+
+.connection-entry button {
+  flex: none;
 }
 
 .breadcrumbs {
@@ -1636,7 +1654,7 @@ dialog .button-row {
 
   .challenge-layout,
   .editor-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .challenge-layout aside,
@@ -1903,6 +1921,12 @@ dialog .button-row {
   border: 1px solid var(--line);
   border-radius: 6px;
   margin-bottom: 12px;
+}
+.instance-network-preview {
+  max-width: 520px;
+}
+.instance-network-preview .topology-scroll {
+  max-height: 240px;
 }
 .topology-diagram {
   display: block;

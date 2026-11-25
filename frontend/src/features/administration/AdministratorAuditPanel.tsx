@@ -4,12 +4,34 @@ import { Card, ResourceState } from '../../components/ui.tsx';
 import { timestamp, number, payload, rows, text, truth } from '../../lib/data.ts';
 import { Link } from '../../lib/router.tsx';
 import { useResource } from '../../lib/state.tsx';
+import { useTableView } from '../../lib/useTableView.tsx';
+import { SortableHeader } from '../../components/SortableHeader.tsx';
 
 export function AdministratorAuditPanel() {
   const { t } = useI18n();
   const [page, setPage] = useState(1),
     resource = useResource('/api/admin/audit?page=' + page, 15000),
     data = payload(resource.data);
+  const events = useTableView(
+    rows(data.events),
+    [
+      { key: 'time', label: t('common.labels.time'), value: (item) => text(item.recorded_at) },
+      { key: 'actor', label: t('audit.administrator'), value: (item) => text(item.actor) },
+      { key: 'action', label: t('common.labels.action'), value: (item) => text(item.action) },
+      {
+        key: 'exercise',
+        label: t('common.labels.exercise'),
+        value: (item) => number(item.resource_id),
+      },
+      {
+        key: 'revision',
+        label: t('audit.revision'),
+        value: (item) => (item.revision_id == null ? null : number(item.revision_id)),
+      },
+    ],
+    '',
+    { loadedRowsOnly: true },
+  );
   return (
     <Card
       title={t('audit.exerciseAdministrationAudit')}
@@ -21,19 +43,18 @@ export function AdministratorAuditPanel() {
     >
       <p className="muted">{t('audit.retentionExplanation')}</p>
       <ResourceState {...resource}>
+        {events.controls}
         <div className="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>{t('common.labels.time')}</th>
-                <th>{t('audit.administrator')}</th>
-                <th>{t('common.labels.action')}</th>
-                <th>{t('common.labels.exercise')}</th>
-                <th>{t('audit.revision')}</th>
+                {['time', 'actor', 'action', 'exercise', 'revision'].map((key) => (
+                  <SortableHeader key={key} {...events.header(key)} />
+                ))}
               </tr>
             </thead>
             <tbody>
-              {rows(data.events).map((event) => (
+              {events.items.map((event) => (
                 <tr key={number(event.id)}>
                   <td>{timestamp(event.recorded_at)}</td>
                   <td>{text(event.actor, 'Deleted account')}</td>

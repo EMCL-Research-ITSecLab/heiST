@@ -92,7 +92,13 @@ def blueprint(factory):
         def load(service,data):
             search=data.get('search','')
             if not isinstance(search,str) or len(search)>100:raise AdminError('Search is too long',400)
-            return service.users(identifier(data.get('actor_id')),search,page(data))
+            sort=data.get('sort','user')
+            order=data.get('order','asc')
+            role=data.get('role','all')
+            if not isinstance(sort,str) or not isinstance(order,str) or sort not in ('user','role','sessions','instance','last_login') or order not in ('asc','desc'):
+                raise AdminError('Invalid user sort',400)
+            if role not in ('all','admin','student'):raise AdminError('Invalid user role',400)
+            return service.users(identifier(data.get('actor_id')),search,page(data),role=role,sort=sort,order=order)
         return run(load)
 
     @routes.post('/admin/users/manage')
@@ -116,7 +122,8 @@ def blueprint(factory):
 
     @routes.get('/admin/instances')
     def instances():return run(lambda service,data:service.instances(identifier(data.get('actor_id')),page(data),data.get('search',''),data.get('state','all'),
-                                                               identifier(data['template_id']) if 'template_id' in data else None))
+                                                               identifier(data['template_id']) if 'template_id' in data else None,
+                                                               sort=data.get('sort','instance'),order=data.get('order','asc')))
 
     @routes.get('/admin/instances/preview')
     def preview():return run(lambda service,data:service.preview(identifier(data.get('actor_id')),identifier(data.get('instance_id')),data.get('action'),

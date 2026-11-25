@@ -1,5 +1,5 @@
 import { useI18n } from '../../lib/i18n.tsx';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Badge,
   Card,
@@ -14,6 +14,7 @@ import { Link, useRouter } from '../../lib/router.tsx';
 import { useResource } from '../../lib/state.tsx';
 import { InstanceActionDialog, type ActionSelection } from './InstanceActionDialog.tsx';
 import { InstanceDetailsPanel } from './InstanceDetailsPanel.tsx';
+import { SortableHeader } from '../../components/SortableHeader.tsx';
 
 export function ManageInstances() {
   const { t } = useI18n();
@@ -23,7 +24,31 @@ export function ManageInstances() {
     selected = number(query.get('instance')) || null;
   const search = query.get('search') ?? '',
     state = query.get('state') ?? 'all';
-  const parameters = new URLSearchParams({ page: String(page), search, state });
+  const sort = query.get('sort') ?? 'instance';
+  const order = query.get('order') ?? 'asc';
+  const [searchInput, setSearchInput] = useState(search);
+  const ownSearchNavigation = useRef<string | null>(null);
+  useEffect(() => {
+    if (searchInput === search) return;
+    const timer = window.setTimeout(() => {
+      const next = new URLSearchParams(window.location.search);
+      if (searchInput) next.set('search', searchInput);
+      else next.delete('search');
+      next.delete('page');
+      next.delete('instance');
+      ownSearchNavigation.current = searchInput;
+      router.navigate('/manage-instances' + (next.size ? '?' + next : ''), true, false);
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [searchInput, search]);
+  useEffect(() => {
+    if (ownSearchNavigation.current === search) {
+      ownSearchNavigation.current = null;
+    } else {
+      setSearchInput(search);
+    }
+  }, [search]);
+  const parameters = new URLSearchParams({ page: String(page), search, state, sort, order });
   if (query.has('template_id')) parameters.set('template_id', query.get('template_id')!);
   const resource = useResource('/api/admin/instances?' + parameters, 15000),
     data = payload(resource.data);
@@ -31,13 +56,25 @@ export function ManageInstances() {
   const [queued, setQueued] = useState('');
   function update(key: string, value: string, replace = false) {
     const next = new URLSearchParams(query);
+    if (searchInput) next.set('search', searchInput);
+    else next.delete('search');
     if (value) next.set(key, value);
     else next.delete(key);
-    if (['search', 'state', 'template_id'].includes(key)) {
+    if (['search', 'state', 'template_id', 'sort'].includes(key)) {
       next.delete('page');
       next.delete('instance');
     }
     router.navigate('/manage-instances' + (next.size ? '?' + next : ''), replace);
+  }
+  function sortBy(key: string) {
+    const next = new URLSearchParams(query);
+    if (searchInput) next.set('search', searchInput);
+    else next.delete('search');
+    next.set('sort', key);
+    next.set('order', sort === key && order === 'asc' ? 'desc' : 'asc');
+    next.delete('page');
+    next.delete('instance');
+    router.navigate('/manage-instances?' + next);
   }
   return (
     <>
@@ -61,10 +98,10 @@ export function ManageInstances() {
         <div className="filter-bar">
           <Field
             label={t('instances.findAnInstance')}
-            value={search}
+            value={searchInput}
             maxLength={100}
             placeholder={t('instances.exerciseStudentOrId')}
-            onChange={(event) => update('search', event.target.value, true)}
+            onChange={(event) => setSearchInput(event.target.value)}
           />
           <Select
             label={t('instances.instanceState')}
@@ -92,11 +129,23 @@ export function ManageInstances() {
               <table>
                 <thead>
                   <tr>
-                    <th>{t('instances.instance')}</th>
-                    <th>{t('common.labels.challenge')}</th>
-                    <th>{t('authoring.student')}</th>
-                    <th>{t('common.labels.state')}</th>
-                    <th>{t('instances.expires')}</th>
+                    {(
+                      [
+                        ['instance', t('instances.instance')],
+                        ['challenge', t('common.labels.challenge')],
+                        ['student', t('authoring.student')],
+                        ['state', t('common.labels.state')],
+                        ['expires', t('instances.expires')],
+                      ] as const
+                    ).map(([key, label]) => (
+                      <SortableHeader
+                        key={key}
+                        label={label}
+                        active={sort === key}
+                        descending={order === 'desc'}
+                        onSort={() => sortBy(key)}
+                      />
+                    ))}
                     <th>{t('common.labels.actions')}</th>
                   </tr>
                 </thead>

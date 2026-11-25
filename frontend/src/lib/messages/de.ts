@@ -1,5 +1,14 @@
 import type { Messages } from './en.ts';
 export const german = {
+  'tables.allValues': 'Alle Werte',
+  'tables.anyColumn': 'Alle Spalten',
+  'tables.filterBy': 'Filtern nach',
+  'tables.search': 'Tabelle durchsuchen',
+  'tables.value': 'Wert',
+  'tables.size': 'Größe',
+  'tables.loadedRowsOnly': 'Diese Steuerelemente gelten für die geladenen Zeilen dieser Seite.',
+  'tables.results': '{shown} von {total} Zeilen',
+  'tables.clear': 'Tabellenfilter zurücksetzen',
   'announcements.administrationCommunication': 'ADMINISTRATION / MITTEILUNGEN',
   'announcements.announcement': 'Mitteilung',
   'announcements.dashboardAnnouncements': 'Mitteilungen auf der Übersicht',
@@ -202,6 +211,12 @@ export const german = {
   'capacity.allocationCaveat':
     'Die Summen enthalten gestoppte VMs. Sie zeigen Zuweisungen, keine aktuelle Auslastung und keine Kapazitätsgarantie für weitere Übungen.',
   'challenge.connectionDetails': 'Verbindungsdetails',
+  'challenge.copyAddress': 'Kopieren',
+  'challenge.copiedAddress': 'Kopiert',
+  'challenge.copyAddressLabel': '{address} kopieren',
+  'challenge.copiedAddressLabel': '{address} kopiert',
+  'challenge.copyAddressFailed':
+    'Kopieren fehlgeschlagen. Wähle die Adresse aus und kopiere sie manuell.',
   'challenge.enterTheFlagYouFound': 'Gefundene Flag eingeben',
   'challenge.environment.connectionHint':
     'Verbinde dich über dein heiST-VPN mit dem isolierten Labor.',

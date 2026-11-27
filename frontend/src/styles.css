@@ -1,6 +1,35 @@
-@import url('./tokens.css');
+@import 'tailwindcss';
+@import './tokens.css';
+
+/* Keep the existing theme variables as the single source for both themes. */
+@theme inline {
+  --font-sans: var(--sans);
+  --font-mono: var(--mono);
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-subtle: var(--subtle);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-accent: var(--blue);
+  --color-accent-hover: var(--blue-hover);
+  --color-on-accent: var(--on-accent);
+  --color-danger: var(--red);
+  --color-on-danger: var(--on-danger);
+  --color-danger-hover: var(--danger-hover);
+  --color-success: var(--green);
+  --color-success-soft: var(--green-bg);
+  --color-warning: var(--amber);
+  --color-warning-soft: var(--amber-bg);
+  --color-danger-soft: var(--red-bg);
+  --color-nav: var(--nav);
+  --color-focus: var(--focus);
+  --shadow-panel: var(--shadow);
+}
+
 * {
-  box-sizing: border-box;
+  @apply box-border;
 }
 
 /* The route landmark receives programmatic focus; controls keep their focus ring. */
@@ -17,10 +46,8 @@ code {
 
 body {
   margin: 0;
-  background: var(--canvas);
-  color: var(--ink);
+  @apply bg-canvas text-ink antialiased;
   font: 14px/1.6 var(--sans);
-  -webkit-font-smoothing: antialiased;
 }
 
 button,
@@ -39,8 +66,7 @@ textarea {
 }
 
 a {
-  color: var(--blue);
-  text-decoration: none;
+  @apply text-accent no-underline;
 }
 
 a:hover {
@@ -49,19 +75,9 @@ a:hover {
 
 button,
 .button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  background: var(--blue);
-  color: var(--on-accent);
-  padding: 11px 17px;
+  @apply inline-flex items-center justify-center gap-3 rounded-lg border border-transparent bg-accent px-[17px] py-[11px] text-on-accent no-underline cursor-pointer;
   font-weight: 650;
-  cursor: pointer;
   line-height: 1.4;
-  text-decoration: none;
   transition:
     background 0.15s,
     transform 0.15s;
@@ -79,9 +95,7 @@ button:disabled {
 }
 
 .secondary {
-  background: var(--surface);
-  border-color: var(--line);
-  color: var(--ink);
+  @apply border-line bg-surface text-ink;
 }
 
 .secondary:hover:not(:disabled) {
@@ -89,8 +103,7 @@ button:disabled {
 }
 
 .danger {
-  background: var(--red);
-  color: var(--on-danger);
+  @apply bg-danger text-on-danger;
 }
 
 .danger:hover:not(:disabled) {
@@ -98,9 +111,7 @@ button:disabled {
 }
 
 .subtle {
-  background: transparent;
-  border-color: var(--line);
-  color: var(--red);
+  @apply border-line bg-transparent text-danger;
 }
 
 .subtle:hover:not(:disabled) {
@@ -108,20 +119,15 @@ button:disabled {
 }
 
 .small {
-  padding: 7px 11px;
-  font-size: 12px;
+  @apply px-[11px] py-[7px] text-xs;
 }
 
 .full {
-  width: 100%;
-  margin-top: 10px;
+  @apply mt-[10px] w-full;
 }
 
 .icon-button {
-  background: transparent;
-  color: var(--muted);
-  padding: 8px;
-  font-size: 20px;
+  @apply bg-transparent p-2 text-xl text-muted;
 }
 
 .icon-button:hover:not(:disabled) {
@@ -194,21 +200,15 @@ code {
 }
 
 .app {
-  display: flex;
-  background: var(--nav);
-  min-height: 100vh;
+  @apply flex min-h-screen bg-nav;
 }
 
 .sidebar {
-  position: fixed;
+  @apply fixed z-30 flex flex-col bg-nav;
   inset: 0 auto 0 0;
   width: 238px;
-  background: var(--nav);
   color: #c2ccda;
   padding: 31px 23px 20px;
-  display: flex;
-  flex-direction: column;
-  z-index: 30;
 }
 
 .brand {
@@ -249,15 +249,9 @@ code {
 }
 
 .sidebar nav > a {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 11px 13px;
+  @apply flex items-center gap-3 whitespace-nowrap rounded-[7px] px-[13px] py-[11px] text-xs;
   color: #acbacd;
-  border-radius: 7px;
-  font-size: 12px;
   margin: 3px 0;
-  white-space: nowrap;
 }
 
 .sidebar nav > a:hover {
@@ -307,23 +301,15 @@ code {
 }
 
 .workspace {
-  background: var(--canvas);
+  @apply flex min-w-0 flex-col bg-canvas;
   margin-left: 238px;
   width: calc(100% - 238px);
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
 }
 
 .topbar {
   height: 79px;
-  border-bottom: 1px solid var(--line);
-  background: var(--surface);
+  @apply flex items-center justify-between gap-4 border-b border-line bg-surface;
   padding: 0 42px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
 }
 
 .topbar-context {
@@ -405,9 +391,7 @@ main {
 }
 
 .page-title {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  @apply flex items-center justify-between;
   gap: 25px;
   margin-bottom: 32px;
 }
@@ -417,20 +401,11 @@ main {
 }
 
 .card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 25px;
-  margin-bottom: 22px;
-  min-width: 0;
+  @apply mb-[22px] min-w-0 rounded-xl border border-line bg-surface p-[25px] shadow-panel;
 }
 
 .card-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 18px;
+  @apply mb-[18px] flex items-center justify-between gap-3;
 }
 
 .card-heading h2 {
@@ -443,17 +418,12 @@ main {
 }
 
 .stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
+  @apply grid grid-cols-4 gap-4;
   margin: 24px 0 30px;
 }
 
 .stats-grid .stat {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 20px 22px;
+  @apply rounded-[10px] border border-line bg-surface px-[22px] py-5 shadow-panel;
 }
 
 .stat > span {
@@ -498,19 +468,11 @@ main {
 }
 
 .challenge-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
-  margin-bottom: 28px;
+  @apply mb-7 grid grid-cols-3 gap-5;
 }
 
 .challenge-card {
-  display: block;
-  border: 1px solid var(--line);
-  background: var(--surface);
-  border-radius: 12px;
-  overflow: hidden;
-  color: var(--ink);
+  @apply block overflow-hidden rounded-xl border border-line bg-surface text-ink shadow-panel;
   transition:
     transform 0.15s,
     box-shadow 0.15s;
@@ -580,44 +542,29 @@ main {
 }
 
 .spread {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  @apply flex flex-wrap items-center justify-between gap-3;
 }
 
 .badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--subtle);
-  color: var(--muted);
-  padding: 4px 9px;
-  border-radius: 5px;
-  font-size: 10px;
+  @apply inline-flex items-center gap-[6px] rounded-[5px] bg-subtle px-[9px] py-1 text-[10px] text-muted capitalize;
   line-height: 1.4;
-  text-transform: capitalize;
   font-weight: 500;
 }
 
 .badge.active,
 .badge.easy {
-  background: var(--green-bg);
-  color: var(--green);
+  @apply bg-success-soft text-success;
 }
 
 .badge.medium,
 .badge.warning,
 .badge.important {
-  background: var(--amber-bg);
-  color: var(--amber);
+  @apply bg-warning-soft text-warning;
 }
 
 .badge.hard,
 .badge.critical {
-  background: var(--red-bg);
-  color: var(--red);
+  @apply bg-danger-soft text-danger;
 }
 
 .two-columns {
@@ -649,11 +596,7 @@ main {
 }
 
 .list-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 15px 0;
-  border-bottom: 1px solid var(--line);
+  @apply flex items-center gap-3 border-b border-line py-[15px];
 }
 
 .list-item:last-child {
@@ -691,13 +634,7 @@ main {
 }
 
 .active-banner {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  padding: 21px 25px;
-  background: var(--green-bg);
-  border: 1px solid var(--line);
-  border-radius: 12px;
+  @apply flex items-center gap-[18px] rounded-xl border border-line bg-success-soft px-[25px] py-[21px];
 }
 
 .active-banner > div {
@@ -711,15 +648,7 @@ main {
 }
 
 .filter-bar {
-  display: flex;
-  align-items: end;
-  flex-wrap: wrap;
-  gap: 16px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  padding: 20px;
-  border-radius: 10px;
-  margin-bottom: 23px;
+  @apply mb-[23px] flex flex-wrap items-end gap-4 rounded-[10px] border border-line bg-surface p-5;
 }
 
 .card .filter-bar {
@@ -749,30 +678,18 @@ main {
 }
 
 .field {
-  display: block;
-  margin: 0 0 18px;
-  min-width: 0;
+  @apply mb-[18px] block min-w-0;
 }
 
 .field > span {
-  display: block;
-  color: var(--ink);
-  font-size: 12px;
+  @apply mb-[7px] block text-xs text-ink;
   font-weight: 550;
-  margin-bottom: 7px;
 }
 
 .field input,
 .field select,
 .field textarea {
-  width: 100%;
-  padding: 11px 12px;
-  border: 1px solid var(--line-strong);
-  background: var(--surface);
-  border-radius: 7px;
-  color: var(--ink);
-  font-size: 13px;
-  min-height: 42px;
+  @apply min-h-[42px] w-full rounded-[7px] border border-line-strong bg-surface px-3 py-[11px] text-[13px] text-ink;
 }
 
 .field input::placeholder,
@@ -824,10 +741,7 @@ input[type='checkbox'] {
 }
 
 .button-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  @apply flex flex-wrap items-center gap-3;
   margin: 15px 0;
 }
 
@@ -912,14 +826,11 @@ input[type='checkbox'] {
 }
 
 .table-wrap {
-  overflow: auto;
+  @apply overflow-auto;
 }
 
 table {
-  border-collapse: collapse;
-  width: 100%;
-  text-align: left;
-  font-size: 12px;
+  @apply w-full border-collapse text-left text-xs;
 }
 
 th {
@@ -934,8 +845,7 @@ th {
 
 th,
 td {
-  padding: 15px 13px;
-  border-bottom: 1px solid var(--line);
+  @apply border-b border-line px-[13px] py-[15px];
 }
 
 th .table-sort {
